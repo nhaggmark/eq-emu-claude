@@ -27,22 +27,64 @@ A custom EverQuest server (Classic through Luclin, 1–6 players, Titanium clien
 ## Directory Layout
 
 ```
-/mnt/d/Dev/EQ/
-├── akk-stack/              Docker stack, Makefile, .env, docker-compose files
-│   ├── server/             Runtime data: configs, quests, logs, maps, binaries
-│   │   ├── eqemu_config.json
-│   │   ├── login.json
-│   │   ├── quests/         Perl/Lua quest scripts (hot-reloadable)
-│   │   ├── logs/           Server logs
-│   │   └── bin/            Symlinks to compiled binaries
-│   └── data/mariadb/       Database files
-├── eqemu/                  Server C++ source (mounted into container as /home/eqemu/code)
-├── spire/                  Admin UI source
-├── claude/                 Project docs (this file, PROJECT.md, design docs)
-│   └── docs/plans/         Implementation plans
-├── install-media/          Installation resources
-└── servers/                Reserved for future dev/prod server configs
+D:\Dev\EQ\                              (WSL: /mnt/d/Dev/EQ/)
+├── akk-stack/                          Docker stack, Makefile, .env, compose files
+│   ├── server/                         Runtime data (mounted as /home/eqemu/server/)
+│   │   ├── eqemu_config.json           Main server config
+│   │   ├── login.json                  Login server config
+│   │   ├── quests/                     Perl/Lua quest scripts (hot-reloadable)
+│   │   ├── logs/                       Server logs
+│   │   ├── maps/                       Zone geometry and pathing
+│   │   ├── plugins/                    Shared Perl/Lua plugins
+│   │   ├── lua_modules/                Shared Lua modules
+│   │   └── bin/                        Symlinks → eqemu/build/bin/
+│   ├── assets/                         Deployment scripts (mounted as /home/eqemu/assets/)
+│   ├── data/mariadb/                   MariaDB database files (872 MB)
+│   └── backup/database/                DB backups (timestamped .tar.gz)
+├── eqemu/                              Server C++ source (mounted as /home/eqemu/code/)
+│   └── build/bin/                      Compiled binaries (world, zone, loginserver, etc.)
+├── spire/                              Admin UI source (Go, Vue.js)
+├── claude/                             Project docs (this file, PROJECT.md, design docs)
+│   └── docs/plans/                     Implementation plans
+├── install-media/                      Installation resources
+└── servers/                            Reserved for future dev/prod server configs
 ```
+
+## Where Your Files Actually Live
+
+All project data lives on `D:\Dev\EQ` — nothing important is hidden elsewhere.
+
+### On D: (your files — bind-mounted into Docker)
+
+| What | Host Path (under `D:\Dev\EQ\`) | Container Path | Notes |
+|------|-------------------------------|----------------|-------|
+| C++ source code | `eqemu/` | `/home/eqemu/code/` | Edit on host, build in container |
+| Compiled binaries | `eqemu/build/bin/` | `/home/eqemu/code/build/bin/` | `world`, `zone`, `loginserver`, etc. |
+| Server runtime | `akk-stack/server/` | `/home/eqemu/server/` | Configs, quests, logs, maps |
+| Binary symlinks | `akk-stack/server/bin/` | `/home/eqemu/server/bin/` | Point to `eqemu/build/bin/` (resolve inside container only) |
+| Quest scripts | `akk-stack/server/quests/` | `/home/eqemu/server/quests/` | Perl/Lua, organized by zone |
+| Server logs | `akk-stack/server/logs/` | `/home/eqemu/server/logs/` | Zone, world, login server logs |
+| Deployment scripts | `akk-stack/assets/` | `/home/eqemu/assets/` | Symlink creator, cron, SSH |
+| MariaDB data | `akk-stack/data/mariadb/` | `/var/lib/mysql/` | 872 MB — the actual database |
+| DB backups | `akk-stack/backup/database/` | — | `.tar.gz` snapshots from `make mysql-backup` |
+| Stack config | `akk-stack/.env` | — | Passwords, ports, IP, feature toggles |
+| Docker compose | `akk-stack/docker-compose*.yml` | — | Service definitions |
+| Project docs | `claude/` | — | README, PROJECT.md, plans |
+
+### In Docker volumes (disposable caches — not on D:)
+
+These live inside Docker's internal storage. They regenerate automatically if deleted and don't contain project data.
+
+| Volume | Container Path | What | Regenerates? |
+|--------|---------------|------|--------------|
+| `akk-stack_build-cache` | `/home/eqemu/.ccache/` | C++ compilation cache | Yes (first rebuild slower) |
+| `akk-stack_go-build-cache` | `/home/eqemu/.cache/` | Go/Spire build cache | Yes |
+| `akk-stack_shared-pkg` | `/home/eqemu/pkg/` | Shared packages | Yes |
+| `akk-stack_eqemu-var-log` | `/var/log/` | Container system logs | Yes |
+| `akk-stack_mariadb-var-log` | MariaDB `/var/log/` | MariaDB system logs | Yes |
+| `akk-stack_spire-assets` | `/home/eqemu/.cache/` | Spire asset cache | Yes |
+
+To inspect Docker volumes: `docker volume ls --filter name=akk`
 
 ---
 
@@ -144,14 +186,7 @@ Incremental builds take seconds (ccache). After building:
 2. Restart servers via Spire dashboard or `make restart` from host
 3. Test with Titanium client
 
-**Key paths inside the container:**
-
-| Container Path | Host Path | What |
-|----------------|-----------|------|
-| `/home/eqemu/code/` | `eqemu/` | Source code |
-| `/home/eqemu/code/build/` | (not mounted) | Build output |
-| `/home/eqemu/server/` | `akk-stack/server/` | Runtime: configs, quests, logs |
-| `/home/eqemu/server/bin/` | `akk-stack/server/bin/` | Symlinks to built binaries |
+**Key paths inside the container** (see [Where Your Files Actually Live](#where-your-files-actually-live) for the full map):
 
 ### Back up the database
 
