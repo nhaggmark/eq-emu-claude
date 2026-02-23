@@ -32,6 +32,7 @@ claude/
 │   ├── AGENTS.md              Agent catalog and usage guide
 │   ├── game-designer.md       Advisory: mechanics, balance, features
 │   ├── lore-master.md         Advisory: dialogue, story, faction lore
+│   ├── architect.md           Advisory: cross-system planning, task breakdown
 │   ├── c-expert.md            Expert: C++ server source
 │   ├── lua-expert.md          Expert: Lua quest scripts (preferred for new work)
 │   ├── perl-expert.md         Expert: Perl quest maintenance
@@ -52,7 +53,7 @@ claude/
 
 ### Permission Model
 
-- **Advisory agents** (game-designer, lore-master): `permissionMode: plan`,
+- **Advisory agents** (game-designer, lore-master, architect): `permissionMode: plan`,
   read-only tools only. They research and recommend; don't write code.
 - **Tech experts** (c-expert, lua-expert, perl-expert, data-expert, config-expert,
   infra-expert): Full tool access. Can read and write code in their domain.
@@ -61,8 +62,8 @@ claude/
 
 ### Model Selection
 
-- **Opus** for agents requiring deep reasoning: game-designer, lore-master, c-expert
-  (complex C++ codebase).
+- **Opus** for agents requiring deep reasoning: game-designer, lore-master, architect,
+  c-expert (complex C++ codebase).
 - **Sonnet** for agents doing focused, well-scoped work: lua-expert, perl-expert,
   data-expert, config-expert, infra-expert, game-tester.
 
@@ -81,7 +82,7 @@ on demand.
 ## Implementation Tasks
 
 1. Create `claude/skills/base-agent.md`
-2. Create all 9 agent files in `claude/agents/`
+2. Create all 10 agent files in `claude/agents/`
 3. Create `claude/agents/AGENTS.md` catalog
 4. Create symlinks: `.claude/agents` → `claude/agents`, `.claude/skills` → `claude/skills`
 5. Commit and push to eq-emu-claude
