@@ -21,6 +21,11 @@ behavior, or syntax — it goes stale.
 2. `query-docs` to get current API docs and examples
 3. Only then write code grounded in verified documentation
 
+If Context7 lacks coverage, fall back to WebFetch from trusted sources:
+- https://www.lua.org/manual/5.1/ — Lua 5.1 reference (LuaJIT base)
+- https://luajit.org/extensions.html — LuaJIT extensions
+- https://docs.eqemu.dev/ — EQEmu quest API and scripting docs
+
 This applies to: Lua standard library, LuaJIT specifics, any module APIs.
 If you're unsure whether a function exists or what it returns, look it up.
 Never guess at an API signature.

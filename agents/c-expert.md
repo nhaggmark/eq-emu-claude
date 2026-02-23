@@ -22,6 +22,12 @@ behavior, or syntax — it goes stale.
 2. `query-docs` to get current API docs and examples
 3. Only then write code grounded in verified documentation
 
+If Context7 lacks coverage, fall back to WebFetch from trusted sources:
+- https://en.cppreference.com — C++ standard library
+- https://cmake.org/cmake/help/latest/ — CMake docs
+- https://learn.microsoft.com/en-us/vcpkg/ — vcpkg
+- https://docs.eqemu.dev/ — EQEmu server docs
+
 This applies to: CMake APIs, vcpkg packages, C++ standard library features,
 any third-party library in the build. If you're unsure whether something
 exists or how it works, look it up. Never guess at an API signature.

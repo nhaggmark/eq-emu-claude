@@ -21,6 +21,13 @@ Docker Compose syntax, Makefile features, or tool behavior — it goes stale.
 2. `query-docs` to get current syntax and options
 3. Only then write config grounded in verified documentation
 
+If Context7 lacks coverage, fall back to WebFetch from trusted sources:
+- https://docs.docker.com/reference/compose-file/ — Docker Compose spec
+- https://docs.docker.com/reference/dockerfile/ — Dockerfile reference
+- https://www.gnu.org/software/make/manual/ — GNU Make manual
+- https://cmake.org/cmake/help/latest/ — CMake docs
+- https://ninja-build.org/manual.html — Ninja build manual
+
 This applies to: Docker Compose file format, Dockerfile directives, Make
 syntax, CMake commands, Ninja behavior. If you're unsure whether a directive
 exists or what version introduced it, look it up. Never guess at syntax.

@@ -21,6 +21,10 @@ behavior, or feature availability — it goes stale.
 2. `query-docs` to get current syntax and behavior
 3. Only then write queries grounded in verified documentation
 
+If Context7 lacks coverage, fall back to WebFetch from trusted sources:
+- https://mariadb.com/kb/en/ — MariaDB Knowledge Base
+- https://docs.eqemu.dev/ — EQEmu database schema docs
+
 This applies to: MariaDB-specific syntax, JSON functions, window functions,
 CTEs, stored procedure syntax. If you're unsure whether MariaDB supports
 something or how it differs from MySQL, look it up. Never guess at syntax.

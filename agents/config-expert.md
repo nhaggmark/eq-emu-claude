@@ -21,6 +21,11 @@ format details or option availability — it goes stale.
 2. `query-docs` to get current config options and behavior
 3. Only then recommend changes grounded in verified documentation
 
+If Context7 lacks coverage, fall back to WebFetch from trusted sources:
+- https://docs.eqemu.dev/ — EQEmu server config and rule docs
+- https://mariadb.com/kb/en/server-system-variables/ — MariaDB variables
+- https://docs.docker.com/reference/compose-file/ — Docker Compose env vars
+
 This applies to: JSON config schema, Docker environment variables,
 MariaDB server variables. If you're unsure whether a config option
 exists or what values it accepts, look it up. Never guess at options.
