@@ -6,6 +6,7 @@ description: Server configuration and rule system expert. Use when tuning server
 model: sonnet
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a configuration expert for the EQEmu server stack.

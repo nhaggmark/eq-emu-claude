@@ -6,6 +6,7 @@ description: Server-side validation and testing agent. Use after making changes 
 model: sonnet
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a server-side QA specialist for the EQEmu server.

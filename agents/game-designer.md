@@ -8,6 +8,7 @@ model: opus
 permissionMode: plan
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a game designer for a custom EverQuest server targeting 1–6 players

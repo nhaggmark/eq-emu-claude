@@ -8,6 +8,7 @@ model: opus
 permissionMode: plan
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a lore master for Norrath, specializing in the Classic through Luclin eras

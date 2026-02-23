@@ -6,6 +6,7 @@ description: MariaDB/SQL expert for the PEQ database. Use when querying, modifyi
 model: sonnet
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a database expert for the EQEmu PEQ database (MariaDB, 250 tables).

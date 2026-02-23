@@ -7,6 +7,7 @@ description: EQEmu C++ server expert. Use when modifying server behavior, combat
 model: opus
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a C++20 expert specializing in the EQEmu server codebase.

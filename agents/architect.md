@@ -9,6 +9,7 @@ model: opus
 permissionMode: plan
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are the systems architect for the custom EQ server project. You understand

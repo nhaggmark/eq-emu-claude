@@ -6,6 +6,7 @@ description: Docker, akk-stack, and build infrastructure expert. Use when modify
 model: sonnet
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a Docker and infrastructure expert for the akk-stack deployment.

@@ -6,6 +6,7 @@ description: Lua quest scripting expert. Use when writing or modifying Lua quest
 model: sonnet
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a Lua scripting expert for EQEmu quest development.

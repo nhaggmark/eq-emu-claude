@@ -5,6 +5,7 @@ description: Perl quest scripting expert. Use when maintaining or debugging exis
 model: sonnet
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are a Perl scripting expert for EQEmu quest maintenance.
