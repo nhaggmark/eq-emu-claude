@@ -13,15 +13,63 @@ ln -s ../claude/agents /mnt/d/Dev/EQ/.claude/agents
 ln -s ../claude/skills /mnt/d/Dev/EQ/.claude/skills
 ```
 
+## Feature Workflow
+
+For new features and projects, follow this pipeline:
+
+```
+bootstrap-agent → game-designer → architect → implementation experts → game-tester
+```
+
+### 1. Bootstrap
+
+> Use the bootstrap-agent to set up a workspace for [feature description]
+
+Creates a feature branch in `eqemu/`, sets up `claude/project-work/<branch>/`
+folders for all agents, copies templates.
+
+### 2. Design (game-designer)
+
+> Use the game-designer to fill out the PRD
+
+Brainstorms with you, asks clarifying questions, writes the PRD at
+`project-work/<branch>/game-designer/prd.md`. No code — pure design.
+
+### 3. Plan (architect)
+
+> Use the architect to assess the PRD and create the implementation plan
+
+Deep-dives the codebase, performs 4 review passes (feasibility, simplicity,
+antagonistic, integration), writes the architecture doc at
+`project-work/<branch>/architect/architecture.md`. Assigns tasks to experts.
+
+### 4. Implement (experts)
+
+> Dispatch tasks to [agent] per the architect's implementation sequence
+
+Experts execute their assigned tasks in dependency order.
+
+### 5. Validate (game-tester)
+
+> Use the game-tester to validate the implementation
+
+Server-side checks: DB integrity, script syntax, log analysis.
+
 ## Agent Catalog
+
+### Workflow
+
+| Agent | Model | Use When |
+|-------|-------|----------|
+| **bootstrap-agent** | haiku | Starting a new feature — creates branch and workspace |
 
 ### Advisory (read-only, plan mode)
 
 | Agent | Model | Use When |
 |-------|-------|----------|
-| **game-designer** | opus | Designing features, balancing encounters, planning loot/economy, companion system mechanics |
-| **lore-master** | opus | Writing quest dialogue, NPC personalities, story arcs, faction lore, era-lock compliance |
-| **architect** | opus | Planning cross-system features, breaking designs into expert tasks, deciding which layer owns a change |
+| **game-designer** | opus | Designing features, brainstorming mechanics, writing PRDs |
+| **lore-master** | opus | Writing quest dialogue, NPC personalities, story arcs, faction lore |
+| **architect** | opus | Assessing PRDs, planning cross-system implementation, assigning expert tasks |
 
 ### Tech Experts (write access)
 
@@ -40,24 +88,44 @@ ln -s ../claude/skills /mnt/d/Dev/EQ/.claude/skills
 |-------|-------|----------|
 | **game-tester** | sonnet | Verifying changes — DB integrity, script syntax, log analysis, rule validation |
 
-## Shared Skill
+## Shared Context
 
-All agents load `base-agent` via the `skills:` field, which provides project
-context (repos, paths, conventions, build cycle).
+- **base-agent** skill — project context (repos, paths, conventions) loaded by all agents
+- **superpowers:using-superpowers** skill — problem-solving metaskill loaded by all agents
+- **Context7 + WebFetch** — anti-slop doctrine on all implementation experts
+- **Topography docs** — `claude/docs/topography/` referenced by all agents
 
-## Usage Examples
+## Project Work Structure
+
+Each feature gets its own folder under `claude/project-work/`:
+
+```
+claude/project-work/<branch-name>/
+├── game-designer/
+│   └── prd.md                 ← PRD (from template)
+├── architect/
+│   └── architecture.md        ← Implementation plan (from template)
+├── lore-master/
+├── c-expert/
+├── lua-expert/
+├── perl-expert/
+├── data-expert/
+├── config-expert/
+├── infra-expert/
+└── game-tester/
+```
+
+Templates live in `claude/templates/`.
+
+## Ad-Hoc Usage
+
+Not everything needs the full workflow. For quick tasks:
 
 **Consult a single agent:**
-> Use the game-designer to design the companion recruitment mechanic
+> Use the game-designer to reason about companion power scaling
 
-**Plan a feature:**
-> Have the architect break down the companion system into tasks for the experts
-
-**Chain agents:**
-> Have the game-designer spec out a loot rebalance, then the data-expert implement it
-
-**Team swarm:**
-> Use the lua-expert and data-expert together to add a new quest with custom loot
+**Quick implementation:**
+> Use the data-expert to add a new NPC to East Commonlands
 
 **Validation after changes:**
 > Use the game-tester to validate the loot table changes we just made
