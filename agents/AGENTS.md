@@ -119,6 +119,7 @@ reviews and flags issues. The PRD requires lore-master sign-off before handoff.
 | **perl-expert** | sonnet | Maintaining existing Perl scripts, planning Perl → Lua migration |
 | **data-expert** | sonnet | Querying/modifying database — NPCs, items, loot, spawns, faction, rules |
 | **config-expert** | sonnet | Tuning via rules, eqemu_config.json, login.json, .env settings |
+| **protocol-agent** | sonnet | Investigating packet structures, opcodes, client capabilities, building packet sniffing tools |
 | **infra-expert** | sonnet | Docker, compose files, Makefile, build pipeline, virtualization, tooling |
 
 These experts are spawned together as teammates during the Implementation phase.
@@ -166,6 +167,8 @@ claude/project-work/<branch-name>/
 │   └── context/
 ├── config-expert/
 │   └── context/
+├── protocol-agent/
+│   └── context/               ← Packet captures, wire format analysis
 ├── infra-expert/
 │   └── context/
 └── game-tester/

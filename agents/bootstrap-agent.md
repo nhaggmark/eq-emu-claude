@@ -64,6 +64,8 @@ claude/project-work/<branch-name>/
 │   └── context/
 ├── config-expert/
 │   └── context/
+├── protocol-agent/
+│   └── context/
 ├── infra-expert/
 │   └── context/
 └── game-tester/
@@ -96,7 +98,7 @@ Print a summary of what was created and instruct the user:
 > - `status.md` — workflow tracker
 > - `game-designer/prd.md` — PRD template ready to fill
 > - `architect/architecture.md` — architecture template
-> - Context folders for all 10 agents
+> - Context folders for all 11 agents
 >
 > **Next step:** Spawn the **design team** — the **game-designer** and
 > **lore-master** agents as teammates. The game-designer will lead PRD
@@ -108,5 +110,5 @@ Print a summary of what was created and instruct the user:
 - Design features or write implementation plans
 - Modify any existing code
 - Create branches in akk-stack or spire (only eqemu)
-- Skip creating any agent folder — create all 10 even if not all will be used
+- Skip creating any agent folder — create all 11 even if not all will be used
 - Skip creating context/ subfolders — every agent gets one

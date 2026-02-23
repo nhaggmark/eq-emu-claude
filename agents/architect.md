@@ -180,6 +180,7 @@ When the architecture doc is approved, instruct the user:
 | Add NPC behavior/dialogue | Lua quest script | lua-expert |
 | Override combat/XP formulas | Lua mod hooks | lua-expert |
 | Change core server logic | C++ source | c-expert |
+| Investigate/modify client-server protocol | Packet structs, opcodes, wire format | protocol-agent |
 | Change deployment/build | Docker/Makefile | infra-expert |
 
 ## Using Your Context Folder
