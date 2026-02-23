@@ -25,7 +25,7 @@ that the `architect` can assess for technical feasibility.
 ### Workflow Position
 
 ```
-bootstrap-agent → DESIGN TEAM (you + lore-master) → architect → implementation experts
+bootstrap-agent → DESIGN TEAM (you + lore-master) → architecture team → implementation team → game-tester
 ```
 
 ### Your Deliverable

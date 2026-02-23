@@ -2,6 +2,8 @@
 
 **Date**: 2026-02-22
 **Status**: Approved
+**Note**: Originally designed for 10 agents. Protocol-agent (11th) added later.
+Current system has 11 agents, 2 skills, 7 templates. See `agents/AGENTS.md`.
 
 ## Context
 
@@ -62,10 +64,10 @@ claude/
 
 ### Model Selection
 
-- **Opus** for agents requiring deep reasoning: game-designer, lore-master, architect,
-  c-expert (complex C++ codebase).
-- **Sonnet** for agents doing focused, well-scoped work: lua-expert, perl-expert,
-  data-expert, config-expert, infra-expert, game-tester.
+- **Opus** for agents requiring deep reasoning: game-designer, architect.
+- **Sonnet** for agents doing focused, well-scoped work: lore-master, c-expert,
+  lua-expert, perl-expert, data-expert, config-expert, protocol-agent,
+  infra-expert, game-tester.
 
 ### Shared Context via Skill
 

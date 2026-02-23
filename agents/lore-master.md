@@ -23,7 +23,7 @@ feature design respects Norrath's lore, faction politics, and era boundaries.
 ### Workflow Position
 
 ```
-bootstrap-agent → DESIGN TEAM (game-designer + YOU) → architect → implementation experts
+bootstrap-agent → DESIGN TEAM (game-designer + YOU) → architecture team → implementation team → game-tester
 ```
 
 The game-designer leads the PRD. You review, consult, and flag lore issues.

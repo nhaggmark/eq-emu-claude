@@ -57,7 +57,7 @@ All verified working. Local IP: `192.168.1.86`. Credentials in `akk-stack/.env`.
 | Spire Dev BE | http://192.168.1.86:3010 | (same JWT) | Spire backend dev server |
 | PEQ Editor | http://192.168.1.86:8081 | HTTP Basic — `PEQ_EDITOR_PROXY_USERNAME` / `PEQ_EDITOR_PROXY_PASSWORD` | Web-based content editing |
 | PHPMyAdmin | http://192.168.1.86:8082 | HTTP Basic — `PHPMYADMIN_USERNAME` / `PHPMYADMIN_PASSWORD` | Direct database access |
-| MariaDB | 192.168.1.86:3306 | `MARIADB_USER` / `MARIADB_PASSWORD` (or `root` / `MARIADB_ROOT_PASSWORD`) | MySQL CLI — 231 tables in `peq` database |
+| MariaDB | 192.168.1.86:3306 | `MARIADB_USER` / `MARIADB_PASSWORD` (or `root` / `MARIADB_ROOT_PASSWORD`) | MySQL CLI — 250 tables in `peq` database |
 | FTP (Quests) | 192.168.1.86:21 | `quests` / `FTP_QUESTS_PASSWORD` | Quest script upload — maps to `server/quests/` |
 | SSH | 192.168.1.86:2222 | `SERVER_PASSWORD` | Container shell (prefer `docker exec` instead) |
 
@@ -116,7 +116,7 @@ All cloned as forks for customization:
 
 - Edit content (items, NPCs, loot, spells) via **Spire** or **PEQ Editor**
 - Write quest scripts (Perl/Lua, migrating to Python) in `server/quests/` — hot-reloadable
-- Modify server behavior by editing **eqemu** C++ source, rebuild via `make init-build`
+- Modify server behavior by editing **eqemu** C++ source, rebuild via `make init-dev-build`
 - Customize deployment by editing **akk-stack** docker-compose and Makefiles
 - Customize admin tools by editing **spire** Go/Vue.js source
 

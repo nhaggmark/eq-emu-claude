@@ -340,6 +340,14 @@
 ║  │ 17. Report completion to user                       │            ║
 ║  └─────────────────────────────────────────────────────┘          ║
 ║                                                                    ║
+║  COMMIT TARGETS (varies by expert):                                ║
+║  • c-expert, lua-expert, perl-expert, protocol-agent →             ║
+║    cd /mnt/d/Dev/EQ/eqemu && git add -A && git commit             ║
+║  • data-expert →                                                   ║
+║    cd /mnt/d/Dev/EQ/claude && git add -A && git commit             ║
+║  • config-expert, infra-expert →                                   ║
+║    cd /mnt/d/Dev/EQ/akk-stack && git add -A && git commit          ║
+║                                                                    ║
 ║  SPECIAL COORDINATION:                                             ║
 ║  • protocol-agent ←→ infra-expert: packet capture tooling          ║
 ║  • protocol-agent → user: "Packet Capture Request" for in-game     ║

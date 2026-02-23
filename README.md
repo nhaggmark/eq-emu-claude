@@ -44,8 +44,15 @@ D:\Dev\EQ\                              (WSL: /mnt/d/Dev/EQ/)
 ├── eqemu/                              Server C++ source (mounted as /home/eqemu/code/)
 │   └── build/bin/                      Compiled binaries (world, zone, loginserver, etc.)
 ├── spire/                              Admin UI source (Go, Vue.js)
-├── claude/                             Project docs (this file, PROJECT.md, design docs)
-│   └── docs/plans/                     Implementation plans
+├── claude/                             Project docs, agent system, templates (separate git repo)
+│   ├── agents/                         Agent definitions (11 agents)
+│   ├── skills/                         Shared skills (base-agent, load-topography)
+│   ├── templates/                      Workflow templates (7 templates)
+│   ├── docs/topography/                Codebase reference docs (C++, Lua, Perl, SQL)
+│   ├── docs/plans/                     Design docs and implementation plans
+│   ├── project-work/                   Per-feature working directories
+│   ├── WORKFLOW-DIAGRAM.md             Full pipeline diagram
+│   └── PROJECT.md                      Vision, roadmap, architecture
 ├── install-media/                      Installation resources
 └── servers/                            Reserved for future dev/prod server configs
 ```
@@ -271,8 +278,10 @@ A backup of the original production `.env` is saved at `claude/.env-bak`.
 |------|---------|
 | [PROJECT.md](PROJECT.md) | Vision, goals, roadmap (Phases 0–8), architecture, web resources |
 | [README.md](README.md) | This file — manual operations reference |
-| [docs/plans/2026-02-22-dev-build-pipeline.md](docs/plans/2026-02-22-dev-build-pipeline.md) | Dev build setup steps (completed) |
-| [docs/plans/2026-02-22-project-definition-design.md](docs/plans/2026-02-22-project-definition-design.md) | Decision record for project doc structure |
+| [WORKFLOW-DIAGRAM.md](WORKFLOW-DIAGRAM.md) | Full agent workflow pipeline diagram |
+| [agents/AGENTS.md](agents/AGENTS.md) | Agent catalog, workflow docs, project work structure |
+| [docs/plans/](docs/plans/) | Design docs and implementation plans |
+| [templates/](templates/) | 7 workflow templates (status, PRD, architecture, dev-notes, lore-notes, test-plan, agent-conversations) |
 | [.env-bak](.env-bak) | Snapshot of original production .env before dev mode switch |
 
 ---
