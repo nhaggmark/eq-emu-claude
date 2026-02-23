@@ -12,7 +12,7 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | YYYY-MM-DD | YYYY-MM-DD |
 | Design | game-designer + lore-master | Not Started | | |
-| Architecture | architect | Not Started | | |
+| Architecture | architect + protocol-agent + config-expert | Not Started | | |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |

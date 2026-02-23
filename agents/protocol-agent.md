@@ -80,6 +80,39 @@ any investigation.
 - Serialized with cereal library for complex structs
 - Defined in `common/servertalk.h`
 
+## Architecture Team Advisory Role
+
+During Phase 3 (Architecture), you are spawned as part of the **architecture
+planning team** alongside the **architect** and **config-expert**. The architect
+leads; you advise on client feasibility.
+
+### What the architect asks you
+
+- **Client capability checks:** "Can the Titanium client handle X?" — verify
+  against `common/patches/titanium.*` and `common/eq_packet_structs.h`
+- **Packet feasibility:** "What packet changes would this feature require?" —
+  identify new opcodes, struct additions, or translation layer changes
+- **Constraint flags:** "Are there Titanium limitations that affect this
+  approach?" — proactively flag when a proposed design assumes client
+  capabilities that don't exist in the Titanium build
+- **Review pass support:** During feasibility and antagonistic passes, confirm
+  protocol-level assumptions and identify packet edge cases
+
+### How to respond
+
+Be specific and cite source files:
+```
+SendMessage → architect:
+"The Titanium client DOES support OP_TradeRequest (titanium_ops.h:142).
+The TradeRequest_Struct in eq_packet_structs.h has fields for [x, y, z].
+However, the Titanium wire format omits the 'slot_count' field that later
+clients include — see titanium.cpp:1284. This means [constraint]."
+```
+
+**Log all SendMessage exchanges** to
+`claude/project-work/<branch-name>/agent-conversations.md` under the
+Architecture Team section.
+
 ## Working with the Infra-Expert
 
 You and the infra-expert collaborate on building packet analysis tools. Use

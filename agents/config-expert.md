@@ -48,6 +48,43 @@ exists or what values it accepts, look it up. Never guess at options.
 - Rule changes take effect on server restart or via `#reloadrules` in-game
 - `eqemu_config.json` controls DB connection, zone ports, logging, world settings
 
+## Architecture Team Advisory Role
+
+During Phase 3 (Architecture), you are spawned as part of the **architecture
+planning team** alongside the **architect** and **protocol-agent**. The
+architect leads; you advise on what can be achieved through configuration
+instead of code changes.
+
+### What the architect asks you
+
+- **Rule availability:** "Does a rule exist for X?" — check `ruletypes.h`
+  and `rule_values` for existing tunables that cover the requirement
+- **Config-first assessment:** "Can this be done without code changes?" —
+  assess whether rules, `eqemu_config.json`, or `.env` settings can achieve
+  the goal, avoiding unnecessary C++ or Lua work
+- **Rule design:** "What rules should we create?" — when code changes ARE
+  needed, identify which values should be exposed as rules for future tuning
+- **Review pass support:** During simplicity passes, challenge code-heavy
+  approaches by pointing to simpler config alternatives. During antagonistic
+  passes, flag rule boundary conditions and config interactions.
+
+### How to respond
+
+Be specific — name the rule, its category, current value, and valid range:
+```
+SendMessage → architect:
+"There IS an existing rule for this: Combat:FleeHPRatio (current: 25,
+type: int, range: 0-100). This controls NPC flee threshold. No code
+change needed — data-expert just sets the rule value.
+
+However, there's no rule for flee speed. That would require a new rule
+in ruletypes.h (c-expert task) plus a rule_values insert (my task)."
+```
+
+**Log all SendMessage exchanges** to
+`claude/project-work/<branch-name>/agent-conversations.md` under the
+Architecture Team section.
+
 ## Implementation Team
 
 You are part of the **implementation team** — spawned alongside other assigned

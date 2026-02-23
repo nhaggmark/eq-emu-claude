@@ -18,7 +18,7 @@ ln -s ../claude/skills /mnt/d/Dev/EQ/.claude/skills
 For new features and projects, follow this pipeline:
 
 ```
-bootstrap-agent → design team (game-designer + lore-master) → architect → implementation experts → game-tester
+bootstrap-agent → design team (game-designer + lore-master) → architecture team (architect + protocol-agent + config-expert) → implementation team → game-tester
 ```
 
 ### 1. Bootstrap
@@ -40,9 +40,14 @@ The PRD is not handed off until the lore-master signs off on lore continuity.
 
 Output: `project-work/<branch>/game-designer/prd.md`
 
-### 3. Plan (architect)
+### 3. Plan (architecture team)
 
-> Use the architect to assess the PRD and create the implementation plan
+> Spawn the architecture team: architect, protocol-agent, and config-expert as teammates
+
+The architect leads the planning team. The protocol-agent advises on client
+feasibility (Titanium capabilities, packet constraints, opcode availability).
+The config-expert advises on what can be achieved through rules and config
+instead of code changes.
 
 Deep-dives the codebase, performs 4 review passes (feasibility, simplicity,
 antagonistic, integration), writes the architecture doc at
@@ -104,11 +109,17 @@ These two agents are always spawned as teammates during the Design phase.
 They coordinate via `SendMessage`. The game-designer drives; the lore-master
 reviews and flags issues. The PRD requires lore-master sign-off before handoff.
 
-### Advisory (read-only, plan mode)
+### Architecture Team (spawned together, architect leads)
 
-| Agent | Model | Use When |
-|-------|-------|----------|
-| **architect** | opus | Assessing PRDs, planning cross-system implementation, assigning expert tasks |
+| Agent | Model | Role |
+|-------|-------|------|
+| **architect** | opus | Leads planning — feasibility, task breakdown, 4 review passes |
+| **protocol-agent** | sonnet | Advises on Titanium client capabilities, packet constraints |
+| **config-expert** | sonnet | Advises on rules/config alternatives to code changes |
+
+The architect is the ultimate arbiter. Protocol-agent and config-expert are
+advisors who inform decisions via `SendMessage`. They coordinate to ensure
+the plan is feasible at the client level and uses the simplest approach.
 
 ### Implementation Team (spawned together, write access)
 

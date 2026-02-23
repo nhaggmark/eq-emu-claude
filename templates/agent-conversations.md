@@ -29,6 +29,24 @@ _game-designer + lore-master exchanges during Phase 2._
 
 ---
 
+## Architecture Team Conversations
+
+_architect + protocol-agent + config-expert exchanges during Phase 3._
+
+### [Date] — [Topic]
+
+**From:** [agent] → **To:** [agent]
+
+> [Message content or summary]
+
+**Response from** [agent]:
+
+> [Response content or summary]
+
+**Outcome:** _What was decided or changed as a result_
+
+---
+
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._

@@ -8,12 +8,12 @@
 ## Pipeline Overview
 
 ```
-┌─────────────┐    ┌─────────────────┐    ┌─────────────┐    ┌──────────────────────┐    ┌──────────────┐    ┌────────────┐
-│  BOOTSTRAP   │───▶│  DESIGN TEAM     │───▶│  ARCHITECT   │───▶│  IMPLEMENTATION TEAM  │───▶│  GAME-TESTER  │───▶│  COMPLETE   │
-│  (Phase 1)   │    │  (Phase 2)       │    │  (Phase 3)   │    │  (Phase 4)            │    │  (Phase 5)    │    │  (Phase 6)  │
-└─────────────┘    └─────────────────┘    └─────────────┘    └──────────────────────┘    └──────────────┘    └────────────┘
-  Solo agent         Team spawn             Solo agent         Team spawn                    Solo agent         User action
-  sonnet             opus + sonnet          opus (plan)        sonnet × N                    sonnet
+┌─────────────┐    ┌─────────────────┐    ┌───────────────────┐    ┌──────────────────────┐    ┌──────────────┐    ┌────────────┐
+│  BOOTSTRAP   │───▶│  DESIGN TEAM     │───▶│  ARCHITECTURE TEAM │───▶│  IMPLEMENTATION TEAM  │───▶│  GAME-TESTER  │───▶│  COMPLETE   │
+│  (Phase 1)   │    │  (Phase 2)       │    │  (Phase 3)         │    │  (Phase 4)            │    │  (Phase 5)    │    │  (Phase 6)  │
+└─────────────┘    └─────────────────┘    └───────────────────┘    └──────────────────────┘    └──────────────┘    └────────────┘
+  Solo agent         Team spawn             Team spawn               Team spawn                    Solo agent         User action
+  sonnet             opus + sonnet          opus + 2× sonnet         sonnet × N                    sonnet
 ```
 
 ---
@@ -155,45 +155,53 @@
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
-║  ARCHITECT                                                         ║
-║  Agent: architect (opus)                                           ║
-║  Mode: plan (read-only)                                            ║
-║  Skills: base-agent, superpowers:using-superpowers                 ║
+║  ARCHITECTURE TEAM  (spawned as teammates)                         ║
+║  Coordination: SendMessage                                         ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                    ║
-║  User prompt: "Use the architect to assess the PRD and create      ║
-║                the implementation plan"                            ║
+║  User prompt: "Spawn the architecture team: architect,             ║
+║                protocol-agent, and config-expert as teammates"     ║
 ║                                                                    ║
-║  ┌──────────────────────────────────────────────────┐              ║
-║  │ 1. ABSORB PRD                                    │              ║
-║  │    Read game-designer/prd.md thoroughly           │              ║
-║  │    Flag gaps → escalate to game-designer          │              ║
-║  │                                                  │              ║
-║  │ 2. DEEP-DIVE CODE                                │              ║
-║  │    Read all 4 topography docs:                   │              ║
-║  │    • C-CODE.md  • LUA-CODE.md                    │              ║
-║  │    • PERL-CODE.md  • SQL-CODE.md                 │              ║
-║  │    Then Grep/Read actual source files             │              ║
-║  │                                                  │              ║
-║  │ 3. DETERMINE APPROACH                            │              ║
-║  │    Least-invasive-first principle:                │              ║
-║  │    Rules → Config → Lua → SQL → C++              │              ║
-║  │                                                  │              ║
-║  │ 4. FOUR REVIEW PASSES                            │              ║
-║  │    ┌─────────────┬──────────────┐                │              ║
-║  │    │ Feasibility │ Simplicity   │                │              ║
-║  │    ├─────────────┼──────────────┤                │              ║
-║  │    │ Antagonistic│ Integration  │                │              ║
-║  │    └─────────────┴──────────────┘                │              ║
-║  │                                                  │              ║
-║  │ 5. WRITE ARCHITECTURE DOC                        │              ║
-║  │    Fill every section of architecture.md         │              ║
-║  │                                                  │              ║
-║  │ 6. UPDATE STATUS.MD                              │              ║
-║  │    Populate Implementation Tasks table           │              ║
-║  │                                                  │              ║
-║  │ 7. HAND OFF TO IMPLEMENTATION                    │              ║
-║  └──────────────────────────────────────────────────┘              ║
+║  ┌───────────────────────┐                                         ║
+║  │ ARCHITECT (opus)      │        SendMessage                      ║
+║  │ Mode: plan            │◄──────────────────────┐                 ║
+║  │ LEADS — ultimate      │                       │                 ║
+║  │ arbiter of all        │   ┌───────────────────┴──────────┐      ║
+║  │ architecture          │   │                              │      ║
+║  │ decisions             │   │  ┌────────────────────────┐  │      ║
+║  │                       │──▶│  │ PROTOCOL-AGENT         │  │      ║
+║  │ Absorbs PRD           │   │  │ (sonnet)               │  │      ║
+║  │ Deep-dives code       │   │  │                        │  │      ║
+║  │ Determines approach   │   │  │ ADVISES ON:            │  │      ║
+║  │ 4 review passes       │   │  │ • Titanium client caps │  │      ║
+║  │ Writes architecture   │   │  │ • Opcode availability  │  │      ║
+║  │ Assigns tasks         │   │  │ • Packet constraints   │  │      ║
+║  │                       │   │  │ • Wire format limits   │  │      ║
+║  │ ASKS:                 │   │  └────────────────────────┘  │      ║
+║  │ "Can the client do X?"│   │                              │      ║
+║  │ "Does a rule exist?"  │   │  ┌────────────────────────┐  │      ║
+║  │ "What's the simplest  │   │  │ CONFIG-EXPERT          │  │      ║
+║  │  approach?"           │──▶│  │ (sonnet)               │  │      ║
+║  │                       │   │  │                        │  │      ║
+║  └───────────────────────┘   │  │ ADVISES ON:            │  │      ║
+║                              │  │ • Existing rule values  │  │      ║
+║                              │  │ • Config alternatives   │  │      ║
+║                              │  │ • Rule design for new   │  │      ║
+║                              │  │   code changes          │  │      ║
+║                              │  └────────────────────────┘  │      ║
+║                              └──────────────────────────────┘      ║
+║                                                                    ║
+║  FLOW:                                                             ║
+║  1. architect absorbs PRD, flags gaps                              ║
+║  2. architect deep-dives code (topography + actual source)         ║
+║  3. architect → config-expert: "What can be done with rules?"      ║
+║  4. architect → protocol-agent: "Client feasibility for X?"        ║
+║  5. Advisors research and respond with specific findings           ║
+║  6. architect determines approach (least-invasive-first)           ║
+║  7. Four review passes (advisors consulted on feasibility          ║
+║     and antagonistic passes)                                       ║
+║  8. architect writes architecture doc                              ║
+║  9. architect updates status.md + hands off                        ║
 ║                                                                    ║
 ║  DECISION FRAMEWORK (agent assignment):                            ║
 ║  ┌────────────────────────────────────┬─────────────────────┐      ║
@@ -212,6 +220,7 @@
 ║                                                                    ║
 ║  INPUTS:                                                           ║
 ║  ├── game-designer/prd.md              (the approved PRD)          ║
+║  ├── lore-master/lore-notes.md         (lore constraints)          ║
 ║  ├── claude/docs/topography/*.md       (4 topography docs)         ║
 ║  └── eqemu/ source code               (Grep/Read actual files)     ║
 ║                                                                    ║
@@ -225,11 +234,17 @@
 ║  │   ├── Review Passes (4 passes documented)                       ║
 ║  │   └── Validation Plan (for game-tester)                         ║
 ║  ├── architect/context/         ◄── Code analysis, feasibility     ║
+║  ├── agent-conversations.md     ◄── Architecture team exchanges    ║
 ║  └── status.md                  ◄── Architecture=Complete,         ║
 ║      ├── Implementation Tasks table populated                      ║
-║      ├── Handoff log: architect → implementation team              ║
+║      ├── Handoff log: architecture team → implementation team      ║
 ║      ├── Decision Log entries                                      ║
 ║      └── Open Questions (if any)                                   ║
+║                                                                    ║
+║  NOTE: protocol-agent and config-expert may also appear in the     ║
+║  implementation team if the architect assigns them tasks. They      ║
+║  serve dual roles: advisors during planning, implementers during   ║
+║  execution.                                                        ║
 ║                                                                    ║
 ║  HANDOFF: "Spawn the implementation team — [list of assigned       ║
 ║            experts] as teammates"                                  ║
