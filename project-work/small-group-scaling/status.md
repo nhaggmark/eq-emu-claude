@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/small-group-scaling`
 > **Created:** 2026-02-22
-> **Last updated:** 2026-02-23 (Implementation phase completed)
+> **Last updated:** 2026-02-23 (Validation phase completed)
 
 ---
 
@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete | 2026-02-22 | 2026-02-22 |
 | Architecture | architect + config-expert | Complete | 2026-02-23 | 2026-02-23 |
 | Implementation | data-expert + config-expert | Complete | 2026-02-23 | 2026-02-23 |
-| Validation | game-tester | Not Started | | |
+| Validation | game-tester | Complete | 2026-02-23 | 2026-02-23 |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Validation (ready for game-tester handoff)
+**Current phase:** Completion (ready for user acceptance and in-game playtesting)
 
 ---
 
@@ -63,6 +63,19 @@ _Record each handoff between agents with context and any notes._
   - Smoke test: 6/6 checks PASS (NPC stat reduction, raid bosses untouched, backup tables intact, expansion lock at 3, loot probability increased, spawn timers reduced)
   - All 5 backup tables exist with correct row counts (46,184 / 2,326 / 12,511 / 3,564 / 42)
   - Ready for in-game playtesting by game-tester agent
+
+### validation (game-tester) -> completion (user)
+- **Date:** 2026-02-23
+- **Notes:** Server-side validation complete. 15/15 automated checks PASS. No blockers found.
+  - All 5 backup tables verified with correct row counts
+  - 45,828 non-raid NPCs confirmed at 50% HP, ~75% maxdmg, ~82% AC
+  - All raid bosses (Nagafen, Vox, Phinigel, Trakanon) confirmed unchanged
+  - 37 rule values verified across 4 rulesets (30 in ruleset 1 + 7 across rulesets 5, 6, 10)
+  - 0 broken FK references, 0 zero-HP regressions, 0 broken loot chains
+  - 0 ERROR/FATAL entries in server logs post-restart
+  - Rollback script validated at `data-expert/context/rollback_sgs.sql`
+  - Full test plan with 10 in-game tests + 4 edge case tests written to `game-tester/test-plan.md`
+  - Ready for user acceptance: in-game playtesting using the test plan
 
 ---
 
@@ -139,11 +152,12 @@ _Key decisions made during this feature's development._
 
 _Filled in after game-tester validation passes._
 
-- [ ] All implementation tasks marked Complete
-- [ ] No open Blockers
-- [ ] game-tester validation: PASS
+- [x] All implementation tasks marked Complete
+- [x] No open Blockers
+- [x] game-tester validation: PASS (15/15 server-side checks)
+- [ ] In-game playtesting by user (10 tests + 4 edge cases in test plan)
 - [ ] Feature branch merged to main
-- [ ] Server rebuilt (if C++ changed)
+- [x] Server rebuilt (if C++ changed) -- N/A, data-only changes
 - [ ] All phases marked Complete in Workflow Status table
 
 **Merged by:** _name_
