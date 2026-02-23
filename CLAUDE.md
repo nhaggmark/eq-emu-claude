@@ -99,6 +99,27 @@ Signature feature: recruit-any-NPC companion system.
 2. `docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`
 3. Restart via Spire (http://192.168.1.86:3000) or `make restart` from akk-stack/
 
+### Temporary File Storage
+
+`claude/tmp/` is gitignored and available for storing large or transient files
+that should not be version controlled: database dumps, backups, packet captures,
+build artifacts, large query results, etc.
+
+Organize by feature name to mirror `project-work/`:
+```
+claude/tmp/<feature-name>/        ← e.g., tmp/small-group-scaling/
+```
+
+Use `tmp/` instead of `context/` when the file is:
+- Large (>100KB) — database exports, backups, binary dumps
+- Transient — intermediate results, scratch data, one-time analysis
+- Reproducible — can be regenerated from source or database
+
+Use `context/` (in `project-work/<feature>/`) when the file is:
+- Small and should persist with the project record
+- Needed by other agents as a reference artifact
+- Part of the feature's audit trail
+
 ### Conventions
 
 - Era lock: Classic, Kunark, Velious, Luclin only

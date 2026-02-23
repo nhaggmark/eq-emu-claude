@@ -77,7 +77,8 @@ agent context windows compact.
 When dispatched for a feature workflow task, follow these four stages IN ORDER.
 **No SQL is executed until Stage 4.** Your dev-notes at
 `claude/project-work/<branch-name>/data-expert/dev-notes.md` track each stage.
-Use `context/` for raw artifacts (SQL dumps, query results, etc.).
+Use `context/` for small reference artifacts (SQL scripts, query results, etc.).
+For large files like database backups, use `claude/tmp/<feature-name>/` instead (gitignored).
 
 ### Stage 1: Plan
 
@@ -117,7 +118,8 @@ Use `context/` for raw artifacts (SQL dumps, query results, etc.).
 13. **Implement** — follow your consensus plan. Use SELECT to verify before
     UPDATE/DELETE. Log each change in `dev-notes.md` Stage 4 Implementation Log.
 14. **Update status.md** — set your task to "Complete" with today's date
-15. **Commit** SQL scripts to the feature branch (save as `.sql` files in context/):
+15. **Commit** SQL scripts to the feature branch (save small `.sql` files in context/,
+    large exports/backups in `claude/tmp/<feature-name>/`):
     `cd /mnt/d/Dev/EQ/claude && git add -A && git commit -m "feat(<scope>): <description>"`
 16. **Notify teammates** — SendMessage any experts whose tasks depend on yours
 17. **Report completion** — tell the user what was done and what the next task is

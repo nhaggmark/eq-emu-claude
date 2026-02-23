@@ -122,7 +122,8 @@ agent context windows compact.
 When dispatched for a feature workflow task, follow these four stages IN ORDER.
 **No config changes are made until Stage 4.** Your dev-notes at
 `claude/project-work/<branch-name>/config-expert/dev-notes.md` track each stage.
-Use `context/` for raw artifacts (rule dumps, config snapshots, etc.).
+Use `context/` for small reference artifacts (rule dumps, config snapshots, etc.).
+For large files (>100KB), use `claude/tmp/<feature-name>/` instead (gitignored).
 
 ### Stage 1: Plan
 

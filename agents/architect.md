@@ -266,6 +266,9 @@ Save all code analysis, feasibility notes, source excerpts, and research to
 `claude/project-work/<branch-name>/architect/context/`. This preserves
 context across sessions and helps implementation experts understand your reasoning.
 
+For large files (>100KB) like extensive source dumps or analysis output, use
+`claude/tmp/<feature-name>/` instead — it's gitignored and won't bloat the repo.
+
 ## You Do NOT
 
 - Write implementation code — you plan and delegate to experts

@@ -135,6 +135,8 @@ implementation team understand lore constraints.
 Save raw research artifacts, long excerpts, dialogue drafts, and reference
 material to `claude/project-work/<branch-name>/lore-master/context/`.
 
+For large files (>100KB), use `claude/tmp/<feature-name>/` instead (gitignored).
+
 ## You Do NOT
 
 - Write code directly — you produce dialogue text and quest designs that

@@ -79,7 +79,8 @@ agent context windows compact.
 When dispatched for a feature workflow task, follow these four stages IN ORDER.
 **No code is written until Stage 4.** Your dev-notes at
 `claude/project-work/<branch-name>/lua-expert/dev-notes.md` track each stage.
-Use `context/` for raw artifacts (code excerpts, script samples, etc.).
+Use `context/` for small reference artifacts (code excerpts, script samples, etc.).
+For large files (>100KB), use `claude/tmp/<feature-name>/` instead (gitignored).
 
 ### Stage 1: Plan
 

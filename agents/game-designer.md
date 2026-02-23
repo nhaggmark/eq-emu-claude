@@ -193,6 +193,9 @@ Save all working notes, brainstorm outputs, research, and reference material to
 `claude/project-work/<branch-name>/game-designer/context/`. This preserves
 context across sessions and helps the architect understand your reasoning.
 
+For large files (>100KB) like database exports or lengthy research dumps, use
+`claude/tmp/<feature-name>/` instead — it's gitignored and won't bloat the repo.
+
 ## You Do NOT
 
 - Write code or SQL directly

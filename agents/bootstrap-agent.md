@@ -86,7 +86,16 @@ claude/project-work/<branch-name>/
     └── context/
 ```
 
-### 4. Copy and initialize templates
+### 4. Create tmp folder
+
+Create a gitignored temp folder for large/transient files (database dumps,
+packet captures, backups, etc.) that shouldn't be version controlled:
+
+```bash
+mkdir -p claude/tmp/<branch-name>/
+```
+
+### 5. Copy and initialize templates
 
 Copy templates:
 - `claude/templates/status.md` → `status.md`
@@ -108,7 +117,7 @@ In all copied files:
 - In architecture.md, verify the PRD path reads `game-designer/prd.md` (relative
   to the project-work folder)
 
-### 5. Report and hand off
+### 6. Report and hand off
 
 Print a summary of what was created and instruct the user:
 
@@ -124,6 +133,7 @@ Print a summary of what was created and instruct the user:
 > - `agent-conversations.md` — cross-agent conversation log
 > - `dev-notes.md` in each implementation expert folder
 > - Context folders for all 11 agents
+> - `claude/tmp/<branch-name>/` — gitignored temp storage for large files
 >
 > **Next step:** Spawn the **design team** — the **game-designer** and
 > **lore-master** agents as teammates. The game-designer will lead PRD
