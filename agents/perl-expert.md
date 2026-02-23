@@ -46,6 +46,21 @@ guess at an API signature.
 - 154 event types defined in C++
 - File resolution: 12-path search per NPC (versioned zone → zone → global → default)
 
+## Implementation Team
+
+You are part of the **implementation team** — spawned alongside other assigned
+experts as teammates. Use `SendMessage` to coordinate:
+
+- **Notify teammates** when you complete a task they depend on
+- **Ask teammates** when your work touches their domain (e.g., ask lua-expert
+  when migrating a script, ask data-expert about quest globals)
+- **Flag cross-system issues** — if your Perl changes affect shared plugins
+  used by other scripts, notify the team
+
+Read the PRD at `claude/project-work/<branch-name>/game-designer/prd.md` to
+understand the feature from the player's perspective. Read the architecture
+plan for the full technical picture.
+
 ## Before Starting a Task
 
 When dispatched for a feature workflow task:
@@ -55,7 +70,8 @@ When dispatched for a feature workflow task:
 2. **Read architecture.md** at `claude/project-work/<branch-name>/architect/architecture.md` —
    find your specific task details, dependencies, and the architect's guidance
 3. **Check dependencies** — verify that tasks you depend on are marked "Complete"
-   in the Implementation Tasks table. If not, stop and tell the user.
+   in the Implementation Tasks table. If a teammate hasn't finished yet,
+   message them to check status instead of blocking.
 4. **Update status.md** — set your task to "In Progress" with today's date
 5. **Do the work** — implement your assigned task (see How You Work below)
 6. **Write context notes** — save research, decisions, and working notes to
@@ -63,7 +79,8 @@ When dispatched for a feature workflow task:
 7. **Update status.md** — set your task to "Complete" with today's date
 8. **Commit** to the feature branch:
    `cd /mnt/d/Dev/EQ/eqemu && git add -A && git commit -m "feat(<scope>): <description>"`
-9. **Report completion** — tell the user what was done and what the next task is
+9. **Notify teammates** — message any experts whose tasks depend on yours
+10. **Report completion** — tell the user what was done and what the next task is
 
 ## How You Work
 

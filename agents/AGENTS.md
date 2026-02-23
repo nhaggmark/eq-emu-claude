@@ -48,17 +48,30 @@ Deep-dives the codebase, performs 4 review passes (feasibility, simplicity,
 antagonistic, integration), writes the architecture doc at
 `project-work/<branch>/architect/architecture.md`. Assigns tasks to experts.
 
-### 4. Implement (experts)
+### 4. Implement (expert team)
 
-> Dispatch tasks to [agent] per the architect's implementation sequence
+> Spawn the implementation team with all assigned experts as teammates
 
-Experts execute their assigned tasks in dependency order.
+The architect's implementation sequence names which experts are needed.
+Spawn all assigned experts together as a team. They coordinate via
+`SendMessage` — notifying teammates when dependencies are complete,
+flagging cross-system issues, and confirming integration points.
+
+Experts work through the task list in dependency order, updating
+status.md as they complete each task.
 
 ### 5. Validate (game-tester)
 
-> Use the game-tester to validate the implementation
+> Use the game-tester to build a test plan and validate the implementation
 
-Server-side checks: DB integrity, script syntax, log analysis.
+The game-tester reads the PRD, architecture plan, and completed work to
+produce a **detailed test plan** with two parts:
+1. **Server-side validation** — DB integrity, script syntax, log analysis
+   (executed by the game-tester directly)
+2. **In-game testing guide** — step-by-step instructions for the user to
+   manually validate gameplay, NPC interactions, and data correctness
+   using the Titanium client (since AI cannot play the game)
+
 If FAIL: game-tester logs blockers in status.md, user dispatches the
 responsible expert to fix, then re-validates.
 
@@ -97,7 +110,7 @@ reviews and flags issues. The PRD requires lore-master sign-off before handoff.
 |-------|-------|----------|
 | **architect** | opus | Assessing PRDs, planning cross-system implementation, assigning expert tasks |
 
-### Tech Experts (write access)
+### Implementation Team (spawned together, write access)
 
 | Agent | Model | Use When |
 |-------|-------|----------|
@@ -106,13 +119,18 @@ reviews and flags issues. The PRD requires lore-master sign-off before handoff.
 | **perl-expert** | sonnet | Maintaining existing Perl scripts, planning Perl → Lua migration |
 | **data-expert** | sonnet | Querying/modifying database — NPCs, items, loot, spawns, faction, rules |
 | **config-expert** | sonnet | Tuning via rules, eqemu_config.json, login.json, .env settings |
-| **infra-expert** | sonnet | Docker, compose files, Makefile, build pipeline, deployment |
+| **infra-expert** | sonnet | Docker, compose files, Makefile, build pipeline, virtualization, tooling |
+
+These experts are spawned together as teammates during the Implementation phase.
+Only spawn the experts the architect assigned tasks to. They coordinate via
+`SendMessage` — notifying when dependencies complete, flagging cross-system
+issues, and confirming integration points.
 
 ### Validation
 
 | Agent | Model | Use When |
 |-------|-------|----------|
-| **game-tester** | sonnet | Verifying changes — DB integrity, script syntax, log analysis, rule validation |
+| **game-tester** | sonnet | Building test plans, server-side validation, writing in-game testing guides |
 
 ## Shared Context
 

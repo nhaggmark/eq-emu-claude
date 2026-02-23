@@ -24,7 +24,7 @@ architecture and implementation plan that the expert agents can execute.
 ### Workflow Position
 
 ```
-bootstrap-agent → game-designer → YOU (architect) → implementation experts
+bootstrap-agent → design team → YOU (architect) → implementation team → game-tester
 ```
 
 ### Your Input
@@ -144,8 +144,8 @@ Update `claude/project-work/<branch-name>/status.md`:
 - Set Architecture phase status to "Complete" with today's date
 - Set Implementation phase status to "Not Started"
 - Set current phase to "Implementation"
-- Add a handoff entry: `architect → implementation experts` with a summary
-  of the task sequence
+- Add a handoff entry: `architect → implementation team` with a summary
+  of the task sequence and which experts to spawn
 - Populate the Implementation Tasks table with each task, assigned agent,
   and "Not Started" status
 - Log any open questions or risks that need monitoring
@@ -164,8 +164,11 @@ When the architecture doc is approved, instruct the user:
 > 2. [task] → **[agent]**
 > ...
 >
-> **Next step:** Begin dispatching tasks to the implementation experts
-> per the sequence above.
+> **Assigned experts:** [list only the experts that have tasks]
+>
+> **Next step:** Spawn the **implementation team** — the assigned experts
+> as teammates. They will coordinate via `SendMessage` and work through
+> the task list in dependency order. Only spawn experts with assigned tasks.
 
 ## Decision Framework
 
