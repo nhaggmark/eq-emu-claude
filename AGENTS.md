@@ -72,39 +72,53 @@ TeamCreate(team_name, description)
 ║  │ 3. Create project-work folder tree               │              ║
 ║  │    (11 agent folders + context/ subfolders)      │              ║
 ║  │                                                  │              ║
-║  │ 4. Copy & initialize templates                   │              ║
+║  │ 4. Create tmp folder                             │              ║
+║  │    claude/tmp/<branch-name>/ (gitignored)        │              ║
+║  │                                                  │              ║
+║  │ 5. Copy & initialize templates                   │              ║
 ║  │    (see Template Flow below)                     │              ║
 ║  │                                                  │              ║
-║  │ 5. Report + hand off to design team              │              ║
+║  │ 6. Report + hand off to design team              │              ║
 ║  └──────────────────────────────────────────────────┘              ║
 ║                                                                    ║
 ║  OUTPUTS:                                                          ║
 ║  ├── eqemu/ branch: feature/<branch-name>                          ║
+║  ├── claude/tmp/<branch-name>/  (gitignored temp storage)          ║
 ║  └── claude/project-work/<branch-name>/                            ║
-║      ├── status.md          ◄── templates/status.md                ║
+║      ├── status.md               ◄── templates/status.md           ║
+║      ├── agent-conversations.md  ◄── templates/agent-conversations ║
 ║      ├── game-designer/                                            ║
-║      │   ├── prd.md         ◄── templates/prd.md                   ║
+║      │   ├── prd.md              ◄── templates/prd.md              ║
 ║      │   └── context/                                              ║
 ║      ├── lore-master/                                              ║
+║      │   ├── lore-notes.md       ◄── templates/lore-notes.md      ║
 ║      │   └── context/                                              ║
 ║      ├── architect/                                                ║
-║      │   ├── architecture.md ◄── templates/architecture.md         ║
+║      │   ├── architecture.md     ◄── templates/architecture.md    ║
 ║      │   └── context/                                              ║
 ║      ├── c-expert/                                                 ║
+║      │   ├── dev-notes.md        ◄── templates/dev-notes.md       ║
 ║      │   └── context/                                              ║
 ║      ├── lua-expert/                                               ║
+║      │   ├── dev-notes.md        ◄── templates/dev-notes.md       ║
 ║      │   └── context/                                              ║
 ║      ├── perl-expert/                                              ║
+║      │   ├── dev-notes.md        ◄── templates/dev-notes.md       ║
 ║      │   └── context/                                              ║
 ║      ├── data-expert/                                              ║
+║      │   ├── dev-notes.md        ◄── templates/dev-notes.md       ║
 ║      │   └── context/                                              ║
 ║      ├── config-expert/                                            ║
+║      │   ├── dev-notes.md        ◄── templates/dev-notes.md       ║
 ║      │   └── context/                                              ║
 ║      ├── protocol-agent/                                           ║
+║      │   ├── dev-notes.md        ◄── templates/dev-notes.md       ║
 ║      │   └── context/                                              ║
 ║      ├── infra-expert/                                             ║
+║      │   ├── dev-notes.md        ◄── templates/dev-notes.md       ║
 ║      │   └── context/                                              ║
 ║      └── game-tester/                                              ║
+║          ├── test-plan.md        ◄── templates/test-plan.md       ║
 ║          └── context/                                              ║
 ║                                                                    ║
 ║  HANDOFF: "Spawn the design team — game-designer + lore-master"    ║
@@ -135,16 +149,16 @@ TeamCreate(team_name, description)
 ║              description="Design team for <feature>"               ║
 ║                                                                    ║
 ║  Task: subagent_type="general-purpose", name="game-designer",      ║
-║        team_name="<branch>-design",                                ║
-║        prompt="You are the game-designer agent.                    ║
-║                [load game-designer agent definition].               ║
+║        team_name="<branch>-design", mode="plan",                   ║
+║        prompt="[Read claude/agents/game-designer.md and paste      ║
+║                its FULL contents here as the agent's instructions]  ║
 ║                Feature: <description>.                             ║
 ║                Work dir: claude/project-work/<branch>/"             ║
 ║                                                                    ║
 ║  Task: subagent_type="general-purpose", name="lore-master",        ║
-║        team_name="<branch>-design",                                ║
-║        prompt="You are the lore-master agent.                      ║
-║                [load lore-master agent definition].                 ║
+║        team_name="<branch>-design", mode="plan",                   ║
+║        prompt="[Read claude/agents/lore-master.md and paste        ║
+║                its FULL contents here as the agent's instructions]  ║
 ║                Feature: <description>.                             ║
 ║                Work dir: claude/project-work/<branch>/"             ║
 ║                                                                    ║
@@ -243,23 +257,23 @@ TeamCreate(team_name, description)
 ║              description="Architecture team for <feature>"         ║
 ║                                                                    ║
 ║  Task: subagent_type="general-purpose", name="architect",          ║
-║        team_name="<branch>-architecture",                          ║
-║        prompt="You are the architect agent.                        ║
-║                [load architect agent definition].                   ║
+║        team_name="<branch>-architecture", mode="plan",             ║
+║        prompt="[Read claude/agents/architect.md and paste its      ║
+║                FULL contents here as the agent's instructions]      ║
 ║                PRD at: claude/project-work/<branch>/                ║
 ║                game-designer/prd.md"                               ║
 ║                                                                    ║
 ║  Task: subagent_type="general-purpose", name="protocol-agent",     ║
 ║        team_name="<branch>-architecture",                          ║
-║        prompt="You are the protocol-agent.                         ║
-║                [load protocol-agent agent definition].              ║
+║        prompt="[Read claude/agents/protocol-agent.md and paste     ║
+║                its FULL contents here as the agent's instructions]  ║
 ║                Wait for questions from the architect                ║
 ║                via SendMessage."                                   ║
 ║                                                                    ║
 ║  Task: subagent_type="general-purpose", name="config-expert",      ║
 ║        team_name="<branch>-architecture",                          ║
-║        prompt="You are the config-expert.                          ║
-║                [load config-expert agent definition].               ║
+║        prompt="[Read claude/agents/config-expert.md and paste      ║
+║                its FULL contents here as the agent's instructions]  ║
 ║                Wait for questions from the architect                ║
 ║                via SendMessage."                                   ║
 ║                                                                    ║
@@ -395,11 +409,16 @@ TeamCreate(team_name, description)
 ║  # Spawn ONLY the experts the architect assigned tasks to:         ║
 ║  Task: subagent_type="general-purpose", name="<expert-name>",      ║
 ║        team_name="<branch>-implementation",                        ║
-║        prompt="You are the <expert-name> agent.                    ║
-║                [load agent definition].                             ║
+║        prompt="[Read claude/agents/<expert-name>.md and paste its  ║
+║                FULL contents here as the agent's instructions]      ║
 ║                Architecture plan at: claude/project-work/<branch>/ ║
 ║                architect/architecture.md                           ║
 ║                Your tasks: [list from architecture plan]"          ║
+║                                                                    ║
+║  NOTE on mode: architect and protocol-agent use mode="plan"        ║
+║  during architecture phase. Implementation experts do NOT set      ║
+║  mode (they need write access). Check each agent's frontmatter     ║
+║  permissionMode field — only set mode="plan" if it says plan.      ║
 ║                                                                    ║
 ║  # Create tasks from the architecture plan's implementation        ║
 ║  # sequence:                                                       ║
@@ -747,7 +766,7 @@ Template initialization (bootstrap-agent):
 
 ---
 
-## Agent Roster (11 agents)
+## Agent Roster (12 agents)
 
 ```
 ┌────────────────┬─────────┬────────────┬──────────────────────────────────────┐
@@ -823,7 +842,10 @@ Template initialization (bootstrap-agent):
 /mnt/d/Dev/EQ/
 ├── claude/
 │   ├── AGENTS.md                      ◄── THIS FILE (workflow + agent catalog)
+│   ├── CLAUDE.md                      ◄── Orchestrator instructions (auto-injected)
+│   ├── README.md                      ◄── Human operations manual
 │   ├── PROJECT.md                     ◄── Project vision, roadmap
+│   ├── .gitignore
 │   ├── agents/
 │   │   ├── bootstrap-agent.md
 │   │   ├── game-designer.md
@@ -852,6 +874,8 @@ Template initialization (bootstrap-agent):
 │   │       ├── LUA-CODE.md
 │   │       ├── PERL-CODE.md
 │   │       └── SQL-CODE.md
+│   ├── tmp/                           ◄── Gitignored temp storage (large files)
+│   │   └── <branch-name>/            ◄── Mirrors project-work feature names
 │   └── project-work/
 │       └── <branch-name>/             ◄── Created per feature
 │           ├── status.md              ◄── Workflow tracker (all agents)

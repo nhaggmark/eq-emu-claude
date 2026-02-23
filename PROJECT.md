@@ -175,10 +175,10 @@ All cloned as forks for customization:
 
 ### Phase 3: Small-Group Viability
 
-- Audit and rebalance encounter difficulty for 1-6 players
-- Adjust XP rates and progression curve
-- Tune loot tables so gear progression feels rewarding at small scale
-- Ensure all Classic-Luclin content is reachable (keys, flags, access quests)
+- [x] Audit and rebalance encounter difficulty for 1-6 players (small-group-scaling: 34 rule changes, ~45K NPC stat reductions)
+- [x] Adjust XP rates and progression curve
+- [x] Tune loot tables so gear progression feels rewarding at small scale (loot multipliers, spawn improvements)
+- [ ] Ensure all Classic-Luclin content is reachable (keys, flags, access quests)
 
 ### Phase 4: Companion Recruitment System
 

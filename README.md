@@ -45,14 +45,16 @@ D:\Dev\EQ\                              (WSL: /mnt/d/Dev/EQ/)
 │   └── build/bin/                      Compiled binaries (world, zone, loginserver, etc.)
 ├── spire/                              Admin UI source (Go, Vue.js)
 ├── claude/                             Project docs, agent system, templates (separate git repo)
+│   ├── CLAUDE.md                       Orchestrator instructions (auto-injected into every session)
 │   ├── AGENTS.md                       Full workflow pipeline + agent catalog
-│   ├── agents/                         Agent definitions (11 agents)
-│   ├── skills/                         Shared skills (currently empty)
+│   ├── README.md                       This file — human operations manual
+│   ├── PROJECT.md                      Vision, roadmap, architecture
+│   ├── agents/                         Agent definitions (12 .md files)
 │   ├── templates/                      Workflow templates (7 templates)
 │   ├── docs/topography/                Codebase reference docs (C++, Protocol, Lua, Perl, SQL)
 │   ├── docs/plans/                     Design docs and implementation plans
 │   ├── project-work/                   Per-feature working directories
-│   └── PROJECT.md                      Vision, roadmap, architecture
+│   └── tmp/                            Gitignored temp storage (large/transient files)
 ├── install-media/                      Installation resources
 └── servers/                            Reserved for future dev/prod server configs
 ```
@@ -276,6 +278,7 @@ A backup of the original production `.env` is saved at `claude/.env-bak`.
 
 | File | Purpose |
 |------|---------|
+| [CLAUDE.md](CLAUDE.md) | Orchestrator instructions + project context (auto-injected into every session) |
 | [PROJECT.md](PROJECT.md) | Vision, goals, roadmap (Phases 0–8), architecture, web resources |
 | [README.md](README.md) | This file — manual operations reference |
 | [AGENTS.md](AGENTS.md) | Full agent workflow pipeline + agent catalog |
