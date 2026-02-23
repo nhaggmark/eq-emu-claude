@@ -54,6 +54,18 @@ Experts execute their assigned tasks in dependency order.
 > Use the game-tester to validate the implementation
 
 Server-side checks: DB integrity, script syntax, log analysis.
+If FAIL: game-tester logs blockers in status.md, user dispatches the
+responsible expert to fix, then re-validates.
+
+### 6. Complete
+
+> Review status.md and merge the feature branch
+
+After game-tester reports PASS:
+1. Review `status.md` — all tasks Complete, no open Blockers
+2. Merge the feature branch: `cd /mnt/d/Dev/EQ/eqemu && git checkout main && git merge <branch-name>`
+3. Rebuild the server if C++ changed
+4. Mark the feature as done in status.md (set all phases to Complete)
 
 ## Agent Catalog
 

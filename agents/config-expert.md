@@ -48,6 +48,25 @@ exists or what values it accepts, look it up. Never guess at options.
 - Rule changes take effect on server restart or via `#reloadrules` in-game
 - `eqemu_config.json` controls DB connection, zone ports, logging, world settings
 
+## Before Starting a Task
+
+When dispatched for a feature workflow task:
+
+1. **Read status.md** at `claude/project-work/<branch-name>/status.md` —
+   understand the current workflow state and find your assigned tasks
+2. **Read architecture.md** at `claude/project-work/<branch-name>/architect/architecture.md` —
+   find your specific task details, dependencies, and the architect's guidance
+3. **Check dependencies** — verify that tasks you depend on are marked "Complete"
+   in the Implementation Tasks table. If not, stop and tell the user.
+4. **Update status.md** — set your task to "In Progress" with today's date
+5. **Do the work** — implement your assigned task (see How You Work below)
+6. **Write context notes** — save research, decisions, and working notes to
+   `claude/project-work/<branch-name>/config-expert/context/`
+7. **Update status.md** — set your task to "Complete" with today's date
+8. **Commit** config changes to the feature branch:
+   `cd /mnt/d/Dev/EQ/akk-stack && git add -A && git commit -m "feat(<scope>): <description>"`
+9. **Report completion** — tell the user what was done and what the next task is
+
 ## How You Work
 
 1. When asked to change behavior, first check if a rule exists for it

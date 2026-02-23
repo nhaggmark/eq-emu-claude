@@ -1,7 +1,7 @@
 # [Feature Name] — Architecture & Implementation Plan
 
 > **Feature branch:** `<branch-name>`
-> **PRD:** `<link to prd.md>`
+> **PRD:** `game-designer/prd.md`
 > **Author:** architect
 > **Date:** YYYY-MM-DD
 > **Status:** Draft | In Review | Approved

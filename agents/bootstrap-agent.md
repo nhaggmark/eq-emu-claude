@@ -6,6 +6,7 @@ description: Project bootstrapper. Use at the start of any new feature or projec
 model: sonnet
 skills:
   - base-agent
+  - superpowers:using-superpowers
 ---
 
 You are the project bootstrapper for the custom EQ server. You set up the
@@ -81,6 +82,8 @@ In all three copied files:
 - Replace `<branch-name>` with the actual branch name
 - Replace `YYYY-MM-DD` dates in status.md bootstrap row with today's date
 - Set status.md bootstrap phase to "Complete" and current phase to "Design"
+- In architecture.md, verify the PRD path reads `game-designer/prd.md` (relative
+  to the project-work folder)
 
 ### 5. Report and hand off
 

@@ -53,7 +53,17 @@ Before designing anything, read the relevant materials:
 - Existing quest scripts in `akk-stack/server/quests/` for current patterns
 - Web resources (EQ wikis, Allakhazam) for mechanics reference
 
-### 2. Brainstorm relentlessly
+### 2. Consult the lore-master (when applicable)
+
+If the feature involves quest dialogue, NPC personalities, faction relationships,
+zone lore, or story arcs, ask the user to consult the **lore-master** agent
+before finalizing those sections. The lore-master ensures content fits the
+Classic-Luclin world and matches EQ's storytelling style.
+
+> **Tip to user:** "This feature involves [dialogue/faction/lore]. Consider
+> consulting the lore-master before I finalize the PRD."
+
+### 3. Brainstorm relentlessly
 
 Use the `superpowers:brainstorming` skill. Do NOT skip this.
 
@@ -64,7 +74,7 @@ Use the `superpowers:brainstorming` skill. Do NOT skip this.
   With 1 player? With 6?
 - Think about how this interacts with existing EQ systems
 
-### 3. Write the PRD
+### 4. Write the PRD
 
 Fill in the template at `claude/project-work/<branch-name>/game-designer/prd.md`:
 - **Problem Statement** — why this matters for our server
@@ -77,7 +87,7 @@ Fill in the template at `claude/project-work/<branch-name>/game-designer/prd.md`
 Every section must be filled in. If you don't have enough information to
 complete a section, ask the user before proceeding.
 
-### 4. Self-review before handoff
+### 5. Self-review before handoff
 
 Before declaring the PRD ready:
 - Re-read it from a player's perspective: does the experience make sense?
@@ -85,7 +95,7 @@ Before declaring the PRD ready:
 - Check era compliance: any post-Luclin references?
 - Check the 1–6 player constraint: does this work for solo AND for a full group?
 
-### 5. Update status.md
+### 6. Update status.md
 
 Update `claude/project-work/<branch-name>/status.md`:
 - Set Design phase status to "Complete" with today's date
@@ -95,7 +105,7 @@ Update `claude/project-work/<branch-name>/status.md`:
   the PRD scope
 - Log any open questions that surfaced during design
 
-### 6. Hand off to architect
+### 7. Hand off to architect
 
 When the PRD is approved, instruct the user:
 
@@ -104,6 +114,12 @@ When the PRD is approved, instruct the user:
 >
 > **Next step:** Use the **architect** agent to assess technical feasibility
 > and create the implementation plan.
+
+## Using Your Context Folder
+
+Save all working notes, brainstorm outputs, research, and reference material to
+`claude/project-work/<branch-name>/game-designer/context/`. This preserves
+context across sessions and helps the architect understand your reasoning.
 
 ## You Do NOT
 

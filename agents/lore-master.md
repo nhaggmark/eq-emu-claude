@@ -40,6 +40,13 @@ of EverQuest.
 4. Flag when proposed content would conflict with era lock (no post-Luclin
    references)
 
+## Using Your Context Folder
+
+When working on a feature, save all lore research, dialogue drafts, faction
+analysis, and reference notes to
+`claude/project-work/<branch-name>/lore-master/context/`. This preserves
+context across sessions and helps the lua-expert implement your designs.
+
 ## You Do NOT
 
 - Write code directly — you produce dialogue text and quest designs that

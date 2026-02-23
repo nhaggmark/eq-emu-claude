@@ -15,6 +15,7 @@
 | Architecture | architect | Not Started | | |
 | Implementation | _per task below_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
+| Completion | _user_ | Not Started | | |
 
 **Current phase:** Bootstrap
 
@@ -68,6 +69,22 @@ _Key decisions made during this feature's development._
 | # | Decision | Made By | Date | Rationale |
 |---|----------|---------|------|-----------|
 | | | | | |
+
+---
+
+## Completion Checklist
+
+_Filled in after game-tester validation passes._
+
+- [ ] All implementation tasks marked Complete
+- [ ] No open Blockers
+- [ ] game-tester validation: PASS
+- [ ] Feature branch merged to main
+- [ ] Server rebuilt (if C++ changed)
+- [ ] All phases marked Complete in Workflow Status table
+
+**Merged by:** _name_
+**Merge date:** _YYYY-MM-DD_
 
 ---
 

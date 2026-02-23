@@ -179,6 +179,12 @@ When the architecture doc is approved, instruct the user:
 | Change core server logic | C++ source | c-expert |
 | Change deployment/build | Docker/Makefile | infra-expert |
 
+## Using Your Context Folder
+
+Save all code analysis, feasibility notes, source excerpts, and research to
+`claude/project-work/<branch-name>/architect/context/`. This preserves
+context across sessions and helps implementation experts understand your reasoning.
+
 ## You Do NOT
 
 - Write implementation code — you plan and delegate to experts
