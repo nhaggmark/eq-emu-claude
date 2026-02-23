@@ -3,7 +3,7 @@ name: bootstrap-agent
 description: Project bootstrapper. Use at the start of any new feature or project
   to create the feature branch, set up the project-work folder structure, and
   hand off to the game-designer. Always the first agent invoked for new work.
-model: haiku
+model: sonnet
 skills:
   - base-agent
 ---

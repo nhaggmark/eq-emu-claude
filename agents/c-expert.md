@@ -4,7 +4,7 @@ description: EQEmu C++ server expert. Use when modifying server behavior, combat
   formulas, spell effects, AI logic, networking, bot/mercenary systems, or any
   C++ source in eqemu/. Knows the entity hierarchy, rule system, and scripting
   interface.
-model: opus
+model: sonnet
 skills:
   - base-agent
   - superpowers:using-superpowers

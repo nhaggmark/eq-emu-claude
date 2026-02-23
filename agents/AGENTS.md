@@ -61,21 +61,21 @@ Server-side checks: DB integrity, script syntax, log analysis.
 
 | Agent | Model | Use When |
 |-------|-------|----------|
-| **bootstrap-agent** | haiku | Starting a new feature — creates branch and workspace |
+| **bootstrap-agent** | sonnet | Starting a new feature — creates branch and workspace |
 
 ### Advisory (read-only, plan mode)
 
 | Agent | Model | Use When |
 |-------|-------|----------|
 | **game-designer** | opus | Designing features, brainstorming mechanics, writing PRDs |
-| **lore-master** | opus | Writing quest dialogue, NPC personalities, story arcs, faction lore |
+| **lore-master** | sonnet | Writing quest dialogue, NPC personalities, story arcs, faction lore |
 | **architect** | opus | Assessing PRDs, planning cross-system implementation, assigning expert tasks |
 
 ### Tech Experts (write access)
 
 | Agent | Model | Use When |
 |-------|-------|----------|
-| **c-expert** | opus | Modifying server C++ — combat, spells, AI, bots, networking, entity systems |
+| **c-expert** | sonnet | Modifying server C++ — combat, spells, AI, bots, networking, entity systems |
 | **lua-expert** | sonnet | Writing new quest scripts, encounter scripts, lua_modules, lua_mod hooks |
 | **perl-expert** | sonnet | Maintaining existing Perl scripts, planning Perl → Lua migration |
 | **data-expert** | sonnet | Querying/modifying database — NPCs, items, loot, spawns, faction, rules |

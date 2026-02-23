@@ -4,7 +4,7 @@ description: EverQuest lore and storytelling expert. Use when writing quest dial
   creating NPC personalities, designing story arcs, or ensuring content fits the
   Classic-Luclin world. Also consults on faction relationships and zone history.
 tools: Read, Grep, Glob, WebFetch, WebSearch
-model: opus
+model: sonnet
 permissionMode: plan
 skills:
   - base-agent
