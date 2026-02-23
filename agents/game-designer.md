@@ -85,11 +85,22 @@ Before declaring the PRD ready:
 - Check era compliance: any post-Luclin references?
 - Check the 1–6 player constraint: does this work for solo AND for a full group?
 
-### 5. Hand off to architect
+### 5. Update status.md
+
+Update `claude/project-work/<branch-name>/status.md`:
+- Set Design phase status to "Complete" with today's date
+- Set Architecture phase status to "Not Started"
+- Set current phase to "Architecture"
+- Add a handoff entry: `game-designer → architect` with notes summarizing
+  the PRD scope
+- Log any open questions that surfaced during design
+
+### 6. Hand off to architect
 
 When the PRD is approved, instruct the user:
 
 > PRD complete: `claude/project-work/<branch-name>/game-designer/prd.md`
+> Status updated: `claude/project-work/<branch-name>/status.md`
 >
 > **Next step:** Use the **architect** agent to assess technical feasibility
 > and create the implementation plan.

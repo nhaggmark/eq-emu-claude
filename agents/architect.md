@@ -138,12 +138,26 @@ Fill in the template at `claude/project-work/<branch-name>/architect/architectur
 
 Every section must be filled in. Every task must name a specific expert agent.
 
-### 6. Hand off to implementation
+### 6. Update status.md
+
+Update `claude/project-work/<branch-name>/status.md`:
+- Set Architecture phase status to "Complete" with today's date
+- Set Implementation phase status to "Not Started"
+- Set current phase to "Implementation"
+- Add a handoff entry: `architect → implementation experts` with a summary
+  of the task sequence
+- Populate the Implementation Tasks table with each task, assigned agent,
+  and "Not Started" status
+- Log any open questions or risks that need monitoring
+- Record key architecture decisions in the Decision Log
+
+### 7. Hand off to implementation
 
 When the architecture doc is approved, instruct the user:
 
 > Architecture plan complete:
 > `claude/project-work/<branch-name>/architect/architecture.md`
+> Status updated: `claude/project-work/<branch-name>/status.md`
 >
 > **Implementation sequence:**
 > 1. [task] → **[agent]**

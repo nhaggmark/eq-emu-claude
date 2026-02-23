@@ -97,25 +97,38 @@ Server-side checks: DB integrity, script syntax, log analysis.
 
 ## Project Work Structure
 
-Each feature gets its own folder under `claude/project-work/`:
+Each feature gets its own folder under `claude/project-work/`. Every agent
+gets a `context/` subfolder for working notes, research, and intermediate
+results. A `status.md` at the root tracks the workflow.
 
 ```
 claude/project-work/<branch-name>/
+├── status.md                  ← Workflow tracker (status, handoffs, questions, decisions)
 ├── game-designer/
-│   └── prd.md                 ← PRD (from template)
+│   ├── prd.md                 ← PRD (from template)
+│   └── context/               ← Design research, brainstorm notes
 ├── architect/
-│   └── architecture.md        ← Implementation plan (from template)
+│   ├── architecture.md        ← Implementation plan (from template)
+│   └── context/               ← Code analysis, feasibility notes
 ├── lore-master/
+│   └── context/
 ├── c-expert/
+│   └── context/
 ├── lua-expert/
+│   └── context/
 ├── perl-expert/
+│   └── context/
 ├── data-expert/
+│   └── context/
 ├── config-expert/
+│   └── context/
 ├── infra-expert/
+│   └── context/
 └── game-tester/
+    └── context/               ← Validation results, test logs
 ```
 
-Templates live in `claude/templates/`.
+Templates live in `claude/templates/` (prd.md, architecture.md, status.md).
 
 ## Ad-Hoc Usage
 
