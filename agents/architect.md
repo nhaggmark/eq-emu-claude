@@ -9,6 +9,7 @@ model: opus
 permissionMode: plan
 skills:
   - base-agent
+  - load-topography
   - superpowers:using-superpowers
 ---
 
