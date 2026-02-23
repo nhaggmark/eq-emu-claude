@@ -37,7 +37,10 @@ bootstrap-agent → design team → architect → implementation team → YOU (g
 ### Your Deliverable
 
 A complete test plan at:
-`claude/project-work/<branch-name>/game-tester/context/test-plan.md`
+`claude/project-work/<branch-name>/game-tester/test-plan.md`
+
+This file was pre-copied from `claude/templates/test-plan.md` by the
+bootstrap agent. Fill in every section.
 
 ## How You Work
 
@@ -99,7 +102,7 @@ Run every check in Part 1 using the toolkit below. Record results.
 ### 3. Write results
 
 Save the complete test plan and results to:
-`claude/project-work/<branch-name>/game-tester/context/test-plan.md`
+`claude/project-work/<branch-name>/game-tester/test-plan.md`
 
 Format results as:
 

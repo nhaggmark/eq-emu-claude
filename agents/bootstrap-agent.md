@@ -46,29 +46,39 @@ notes, research, intermediate results, and reference material.
 ```
 claude/project-work/<branch-name>/
 ├── status.md                  (copied from claude/templates/status.md)
+├── agent-conversations.md     (copied from claude/templates/agent-conversations.md)
 ├── game-designer/
 │   ├── prd.md                 (copied from claude/templates/prd.md)
 │   └── context/
 ├── lore-master/
+│   ├── lore-notes.md          (copied from claude/templates/lore-notes.md)
 │   └── context/
 ├── architect/
 │   ├── architecture.md        (copied from claude/templates/architecture.md)
 │   └── context/
 ├── c-expert/
+│   ├── dev-notes.md           (copied from claude/templates/dev-notes.md)
 │   └── context/
 ├── lua-expert/
+│   ├── dev-notes.md           (copied from claude/templates/dev-notes.md)
 │   └── context/
 ├── perl-expert/
+│   ├── dev-notes.md           (copied from claude/templates/dev-notes.md)
 │   └── context/
 ├── data-expert/
+│   ├── dev-notes.md           (copied from claude/templates/dev-notes.md)
 │   └── context/
 ├── config-expert/
+│   ├── dev-notes.md           (copied from claude/templates/dev-notes.md)
 │   └── context/
 ├── protocol-agent/
+│   ├── dev-notes.md           (copied from claude/templates/dev-notes.md)
 │   └── context/
 ├── infra-expert/
+│   ├── dev-notes.md           (copied from claude/templates/dev-notes.md)
 │   └── context/
 └── game-tester/
+    ├── test-plan.md            (copied from claude/templates/test-plan.md)
     └── context/
 ```
 
@@ -76,12 +86,19 @@ claude/project-work/<branch-name>/
 
 Copy templates:
 - `claude/templates/status.md` → `status.md`
+- `claude/templates/agent-conversations.md` → `agent-conversations.md`
 - `claude/templates/prd.md` → `game-designer/prd.md`
+- `claude/templates/lore-notes.md` → `lore-master/lore-notes.md`
 - `claude/templates/architecture.md` → `architect/architecture.md`
+- `claude/templates/dev-notes.md` → `<expert>/dev-notes.md` (one copy per
+  implementation expert: c-expert, lua-expert, perl-expert, data-expert,
+  config-expert, protocol-agent, infra-expert)
+- `claude/templates/test-plan.md` → `game-tester/test-plan.md`
 
-In all three copied files:
+In all copied files:
 - Replace `[Feature Name]` with the actual feature name
 - Replace `<branch-name>` with the actual branch name
+- Replace `[Agent Name]` / `[agent-name]` in dev-notes.md with the agent's name
 - Replace `YYYY-MM-DD` dates in status.md bootstrap row with today's date
 - Set status.md bootstrap phase to "Complete" and current phase to "Design"
 - In architecture.md, verify the PRD path reads `game-designer/prd.md` (relative
@@ -97,7 +114,11 @@ Print a summary of what was created and instruct the user:
 > Created:
 > - `status.md` — workflow tracker
 > - `game-designer/prd.md` — PRD template ready to fill
+> - `lore-master/lore-notes.md` — lore research template
 > - `architect/architecture.md` — architecture template
+> - `game-tester/test-plan.md` — test plan template
+> - `agent-conversations.md` — cross-agent conversation log
+> - `dev-notes.md` in each implementation expert folder
 > - Context folders for all 11 agents
 >
 > **Next step:** Spawn the **design team** — the **game-designer** and

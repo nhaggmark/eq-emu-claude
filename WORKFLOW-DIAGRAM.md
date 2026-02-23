@@ -137,7 +137,10 @@
 ║  OUTPUTS:                                                          ║
 ║  ├── game-designer/prd.md          ◄── FILLED IN (all sections)    ║
 ║  ├── game-designer/context/        ◄── Design notes, brainstorm    ║
-║  ├── lore-master/context/          ◄── Lore research, faction data ║
+║  ├── lore-master/lore-notes.md     ◄── FILLED IN (research,        ║
+║  │                                      reviews, sign-off)         ║
+║  ├── lore-master/context/          ◄── Raw lore research artifacts ║
+║  ├── agent-conversations.md        ◄── Design team SendMessage log ║
 ║  └── status.md                     ◄── Design=Complete             ║
 ║                                                                    ║
 ║  HANDOFF: "Use the architect to assess technical feasibility"      ║
@@ -318,7 +321,9 @@
 ║  OUTPUTS:                                                          ║
 ║  ├── eqemu/ source changes          (committed to feature branch)  ║
 ║  ├── akk-stack/ infra changes       (if infra-expert involved)     ║
-║  ├── <agent>/context/               (working notes per expert)     ║
+║  ├── <agent>/dev-notes.md           (filled-in dev log per expert) ║
+║  ├── <agent>/context/               (raw research artifacts)       ║
+║  ├── agent-conversations.md         (impl team SendMessage log)    ║
 ║  └── status.md                      ◄── All tasks = Complete       ║
 ║                                                                    ║
 ║  HANDOFF: "All implementation tasks complete. Use the game-tester  ║
@@ -373,7 +378,7 @@
 ║  │                                                  │              ║
 ║  │ 2. EXECUTE server-side validation                │              ║
 ║  │                                                  │              ║
-║  │ 3. WRITE results to context/test-plan.md         │              ║
+║  │ 3. WRITE results to game-tester/test-plan.md      │              ║
 ║  │                                                  │              ║
 ║  │ 4. UPDATE status.md                              │              ║
 ║  │    ├── PASS → handoff to completion              │              ║
@@ -401,8 +406,8 @@
 ║  └── status.md                      (completed tasks, notes)       ║
 ║                                                                    ║
 ║  OUTPUTS:                                                          ║
-║  ├── game-tester/context/test-plan.md  ◄── Full test plan + results║
-║  └── status.md                         ◄── Validation result       ║
+║  ├── game-tester/test-plan.md    ◄── Full test plan + results      ║
+║  └── status.md                   ◄── Validation result             ║
 ║                                                                    ║
 ║                  ┌───────────────────────┐                         ║
 ║                  │ Server-side result?   │                         ║
@@ -454,37 +459,69 @@
 
 ## Template Flow
 
-Three templates are copied by bootstrap-agent and filled by subsequent agents:
+Seven templates are copied by bootstrap-agent and filled by subsequent agents:
 
 ```
 claude/templates/                     claude/project-work/<branch>/
-┌──────────────────┐                  ┌──────────────────────────────────┐
-│                  │   COPY &         │                                  │
-│  status.md       │ ──INIT──────▶   │  status.md                       │
-│  (95 lines)      │                  │  Filled by: ALL agents           │
-│                  │                  │  Tracks: phases, tasks, handoffs,│
-│                  │                  │    questions, blockers, decisions │
-└──────────────────┘                  └──────────────────────────────────┘
-┌──────────────────┐                  ┌──────────────────────────────────┐
-│                  │   COPY &         │                                  │
-│  prd.md          │ ──INIT──────▶   │  game-designer/prd.md            │
-│  (98 lines)      │                  │  Filled by: game-designer        │
-│                  │                  │  Reviewed by: lore-master         │
-│                  │                  │  Sections: problem, goals, UX,   │
-│                  │                  │    mechanics, systems, criteria   │
-└──────────────────┘                  └──────────────────────────────────┘
-┌──────────────────┐                  ┌──────────────────────────────────┐
-│                  │   COPY &         │                                  │
-│  architecture.md │ ──INIT──────▶   │  architect/architecture.md       │
-│  (117 lines)     │                  │  Filled by: architect            │
-│                  │                  │  Sections: summary, analysis,    │
-│                  │                  │    approach, sequence, risks,    │
-│                  │                  │    review passes, validation     │
-└──────────────────┘                  └──────────────────────────────────┘
+┌──────────────────────┐              ┌──────────────────────────────────┐
+│                      │   COPY &     │                                  │
+│  status.md           │ ──INIT───▶  │  status.md                       │
+│                      │              │  Filled by: ALL agents           │
+│                      │              │  Tracks: phases, tasks, handoffs,│
+│                      │              │    questions, blockers, decisions │
+└──────────────────────┘              └──────────────────────────────────┘
+┌──────────────────────┐              ┌──────────────────────────────────┐
+│  agent-              │   COPY &     │                                  │
+│  conversations.md    │ ──INIT───▶  │  agent-conversations.md          │
+│                      │              │  Filled by: ALL team agents      │
+│                      │              │  Logs: SendMessage exchanges,    │
+│                      │              │    decisions, unresolved threads  │
+└──────────────────────┘              └──────────────────────────────────┘
+┌──────────────────────┐              ┌──────────────────────────────────┐
+│                      │   COPY &     │                                  │
+│  prd.md              │ ──INIT───▶  │  game-designer/prd.md            │
+│                      │              │  Filled by: game-designer        │
+│                      │              │  Reviewed by: lore-master         │
+│                      │              │  Sections: problem, goals, UX,   │
+│                      │              │    mechanics, systems, criteria   │
+└──────────────────────┘              └──────────────────────────────────┘
+┌──────────────────────┐              ┌──────────────────────────────────┐
+│                      │   COPY &     │                                  │
+│  lore-notes.md       │ ──INIT───▶  │  lore-master/lore-notes.md       │
+│                      │              │  Filled by: lore-master          │
+│                      │              │  Sections: research, era review, │
+│                      │              │    PRD reviews, decisions,        │
+│                      │              │    final sign-off                 │
+└──────────────────────┘              └──────────────────────────────────┘
+┌──────────────────────┐              ┌──────────────────────────────────┐
+│                      │   COPY &     │                                  │
+│  architecture.md     │ ──INIT───▶  │  architect/architecture.md       │
+│                      │              │  Filled by: architect            │
+│                      │              │  Sections: summary, analysis,    │
+│                      │              │    approach, sequence, risks,    │
+│                      │              │    review passes, validation     │
+└──────────────────────┘              └──────────────────────────────────┘
+┌──────────────────────┐              ┌──────────────────────────────────┐
+│                      │   COPY &     │                                  │
+│  dev-notes.md        │ ──INIT───▶  │  <expert>/dev-notes.md (×7)      │
+│                      │              │  Filled by: each implementation  │
+│                      │              │    expert assigned to a task     │
+│                      │              │  Sections: research, approach,   │
+│                      │              │    impl log, deps, files changed │
+└──────────────────────┘              └──────────────────────────────────┘
+┌──────────────────────┐              ┌──────────────────────────────────┐
+│                      │   COPY &     │                                  │
+│  test-plan.md        │ ──INIT───▶  │  game-tester/test-plan.md        │
+│                      │              │  Filled by: game-tester          │
+│                      │              │  Sections: server-side checks,   │
+│                      │              │    in-game guide, blockers,       │
+│                      │              │    rollback instructions          │
+└──────────────────────┘              └──────────────────────────────────┘
 
 Template initialization (bootstrap-agent):
   • Replace [Feature Name] with actual name
   • Replace <branch-name> with actual branch
+  • Replace [Agent Name] / [agent-name] in dev-notes.md with each expert's name
   • Replace YYYY-MM-DD dates in status.md bootstrap row
   • Set bootstrap phase to Complete, current phase to Design
   • Verify architecture.md PRD path reads game-designer/prd.md
@@ -512,6 +549,15 @@ Template initialization (bootstrap-agent):
 │  • claude/docs/topography/LUA-CODE.md                               │
 │  • claude/docs/topography/PERL-CODE.md                              │
 │  • claude/docs/topography/SQL-CODE.md                               │
+│                                                                     │
+│  CONTEXT DURABILITY PRINCIPLE:                                      │
+│  Every agent writes hard-earned context to persistent files so it   │
+│  survives context window compaction. Templates enforce this:        │
+│  • dev-notes.md   — research, decisions, impl log, files changed   │
+│  • lore-notes.md  — lore research, era review, PRD review log      │
+│  • test-plan.md   — validation checks, in-game guide, results      │
+│  • agent-conversations.md — all SendMessage exchanges logged        │
+│  • context/       — raw artifacts (captures, dumps, excerpts)       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -610,8 +656,12 @@ Template initialization (bootstrap-agent):
 │   │   └── game-tester.md
 │   ├── templates/
 │   │   ├── status.md                  ◄── Workflow tracker template
+│   │   ├── agent-conversations.md     ◄── Cross-agent conversation log template
 │   │   ├── prd.md                     ◄── PRD template
-│   │   └── architecture.md            ◄── Architecture plan template
+│   │   ├── lore-notes.md             ◄── Lore research & review template
+│   │   ├── architecture.md            ◄── Architecture plan template
+│   │   ├── dev-notes.md              ◄── Implementation dev log template (×7)
+│   │   └── test-plan.md              ◄── Test plan & results template
 │   ├── docs/
 │   │   └── topography/
 │   │       ├── C-CODE.md
@@ -620,32 +670,41 @@ Template initialization (bootstrap-agent):
 │   │       └── SQL-CODE.md
 │   └── project-work/
 │       └── <branch-name>/             ◄── Created per feature
-│           ├── status.md
+│           ├── status.md              ◄── Workflow tracker (all agents)
+│           ├── agent-conversations.md ◄── SendMessage log (all team agents)
 │           ├── game-designer/
-│           │   ├── prd.md
+│           │   ├── prd.md             ◄── PRD deliverable
 │           │   └── context/
 │           ├── lore-master/
+│           │   ├── lore-notes.md      ◄── Lore research deliverable
 │           │   └── context/
 │           ├── architect/
-│           │   ├── architecture.md
+│           │   ├── architecture.md    ◄── Architecture plan deliverable
 │           │   └── context/
 │           ├── c-expert/
+│           │   ├── dev-notes.md       ◄── Dev log deliverable
 │           │   └── context/
 │           ├── lua-expert/
+│           │   ├── dev-notes.md
 │           │   └── context/
 │           ├── perl-expert/
+│           │   ├── dev-notes.md
 │           │   └── context/
 │           ├── data-expert/
+│           │   ├── dev-notes.md
 │           │   └── context/
 │           ├── config-expert/
+│           │   ├── dev-notes.md
 │           │   └── context/
 │           ├── protocol-agent/
+│           │   ├── dev-notes.md
 │           │   └── context/
 │           ├── infra-expert/
+│           │   ├── dev-notes.md
 │           │   └── context/
 │           └── game-tester/
+│               ├── test-plan.md       ◄── Test plan deliverable
 │               └── context/
-│                   └── test-plan.md   ◄── game-tester deliverable
 ├── eqemu/                             ◄── Server source (feature branches)
 └── akk-stack/                         ◄── Docker deployment
 ```

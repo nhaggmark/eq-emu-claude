@@ -148,34 +148,45 @@ results. A `status.md` at the root tracks the workflow.
 
 ```
 claude/project-work/<branch-name>/
-├── status.md                  ← Workflow tracker (status, handoffs, questions, decisions)
+├── status.md                  ← Workflow tracker (from template)
+├── agent-conversations.md     ← Cross-agent communication log (from template)
 ├── game-designer/
 │   ├── prd.md                 ← PRD (from template)
 │   └── context/               ← Design research, brainstorm notes
+├── lore-master/
+│   ├── lore-notes.md          ← Lore research & review log (from template)
+│   └── context/               ← Raw lore research artifacts
 ├── architect/
 │   ├── architecture.md        ← Implementation plan (from template)
 │   └── context/               ← Code analysis, feasibility notes
-├── lore-master/
-│   └── context/
 ├── c-expert/
+│   ├── dev-notes.md           ← Dev log (from template)
 │   └── context/
 ├── lua-expert/
+│   ├── dev-notes.md           ← Dev log (from template)
 │   └── context/
 ├── perl-expert/
+│   ├── dev-notes.md           ← Dev log (from template)
 │   └── context/
 ├── data-expert/
+│   ├── dev-notes.md           ← Dev log (from template)
 │   └── context/
 ├── config-expert/
+│   ├── dev-notes.md           ← Dev log (from template)
 │   └── context/
 ├── protocol-agent/
+│   ├── dev-notes.md           ← Dev log (from template)
 │   └── context/               ← Packet captures, wire format analysis
 ├── infra-expert/
+│   ├── dev-notes.md           ← Dev log (from template)
 │   └── context/
 └── game-tester/
-    └── context/               ← Validation results, test logs
+    ├── test-plan.md            ← Test plan & results (from template)
+    └── context/               ← Raw validation artifacts, test logs
 ```
 
-Templates live in `claude/templates/` (prd.md, architecture.md, status.md).
+Templates live in `claude/templates/` (status.md, agent-conversations.md,
+prd.md, lore-notes.md, architecture.md, dev-notes.md, test-plan.md).
 
 ## Ad-Hoc Usage
 

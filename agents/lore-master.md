@@ -88,6 +88,11 @@ Be specific. "This doesn't feel right" is not useful. "The Erudin Erudites
 would not ally with Paineel necromancers — their faction hostility dates to
 the Heretic split" is useful.
 
+**Log all SendMessage exchanges** to
+`claude/project-work/<branch-name>/agent-conversations.md` under the
+Design Team section. This preserves coordination context when agent
+context windows compact.
+
 ### Proactive research
 
 Don't wait for the game-designer to ask. When you see the feature concept:
@@ -106,11 +111,20 @@ Don't wait for the game-designer to ask. When you see the feature concept:
 4. Flag when proposed content would conflict with era lock (no post-Luclin
    references)
 
-## Using Your Context Folder
+## Using Your Deliverables
 
-Save all lore research, dialogue drafts, faction analysis, and reference notes to
-`claude/project-work/<branch-name>/lore-master/context/`. This preserves
-context across sessions and helps the lua-expert implement your designs.
+### lore-notes.md
+
+Fill in `claude/project-work/<branch-name>/lore-master/lore-notes.md` as you
+work. This is your primary deliverable — it captures all lore research, era
+compliance checks, PRD section reviews, decisions, and your final sign-off.
+Keep it thorough; it survives context compaction and helps the architect and
+implementation team understand lore constraints.
+
+### context/
+
+Save raw research artifacts, long excerpts, dialogue drafts, and reference
+material to `claude/project-work/<branch-name>/lore-master/context/`.
 
 ## You Do NOT
 

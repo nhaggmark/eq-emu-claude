@@ -146,6 +146,11 @@ Read the PRD at `claude/project-work/<branch-name>/game-designer/prd.md` to
 understand the feature from the player's perspective. Read the architecture
 plan for the full technical picture.
 
+**Log all SendMessage exchanges** to
+`claude/project-work/<branch-name>/agent-conversations.md` under the
+Implementation Team section. This preserves coordination context when
+agent context windows compact.
+
 ## Before Starting a Task
 
 When dispatched for a feature workflow task:
@@ -159,9 +164,9 @@ When dispatched for a feature workflow task:
    message them to check status instead of blocking.
 4. **Update status.md** — set your task to "In Progress" with today's date
 5. **Do the work** — implement your assigned task (see How You Work below)
-6. **Write context notes** — save research, packet captures, protocol analysis,
-   and working notes to
-   `claude/project-work/<branch-name>/protocol-agent/context/`
+6. **Update dev-notes.md** — fill in your research, decisions, implementation
+   log, and files modified in `claude/project-work/<branch-name>/protocol-agent/dev-notes.md`.
+   Use `context/` for raw research artifacts (packet captures, wire dumps, etc.).
 7. **Update status.md** — set your task to "Complete" with today's date
 8. **Commit** to the feature branch:
    `cd /mnt/d/Dev/EQ/eqemu && git add -A && git commit -m "feat(<scope>): <description>"`

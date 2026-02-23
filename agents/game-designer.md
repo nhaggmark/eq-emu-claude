@@ -94,6 +94,11 @@ Please review this section for lore accuracy and era compliance:
 If the lore-master flags an issue, revise the PRD before proceeding.
 Do NOT hand off a PRD the lore-master hasn't reviewed.
 
+**Log all SendMessage exchanges** to
+`claude/project-work/<branch-name>/agent-conversations.md` under the
+Design Team section. This preserves coordination context when agent
+context windows compact.
+
 ## How You Work
 
 ### 1. Ground yourself in the codebase
