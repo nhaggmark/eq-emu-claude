@@ -186,25 +186,54 @@ agent context windows compact.
 
 ## Before Starting a Task
 
-When dispatched for a feature workflow task:
+When dispatched for a feature workflow task, follow these four stages IN ORDER.
+**No code is written until Stage 4.** Your dev-notes at
+`claude/project-work/<branch-name>/protocol-agent/dev-notes.md` track each stage.
+Use `context/` for raw artifacts (packet captures, wire dumps, byte layouts, etc.).
 
-1. **Read status.md** at `claude/project-work/<branch-name>/status.md` —
-   understand the current workflow state and find your assigned tasks
-2. **Read architecture.md** at `claude/project-work/<branch-name>/architect/architecture.md` —
-   find your specific task details, dependencies, and the architect's guidance
-3. **Check dependencies** — verify that tasks you depend on are marked "Complete"
-   in the Implementation Tasks table. If a teammate hasn't finished yet,
-   message them to check status instead of blocking.
-4. **Update status.md** — set your task to "In Progress" with today's date
-5. **Do the work** — implement your assigned task (see How You Work below)
-6. **Update dev-notes.md** — fill in your research, decisions, implementation
-   log, and files modified in `claude/project-work/<branch-name>/protocol-agent/dev-notes.md`.
-   Use `context/` for raw research artifacts (packet captures, wire dumps, etc.).
-7. **Update status.md** — set your task to "Complete" with today's date
-8. **Commit** to the feature branch:
-   `cd /mnt/d/Dev/EQ/eqemu && git add -A && git commit -m "feat(<scope>): <description>"`
-9. **Notify teammates** — message any experts whose tasks depend on yours
-10. **Report completion** — tell the user what was done and what the next task is
+### Stage 1: Plan
+
+1. **Read status.md** — find your assigned tasks
+2. **Read architecture.md** — task details, dependencies, architect's guidance
+3. **Read the PRD** — understand the feature from the player's perspective
+4. **Check dependencies** — are blocking tasks Complete? If not, SendMessage
+   the teammate to check status.
+5. **Read relevant protocol source** — topography docs + `eq_packet_structs.h`,
+   `titanium.*`, `client_packet.cpp`, `emu_opcodes.h` for the relevant subsystem
+6. **Write your implementation plan** in `dev-notes.md` Stage 1 section:
+   which structs, what opcodes, what order, what to verify
+
+### Stage 2: Research
+
+7. **Verify every API and pattern** in your plan against documentation:
+   - Use Context7 (`resolve-library-id` → `query-docs`) for C++ stdlib and
+     networking APIs
+   - Fall back to WebFetch (cppreference.com, docs.eqemu.dev)
+   - Read actual Titanium patch files to confirm wire format assumptions
+   - Design packet capture experiments if behavior is uncertain
+8. **Augment your plan** — update `dev-notes.md` Stage 2 with verified struct
+   layouts, confirmed opcode mappings, and wire format details. Amend the plan
+   if research reveals issues.
+
+### Stage 3: Socialize
+
+9. **Share your plan** with relevant teammates via SendMessage — ask them to
+   confirm your approach aligns with their work (e.g., confirm handler
+   patterns with c-expert, confirm data flow with data-expert)
+10. **Incorporate feedback** and write the **consensus plan** to `dev-notes.md`
+    Stage 3 section
+11. **Log conversations** to `agent-conversations.md`
+
+### Stage 4: Build
+
+12. **Update status.md** — set your task to "In Progress" with today's date
+13. **Implement** — follow your consensus plan. Log each change in the
+    `dev-notes.md` Stage 4 Implementation Log.
+14. **Update status.md** — set your task to "Complete" with today's date
+15. **Commit** to the feature branch:
+    `cd /mnt/d/Dev/EQ/eqemu && git add -A && git commit -m "feat(<scope>): <description>"`
+16. **Notify teammates** — SendMessage any experts whose tasks depend on yours
+17. **Report completion** — tell the user what was done and what the next task is
 
 ## How You Work
 

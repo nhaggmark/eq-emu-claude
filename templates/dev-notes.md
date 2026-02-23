@@ -4,6 +4,7 @@
 > **Agent:** [agent-name]
 > **Task(s):** [task numbers from architecture.md]
 > **Date started:** YYYY-MM-DD
+> **Current stage:** Plan / Research / Socialize / Build / Complete
 
 ---
 
@@ -17,11 +18,10 @@ _Copy your assigned task(s) from the architecture doc's Implementation Sequence.
 
 ---
 
-## Research & Exploration
+## Stage 1: Plan
 
-_What did you read/search/discover before starting? File paths, function
-signatures, table schemas, existing patterns you found. This section is the
-most critical for context durability — dump everything you learned here._
+_What you learned from reading source code and your proposed approach. NO CODE
+is written during this stage._
 
 ### Files Examined
 
@@ -33,60 +33,110 @@ most critical for context durability — dump everything you learned here._
 
 _Summarize what you learned about the existing system that informs your approach._
 
+### Implementation Plan
+
+_Your proposed approach. Be specific enough that a fresh agent after context
+compaction could execute this plan without additional exploration._
+
+**Files to create or modify:**
+
+| File | Action | What Changes |
+|------|--------|-------------|
+| | Create / Modify | |
+
+**Change sequence:**
+1.
+2.
+3.
+
+**What to test:**
+-
+
 ---
 
-## Approach & Decisions
+## Stage 2: Research
 
-_What approach did you choose and why? Document alternatives you considered
-and reasons for rejecting them._
+_Context7 and documentation verification. Every API, function, and syntax in
+your plan must be verified against current docs before proceeding._
 
-| # | Decision | Alternatives Considered | Rationale |
-|---|----------|------------------------|-----------|
-| | | | |
+### Documentation Consulted
+
+| API / Function / Syntax | Source | Verified? | Notes |
+|------------------------|--------|-----------|-------|
+| | Context7 / WebFetch / Source | Yes / No | |
+
+### Plan Amendments
+
+_What changed in your plan based on documentation research? If nothing, state
+"Plan confirmed — no amendments needed."_
+
+### Verified Plan
+
+_Final plan after research. This is the version you socialize. If no amendments
+were needed, write "See Implementation Plan above — confirmed by research."_
 
 ---
 
-## Implementation Log
+## Stage 3: Socialize
+
+_Share your plan with relevant teammates. Get confirmation before writing code._
+
+### Messages Sent
+
+| To | Subject | Key Question |
+|----|---------|-------------|
+| | | |
+
+### Feedback Received
+
+| From | Feedback | Action Taken |
+|------|----------|-------------|
+| | | |
+
+### Consensus Plan
+
+_Final plan incorporating teammate feedback. This is what you build from.
+Write it self-contained — a fresh agent should be able to execute this section
+alone after context compaction._
+
+**Agreed approach:**
+
+**Files to create or modify:**
+
+| File | Action | What Changes |
+|------|--------|-------------|
+| | Create / Modify | |
+
+**Change sequence (final):**
+1.
+2.
+3.
+
+---
+
+## Stage 4: Build
+
+_Execute the consensus plan. Log every change._
+
+### Implementation Log
 
 _Chronological record of what you did. Each entry should have enough detail
 that a fresh agent could understand the change without reading the diff._
 
-### [Date] — [Brief description]
+#### [Date] — [Brief description]
 
 **What:** _What you changed_
 **Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the task_
+**Why:** _Rationale connecting this to the consensus plan_
 **Notes:** _Edge cases, gotchas, things the next agent should know_
 
----
-
-## Dependencies & Coordination
-
-_Record all cross-agent interactions: what you needed from teammates, what
-you provided to teammates, any blockers encountered._
-
-| Direction | Teammate | Subject | Status |
-|-----------|----------|---------|--------|
-| Needed from | | | |
-| Provided to | | | |
-
----
-
-## Problems & Solutions
-
-_Document issues you hit and how you solved them. This is gold for future
-context recovery._
+### Problems & Solutions
 
 | Problem | Root Cause | Solution |
 |---------|-----------|----------|
 | | | |
 
----
-
-## Files Modified
-
-_Complete list of files you created or modified, with a one-line description
-of each change._
+### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
@@ -105,4 +155,5 @@ _Anything unfinished, deferred, or flagged for attention._
 ## Context for Next Agent
 
 _If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context._
+this work, what do they need to know? Write as if the reader has zero context.
+Reference the Consensus Plan section above._

@@ -300,24 +300,45 @@
 ║  • Anti-slop: Context7 → query-docs before writing code            ║
 ║  • Fallback: WebFetch from trusted domain-specific sources         ║
 ║  • Mode: write access (can edit files, run commands)               ║
+║  • 4-stage workflow: Plan → Research → Socialize → Build           ║
+║  • NO CODE UNTIL STAGE 4 — plan and verify first                   ║
 ║                                                                    ║
-║  EACH EXPERT'S TASK LOOP:                                          ║
-║  ┌──────────────────────────────────────────────────────┐          ║
-║  │  1. Read status.md — find assigned tasks             │          ║
-║  │  2. Read architecture.md — task details & deps       │          ║
-║  │  3. Check deps — are blocking tasks Complete?        │          ║
-║  │     ├── YES → proceed                                │          ║
-║  │     └── NO → SendMessage to blocking teammate        │          ║
-║  │  4. Update status.md — task → "In Progress"          │          ║
-║  │  5. Do the work                                      │          ║
-║  │  6. Write context notes to <agent>/context/          │          ║
-║  │  7. Update status.md — task → "Complete"             │          ║
-║  │  8. Commit to feature branch                         │          ║
-║  │     cd /mnt/d/Dev/EQ/eqemu && git add -A &&         │          ║
-║  │     git commit -m "feat(<scope>): <desc>"            │          ║
-║  │  9. SendMessage → notify dependent teammates         │          ║
-║  │ 10. Report completion to user                        │          ║
-║  └──────────────────────────────────────────────────────┘          ║
+║  EACH EXPERT'S 4-STAGE WORKFLOW:                                   ║
+║                                                                    ║
+║  ┌─── STAGE 1: PLAN ──────────────────────────────────┐            ║
+║  │  1. Read status.md — find assigned tasks            │            ║
+║  │  2. Read architecture.md — task details & deps      │            ║
+║  │  3. Read PRD — player perspective                   │            ║
+║  │  4. Check deps — blocking tasks Complete?           │            ║
+║  │     ├── YES → proceed                               │            ║
+║  │     └── NO → SendMessage to blocking teammate       │            ║
+║  │  5. Read relevant source code / data                │            ║
+║  │  6. Write implementation plan → dev-notes.md §1     │            ║
+║  └────────────────────────┬────────────────────────────┘            ║
+║                           ▼                                         ║
+║  ┌─── STAGE 2: RESEARCH ──────────────────────────────┐            ║
+║  │  7. Verify every API/pattern against docs:          │            ║
+║  │     • Context7 (resolve-library-id → query-docs)    │            ║
+║  │     • WebFetch fallback (domain-specific sources)    │            ║
+║  │     • Read actual source to confirm signatures      │            ║
+║  │  8. Augment plan with verified info → dev-notes §2  │            ║
+║  └────────────────────────┬────────────────────────────┘            ║
+║                           ▼                                         ║
+║  ┌─── STAGE 3: SOCIALIZE ─────────────────────────────┐            ║
+║  │  9. SendMessage plan to relevant teammates          │            ║
+║  │ 10. Incorporate feedback → consensus plan §3        │            ║
+║  │ 11. Log conversations → agent-conversations.md      │            ║
+║  └────────────────────────┬────────────────────────────┘            ║
+║                           ▼                                         ║
+║  ┌─── STAGE 4: BUILD ─────────────────────────────────┐            ║
+║  │ 12. Update status.md → "In Progress"                │            ║
+║  │ 13. Implement from consensus plan                   │            ║
+║  │     Log each change → dev-notes.md §4               │            ║
+║  │ 14. Update status.md → "Complete"                   │            ║
+║  │ 15. Commit to feature branch                        │            ║
+║  │ 16. SendMessage → notify dependent teammates        │            ║
+║  │ 17. Report completion to user                       │            ║
+║  └─────────────────────────────────────────────────────┘          ║
 ║                                                                    ║
 ║  SPECIAL COORDINATION:                                             ║
 ║  • protocol-agent ←→ infra-expert: packet capture tooling          ║
@@ -521,8 +542,8 @@ claude/templates/                     claude/project-work/<branch>/
 │  dev-notes.md        │ ──INIT───▶  │  <expert>/dev-notes.md (×7)      │
 │                      │              │  Filled by: each implementation  │
 │                      │              │    expert assigned to a task     │
-│                      │              │  Sections: research, approach,   │
-│                      │              │    impl log, deps, files changed │
+│                      │              │  4 stages: Plan, Research,       │
+│                      │              │    Socialize, Build              │
 └──────────────────────┘              └──────────────────────────────────┘
 ┌──────────────────────┐              ┌──────────────────────────────────┐
 │                      │   COPY &     │                                  │
@@ -568,7 +589,7 @@ Template initialization (bootstrap-agent):
 │  CONTEXT DURABILITY PRINCIPLE:                                      │
 │  Every agent writes hard-earned context to persistent files so it   │
 │  survives context window compaction. Templates enforce this:        │
-│  • dev-notes.md   — research, decisions, impl log, files changed   │
+│  • dev-notes.md   — 4 stages: plan, research, socialize, build     │
 │  • lore-notes.md  — lore research, era review, PRD review log      │
 │  • test-plan.md   — validation checks, in-game guide, results      │
 │  • agent-conversations.md — all SendMessage exchanges logged        │
