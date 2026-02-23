@@ -47,8 +47,9 @@ a nearby druid NPC as a companion..."_
 
 ### Mechanics
 
-_How does this feature work mechanically? Include formulas, thresholds,
-conditions, and tuning knobs._
+_How does this feature work mechanically? Describe in player-facing terms.
+Include thresholds, conditions, and tuning knobs. Focus on WHAT and WHY,
+not HOW it should be implemented (that is the architect's job)._
 
 ### Balance Considerations
 
@@ -62,7 +63,9 @@ references that need verification?_
 
 ## Affected Systems
 
-_Which parts of the codebase does this touch? Check all that apply._
+_Which parts of the codebase does this touch? Check all that apply.
+Do NOT prescribe specific implementation approach — list systems affected,
+not SQL statements or code changes._
 
 - [ ] C++ server source (`eqemu/`)
 - [ ] Lua quest scripts (`akk-stack/server/quests/`)
@@ -78,18 +81,29 @@ _Does this feature depend on other features or systems being in place first?_
 
 ## Open Questions
 
-_Unresolved decisions or unknowns that need answers before implementation._
+_Unresolved decisions or unknowns that need answers before implementation.
+Include technical unknowns for the architect to investigate._
 
 1.
 2.
 
 ## Acceptance Criteria
 
-_How do we verify this feature is complete and working?_
+_How do we verify this feature is complete and working? Write from the
+player's perspective — what should be observable in-game?_
 
 - [ ]
 - [ ]
 - [ ]
+
+---
+
+## Appendix: Technical Notes for Architect
+
+_OPTIONAL. If the game-designer has specific technical insights, rule name
+suggestions, or SQL patterns that might help the architect, put them here.
+This section is advisory only — the architect makes all implementation
+decisions. Never put implementation SQL in the main PRD body above._
 
 ---
 

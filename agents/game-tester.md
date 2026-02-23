@@ -5,7 +5,6 @@ description: QA and validation agent. Use after implementation to build a detail
   for the user to manually verify gameplay since AI cannot play the game.
 model: sonnet
 skills:
-  - base-agent
   - superpowers:using-superpowers
 ---
 

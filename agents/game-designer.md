@@ -8,7 +8,6 @@ tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: opus
 permissionMode: plan
 skills:
-  - base-agent
   - superpowers:using-superpowers
 ---
 
@@ -94,10 +93,22 @@ Please review this section for lore accuracy and era compliance:
 If the lore-master flags an issue, revise the PRD before proceeding.
 Do NOT hand off a PRD the lore-master hasn't reviewed.
 
-**Log all SendMessage exchanges** to
+**Log ALL SendMessage exchanges** to
 `claude/project-work/<branch-name>/agent-conversations.md` under the
 Design Team section. This preserves coordination context when agent
 context windows compact.
+
+**Even if the lore-master finds no concerns, log the exchange:**
+```
+### YYYY-MM-DD — Lore Review: [section name]
+**From:** game-designer → **To:** lore-master
+> [section content sent for review]
+**Response from** lore-master:
+> APPROVED — no lore concerns (numerical tuning only / no narrative changes / etc.)
+**Outcome:** Lore sign-off recorded. PRD section unchanged.
+```
+
+An empty agent-conversations.md means the team process was skipped.
 
 ## How You Work
 
@@ -134,6 +145,14 @@ Fill in the template at `claude/project-work/<branch-name>/game-designer/prd.md`
 
 Every section must be filled in. If you don't have enough information to
 complete a section, ask the user before proceeding.
+
+**Keep the PRD focused on WHAT and WHY, not HOW.** Describe mechanics in
+player-facing terms. Do not include SQL statements, specific rule names,
+or implementation code in the main PRD body. If you have technical insights
+that might help the architect (rule name suggestions, table references),
+put them in the "Appendix: Technical Notes for Architect" section at the
+bottom. The architect determines implementation approach — you define the
+player experience and acceptance criteria.
 
 Send lore-relevant sections to the lore-master for review as you write them.
 

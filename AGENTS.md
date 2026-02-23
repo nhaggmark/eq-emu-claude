@@ -1,31 +1,63 @@
-# EQ Server — Feature Workflow Diagram
+# EQ Server Agents
 
-> **Last updated:** 2026-02-22
-> **Source of truth:** Agent definitions in `claude/agents/`, templates in `claude/templates/`
+Custom Claude Code agents for the EQ server project. Each agent is a specialist
+that can be consulted individually or coordinated as a team.
 
----
+## Setup
 
-## Pipeline Overview
+Agent and skill source files live in `claude/` (version controlled). Claude Code
+needs symlinks to discover them:
+
+```bash
+ln -s ../claude/agents /mnt/d/Dev/EQ/.claude/agents
+ln -s ../claude/skills /mnt/d/Dev/EQ/.claude/skills
+```
+
+## Feature Workflow
+
+For new features and projects, follow this pipeline:
 
 ```
 ┌─────────────┐    ┌─────────────────┐    ┌───────────────────┐    ┌──────────────────────┐    ┌──────────────┐    ┌────────────┐
 │  BOOTSTRAP   │───▶│  DESIGN TEAM     │───▶│  ARCHITECTURE TEAM │───▶│  IMPLEMENTATION TEAM  │───▶│  GAME-TESTER  │───▶│  COMPLETE   │
 │  (Phase 1)   │    │  (Phase 2)       │    │  (Phase 3)         │    │  (Phase 4)            │    │  (Phase 5)    │    │  (Phase 6)  │
 └─────────────┘    └─────────────────┘    └───────────────────┘    └──────────────────────┘    └──────────────┘    └────────────┘
-  Solo agent         Team spawn             Team spawn               Team spawn                    Solo agent         User action
-  sonnet             opus + sonnet          opus + 2× sonnet         sonnet × N                    sonnet
+  Solo agent         Team spawn             Team spawn               Scoped team spawn             Solo agent         User action
+  sonnet             opus + sonnet          opus + 2× sonnet         sonnet × (arch-assigned)      sonnet
+```
+
+### IMPORTANT: Team Spawn Rules
+
+1. **Bootstrap is MANDATORY.** Always start with bootstrap-agent. Never manually create project-work folders.
+2. **Multi-agent phases MUST use Claude Code agent teams.** Use `TeamCreate` → `Task` with `team_name` → `SendMessage` for coordination.
+3. **All inter-agent exchanges MUST be logged** to `agent-conversations.md`. Even "no concerns" reviews.
+4. **Shut down teams after each phase.** Use `SendMessage type="shutdown_request"` then `TeamDelete`.
+
+### Team Lifecycle Per Phase
+
+```
+TeamCreate(team_name, description)
+  → Task(agent1, team_name=...) + Task(agent2, team_name=...)
+  → TaskCreate(tasks for the team)
+  → Agents work via SendMessage + TaskUpdate
+  → SendMessage(type="shutdown_request") to each agent
+  → TeamDelete
 ```
 
 ---
 
-## Phase 1: Bootstrap
+## Phase 1: Bootstrap (MANDATORY)
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
-║  BOOTSTRAP                                                         ║
+║  BOOTSTRAP — MANDATORY ENTRY POINT                                 ║
 ║  Agent: bootstrap-agent (sonnet)                                   ║
 ║  Mode: write access                                                ║
-║  Skills: base-agent, superpowers:using-superpowers                 ║
+║  Skills: superpowers:using-superpowers                             ║
+║                                                                    ║
+║  ⚠ NEVER skip this phase. Never manually create project-work      ║
+║    folders. Skipping leads to naming inconsistencies, missing      ║
+║    templates, and broken agent handoffs.                           ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                    ║
 ║  User prompt: "Use bootstrap-agent to set up [feature]"            ║
@@ -86,20 +118,50 @@
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
-║  DESIGN TEAM  (spawned as teammates)                               ║
+║  DESIGN TEAM  (Claude Code agent team)                             ║
 ║  Coordination: SendMessage                                         ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                    ║
-║  User prompt: "Spawn the design team: game-designer and            ║
-║                lore-master as teammates"                           ║
+║  TEAM SETUP:                                                       ║
+║  TeamCreate(team_name="<branch>-design",                           ║
+║             description="Design team for <feature>")               ║
+║  Task(name="game-designer", team_name="<branch>-design", ...)      ║
+║  Task(name="lore-master", team_name="<branch>-design", ...)        ║
+║  TaskCreate(subject="Write PRD", owner="game-designer")            ║
+║  TaskCreate(subject="Review PRD for lore", owner="lore-master")    ║
+║                                                                    ║
+║  Full spawn commands:                                              ║
+║  TeamCreate: team_name="<branch>-design",                          ║
+║              description="Design team for <feature>"               ║
+║                                                                    ║
+║  Task: subagent_type="general-purpose", name="game-designer",      ║
+║        team_name="<branch>-design",                                ║
+║        prompt="You are the game-designer agent.                    ║
+║                [load game-designer agent definition].               ║
+║                Feature: <description>.                             ║
+║                Work dir: claude/project-work/<branch>/"             ║
+║                                                                    ║
+║  Task: subagent_type="general-purpose", name="lore-master",        ║
+║        team_name="<branch>-design",                                ║
+║        prompt="You are the lore-master agent.                      ║
+║                [load lore-master agent definition].                 ║
+║                Feature: <description>.                             ║
+║                Work dir: claude/project-work/<branch>/"             ║
+║                                                                    ║
+║  TaskCreate: subject="Write PRD", owner="game-designer"            ║
+║  TaskCreate: subject="Review PRD for lore compliance",             ║
+║              owner="lore-master", addBlockedBy=["PRD task ID"]     ║
+║                                                                    ║
+║  User prompt: "Create the design team and spawn game-designer      ║
+║                and lore-master as teammates"                       ║
 ║                                                                    ║
 ║  ┌─────────────────────────────┐  SendMessage  ┌────────────────┐  ║
 ║  │ GAME-DESIGNER (opus)        │◄────────────▶│ LORE-MASTER     │  ║
 ║  │ Mode: plan (read-only)      │               │ (sonnet)        │  ║
-║  │ Skills: base-agent,         │               │ Mode: plan      │  ║
-║  │   superpowers:using-        │               │ Skills: base-   │  ║
-║  │   superpowers               │               │   agent, super- │  ║
-║  │                             │               │   powers        │  ║
+║  │ Skills: superpowers:        │               │ Mode: plan      │  ║
+║  │   using-superpowers         │               │ Skills: super-  │  ║
+║  │                             │               │   powers:using- │  ║
+║  │                             │               │   superpowers   │  ║
 ║  │ LEADS:                      │               │                 │  ║
 ║  │ • Brainstorm (skill)        │               │ REVIEWS:        │  ║
 ║  │ • Write PRD sections        │  ──────────▶  │ • Era compliance│  ║
@@ -143,7 +205,13 @@
 ║  ├── agent-conversations.md        ◄── Design team SendMessage log ║
 ║  └── status.md                     ◄── Design=Complete             ║
 ║                                                                    ║
-║  HANDOFF: "Use the architect to assess technical feasibility"      ║
+║  TEAM CLEANUP:                                                     ║
+║  SendMessage(type="shutdown_request") to game-designer             ║
+║  SendMessage(type="shutdown_request") to lore-master               ║
+║  TeamDelete                                                        ║
+║                                                                    ║
+║  HANDOFF: "Create the architecture team and spawn architect,       ║
+║            protocol-agent, and config-expert as teammates"         ║
 ║  status.md: Design=Complete, Current phase=Architecture            ║
 ║  Handoff log: "design team → architect" + lore-master sign-off     ║
 ╚══════════════════════════════════════════════════════════════════════╝
@@ -155,11 +223,53 @@
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
-║  ARCHITECTURE TEAM  (spawned as teammates)                         ║
+║  ARCHITECTURE TEAM  (Claude Code agent team)                       ║
 ║  Coordination: SendMessage                                         ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                    ║
-║  User prompt: "Spawn the architecture team: architect,             ║
+║  TEAM SETUP:                                                       ║
+║  TeamCreate(team_name="<branch>-architecture",                     ║
+║             description="Architecture team for <feature>")         ║
+║  Task(name="architect", team_name="<branch>-architecture", ...)    ║
+║  Task(name="protocol-agent", team_name="...", ...)                 ║
+║  Task(name="config-expert", team_name="...", ...)                  ║
+║  TaskCreate(subject="Write architecture plan", owner="architect")  ║
+║  TaskCreate(subject="Advise on client feasibility",                ║
+║             owner="protocol-agent")                                ║
+║  TaskCreate(subject="Advise on rules/config", owner="config-expert")║
+║                                                                    ║
+║  Full spawn commands:                                              ║
+║  TeamCreate: team_name="<branch>-architecture",                    ║
+║              description="Architecture team for <feature>"         ║
+║                                                                    ║
+║  Task: subagent_type="general-purpose", name="architect",          ║
+║        team_name="<branch>-architecture",                          ║
+║        prompt="You are the architect agent.                        ║
+║                [load architect agent definition].                   ║
+║                PRD at: claude/project-work/<branch>/                ║
+║                game-designer/prd.md"                               ║
+║                                                                    ║
+║  Task: subagent_type="general-purpose", name="protocol-agent",     ║
+║        team_name="<branch>-architecture",                          ║
+║        prompt="You are the protocol-agent.                         ║
+║                [load protocol-agent agent definition].              ║
+║                Wait for questions from the architect                ║
+║                via SendMessage."                                   ║
+║                                                                    ║
+║  Task: subagent_type="general-purpose", name="config-expert",      ║
+║        team_name="<branch>-architecture",                          ║
+║        prompt="You are the config-expert.                          ║
+║                [load config-expert agent definition].               ║
+║                Wait for questions from the architect                ║
+║                via SendMessage."                                   ║
+║                                                                    ║
+║  TaskCreate: subject="Write architecture plan", owner="architect"  ║
+║  TaskCreate: subject="Advise on client feasibility",               ║
+║              owner="protocol-agent"                                ║
+║  TaskCreate: subject="Advise on rule/config alternatives",         ║
+║              owner="config-expert"                                 ║
+║                                                                    ║
+║  User prompt: "Create the architecture team and spawn architect,   ║
 ║                protocol-agent, and config-expert as teammates"     ║
 ║                                                                    ║
 ║  ┌───────────────────────┐                                         ║
@@ -221,7 +331,7 @@
 ║  INPUTS:                                                           ║
 ║  ├── game-designer/prd.md              (the approved PRD)          ║
 ║  ├── lore-master/lore-notes.md         (lore constraints)          ║
-║  ├── claude/docs/topography/*.md       (4 topography docs)         ║
+║  ├── claude/docs/topography/*.md       (5 topography docs)         ║
 ║  └── eqemu/ source code               (Grep/Read actual files)     ║
 ║                                                                    ║
 ║  OUTPUTS:                                                          ║
@@ -246,7 +356,13 @@
 ║  serve dual roles: advisors during planning, implementers during   ║
 ║  execution.                                                        ║
 ║                                                                    ║
-║  HANDOFF: "Spawn the implementation team — [list of assigned       ║
+║  TEAM CLEANUP:                                                     ║
+║  SendMessage(type="shutdown_request") to architect                 ║
+║  SendMessage(type="shutdown_request") to protocol-agent            ║
+║  SendMessage(type="shutdown_request") to config-expert             ║
+║  TeamDelete                                                        ║
+║                                                                    ║
+║  HANDOFF: "Create the implementation team and spawn [assigned      ║
 ║            experts] as teammates"                                  ║
 ║  status.md: Architecture=Complete, Current phase=Implementation    ║
 ╚══════════════════════════════════════════════════════════════════════╝
@@ -258,45 +374,61 @@
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
-║  IMPLEMENTATION TEAM  (spawned as teammates)                       ║
-║  Coordination: SendMessage                                         ║
-║  Only spawn experts the architect assigned tasks to                ║
+║  IMPLEMENTATION TEAM  (Claude Code agent team)                     ║
+║  Coordination: SendMessage + TaskCreate/TaskUpdate                 ║
+║  ONLY spawn agents listed in architecture.md "Required             ║
+║  Implementation Agents" — never the full roster                    ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                    ║
-║  User prompt: "Spawn the implementation team with all assigned     ║
-║                experts as teammates"                               ║
+║  TEAM SETUP:                                                       ║
+║  TeamCreate(team_name="<branch>-implementation",                   ║
+║             description="Implementation team for <feature>")       ║
+║  # Spawn ONLY assigned experts:                                    ║
+║  Task(name="<expert>", team_name="<branch>-implementation", ...)   ║
+║  # Create tasks from architecture plan:                            ║
+║  TaskCreate per task, with addBlockedBy for dependencies           ║
 ║                                                                    ║
-║  ┌──────────────────── AVAILABLE EXPERTS ─────────────────────┐    ║
+║  Full spawn commands:                                              ║
+║  TeamCreate: team_name="<branch>-implementation",                  ║
+║              description="Implementation team for <feature>"       ║
+║                                                                    ║
+║  # Spawn ONLY the experts the architect assigned tasks to:         ║
+║  Task: subagent_type="general-purpose", name="<expert-name>",      ║
+║        team_name="<branch>-implementation",                        ║
+║        prompt="You are the <expert-name> agent.                    ║
+║                [load agent definition].                             ║
+║                Architecture plan at: claude/project-work/<branch>/ ║
+║                architect/architecture.md                           ║
+║                Your tasks: [list from architecture plan]"          ║
+║                                                                    ║
+║  # Create tasks from the architecture plan's implementation        ║
+║  # sequence:                                                       ║
+║  TaskCreate: subject="<task description>",                         ║
+║              owner="<assigned-expert>",                             ║
+║              addBlockedBy=[<dependency task IDs>]                  ║
+║  # ... one per task in the implementation sequence                 ║
+║                                                                    ║
+║  User prompt: "Create the implementation team and spawn            ║
+║                [agent-a] and [agent-b] as teammates"               ║
+║  (names come from architect's Required Implementation Agents)      ║
+║                                                                    ║
+║  ┌─────────── AGENT POOL (spawn only what's needed) ─────────┐    ║
 ║  │                                                            │    ║
-║  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │    ║
-║  │  │ c-expert     │  │ lua-expert   │  │ perl-expert  │     │    ║
-║  │  │ (sonnet)     │  │ (sonnet)     │  │ (sonnet)     │     │    ║
-║  │  │ C++ server   │  │ Lua quests,  │  │ Perl scripts │     │    ║
-║  │  │ combat, AI,  │  │ lua_modules, │  │ maintenance, │     │    ║
-║  │  │ networking   │  │ mod hooks    │  │ migration    │     │    ║
-║  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │    ║
-║  │         │                 │                  │             │    ║
-║  │         │      SendMessage (all ◄──▶ all)    │             │    ║
-║  │         │                 │                  │             │    ║
-║  │  ┌──────┴───────┐  ┌─────┴────────┐  ┌─────┴────────┐    │    ║
-║  │  │ data-expert  │  │config-expert │  │protocol-agent│    │    ║
-║  │  │ (sonnet)     │  │ (sonnet)     │  │ (sonnet)     │    │    ║
-║  │  │ DB: NPCs,    │  │ Rules,       │  │ Packets,     │    │    ║
-║  │  │ items, loot, │  │ eqemu_config,│  │ opcodes,     │    │    ║
-║  │  │ spawns       │  │ login.json   │  │ client caps  │    │    ║
-║  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘    │    ║
-║  │         │                 │                  │             │    ║
-║  │         │                 │                  │             │    ║
-║  │  ┌──────┴─────────────────┴──────────────────┴───────┐    │    ║
-║  │  │              infra-expert (sonnet)                 │    │    ║
-║  │  │  Docker, compose, Makefile, build pipeline,       │    │    ║
-║  │  │  virtualization, tooling, packet capture setup     │    │    ║
-║  │  └───────────────────────────────────────────────────┘    │    ║
+║  │  c-expert       — C++ server, combat, AI, networking       │    ║
+║  │  lua-expert     — Lua quests, lua_modules, mod hooks       │    ║
+║  │  perl-expert    — Perl script maintenance, migration       │    ║
+║  │  data-expert    — DB: NPCs, items, loot, spawns            │    ║
+║  │  config-expert  — Rules, eqemu_config, login.json          │    ║
+║  │  protocol-agent — Packets, opcodes, client protocol        │    ║
+║  │  infra-expert   — Docker, compose, Makefile, builds        │    ║
+║  │                                                            │    ║
+║  │  Example: if architect assigns tasks to only data-expert   │    ║
+║  │  and config-expert, spawn ONLY those two.                  │    ║
 ║  │                                                            │    ║
 ║  └────────────────────────────────────────────────────────────┘    ║
 ║                                                                    ║
 ║  ALL EXPERTS share these traits:                                   ║
-║  • Skills: base-agent, superpowers:using-superpowers               ║
+║  • Skills: superpowers:using-superpowers                           ║
 ║  • Anti-slop: Context7 → query-docs before writing code            ║
 ║  • Fallback: WebFetch from trusted domain-specific sources         ║
 ║  • Mode: write access (can edit files, run commands)               ║
@@ -321,23 +453,25 @@
 ║  │     • Context7 (resolve-library-id → query-docs)    │            ║
 ║  │     • WebFetch fallback (domain-specific sources)    │            ║
 ║  │     • Read actual source to confirm signatures      │            ║
-║  │  8. Augment plan with verified info → dev-notes §2  │            ║
+║  │  8. Study existing code patterns — naming, style,   │            ║
+║  │     conventions. Adopt existing patterns over new.   │            ║
+║  │  9. Augment plan with verified info → dev-notes §2  │            ║
 ║  └────────────────────────┬────────────────────────────┘            ║
 ║                           ▼                                         ║
 ║  ┌─── STAGE 3: SOCIALIZE ─────────────────────────────┐            ║
-║  │  9. SendMessage plan to relevant teammates          │            ║
-║  │ 10. Incorporate feedback → consensus plan §3        │            ║
-║  │ 11. Log conversations → agent-conversations.md      │            ║
+║  │ 10. SendMessage plan to relevant teammates          │            ║
+║  │ 11. Incorporate feedback → consensus plan §3        │            ║
+║  │ 12. Log conversations → agent-conversations.md      │            ║
 ║  └────────────────────────┬────────────────────────────┘            ║
 ║                           ▼                                         ║
 ║  ┌─── STAGE 4: BUILD ─────────────────────────────────┐            ║
-║  │ 12. Update status.md → "In Progress"                │            ║
-║  │ 13. Implement from consensus plan                   │            ║
+║  │ 13. Update status.md → "In Progress"                │            ║
+║  │ 14. Implement from consensus plan                   │            ║
 ║  │     Log each change → dev-notes.md §4               │            ║
-║  │ 14. Update status.md → "Complete"                   │            ║
-║  │ 15. Commit to feature branch                        │            ║
-║  │ 16. SendMessage → notify dependent teammates        │            ║
-║  │ 17. Report completion to user                       │            ║
+║  │ 15. Update status.md → "Complete"                   │            ║
+║  │ 16. Commit to feature branch                        │            ║
+║  │ 17. SendMessage → notify dependent teammates        │            ║
+║  │ 18. Report completion to user                       │            ║
 ║  └─────────────────────────────────────────────────────┘          ║
 ║                                                                    ║
 ║  COMMIT TARGETS (varies by expert):                                ║
@@ -370,6 +504,10 @@
 ║  ├── agent-conversations.md         (impl team SendMessage log)    ║
 ║  └── status.md                      ◄── All tasks = Complete       ║
 ║                                                                    ║
+║  TEAM CLEANUP:                                                     ║
+║  SendMessage(type="shutdown_request") to each expert               ║
+║  TeamDelete                                                        ║
+║                                                                    ║
 ║  HANDOFF: "All implementation tasks complete. Use the game-tester  ║
 ║            to build a test plan and validate the implementation"   ║
 ║  status.md: Implementation=Complete, Current phase=Validation      ║
@@ -385,7 +523,7 @@
 ║  GAME-TESTER                                                       ║
 ║  Agent: game-tester (sonnet)                                       ║
 ║  Mode: write access                                                ║
-║  Skills: base-agent, superpowers:using-superpowers                 ║
+║  Skills: superpowers:using-superpowers                             ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                    ║
 ║  User prompt: "Use the game-tester to build a test plan and        ║
@@ -577,8 +715,9 @@ Template initialization (bootstrap-agent):
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  SKILLS loaded by every agent:                                      │
-│  • base-agent — project context (repos, paths, conventions)         │
+│  CONTEXT loaded by every agent:                                     │
+│  • CLAUDE.md — project context (repos, paths, conventions)          │
+│    Auto-injected into every session. No skill invocation needed.    │
 │  • superpowers:using-superpowers — problem-solving metaskill        │
 │                                                                     │
 │  ANTI-SLOP DOCTRINE (implementation experts only):                  │
@@ -590,6 +729,7 @@ Template initialization (bootstrap-agent):
 │                                                                     │
 │  TOPOGRAPHY DOCS (read by architect + implementation experts):      │
 │  • claude/docs/topography/C-CODE.md                                 │
+│  • claude/docs/topography/PROTOCOL-CODE.md                          │
 │  • claude/docs/topography/LUA-CODE.md                               │
 │  • claude/docs/topography/PERL-CODE.md                              │
 │  • claude/docs/topography/SQL-CODE.md                               │
@@ -682,10 +822,9 @@ Template initialization (bootstrap-agent):
 ```
 /mnt/d/Dev/EQ/
 ├── claude/
-│   ├── WORKFLOW-DIAGRAM.md            ◄── THIS FILE
+│   ├── AGENTS.md                      ◄── THIS FILE (workflow + agent catalog)
 │   ├── PROJECT.md                     ◄── Project vision, roadmap
 │   ├── agents/
-│   │   ├── AGENTS.md                  ◄── Agent catalog + workflow docs
 │   │   ├── bootstrap-agent.md
 │   │   ├── game-designer.md
 │   │   ├── lore-master.md
@@ -709,6 +848,7 @@ Template initialization (bootstrap-agent):
 │   ├── docs/
 │   │   └── topography/
 │   │       ├── C-CODE.md
+│   │       ├── PROTOCOL-CODE.md
 │   │       ├── LUA-CODE.md
 │   │       ├── PERL-CODE.md
 │   │       └── SQL-CODE.md
@@ -789,3 +929,18 @@ Sections updated by phase:
 │ Checklist        │                                                  │
 └──────────────────┴──────────────────────────────────────────────────┘
 ```
+
+---
+
+## Ad-Hoc Usage
+
+Not everything needs the full workflow. For quick tasks:
+
+**Consult a single agent:**
+> Use the game-designer to reason about companion power scaling
+
+**Quick implementation:**
+> Use the data-expert to add a new NPC to East Commonlands
+
+**Validation after changes:**
+> Use the game-tester to validate the loot table changes we just made

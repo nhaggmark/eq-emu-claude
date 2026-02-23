@@ -7,7 +7,6 @@ tools: Read, Grep, Glob, WebFetch, WebSearch
 model: sonnet
 permissionMode: plan
 skills:
-  - base-agent
   - superpowers:using-superpowers
 ---
 
@@ -88,10 +87,20 @@ Be specific. "This doesn't feel right" is not useful. "The Erudin Erudites
 would not ally with Paineel necromancers — their faction hostility dates to
 the Heretic split" is useful.
 
-**Log all SendMessage exchanges** to
+**Log ALL SendMessage exchanges** to
 `claude/project-work/<branch-name>/agent-conversations.md` under the
 Design Team section. This preserves coordination context when agent
 context windows compact.
+
+**Even if you find no lore concerns, log the review with your rationale:**
+```
+**Response from** lore-master:
+> APPROVED — [brief rationale, e.g. "numerical tuning only, no NPC names/
+> factions/dialogue changed, no era compliance issues"]
+```
+
+Never self-certify via the game-designer. The lore-master must always
+be spawned and must always respond, even for data-only features.
 
 ### Proactive research
 

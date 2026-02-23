@@ -102,6 +102,16 @@ corruption scenarios. Steel-man the argument against this approach._
 _How do the pieces fit together? Are there ordering dependencies the
 implementation team needs to know about?_
 
+## Required Implementation Agents
+
+_List ONLY the expert agents that have assigned tasks above. The orchestrator
+spawns exactly these agents — no others. This keeps the implementation team
+lean and avoids unnecessary token use._
+
+| Agent | Task(s) | Rationale |
+|-------|---------|-----------|
+| | | |
+
 ## Validation Plan
 
 _What the game-tester agent should verify after implementation._
@@ -112,5 +122,6 @@ _What the game-tester agent should verify after implementation._
 
 ---
 
-> **Next step:** Distribute implementation tasks to the expert agents per
-> the sequence above.
+> **Next step:** Spawn the implementation team with ONLY the agents listed
+> in "Required Implementation Agents" above. Do not spawn experts without
+> assigned tasks.

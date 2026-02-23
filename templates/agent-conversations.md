@@ -7,7 +7,14 @@ This file preserves cross-agent communication for context durability. When
 context windows compact, this log ensures decisions, coordination, and
 rationale are never lost.
 
-**Every agent on a team must log their SendMessage exchanges here.**
+**Every agent on a team MUST log their SendMessage exchanges here.**
+
+**Rules:**
+1. Log ALL exchanges, including "no concerns" / "no constraints" responses
+2. Log the date, sender, recipient, content summary, and outcome
+3. An empty section for a team phase means the team process was skipped
+4. "APPROVED — no issues" is a valid and valuable finding; it must be logged
+5. This file is the audit trail that proves peer review actually happened
 
 ---
 
