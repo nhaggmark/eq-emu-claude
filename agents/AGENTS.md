@@ -18,7 +18,7 @@ ln -s ../claude/skills /mnt/d/Dev/EQ/.claude/skills
 For new features and projects, follow this pipeline:
 
 ```
-bootstrap-agent → game-designer → architect → implementation experts → game-tester
+bootstrap-agent → design team (game-designer + lore-master) → architect → implementation experts → game-tester
 ```
 
 ### 1. Bootstrap
@@ -28,12 +28,17 @@ bootstrap-agent → game-designer → architect → implementation experts → g
 Creates a feature branch in `eqemu/`, sets up `claude/project-work/<branch>/`
 folders for all agents, copies templates.
 
-### 2. Design (game-designer)
+### 2. Design (game-designer + lore-master team)
 
-> Use the game-designer to fill out the PRD
+> Spawn the design team: game-designer and lore-master as teammates
 
-Brainstorms with you, asks clarifying questions, writes the PRD at
-`project-work/<branch>/game-designer/prd.md`. No code — pure design.
+The game-designer and lore-master are spawned together as a team. The
+game-designer leads PRD creation while the lore-master provides lore review,
+faction verification, and era compliance checks via `SendMessage`.
+
+The PRD is not handed off until the lore-master signs off on lore continuity.
+
+Output: `project-work/<branch>/game-designer/prd.md`
 
 ### 3. Plan (architect)
 
@@ -75,12 +80,21 @@ After game-tester reports PASS:
 |-------|-------|----------|
 | **bootstrap-agent** | sonnet | Starting a new feature — creates branch and workspace |
 
+### Design Team (spawned together, plan mode)
+
+| Agent | Model | Use When |
+|-------|-------|----------|
+| **game-designer** | opus | Leads PRD creation — mechanics, balance, player experience |
+| **lore-master** | sonnet | Reviews PRD for lore continuity, faction accuracy, era compliance |
+
+These two agents are always spawned as teammates during the Design phase.
+They coordinate via `SendMessage`. The game-designer drives; the lore-master
+reviews and flags issues. The PRD requires lore-master sign-off before handoff.
+
 ### Advisory (read-only, plan mode)
 
 | Agent | Model | Use When |
 |-------|-------|----------|
-| **game-designer** | opus | Designing features, brainstorming mechanics, writing PRDs |
-| **lore-master** | sonnet | Writing quest dialogue, NPC personalities, story arcs, faction lore |
 | **architect** | opus | Assessing PRDs, planning cross-system implementation, assigning expert tasks |
 
 ### Tech Experts (write access)

@@ -11,7 +11,7 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | YYYY-MM-DD | YYYY-MM-DD |
-| Design | game-designer | Not Started | | |
+| Design | game-designer + lore-master | Not Started | | |
 | Architecture | architect | Not Started | | |
 | Implementation | _per task below_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
@@ -25,9 +25,10 @@
 
 _Record each handoff between agents with context and any notes._
 
-### bootstrap-agent → game-designer
+### bootstrap-agent → design team (game-designer + lore-master)
 - **Date:**
 - **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
+  Spawn both agents as teammates for the Design phase.
 
 ---
 

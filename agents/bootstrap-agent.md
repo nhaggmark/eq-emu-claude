@@ -98,8 +98,10 @@ Print a summary of what was created and instruct the user:
 > - `architect/architecture.md` — architecture template
 > - Context folders for all 10 agents
 >
-> **Next step:** Use the **game-designer** agent to fill out the PRD at
-> `claude/project-work/<branch-name>/game-designer/prd.md`
+> **Next step:** Spawn the **design team** — the **game-designer** and
+> **lore-master** agents as teammates. The game-designer will lead PRD
+> creation at `claude/project-work/<branch-name>/game-designer/prd.md`
+> while the lore-master reviews for lore continuity.
 
 ## You Do NOT
 
