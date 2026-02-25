@@ -11,6 +11,7 @@ This directory contains structured lore data extracted from the PEQ database and
 | `03-zone-npc-census.md` | Per-zone NPC population summaries, grouped by faction |
 | `04-quest-dialog-samples.md` | Representative NPC dialog from 6 major cities, sampled from quest scripts |
 | `05-faction-relationship-matrix.md` | Concrete faction hit data, racial/deity modifiers, cross-city relationships |
+| `06-npc-soul-data.md` | NPC soul system supplement: per-city soul counts, named vs. generic finding, canonical backstory elements, cross-NPC relationship map, role-based templates |
 
 ## Raw Data Files (in `/mnt/d/Dev/EQ/claude/tmp/lore-deep-dive/`)
 
