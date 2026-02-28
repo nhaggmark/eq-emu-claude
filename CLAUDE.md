@@ -15,6 +15,8 @@ manager and dispatcher only**. It does NOT do feature work directly.
 - Monitor progress via `TaskList` and agent messages
 - Shut down teams (`SendMessage` type `shutdown_request`, then `TeamDelete`)
 - Update `status.md` phase transitions between teams
+- Triage bug reports (read report, set severity, select relevant expert agents)
+- Create bug workspaces and update Bug Reports tables in status.md
 
 ### The orchestrator does NOT:
 
@@ -64,6 +66,19 @@ but never performs the work itself.
 ```
 
 Between phases: shut down the current team, then create the next one.
+
+### Bug Workflow Summary
+
+Bugs follow a lighter pipeline. The orchestrator triages and selects
+expert agents relevant to the bug based on its Affected Systems checklist.
+
+```
+1. Triage     → orchestrator (read report, select experts, create workspace)
+2. Diagnose   → TeamCreate → relevant experts investigate root cause
+3. Fix/Verify → solo expert fixes, game-tester verifies
+```
+
+Trivial bugs skip diagnosis: Triage → solo expert → game-tester.
 
 ## Project Context
 

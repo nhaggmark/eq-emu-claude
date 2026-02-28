@@ -658,6 +658,112 @@ TeamCreate(team_name, description)
 
 ---
 
+## Bug Workflow
+
+A parallel track to the feature pipeline for reporting and resolving bugs.
+Lighter-weight: no PRD, no architecture team. Bugs found during feature
+testing live inside the feature workspace. General bugs get a standalone
+workspace.
+
+```
+┌──────────────┐    ┌────────────────────────┐    ┌────────────────────┐
+│  TRIAGE       │───▶│  DIAGNOSE (team)        │───▶│  FIX & VERIFY      │
+│  (Phase 1)    │    │  (Phase 2)              │    │  (Phase 3)         │
+└──────────────┘    └────────────────────────┘    └────────────────────┘
+ Orchestrator        TeamCreate → relevant        Solo expert fixes,
+ reads report,       experts investigate          game-tester verifies
+ selects agents
+```
+
+### Bug Report Submission
+
+Anyone (user or game-tester) can submit a bug using `claude/templates/bug-report.md`.
+
+**Feature bugs:** Copy template to `project-work/<feature>/bugs/BUG-NNN-short-name/report.md`
+**General bugs:** Copy template to `project-work/bugs/BUG-GNNN-short-name/report.md`
+
+Create the bug workspace:
+```bash
+mkdir -p claude/project-work/<feature>/bugs/BUG-NNN-short-name/{diagnosis,fix}
+# or for general bugs:
+mkdir -p claude/project-work/bugs/BUG-GNNN-short-name/{diagnosis,fix}
+```
+
+### Phase 1: Triage (orchestrator)
+
+The orchestrator reads the bug report and:
+
+1. **Sets severity** if not already specified by the submitter.
+2. **Selects expert agents relevant to the bug.** The Affected Systems
+   checklist in the report determines which agents are needed:
+   - C++ server source → c-expert
+   - Lua quest scripts → lua-expert
+   - Perl quest scripts → perl-expert
+   - Database / SQL → data-expert
+   - Rules / Configuration → config-expert
+   - Client protocol → protocol-agent
+   - Infrastructure / Docker → infra-expert
+   - Multiple systems → multiple experts
+   - Unclear root cause → start with systematic-debugging skill to narrow
+     down, then assign the relevant expert(s)
+3. **Evaluates complexity.** Trivial bugs (wrong rule value, typo, obvious
+   one-line fix) skip diagnosis and go directly to a solo expert fix.
+4. **Updates status.md** — adds a row to the Bug Reports table with status
+   `Investigating` and the assigned expert agents.
+5. **Creates the bug workspace** — folder, report.md, diagnosis/ and fix/
+   directories.
+
+### Phase 2: Diagnose (small team)
+
+A team of expert agents relevant to the bug is spawned via TeamCreate.
+The team composition is determined during triage based on the bug's
+Affected Systems — only agents whose expertise matches the bug are included.
+
+```
+TeamCreate(team_name="<feature>-bug-NNN", description="Diagnose BUG-NNN")
+  → Task(name="<expert-1>", team_name=...) + Task(name="<expert-2>", ...)
+  → Agents investigate root cause
+  → Findings written to diagnosis/ in the bug workspace
+  → Inter-agent discussion logged to agent-conversations.md
+  → SendMessage(type="shutdown_request") to each agent
+  → TeamDelete
+```
+
+The team:
+- Reads the bug report
+- Investigates root cause using the systematic-debugging approach
+- Writes findings to `diagnosis/` in the bug workspace
+- Identifies the fix (which files, what changes)
+
+### Phase 3: Fix & Verify
+
+- The expert identified during diagnosis implements the fix (commits on
+  the feature branch or relevant branch)
+- Status.md row updated to `Fix In Progress`
+- Game-tester runs the reproduction steps to confirm the fix
+- Status.md row updated to `Resolved` with the date
+
+### Trivial Bug Shortcut
+
+For bugs where triage determines the fix is obvious:
+
+```
+Triage → Solo expert fixes → Game-tester verifies
+```
+
+No team spawn, no diagnosis artifacts. The orchestrator makes this call.
+
+### Bug Status Flow
+
+```
+Open → Investigating → Fix In Progress → Resolved
+```
+
+Tracked in the feature's `status.md` Bug Reports table (feature bugs)
+or `project-work/bugs/status.md` (general bugs).
+
+---
+
 ## Template Flow
 
 Seven templates are copied by bootstrap-agent and filled by subsequent agents:

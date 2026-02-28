@@ -63,6 +63,17 @@ _Anything preventing progress. Remove when resolved._
 
 ---
 
+## Bug Reports
+
+_Bugs discovered during testing or play. Status flow:
+Open → Investigating → Fix In Progress → Resolved._
+
+| # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
+|---|-----|----------|-------------|--------|-------------|----------|
+| | | | | | | |
+
+---
+
 ## Decision Log
 
 _Key decisions made during this feature's development._
