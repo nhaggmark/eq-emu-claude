@@ -107,6 +107,7 @@ Signature feature: recruit-any-NPC companion system.
 | Server logs | `akk-stack/server/logs/` |
 | Topography docs | `claude/docs/topography/` (C-CODE.md, PROTOCOL-CODE.md, PERL-CODE.md, LUA-CODE.md, SQL-CODE.md) |
 | Project definition | `claude/PROJECT.md` |
+| Titanium client | `/mnt/d/EQ` (crash logs, client data) |
 
 ### Build Cycle
 

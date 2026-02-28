@@ -1,0 +1,2603 @@
+zone	zone_name	npc_id	npc_name	race	class	level	faction_name	bodytype	class_name
+akanon	Ak'Anon	55005	a_defective_cleaner	36	1	1	NULL	21	Warrior
+akanon	Ak'Anon	55011	a_rock_snake	37	1	1	NULL	21	Warrior
+akanon	Ak'Anon	55336	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+akanon	Ak'Anon	55337	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+akanon	Ak'Anon	55338	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+akanon	Ak'Anon	55012	a_rock_spider	38	1	2	NULL	22	Warrior
+akanon	Ak'Anon	55159	Gilipus	12	1	20	NULL	1	Warrior
+akanon	Ak'Anon	55158	Priest_of_Discord	1	2	50	NULL	1	Cleric
+akanon	Ak'Anon	55151	Zapho_the_Ancient	12	13	61	NULL	1	Magician
+akanon	Ak'Anon	55153	Golsodix_Biroboddle	12	1	61	NULL	1	Warrior
+akanon	Ak'Anon	55019	Tamno_Shifa	12	63	65	NULL	1	Class 63
+akanon	Ak'Anon	55156	Flapti_Bizttrin	12	1	65	NULL	1	Warrior
+akanon	Ak'Anon	55335	Santug_Claugg	10	1	70	NULL	1	Warrior
+akanon	Ak'Anon	55152	Soulbinder_Toglonoit	12	1	65	Beta Neutral	1	Warrior
+akanon	Ak'Anon	55035	clockwork_scrubber	36	1	4	Clockworks of Ak`Anon	21	Warrior
+akanon	Ak'Anon	55010	clockwork_scrubber	36	1	5	Clockworks of Ak`Anon	21	Warrior
+akanon	Ak'Anon	55001	clockwork_scrubber	36	1	6	Clockworks of Ak`Anon	21	Warrior
+akanon	Ak'Anon	55009	clockwork_sweeper	36	1	15	Clockworks of Ak`Anon	21	Warrior
+akanon	Ak'Anon	55007	a_decaying_gnome_skeleton	367	1	1	Dark Reflection	3	Warrior
+akanon	Ak'Anon	55223	Kozyn_Gigglephizz	12	12	32	Dark Reflection	1	Wizard
+akanon	Ak'Anon	55164	Kozyn_Gigglephizz	12	12	34	Dark Reflection	1	Wizard
+akanon	Ak'Anon	55022	Glerbella_Gibblix	12	2	35	Dark Reflection	1	Cleric
+akanon	Ak'Anon	55026	Tilkzog_Mournunder	12	11	35	Dark Reflection	1	Necromancer
+akanon	Ak'Anon	55025	Windlebeck_Tobokog	12	1	35	Dark Reflection	1	Warrior
+akanon	Ak'Anon	55024	Mimtia_Zethkog	12	1	35	Dark Reflection	1	Warrior
+akanon	Ak'Anon	55023	Rebbie_Romblerum	12	9	35	Dark Reflection	1	Rogue
+akanon	Ak'Anon	55006	Silox_Azrix	12	2	60	Dark Reflection	1	Cleric
+akanon	Ak'Anon	55126	Eonis_Mournunder	12	30	61	Dark Reflection	1	Class 30
+akanon	Ak'Anon	55119	Velena_Corgtec	12	31	61	Dark Reflection	1	Class 31
+akanon	Ak'Anon	55121	Rilgor_Plegnog	12	33	61	Dark Reflection	1	Class 33
+akanon	Ak'Anon	55122	Kaxon_Frennor	12	28	61	Dark Reflection	1	Class 28
+akanon	Ak'Anon	55124	Evah_Xokez	12	21	61	Dark Reflection	1	Cleric (NPC)
+akanon	Ak'Anon	55125	Dewis_Caneal	12	30	61	Dark Reflection	1	Class 30
+akanon	Ak'Anon	55145	Garret_Zethkog	12	24	61	Dark Reflection	1	Class 24
+akanon	Ak'Anon	55020	Derthix_Gibblix	12	21	61	Dark Reflection	1	Cleric (NPC)
+akanon	Ak'Anon	55123	Vaenor_Husga	12	32	61	Dark Reflection	1	Class 32
+akanon	Ak'Anon	55120	Naygog_Mitope	12	20	61	Dark Reflection	1	Warrior (NPC)
+akanon	Ak'Anon	55157	Drigaz_Grumblegrowl	48	2	34	Deepmuses	1	Cleric
+akanon	Ak'Anon	55089	a_clockwork_torturer	88	9	40	Deepmuses	1	Rogue
+akanon	Ak'Anon	55127	Lobal_Postugger	12	28	61	Deepmuses	1	Class 28
+akanon	Ak'Anon	55138	Digetha_Chogaller	12	21	61	Deepmuses	1	Cleric (NPC)
+akanon	Ak'Anon	55139	Iony_Gredlong	12	21	61	Deepmuses	1	Cleric (NPC)
+akanon	Ak'Anon	55146	Lewis_Reldnok	12	22	61	Deepmuses	1	Class 22
+akanon	Ak'Anon	55128	Welno_Tanlonikan	12	28	70	Deepmuses	1	Class 28
+akanon	Ak'Anon	55339	Reuben_Reldnok	12	22	70	Deepmuses	1	Class 22
+akanon	Ak'Anon	55340	Morlan_Tanlonikan	12	28	70	Deepmuses	1	Class 28
+akanon	Ak'Anon	55225	obsolete_model	88	1	1	Defective Clockwork	1	Warrior
+akanon	Ak'Anon	55174	obsolete_model	88	1	1	Defective Clockwork	1	Warrior
+akanon	Ak'Anon	55168	obsolete_model	36	1	2	Defective Clockwork	21	Warrior
+akanon	Ak'Anon	55034	obsolete_model	88	1	3	Defective Clockwork	1	Warrior
+akanon	Ak'Anon	55160	obsolete_model	88	1	3	Defective Clockwork	1	Warrior
+akanon	Ak'Anon	55162	obsolete_model	36	1	3	Defective Clockwork	21	Warrior
+akanon	Ak'Anon	55056	Larkon_Theardor	12	32	61	Eldritch Collective	1	Class 32
+akanon	Ak'Anon	55129	Useah_Harnbock	12	31	61	Eldritch Collective	1	Class 31
+akanon	Ak'Anon	55131	Nonnie_Texaker	12	33	61	Eldritch Collective	1	Class 33
+akanon	Ak'Anon	55134	Wuggan_Azusphere	12	32	61	Eldritch Collective	1	Class 32
+akanon	Ak'Anon	55130	Tobon_Starpyre	12	31	61	Eldritch Collective	1	Class 31
+akanon	Ak'Anon	55133	Tergon_Brenclog	12	32	61	Eldritch Collective	1	Class 32
+akanon	Ak'Anon	55015	Xalirilan_Zarinokosalio	12	31	61	Eldritch Collective	1	Class 31
+akanon	Ak'Anon	55132	Juline_Urncaller	12	33	70	Eldritch Collective	1	Class 33
+akanon	Ak'Anon	55116	Drekon_Vebnebber	12	41	20	Gem Choppers	1	Class 41
+akanon	Ak'Anon	55018	Zigg_Flin	12	9	25	Gem Choppers	1	Rogue
+akanon	Ak'Anon	55090	Sanfyrd_Featherhead	12	1	25	Gem Choppers	1	Warrior
+akanon	Ak'Anon	55042	Watchman_Dool	12	1	35	Gem Choppers	1	Warrior
+akanon	Ak'Anon	55058	Watchman_Qiz	12	1	35	Gem Choppers	1	Warrior
+akanon	Ak'Anon	55059	Watchman_Hodl	12	1	35	Gem Choppers	1	Warrior
+akanon	Ak'Anon	55069	Watchman_Lyl	12	1	35	Gem Choppers	1	Warrior
+akanon	Ak'Anon	55137	Kimble_Nogflop	12	1	40	Gem Choppers	1	Warrior
+akanon	Ak'Anon	55117	Narron_Jenork	12	20	61	Gem Choppers	1	Warrior (NPC)
+akanon	Ak'Anon	55118	Manik_Compolten	12	20	61	Gem Choppers	1	Warrior (NPC)
+akanon	Ak'Anon	55135	Jarah_Reskan	12	20	61	Gem Choppers	1	Warrior (NPC)
+akanon	Ak'Anon	55136	Baxok_Curhunter	12	20	61	Gem Choppers	1	Warrior (NPC)
+akanon	Ak'Anon	55224	Red_V	88	1	3	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55083	a_brown_bear	43	1	4	King Ak`Anon	21	Warrior
+akanon	Ak'Anon	55167	Red_V	88	1	5	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55161	Cleaner_X	36	1	6	King Ak`Anon	21	Warrior
+akanon	Ak'Anon	55163	Duster_V	36	1	6	King Ak`Anon	21	Warrior
+akanon	Ak'Anon	55202	Clockwork_XXIA	38	1	7	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55190	Clockwork_XXIIIA	38	1	8	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55082	a_tiger	63	1	8	King Ak`Anon	21	Warrior
+akanon	Ak'Anon	55221	Scrubber_IV	36	1	8	King Ak`Anon	21	Warrior
+akanon	Ak'Anon	55062	Clockwork_XXIA	38	1	9	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55183	clockwork_cleaner	36	1	9	King Ak`Anon	21	Warrior
+akanon	Ak'Anon	55000	Scrubber_IV	36	1	11	King Ak`Anon	21	Warrior
+akanon	Ak'Anon	55044	Clockwork_XXIIIA	38	1	12	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55036	clockwork_cleaner	36	1	12	King Ak`Anon	21	Warrior
+akanon	Ak'Anon	55039	Clockwork_XVIIA	38	1	18	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55191	Clockwork_XXA	38	1	19	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55200	Clockwork_XXVA	38	1	19	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55004	Clockwork_XIXA	38	1	20	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55166	Clockwork_XIXA	38	1	21	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55060	Clockwork_XXVA	38	1	21	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55205	Clockwork_XVA	38	1	21	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55172	Clockwork_XIXA	38	1	22	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55045	Clockwork_XXA	38	1	22	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55065	Clockwork_XVA	38	1	22	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55218	a_mechanic	12	1	23	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55091	a_mechanic	12	1	23	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55094	a_mechanic	12	1	24	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55219	a_mechanic	12	1	24	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55095	a_mechanic	12	1	25	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55096	a_mechanic	12	1	26	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55092	a_mechanic	12	1	26	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55008	a_mechanic	12	1	27	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55093	a_mechanic	12	1	27	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55171	Clockwork_XIIE	88	1	28	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55178	Guide_V	88	1	28	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55180	Guide_III	88	1	28	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55193	Clockwork_XXVIIB	38	1	28	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55050	Clockwork_XXIXB	38	1	28	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55063	Clockwork_XVIB	38	1	28	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55066	Clockwork_XIIB	38	1	28	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55073	Clockwork_XIE	88	1	28	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55085	Clockwork_IZ	88	1	28	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55032	Guide_III	88	1	29	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55033	Guide_II	88	1	29	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55041	Clockwork_XVIIIE	88	1	29	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55192	Clockwork_XVIE	88	1	29	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55049	Clockwork_XXVIIIB	38	1	29	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55195	Clockwork_XXIXB	38	1	29	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55055	Clockwork_XXIB	38	1	29	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55071	Clockwork_XIVE	88	1	29	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55215	Clockwork_IIIZ	88	1	29	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55216	Clockwork_IZ	88	1	29	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55204	Clockwork_XVIIB	38	1	29	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55030	Guide_V	88	1	30	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55194	Clockwork_XXVIIIB	38	1	30	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55197	Clockwork_IVB	38	1	30	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55199	Clockwork_XXB	38	1	30	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55076	Clockwork_XE	88	1	30	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55077	Clockwork_XVE	88	1	30	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55002	Clockwork_XIIE	88	1	31	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55176	Guide_VI	88	1	31	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55177	Guide_IV	88	1	31	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55179	Guide_I	88	1	31	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55047	Clockwork_XVIE	88	1	31	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55048	Clockwork_XXVIIB	38	1	31	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55052	Clockwork_IVB	38	1	31	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55203	Clockwork_XVIB	38	1	31	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55206	Clockwork_XIIB	38	1	31	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55067	Clockwork_XIB	38	1	31	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55070	Clockwork_XXE	88	1	31	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55064	Clockwork_XVIIB	38	1	31	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55028	Guide_VI	88	1	32	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55029	Guide_IV	88	1	32	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55031	Guide_I	88	1	32	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55181	Guide_II	88	1	32	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55043	Clockwork_XIIIB	38	1	32	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55046	Clockwork_XVIIIB	38	1	32	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55054	Clockwork_XXB	38	1	32	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55208	Clockwork_XXE	88	1	32	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55210	Clockwork_XIE	88	1	32	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55084	Clockwork_IIIZ	88	1	32	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55086	Clockwork_IIZ	88	1	32	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55175	Exterminator_VIII	88	1	33	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55207	Clockwork_XXXD	88	1	33	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55075	Clockwork_XVD	88	1	33	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55053	Clockwork_XXVD	88	1	34	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55209	Clockwork_XVID	88	1	34	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55211	Clockwork_XXID	88	1	34	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55040	Clockwork_XXIVD	88	1	35	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55068	Clockwork_XXXD	88	1	35	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55074	Clockwork_XXID	88	1	35	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55212	Clockwork_XVD	88	1	35	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55198	Clockwork_XXVD	88	1	36	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55213	Clockwork_XXD	88	1	36	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55016	Exterminator_VIII	88	1	37	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55072	Clockwork_XVID	88	1	37	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55078	Clockwork_XXD	88	1	37	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55170	Clockwork_XVIIC	38	1	38	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55051	Clockwork_XIIC	38	1	38	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55165	Clockwork_XVIIC	38	1	39	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55185	Clockwork_XXVIIC	38	1	39	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55196	Clockwork_XIIC	38	1	39	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55061	Clockwork_XXVIC	38	1	39	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55003	Clockwork_XVIIC	38	1	40	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55037	Clockwork_XXVIIC	38	1	40	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55087	a_clockwork_receptionist	88	1	40	King Ak`Anon	1	Warrior
+akanon	Ak'Anon	55222	Clockwork_XVIIC	38	1	42	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55201	Clockwork_XXVIC	38	1	42	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55057	Clockwork_MX	38	1	44	King Ak`Anon	22	Warrior
+akanon	Ak'Anon	55017	Clockwork_VIIX	88	14	55	King Ak`Anon	1	Enchanter
+akanon	Ak'Anon	55088	King_Ak-Anon	88	13	60	King Ak`Anon	1	Magician
+akanon	Ak'Anon	55155	Lyra_Lyrestringer	4	8	25	League of Antonican Bards	1	Bard
+akanon	Ak'Anon	55081	a_lesser_minotaur	53	1	9	Meldrath	1	Warrior
+akanon	Ak'Anon	55150	Zenrel_Ottonoggin	12	41	25	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55027	Rylin_Coil	12	41	30	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55080	a_clockwork_merchant	88	41	30	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55140	a_clockwork_baker	88	41	35	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55141	a_clockwork_armorer	88	41	35	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55142	a_clockwork_merchant	88	41	35	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55143	a_clockwork_potter	88	41	35	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55144	a_clockwork_tailor	88	41	35	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55013	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55325	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55324	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55311	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55316	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55309	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55021	Clockwork_SmithXIII	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55149	a_clockwork_miner	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55098	a_clockwork_alchemist	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55099	a_clockwork_jeweler	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55100	a_clockwork_jeweler	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55101	a_clockwork_grocer	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55102	a_clockwork_bowyer	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55103	a_clockwork_weaponsmith	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55104	a_clockwork_weaponsmith	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55105	a_clockwork_barkeep	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55328	a_clockwork_merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55106	a_clockwork_cobbler	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55107	a_clockwork_armorer	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55108	a_clockwork_armorer	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55109	a_clockwork_tanner	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55110	a_clockwork_tanner	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55111	a_clockwork_tailor	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55112	a_clockwork_tailor	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55113	a_clockwork_banker	88	40	40	Merchants of Ak`Anon	1	Class 40
+akanon	Ak'Anon	55220	a_clockwork_banker	88	40	40	Merchants of Ak`Anon	1	Class 40
+akanon	Ak'Anon	55147	a_clockwork_brewmaster	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55148	a_clockwork_sketcher	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55154	Tesil_Gludien	12	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55308	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55310	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55312	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55313	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55314	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55315	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55317	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55318	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55319	a_clockwork_merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55301	a_clockwork_merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55302	a_clockwork_merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55320	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55323	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55322	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55115	a_clockwork_priest	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55014	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55321	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55079	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55097	a_clockwork_merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55326	a_clockwork_merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55327	a_clockwork_merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55329	a_clockwork_merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55330	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55332	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55333	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55331	Clockwork_Merchant	88	41	40	Merchants of Ak`Anon	1	Class 41
+akanon	Ak'Anon	55305	Clockwork_Merchant	88	41	50	Merchants of Ak`Anon	5	Class 41
+akanon	Ak'Anon	55304	Clockwork_Merchant	88	41	50	Merchants of Ak`Anon	5	Class 41
+akanon	Ak'Anon	55306	Clockwork_Merchant	88	41	50	Merchants of Ak`Anon	5	Class 41
+akanon	Ak'Anon	55307	Clockwork_Merchant	88	41	50	Merchants of Ak`Anon	5	Class 41
+akanon	Ak'Anon	55303	Clockwork_Merchant	88	41	50	Merchants of Ak`Anon	5	Class 41
+cabeast	Cabilis East	106003	a_swamp_leech	104	1	1	NULL	21	Warrior
+cabeast	Cabilis East	106000	a_mosquito	134	1	1	NULL	22	Warrior
+cabeast	Cabilis East	106001	decaying_skeleton	161	1	1	NULL	3	Warrior
+cabeast	Cabilis East	106005	a_young_scaled_wolf	356	1	1	NULL	21	Warrior
+cabeast	Cabilis East	106126	betabstgmspawner	240	1	1	NULL	11	Warrior
+cabeast	Cabilis East	106305	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+cabeast	Cabilis East	106306	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+cabeast	Cabilis East	106307	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+cabeast	Cabilis East	106002	a_scorpion	129	1	2	NULL	22	Warrior
+cabeast	Cabilis East	106124	a_giant_swamp_leech	104	1	2	NULL	21	Warrior
+cabeast	Cabilis East	106022	a_giant_swamp_leech	104	1	4	NULL	21	Warrior
+cabeast	Cabilis East	106023	Half_Elf_Maiden	7	1	25	NULL	1	Warrior
+cabeast	Cabilis East	106120	Master_Glox	128	7	40	NULL	1	Monk
+cabeast	Cabilis East	106999	Priest_of_Discord	1	2	50	NULL	1	Cleric
+cabeast	Cabilis East	106015	Gondola	73	1	50	NULL	5	Warrior
+cabeast	Cabilis East	106303	Zauz_Malgorne	128	1	50	NULL	1	Warrior
+cabeast	Cabilis East	106113	Hierophant_Vjen	128	63	65	NULL	1	Class 63
+cabeast	Cabilis East	106304	Santug_Claugg	10	1	70	NULL	1	Warrior
+cabeast	Cabilis East	106117	Soulbinder_Shakar	128	1	65	Beta Neutral	1	Warrior
+cabeast	Cabilis East	106004	Grype	128	11	30	Brood of Kotiz	1	Necromancer
+cabeast	Cabilis East	106021	Klok_Wartol	139	41	30	Brood of Kotiz	1	Class 41
+cabeast	Cabilis East	106998	Sybar	139	41	50	Brood of Kotiz	1	Class 41
+cabeast	Cabilis East	106061	Librarian_Zimor	128	11	61	Brood of Kotiz	1	Necromancer
+cabeast	Cabilis East	106085	Frizazz	139	1	15	Cabilis Residents	1	Warrior
+cabeast	Cabilis East	106094	Jozter	139	1	15	Cabilis Residents	1	Warrior
+cabeast	Cabilis East	106115	Klok_Faziz	128	41	25	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106009	Exterminator_Sahizz	139	1	30	Cabilis Residents	1	Warrior
+cabeast	Cabilis East	106018	Klok_Toren	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106019	Klok_Gritchit	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106020	Klok_Sweetzie	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106032	Granthrow	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106033	Rastok	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106034	Klok_Grots	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106035	Klok_Nalgoz	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106036	Klok_Stitch	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106038	Smithy_Vyx	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106039	Weaponsmith_Grugl	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106040	Smithy_Bashdyn	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106041	Smithy_Qag	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106042	Smithy_Ygen	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106043	Smithy_Phlegyl	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106044	Klok_Oxmod	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106045	Klok_Ixmid	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106046	Klok_Gogon	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106047	Klok_Foxmyr	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106048	Klok_Ephmir	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106049	Klok_Dytar	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106050	Klok_Vednir	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106051	Klok_Tempar	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106052	Klok_Scaznar	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106053	Klok_Hoga	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106054	Klok_Wyga	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106055	Klok_Poklon	128	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106056	Klok_Margar	139	40	30	Cabilis Residents	1	Class 40
+cabeast	Cabilis East	106057	Klok_Rakra	139	40	30	Cabilis Residents	1	Class 40
+cabeast	Cabilis East	106058	Klok_Unlar	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106059	Klok_Mugruk	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106060	Haggle_Baron_Klok	128	1	30	Cabilis Residents	1	Warrior
+cabeast	Cabilis East	106095	Klok_Sass	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106096	Brewer_Prixal	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106110	Smithy_Zern	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106111	Smithy_Xzatik	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106112	Smithy_Krikt	139	41	30	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106118	Pagnar_Vyng	128	41	40	Cabilis Residents	1	Class 41
+cabeast	Cabilis East	106122	Clerk_Doval	128	1	30	Crusaders of Greenmist	1	Warrior
+cabeast	Cabilis East	106082	Squire_Gristle	139	41	30	Crusaders of Greenmist	1	Class 41
+cabeast	Cabilis East	106083	Squire_Rygle	139	41	30	Crusaders of Greenmist	1	Class 41
+cabeast	Cabilis East	106010	Sirtha_Scarscale	128	1	50	Crusaders of Greenmist	1	Warrior
+cabeast	Cabilis East	106011	Sarth_Scarscale	128	1	50	Crusaders of Greenmist	1	Warrior
+cabeast	Cabilis East	106016	Lord_Vizaroth	128	41	50	Crusaders of Greenmist	1	Class 41
+cabeast	Cabilis East	106024	Crusader_Zixo	139	5	50	Crusaders of Greenmist	1	Shadowknight
+cabeast	Cabilis East	106025	Crusader_Hitol	139	5	50	Crusaders of Greenmist	1	Shadowknight
+cabeast	Cabilis East	106026	Crusader_Reidak	139	5	50	Crusaders of Greenmist	1	Shadowknight
+cabeast	Cabilis East	106027	Crusader_Olos	139	5	50	Crusaders of Greenmist	1	Shadowknight
+cabeast	Cabilis East	106028	Crusader_Cotat	139	5	50	Crusaders of Greenmist	1	Shadowknight
+cabeast	Cabilis East	106029	Crusader_Golia	139	5	50	Crusaders of Greenmist	1	Shadowknight
+cabeast	Cabilis East	106030	Crusader_Daehod	139	5	50	Crusaders of Greenmist	1	Shadowknight
+cabeast	Cabilis East	106031	Crusader_Wonku	139	5	50	Crusaders of Greenmist	1	Shadowknight
+cabeast	Cabilis East	106106	Lord_Qyzar	128	24	61	Crusaders of Greenmist	1	Class 24
+cabeast	Cabilis East	106107	Lord_Korzin	128	24	61	Crusaders of Greenmist	1	Class 24
+cabeast	Cabilis East	106108	Lord_Gikzic	128	24	61	Crusaders of Greenmist	1	Class 24
+cabeast	Cabilis East	106109	Arch_Duke_Xog	128	24	61	Crusaders of Greenmist	1	Class 24
+cabeast	Cabilis East	106007	a_froglok_slave	26	1	2	Indifferent	1	Warrior
+cabeast	Cabilis East	106006	a_pygmy_barracuda	148	1	2	KOS	21	Warrior
+cabeast	Cabilis East	106037	War_Historian_Kobl	139	41	30	Legion of Cabilis	1	Class 41
+cabeast	Cabilis East	106066	The_Toilmaster	139	1	40	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106062	Trooper_Fryp	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106063	Trooper_Nagraz	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106064	Trooper_Iggmin	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106065	Trooper_Zishrin	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106067	Trooper_Azalin	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106068	Trooper_Begzei	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106069	Trooper_Shestar	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106070	Trooper_Feglesh	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106071	Trooper_Rofylin	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106072	Trooper_Nishnish	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106073	Trooper_Ishlin	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106074	Trooper_Keplar	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106075	Trooper_Byzin	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106076	Trooper_Googin	139	1	50	Legion of Cabilis	1	Warrior
+cabeast	Cabilis East	106008	Vessel_Drozlin	128	5	60	Legion of Cabilis	1	Shadowknight
+cabeast	Cabilis East	106077	Drill_Master_Kyg	128	20	61	Legion of Cabilis	1	Warrior (NPC)
+cabeast	Cabilis East	106078	Drill_Master_Vygan	128	20	61	Legion of Cabilis	1	Warrior (NPC)
+cabeast	Cabilis East	106079	Drill_Master_Dal	128	20	61	Legion of Cabilis	1	Warrior (NPC)
+cabeast	Cabilis East	106080	War_Baron_Eator	128	20	61	Legion of Cabilis	1	Warrior (NPC)
+cabeast	Cabilis East	106014	Grazik_Plaguebringer	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106081	Vessel_Spirit_Companion	128	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106086	Vessel_Kirtokk	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106087	Vessel_Drekk	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106088	Vessel_Migron	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106089	Vessel_Mortyr	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106090	Vessel_Grymm	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106091	Vessel_Grott	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106092	Vessel_Kabda	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106105	Gaxl_the_scribe	139	41	30	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106116	Slithreina	128	41	45	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106119	Zreezas	128	41	45	Scaled Mystics	1	Class 41
+cabeast	Cabilis East	106012	Shezlie_Furscale	128	10	50	Scaled Mystics	1	Shaman
+cabeast	Cabilis East	106013	Zazlan_Furscale	128	10	50	Scaled Mystics	1	Shaman
+cabeast	Cabilis East	106017	Himart_Kichith	128	1	50	Scaled Mystics	1	Warrior
+cabeast	Cabilis East	106084	#Prime_Patriarch_Vuzx	128	34	61	Scaled Mystics	1	Class 34
+cabeast	Cabilis East	106101	Hierophant_Dexl	128	29	61	Scaled Mystics	1	Class 29
+cabeast	Cabilis East	106102	Hierophant_Zand	128	29	61	Scaled Mystics	1	Class 29
+cabeast	Cabilis East	106103	Hierophant_Oxyn	128	29	61	Scaled Mystics	1	Class 29
+cabeast	Cabilis East	106104	Prime_Hierophant_Vek	128	29	61	Scaled Mystics	1	Class 29
+cabeast	Cabilis East	106114	Hierophant_Granix	128	29	61	Scaled Mystics	1	Class 29
+cabeast	Cabilis East	106125	Elder_Patriarch_Ixthal	128	34	61	Scaled Mystics	1	Class 34
+cabeast	Cabilis East	106093	the_Court_Chronicler	139	41	30	Swift Tails	1	Class 41
+cabeast	Cabilis East	106097	Master_Niska	128	26	61	Swift Tails	1	Class 26
+cabeast	Cabilis East	106098	Master_Raska	128	26	61	Swift Tails	1	Class 26
+cabeast	Cabilis East	106099	Master_Bain	128	26	61	Swift Tails	1	Class 26
+cabeast	Cabilis East	106100	Grand_Master_Glox	128	26	61	Swift Tails	1	Class 26
+cabeast	Cabilis East	106121	an_Iksar_outcast	128	1	3	The Forsaken	1	Warrior
+cabwest	Cabilis West	82045	a_young_scaled_wolf	356	1	1	NULL	21	Warrior
+cabwest	Cabilis West	82001	Gondola	73	1	50	NULL	5	Warrior
+cabwest	Cabilis West	82046	Sartar_the_Unrivaled	128	7	61	NULL	1	Monk
+cabwest	Cabilis West	82047	Yzilimn_Pxikn	128	7	65	NULL	1	Monk
+cabwest	Cabilis West	82008	Zotalz	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82011	Jaxxtz	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82012	a_mortician	161	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82014	Mohin	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82015	Lybar	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82016	Kamzar	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82017	Jondin	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82034	Keeper_Pain	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82035	Keeper_Rott	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82036	Keeper_Pestilence	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82037	Keeper_Plight	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82038	Keeper_Bile	139	41	30	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82002	Lithriss_Frizen	128	41	40	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82004	Visar_Glolith	128	41	40	Brood of Kotiz	1	Class 41
+cabwest	Cabilis West	82005	Izarod_Fristan	128	11	50	Brood of Kotiz	1	Necromancer
+cabwest	Cabilis West	82026	Nihilist_Zeegarn	128	1	50	Brood of Kotiz	1	Warrior
+cabwest	Cabilis West	82027	Nihilist_Yeegarn	128	1	50	Brood of Kotiz	1	Warrior
+cabwest	Cabilis West	82040	an_Iksar_hermit	128	30	61	Brood of Kotiz	1	Class 30
+cabwest	Cabilis West	82041	Master_Kyvix	128	30	61	Brood of Kotiz	1	Class 30
+cabwest	Cabilis West	82042	Master_Rixiz	128	30	61	Brood of Kotiz	1	Class 30
+cabwest	Cabilis West	82043	Master_Xydoz	128	30	61	Brood of Kotiz	1	Class 30
+cabwest	Cabilis West	82044	Harbinger_Glosk	128	30	61	Brood of Kotiz	1	Class 30
+cabwest	Cabilis West	82007	a_forbidden_scribe	128	41	30	Cabilis Residents	1	Class 41
+cabwest	Cabilis West	82013	Gryzil	139	41	30	Cabilis Residents	1	Class 41
+cabwest	Cabilis West	82039	Klok_Scaleroot	139	41	45	Cabilis Residents	1	Class 41
+cabwest	Cabilis West	82049	Klok_Greyscale	139	41	45	Cabilis Residents	1	Class 41
+cabwest	Cabilis West	82003	Keeper_Suffering	139	41	50	Cabilis Residents	1	Class 41
+cabwest	Cabilis West	82006	Crusader_Ezrogz	139	1	50	Crusaders of Greenmist	1	Warrior
+cabwest	Cabilis West	82009	Crusader_Axmo	139	1	50	Crusaders of Greenmist	1	Warrior
+cabwest	Cabilis West	82010	Crusader_Mocdi	139	1	50	Crusaders of Greenmist	1	Warrior
+cabwest	Cabilis West	82000	Exterminator_Jaliss	139	1	30	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82018	Trooper_Dagnav	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82019	Trooper_Yegmesh	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82020	Trooper_Moggoz	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82021	Trooper_Shyzin	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82022	Trooper_Ogmire	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82023	Trooper_Gryfkyz	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82024	Trooper_Xaxxot	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82025	Trooper_Gegren	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82028	Trooper_Hylpik	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82029	Trooper_Egrephit	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82030	Trooper_Ryzee	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82031	Trooper_Tygar	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82032	Trooper_Ozlot	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82033	Trooper_Eglo	139	1	50	Legion of Cabilis	1	Warrior
+cabwest	Cabilis West	82048	Marthor	128	7	61	Swift Tails	1	Monk
+erudnext	Erudin	24005	a_fish	24	1	1	NULL	21	Warrior
+erudnext	Erudin	24006	a_fish	24	1	1	NULL	21	Warrior
+erudnext	Erudin	24010	a_fish	24	1	1	NULL	21	Warrior
+erudnext	Erudin	24011	a_fish	24	1	1	NULL	21	Warrior
+erudnext	Erudin	24056	Sabrina	73	1	1	NULL	5	Warrior
+erudnext	Erudin	24101	#Translocator_Eniela	12	12	1	NULL	1	Wizard
+erudnext	Erudin	24000	Lenya_Wisk	1	9	1	NULL	1	Rogue
+erudnext	Erudin	24304	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+erudnext	Erudin	24305	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+erudnext	Erudin	24306	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+erudnext	Erudin	24104	Megan_Tiglin	1	9	2	NULL	1	Rogue
+erudnext	Erudin	24106	Genna_Lostin	1	9	2	NULL	1	Rogue
+erudnext	Erudin	24109	Zip_Fendil	1	9	2	NULL	1	Rogue
+erudnext	Erudin	24111	Taler_Bilge	1	9	2	NULL	1	Rogue
+erudnext	Erudin	24058	a_sand_shark	61	1	3	NULL	21	Warrior
+erudnext	Erudin	24057	a_sand_shark	61	1	5	NULL	21	Warrior
+erudnext	Erudin	24034	Tomekeeper_Danl	78	1	35	NULL	1	Warrior
+erudnext	Erudin	24033	#Senina_Jolik	3	14	50	NULL	1	Enchanter
+erudnext	Erudin	24103	Priest_of_Discord	1	2	50	NULL	1	Cleric
+erudnext	Erudin	24003	Nolusia_Finharn	3	1	61	NULL	1	Warrior
+erudnext	Erudin	24055	Breya_Nostulia	3	22	61	NULL	1	Class 22
+erudnext	Erudin	24095	Brianna_Falsruinay	3	1	61	NULL	1	Warrior
+erudnext	Erudin	24031	Bazma_Brinstar	3	63	65	NULL	1	Class 63
+erudnext	Erudin	24302	Orwin_Flintmaker	3	1	65	NULL	1	Warrior
+erudnext	Erudin	24301	Sea_King	72	1	70	NULL	11	Warrior
+erudnext	Erudin	24303	Santug_Claugg	10	1	70	NULL	1	Warrior
+erudnext	Erudin	24035	Soulbinder_Altira_Mamar	3	1	65	Beta Neutral	1	Warrior
+erudnext	Erudin	24102	Collier	1	9	35	Circle of Unseen Hands	1	Rogue
+erudnext	Erudin	24032	#Jordin_Sretin	3	1	1	Craftkeepers	1	Warrior
+erudnext	Erudin	24037	Tol_Nicelot	3	3	20	Deepwater Knights	1	Paladin
+erudnext	Erudin	24051	Zure_Bavuior	3	21	61	Deepwater Knights	1	Cleric (NPC)
+erudnext	Erudin	24052	Mikeana_Tolstaub	3	21	61	Deepwater Knights	1	Cleric (NPC)
+erudnext	Erudin	24054	Laoni_Reista	3	22	61	Deepwater Knights	1	Class 22
+erudnext	Erudin	24063	Gans_Paust	3	21	61	Deepwater Knights	1	Cleric (NPC)
+erudnext	Erudin	24065	Weligon_Steelherder	3	22	61	Deepwater Knights	1	Class 22
+erudnext	Erudin	24098	Kordian_Keshalian	3	3	61	Deepwater Knights	1	Paladin
+erudnext	Erudin	24099	Alimaja_Shanthun	3	2	61	Deepwater Knights	1	Cleric
+erudnext	Erudin	24050	Dleria_Mausrel	3	21	61	Deepwater Knights	1	Cleric (NPC)
+erudnext	Erudin	24053	Tiam_Khonsir	3	22	61	Deepwater Knights	1	Class 22
+erudnext	Erudin	24038	Sinnkin_Highbrow	3	1	4	Erudin Citizens	1	Warrior
+erudnext	Erudin	24039	Phloatin_Highbrow	3	1	17	Erudin Citizens	1	Warrior
+erudnext	Erudin	24110	a_young_shark	61	1	1	Heretics	21	Warrior
+erudnext	Erudin	24069	Sentinel_Venci	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24073	Sentinel_Demitri	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24077	Sentinel_Phylos	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24082	Sentinel_Polix	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24083	Sentinel_Silvis	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24086	Sentinel_Gressio	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24087	Sentinel_Tybal	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24088	Sentinel_Malvol	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24089	Sentinel_Cymbelin	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24090	Sentinel_Ursulo	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24091	Sentinel_Aegeo	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24092	Sentinel_Mercutil	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24093	Sentinel_Belario	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24094	Sentinel_Adrial	78	3	30	High Guard of Erudin	1	Paladin
+erudnext	Erudin	24009	a_giant_piranha	74	1	6	KOS	21	Warrior
+erudnext	Erudin	24008	a_giant_piranha	74	1	9	KOS	21	Warrior
+erudnext	Erudin	24007	a_shark	61	1	13	KOS	21	Warrior
+erudnext	Erudin	24012	a_shark	61	1	14	KOS	21	Warrior
+erudnext	Erudin	24001	a_shark	61	1	15	KOS	21	Warrior
+erudnext	Erudin	24105	a_shark	61	1	16	KOS	21	Warrior
+erudnext	Erudin	24019	Altrusan_Belstince	78	41	24	League of Antonican Bards	1	Class 41
+erudnext	Erudin	24097	Ticar_Lorestring	7	1	25	League of Antonican Bards	1	Warrior
+erudnext	Erudin	24036	Illithi_Nollith	3	1	20	Merchants of Erudin	1	Warrior
+erudnext	Erudin	24067	Helia_BlueHawk	3	41	20	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24042	Ayth_Niphiria	3	41	22	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24015	Ignacia_Rellasp	78	41	24	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24016	Qualtis_Weslent	78	41	24	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24020	Tollari_Mistell	78	41	24	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24023	Kathar_Varselli	78	41	24	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24024	Selint_Chency	78	41	24	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24027	Stolace_Printell	78	41	24	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24028	Mertitt_Phentilly	78	41	24	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24114	Rem_Knarjon	78	41	25	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24068	Geoard_BlueHawk	78	41	25	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24066	Ghemna_Nyjuss	78	41	26	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24049	Fhania_Aserdon	3	41	28	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24080	Stella_Breezemoon	3	41	28	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24014	Chembla_Ellent	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24017	Weltria_Ostriss	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24018	Sornita_Eltern	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24021	Raine_Beteria	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24022	Issibla_Belstince	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24025	Junice_Weslent	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24026	Alysa_Eltern	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24030	Lissa_Respelti	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24029	Syra_Printell	3	41	35	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24096	Valani_Gadriek	3	41	40	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24040	Gayle_Weaven	3	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24041	Shinan_Orefinder	3	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24059	Beth_Breadmaker	3	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24060	Palus_Weaponsmith	78	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24061	Nerth_Sailwind	78	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24062	Monita_Weaver	3	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24070	Luren_Renthalis	3	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24071	Teria_Finleather	3	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24072	Borge_Finleather	78	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24074	Reihan_Wilhemson	78	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24076	Demicla_Tanner	3	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24078	Jagen_Kindlor	78	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24079	Dunore_Steelfinger	78	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24084	Kisrin_Breezeshadow	3	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24085	Reko_Saltamer	78	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24075	Galbasi_Weaver	78	41	45	Merchants of Erudin	1	Class 41
+erudnext	Erudin	24043	Jras_Solsier	3	22	61	Peace Keepers	1	Class 22
+erudnext	Erudin	24044	Reklon_Gnallen	3	22	61	Peace Keepers	1	Class 22
+erudnext	Erudin	24045	Vynon_Estaliun	3	22	61	Peace Keepers	1	Class 22
+erudnext	Erudin	24046	Cipse_Tospyr	3	21	61	Peace Keepers	1	Cleric (NPC)
+erudnext	Erudin	24081	Leraena_Shelyrak	3	21	61	Peace Keepers	1	Cleric (NPC)
+erudnext	Erudin	24047	Lumi_Stergnon	3	21	61	Peace Keepers	1	Cleric (NPC)
+erudnext	Erudin	24064	Depnar_Bulrious	3	22	61	Peace Keepers	1	Class 22
+erudnext	Erudin	24048	Rarnan_Lapice	3	21	61	Peace Keepers	1	Cleric (NPC)
+erudnext	Erudin	24004	Camin	1	12	50	Truespirit	1	Wizard
+erudnext	Erudin	24013	Stofo_Olan	3	14	50	Truespirit	1	Enchanter
+erudnint	The Erudin Palace	23019	Mairee_Silentone	3	1	60	NULL	1	Warrior
+erudnint	The Erudin Palace	23018	Syreth_the_Fathomkeeper	3	3	61	NULL	1	Paladin
+erudnint	The Erudin Palace	23079	Ienala_Eceiaiu	3	1	65	NULL	1	Warrior
+erudnint	The Erudin Palace	23078	Alcinda_Soolpop	3	14	3	Craftkeepers	1	Enchanter
+erudnint	The Erudin Palace	23014	Vellenon_Harrance	78	41	24	Craftkeepers	1	Class 41
+erudnint	The Erudin Palace	23010	Elentar_Bealtarik	78	41	24	Craftkeepers	1	Class 41
+erudnint	The Erudin Palace	23011	Horacia_Garnellia	78	41	24	Craftkeepers	1	Class 41
+erudnint	The Erudin Palace	23032	Gwynora_Armista	3	41	28	Craftkeepers	1	Class 41
+erudnint	The Erudin Palace	23012	Estra_Nancer	3	41	35	Craftkeepers	1	Class 41
+erudnint	The Erudin Palace	23013	Danilla_Delucic	3	41	35	Craftkeepers	1	Class 41
+erudnint	The Erudin Palace	23015	Pinilla	3	41	35	Craftkeepers	1	Class 41
+erudnint	The Erudin Palace	23000	Nolusia_Finharn	3	33	61	Craftkeepers	1	Class 33
+erudnint	The Erudin Palace	23033	Nikina_Sparlek	3	33	61	Craftkeepers	1	Class 33
+erudnint	The Erudin Palace	23034	Lanken_Rjarn	3	33	61	Craftkeepers	1	Class 33
+erudnint	The Erudin Palace	23073	Toresian_Fhabel	3	33	61	Craftkeepers	1	Class 33
+erudnint	The Erudin Palace	23002	Barstall_Methinon	78	41	24	Crimson Hands	1	Class 41
+erudnint	The Erudin Palace	23003	Effunic_Korett	78	41	24	Crimson Hands	1	Class 41
+erudnint	The Erudin Palace	23040	Andane_Starinen	78	41	24	Crimson Hands	1	Class 41
+erudnint	The Erudin Palace	23004	Gissa_Brist	3	41	35	Crimson Hands	1	Class 41
+erudnint	The Erudin Palace	23077	Akbaq_Salid	3	12	35	Crimson Hands	1	Wizard
+erudnint	The Erudin Palace	23041	Raskena_Djor	3	31	61	Crimson Hands	1	Class 31
+erudnint	The Erudin Palace	23042	Ghanlin_Skyphire	3	31	61	Crimson Hands	1	Class 31
+erudnint	The Erudin Palace	23071	Whes_Nareya	3	31	61	Crimson Hands	1	Class 31
+erudnint	The Erudin Palace	23072	Josper_Kenshed	3	31	61	Crimson Hands	1	Class 31
+erudnint	The Erudin Palace	23006	Tuballi_Stellari	78	41	24	Gate Callers	1	Class 41
+erudnint	The Erudin Palace	23007	Kestall_Tulenci	78	41	24	Gate Callers	1	Class 41
+erudnint	The Erudin Palace	23036	Harban_Ranflash	78	41	26	Gate Callers	1	Class 41
+erudnint	The Erudin Palace	23005	Wistcona	3	41	35	Gate Callers	1	Class 41
+erudnint	The Erudin Palace	23009	Killi_Frillep	3	41	35	Gate Callers	1	Class 41
+erudnint	The Erudin Palace	23038	Reba_Garus	3	32	61	Gate Callers	1	Class 32
+erudnint	The Erudin Palace	23075	Dalles_Cekus	3	32	61	Gate Callers	1	Class 32
+erudnint	The Erudin Palace	23037	Markus_Jaevins	3	32	61	Gate Callers	1	Class 32
+erudnint	The Erudin Palace	23074	Vasile_Jahnir	3	32	61	Gate Callers	1	Class 32
+erudnint	The Erudin Palace	23021	Shondo_Billin	12	1	11	Gem Choppers	1	Warrior
+erudnint	The Erudin Palace	23022	Warden_Lius	78	3	25	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23043	Sentinel_Charin	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23058	Sentinel_Wren	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23023	Sentinel_Hylin	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23024	Sentinel_Lixen	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23025	Sentinel_Balthar	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23026	Sentinel_Desde	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23027	Sentinel_Laphis	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23031	Sentinel_Jeast	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23035	Sentinel_Edan	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23044	Sentinel_Golas	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23039	Sentinel_Dadil	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23045	Sentinel_Thron	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23048	Sentinel_Ogen	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23057	Sentinel_Cholis	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23059	Sentinel_Rysin	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23060	Sentinel_Vanil	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23061	Sentinel_Colm	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23066	Sentinel_Knox	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23067	Sentinel_Phis	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23068	Sentinel_Nolbain	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23069	Sentinel_Tigonus	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23070	Sentinel_Corin	78	3	30	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23053	Chief_Adair	78	3	37	High Guard of Erudin	1	Paladin
+erudnint	The Erudin Palace	23020	Trilani_Parlone	5	14	45	Keepers of the Art	1	Enchanter
+erudnint	The Erudin Palace	23076	Barodreth_Firefingers	3	3	61	Keepers of the Art	1	Paladin
+erudnint	The Erudin Palace	23017	Sparlus_Penfold	3	41	25	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23063	Wick_Ashfield	78	40	25	Merchants of Erudin	1	Class 40
+erudnint	The Erudin Palace	23064	Sahana_Heartlyn	3	40	25	Merchants of Erudin	1	Class 40
+erudnint	The Erudin Palace	23065	Agryn_Moonfield	78	41	30	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23008	Onyssa_Vroce	3	41	35	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23016	Telor_Beteria	78	41	35	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23028	Jeliala_Glimmercharm	3	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23029	Frena_Runeflash	3	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23030	Tika_Shockstep	3	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23046	Sothure_Gemcutter	78	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23047	Anite_Gemcutter	3	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23049	Sharin_Denuen	3	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23050	Glysin_Denuen	3	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23051	Myrcin_Denuen	3	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23052	Elbsin_Denuen	3	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23054	Vall_Stonewisp	78	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23055	Tan_Monosty	78	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23056	Judge_Monosty	78	41	45	Merchants of Erudin	1	Class 41
+erudnint	The Erudin Palace	23062	Tyrena_Monosty	3	40	45	Merchants of Erudin	1	Class 40
+felwithea	Northern Felwithe	61000	a_rodent	36	1	1	NULL	21	Warrior
+felwithea	Northern Felwithe	61092	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+felwithea	Northern Felwithe	61093	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+felwithea	Northern Felwithe	61094	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+felwithea	Northern Felwithe	61014	Exterminator_Valern	5	1	40	NULL	1	Warrior
+felwithea	Northern Felwithe	61061	Banker_Rylisan	5	40	40	NULL	1	Class 40
+felwithea	Northern Felwithe	61062	Banker_Tintal	5	40	40	NULL	1	Class 40
+felwithea	Northern Felwithe	61085	Lieutenant_Rosaed	106	3	41	NULL	1	Paladin
+felwithea	Northern Felwithe	61071	Priest_of_Discord	1	2	50	NULL	1	Cleric
+felwithea	Northern Felwithe	61066	Lord_Nethryn	5	2	61	NULL	1	Cleric
+felwithea	Northern Felwithe	61023	Ann_Oma	5	63	65	NULL	1	Class 63
+felwithea	Northern Felwithe	61067	Soulbinder_Elendalira	5	1	65	NULL	1	Warrior
+felwithea	Northern Felwithe	61070	Larroniae_Huial	5	12	65	NULL	1	Wizard
+felwithea	Northern Felwithe	61091	Santug_Claugg	10	1	70	NULL	1	Warrior
+felwithea	Northern Felwithe	61089	#Galrun_Starforge	5	3	70	NULL	1	Paladin
+felwithea	Northern Felwithe	61017	Terren_Starwatcher	5	41	40	Clerics of Tunare	1	Class 41
+felwithea	Northern Felwithe	61027	Arrias_Arcanum	5	2	40	Clerics of Tunare	1	Cleric
+felwithea	Northern Felwithe	61035	Lieutenant_Rosaed	106	3	42	Clerics of Tunare	1	Paladin
+felwithea	Northern Felwithe	61013	Elia_the_Pure	5	2	55	Clerics of Tunare	1	Cleric
+felwithea	Northern Felwithe	61024	Tynkale	5	22	61	Clerics of Tunare	1	Class 22
+felwithea	Northern Felwithe	61025	Yeolarn_Bronzeleaf	5	21	61	Clerics of Tunare	1	Cleric (NPC)
+felwithea	Northern Felwithe	61026	General_Jyleel	5	22	61	Clerics of Tunare	1	Class 22
+felwithea	Northern Felwithe	61078	Guard_Evital	106	3	38	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61087	Guard_Jassong	106	3	38	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61086	Guard_Settine	106	3	38	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61084	Guard_Meadom	106	3	38	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61077	Guard_Crucorn	106	3	38	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61001	Guard_Evital	106	3	39	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61074	Guard_Hutian	106	3	39	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61004	Guard_Settine	106	3	39	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61076	Guard_Meadom	106	3	39	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61036	Guard_Crucorn	106	3	39	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61037	Guard_Lovayn	106	3	39	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61007	Guard_Wisnyw	106	3	40	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61008	Guard_Legver	106	3	40	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61009	Guard_Meadom	106	3	40	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61038	Guard_Trerun	106	3	40	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61039	Guard_Kiston	106	3	40	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61002	Guard_Hutian	106	3	41	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61072	Guard_Kiston	106	3	41	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61003	Guard_Jassong	106	3	42	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61005	Guard_Allmayn	106	3	42	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61006	Guard_Mystan	106	3	42	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61075	Guard_Wisnyw	106	3	42	Emerald Warriors	1	Paladin
+felwithea	Northern Felwithe	61011	Tolkar_Parlone	5	14	35	Keepers of the Art	1	Enchanter
+felwithea	Northern Felwithe	61069	Tacar_Tissleplay	4	8	25	League of Antonican Bards	1	Bard
+felwithea	Northern Felwithe	61065	Laernian_Caelael	5	41	25	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61034	Merchant_Nora	5	41	35	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61010	Elytan_Rantas	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61015	Seria_Woodwind	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61016	Seleni_Treekeeper	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61018	Terri_Woodshape	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61019	Allia_Moondancer	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61020	Celest_Palestream	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61021	Wellin_Brookleap	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61022	Assa_Leafwind	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61028	Bedida_Claygrinder	8	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61029	Serenica_Greenfinger	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61030	Alladria_Skyetcher	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61031	Feraniel_Leafsway	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61040	Tam_Slyspan	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61041	Fishmonger_Jassa	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61042	Rolyn_Longwalker	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61043	Merchant_Silspin	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61044	Merchant_Tyslin	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61045	Merchant_Issynal	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61046	Merchant_Longarrow	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61047	Merchant_Dantree	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61048	Opal_Leganyn	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61049	Tolis_Fearnone	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61050	Inkeeper_Freegraze	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61051	Fishmonger_Issa	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61052	Wela_Muselender	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61053	Tyle_Songwhisper	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61054	Merchant_Sorintal	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61055	Merchant_Deerchaser	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61056	Merchant_Tearlan	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61057	Merchant_Irontree	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61058	Merchant_Silverkale	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61059	Merchant_Tissan	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61060	Merchant_Silvenspin	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61063	Tylar_Windspirit	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61064	Isyna_Firspanyl	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61068	Chenori_Berinal	5	41	40	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61032	Nerrisia_Irontree	5	41	50	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61033	Tanalin_Silverkale	5	41	50	Merchants of Felwithe	1	Class 41
+felwithea	Northern Felwithe	61012	Challice	5	2	30	Truespirit	1	Cleric
+felwitheb	Southern Felwithe	62037	Thwinose_Vilgarn	5	1	65	NULL	1	Warrior
+felwitheb	Southern Felwithe	62000	Joren_Nobleheart	5	3	60	Deepwater Knights	1	Paladin
+felwitheb	Southern Felwithe	62023	Guard_Mystan	106	3	38	Emerald Warriors	1	Paladin
+felwitheb	Southern Felwithe	62032	Guard_Plage	106	3	39	Emerald Warriors	1	Paladin
+felwitheb	Southern Felwithe	62033	Guard_Tistan	106	3	39	Emerald Warriors	1	Paladin
+felwitheb	Southern Felwithe	62024	Guard_Tynthal	106	3	42	Emerald Warriors	1	Paladin
+felwitheb	Southern Felwithe	62025	Guard_Psape	106	3	42	Emerald Warriors	1	Paladin
+felwitheb	Southern Felwithe	62034	Guard_Spioko	106	3	42	Emerald Warriors	1	Paladin
+felwitheb	Southern Felwithe	62035	Guard_Golyn	106	3	42	Emerald Warriors	1	Paladin
+felwitheb	Southern Felwithe	62018	Farios_Elianos	5	12	50	Keepers of the Art	1	Wizard
+felwitheb	Southern Felwithe	62017	Elishia_Leafrunner	5	14	55	Keepers of the Art	1	Enchanter
+felwitheb	Southern Felwithe	62019	Tarker_Blazetoss	5	31	61	Keepers of the Art	1	Class 31
+felwitheb	Southern Felwithe	62020	Kinool_Goldsinger	5	33	61	Keepers of the Art	1	Class 33
+felwitheb	Southern Felwithe	62021	Niola_Impholder	5	32	61	Keepers of the Art	1	Class 32
+felwitheb	Southern Felwithe	62036	Yuin_Starchaser	5	33	61	Keepers of the Art	1	Class 33
+felwitheb	Southern Felwithe	62030	Merchant_Jewyln	5	41	38	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62001	Nestess_Branchtop	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62002	Est_Treewalker	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62003	Seren_the_Swift	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62004	Porra	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62005	Xista_Finder	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62006	Berill_Gladeleaper	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62007	Celent_Newmist	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62008	Serri_Moonwatcher	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62009	Stormy	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62010	Quiss_Stormseeker	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62011	Reff_Truewood	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62012	Osisa_Goldenspear	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62013	Elle_Leafdancer	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62014	Griff_Candleflame	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62015	Vellera_Wintergreen	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62016	Srell_Tumblebrook	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62022	Alicia_Starshimmer	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62026	Merchant_Tyslin	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62027	Merchant_Moonthread	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62028	Merchant_Yisasan	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62031	Merchant_Earlyn	5	41	40	Merchants of Felwithe	1	Class 41
+felwitheb	Southern Felwithe	62029	Merchant_Lyssia	5	41	43	Merchants of Felwithe	1	Class 41
+freporte	East Freeport	10005	a_large_rat	36	1	1	NULL	21	Warrior
+freporte	East Freeport	10013	a_rodent	36	1	1	NULL	21	Warrior
+freporte	East Freeport	10160	Biggle_Limbokker	11	9	19	NULL	1	Rogue
+freporte	East Freeport	10179	Biggle_Limbokker	11	9	21	NULL	1	Rogue
+freporte	East Freeport	10165	Palana_Willin	7	1	25	NULL	1	Warrior
+freporte	East Freeport	10029	a_grubby_rogue	11	9	40	NULL	1	Rogue
+freporte	East Freeport	10116	Wenden_Blackhammer	8	1	50	NULL	1	Warrior
+freporte	East Freeport	10117	Kargek_Redblade	1	1	50	NULL	1	Warrior
+freporte	East Freeport	10130	Jheron_Felkis	1	13	50	NULL	1	Magician
+freporte	East Freeport	10132	Priest_of_Discord	1	2	50	NULL	1	Cleric
+freporte	East Freeport	10183	SirensBane	72	1	50	NULL	11	Warrior
+freporte	East Freeport	10188	water_lily	240	1	50	NULL	11	Warrior
+freporte	East Freeport	10115	Cartographer_Piri	1	12	60	NULL	1	Wizard
+freporte	East Freeport	10041	Gartrog_Smitehammer	8	1	61	NULL	1	Warrior
+freporte	East Freeport	10037	Xon_Stonehands	1	63	65	NULL	1	Class 63
+freporte	East Freeport	10123	Miocaei_Herlsas	1	11	65	NULL	1	Necromancer
+freporte	East Freeport	10192	Freeport_Harbormaster	240	1	99	NULL	11	Warrior
+freporte	East Freeport	10155	#Translocator_Setikan	12	12	1	Beta Neutral	1	Wizard
+freporte	East Freeport	10191	Soulbinder_Grunson	1	1	65	Beta Neutral	1	Warrior
+freporte	East Freeport	10193	Lyda_Nasin	1	1	3	Coalition of Tradefolk	1	Warrior
+freporte	East Freeport	10026	Brunar_Rankin	2	9	10	Coalition of Tradefolk	1	Rogue
+freporte	East Freeport	10113	Zenita_D`Rin	6	9	10	Coalition of Tradefolk	1	Rogue
+freporte	East Freeport	10173	Brunar_Rankin	2	9	11	Coalition of Tradefolk	1	Rogue
+freporte	East Freeport	10153	Zenita_D`Rin	6	9	12	Coalition of Tradefolk	1	Rogue
+freporte	East Freeport	10147	Henna_Treghost	71	41	18	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10062	Winda_Lylil	71	41	20	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10063	Henna_Treghost	71	41	21	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10172	Henna_Treghost	71	41	22	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10184	Rolfic_Gohar	1	41	30	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10038	Ralfson_Gerositan	1	41	40	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10042	Innkeep_Paggie	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10046	Jenna_Smith	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10047	Klan_Smith	44	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10048	Gord_Smith	44	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10049	Lynda_Tapper	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10053	Tohsan_Hallard	44	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10058	Innkeep_Nasumi	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10061	Jaleel_Hoglomp	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10068	Sissin_Tanner	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10073	Myrissa_O`Donner	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10075	Monita_O`Donner	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10076	Cloud_Alemaker	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10077	Tislan	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10079	Sun_Alemaker	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10080	Valentin_Fireheart	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10086	Jillian_Dayson	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10087	Issilyn_Ristan	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10131	Daria_Smith	71	41	45	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10104	Tenni_Kohern	71	41	47	Coalition of Tradefolk	1	Class 41
+freporte	East Freeport	10105	Nestral_TGaza	6	28	61	Coalition of Tradefolk	1	Class 28
+freporte	East Freeport	10106	Beur_Tenlah	1	28	61	Coalition of Tradefolk	1	Class 28
+freporte	East Freeport	10108	Elisi_Nasin	1	28	61	Coalition of Tradefolk	1	Class 28
+freporte	East Freeport	10154	Tovan_Tenlah	7	28	61	Coalition of Tradefolk	1	Class 28
+freporte	East Freeport	10107	Harkin_Duskfoot	8	28	61	Coalition of Tradefolk	1	Class 28
+freporte	East Freeport	10012	Imxil_Tbrow	6	1	10	Coalition of Tradefolk Underground	1	Warrior
+freporte	East Freeport	10122	Gren_Frikniller	11	9	14	Coalition of Tradefolk Underground	1	Rogue
+freporte	East Freeport	10128	Rigg_Nostra	1	9	15	Coalition of Tradefolk Underground	1	Rogue
+freporte	East Freeport	10176	Swiftfingers	12	9	16	Coalition of Tradefolk Underground	1	Rogue
+freporte	East Freeport	10007	Swiftfingers	12	9	17	Coalition of Tradefolk Underground	1	Rogue
+freporte	East Freeport	10009	Scar	6	9	18	Coalition of Tradefolk Underground	1	Rogue
+freporte	East Freeport	10064	Gregor_Nasin	44	41	19	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10011	Lunce_Nasin	44	41	20	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10051	Nesin_Tapper	44	41	20	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10171	Gregor_Nasin	44	41	21	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10052	Harg_Tonicka	44	41	25	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10125	Quan_Nektogo	1	9	30	Coalition of Tradefolk Underground	1	Rogue
+freporte	East Freeport	10126	Jerra_Renlock	1	9	30	Coalition of Tradefolk Underground	1	Rogue
+freporte	East Freeport	10044	Tarn_Bearcrusher	1	1	35	Coalition of Tradefolk Underground	1	Warrior
+freporte	East Freeport	10129	Verona_Rankin	1	9	35	Coalition of Tradefolk Underground	1	Rogue
+freporte	East Freeport	10043	Innkeep_Rastle	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10059	Innkeep_Hunter	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10065	Tanlok_Harson	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10066	Iseba_Gargurd	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10067	Tarker_Gargurd	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10069	Sanhan_Tanner	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10070	Winsa_Tanner	71	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10071	Winlar_Tanner	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10072	Ston_O`Donner	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10074	Slan_ODonner	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10078	River_Alemaker	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10081	Ikthar_Fireheart	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10083	Kif	44	41	45	Coalition of Tradefolk Underground	1	Class 41
+freporte	East Freeport	10112	Palatos_Kynarn	3	14	22	Craftkeepers	1	Enchanter
+freporte	East Freeport	10002	a_deathfist_pawn	54	1	2	Death Fist Orcs	1	Warrior
+freporte	East Freeport	10166	Orc_Centurion	54	1	6	Death Fist Orcs	1	Warrior
+freporte	East Freeport	10159	Orc_Centurion	54	1	8	Death Fist Orcs	1	Warrior
+freporte	East Freeport	10139	Bait_Masterson	1	1	25	Deepwater Knights	1	Warrior
+freporte	East Freeport	10178	Lydl_the_Great	1	12	2	Dismal Rage	1	Wizard
+freporte	East Freeport	10181	Lydl_the_Great	1	12	3	Dismal Rage	1	Wizard
+freporte	East Freeport	10150	Jak_Sindin	55	9	4	Dismal Rage	1	Rogue
+freporte	East Freeport	10162	Lydl_the_Great	1	12	4	Dismal Rage	1	Wizard
+freporte	East Freeport	10045	Jak_Sindin	55	9	6	Dismal Rage	1	Rogue
+freporte	East Freeport	10090	Prasen_Rusgor	44	41	24	Dismal Rage	1	Class 41
+freporte	East Freeport	10089	Banor_Raglesin	44	41	28	Dismal Rage	1	Class 41
+freporte	East Freeport	10088	Celanie_Xtoria	44	41	30	Dismal Rage	1	Class 41
+freporte	East Freeport	10030	Tagus_Wunne	71	41	45	Dismal Rage	1	Class 41
+freporte	East Freeport	10031	Sermio_Capret	44	41	45	Dismal Rage	1	Class 41
+freporte	East Freeport	10032	Itzia_Vunpe	71	41	45	Dismal Rage	1	Class 41
+freporte	East Freeport	10033	Ainla_Yurimar	71	41	45	Dismal Rage	1	Class 41
+freporte	East Freeport	10034	Hundle_Quatvel	44	41	45	Dismal Rage	1	Class 41
+freporte	East Freeport	10035	Peku_Croxe	44	41	45	Dismal Rage	1	Class 41
+freporte	East Freeport	10036	Mika_Fugas	71	41	45	Dismal Rage	1	Class 41
+freporte	East Freeport	10091	Thuzin_Kaver	1	30	61	Dismal Rage	1	Class 30
+freporte	East Freeport	10092	Mheno_Raveus	1	30	61	Dismal Rage	1	Class 30
+freporte	East Freeport	10093	Xelha_Nevagon	1	30	61	Dismal Rage	1	Class 30
+freporte	East Freeport	10096	Brek_Stolrus	1	21	61	Dismal Rage	1	Cleric (NPC)
+freporte	East Freeport	10097	Vesagar_Nekio	1	21	61	Dismal Rage	1	Cleric (NPC)
+freporte	East Freeport	10098	Venox_Tarkog	1	21	61	Dismal Rage	1	Cleric (NPC)
+freporte	East Freeport	10099	Gunex_Eklar	1	24	61	Dismal Rage	1	Class 24
+freporte	East Freeport	10100	Raltur_Caliskon	1	24	61	Dismal Rage	1	Class 24
+freporte	East Freeport	10101	Netuk_Phenzon	1	24	61	Dismal Rage	1	Class 24
+freporte	East Freeport	10102	Pietro_Zarn	1	24	61	Dismal Rage	1	Class 24
+freporte	East Freeport	10118	Brutol_Rhaksen	2	20	61	Dismal Rage	1	Warrior (NPC)
+freporte	East Freeport	10119	Nexvok_Thirod	1	31	61	Dismal Rage	1	Class 31
+freporte	East Freeport	10120	Konious_Eranon	1	33	61	Dismal Rage	1	Class 33
+freporte	East Freeport	10121	Heneva_Jexsped	1	32	61	Dismal Rage	1	Class 32
+freporte	East Freeport	10124	Marv_Orilis	1	30	61	Dismal Rage	1	Class 30
+freporte	East Freeport	10010	Giz_Dinree	6	9	14	Ebon Mask	1	Rogue
+freporte	East Freeport	10177	Giz_Dinree	6	9	16	Ebon Mask	1	Rogue
+freporte	East Freeport	10138	Jyle_Windshot	1	9	3	Faydarks Champions	1	Rogue
+freporte	East Freeport	10175	Jyle_Windshot	1	9	4	Faydarks Champions	1	Rogue
+freporte	East Freeport	10008	Jyle_Windshot	1	9	5	Faydarks Champions	1	Rogue
+freporte	East Freeport	10186	Tlin_Bowfright	4	1	30	Faydarks Champions	1	Warrior
+freporte	East Freeport	10190	Roghur_Muleson	8	41	45	Kaladim Merchants	1	Class 41
+freporte	East Freeport	10182	Talym_Shoontar	2	1	15	Karana Residents	1	Warrior
+freporte	East Freeport	10082	Sir_Ranlon	44	41	45	Knights of Truth	1	Class 41
+freporte	East Freeport	10028	a_shark	61	1	3	KOS	21	Warrior
+freporte	East Freeport	10167	a_shark	61	1	4	KOS	21	Warrior
+freporte	East Freeport	10146	a_shark	61	1	5	KOS	21	Warrior
+freporte	East Freeport	10180	a_wolf	42	1	5	KOS_animal	21	Warrior
+freporte	East Freeport	10050	Canlan_Talespinner	1	1	15	League of Antonican Bards	1	Warrior
+freporte	East Freeport	10141	Trolon_Lightleer	1	1	15	League of Antonican Bards	1	Warrior
+freporte	East Freeport	10158	Branis_Noolright	1	8	20	League of Antonican Bards	1	Bard
+freporte	East Freeport	10014	Jasmine_Yiur	1	1	25	League of Antonican Bards	1	Warrior
+freporte	East Freeport	10114	Fabian	1	1	25	League of Antonican Bards	1	Warrior
+freporte	East Freeport	10156	Lozani	12	12	30	Merchants of Ak`Anon	1	Wizard
+freporte	East Freeport	10136	Lenka_Stoutheart	2	1	35	Merchants of Halas	1	Warrior
+freporte	East Freeport	10127	Grendig	8	1	12	Merchants of Kaladim	1	Warrior
+freporte	East Freeport	10195	Groflah_Steadirt	8	41	20	Merchants of Kaladim	1	Class 41
+freporte	East Freeport	10006	a_fire_beetle	22	1	2	Nature Animal - Beetle	22	Warrior
+freporte	East Freeport	10001	a_bat	34	1	1	Noobie Monsters KOS to Guards	21	Warrior
+freporte	East Freeport	10004	a_decaying_skeleton	367	1	1	Noobie Monsters KOS to Guards	3	Warrior
+freporte	East Freeport	10134	a_stonesnake	37	1	1	Noobie Monsters KOS to Guards	21	Warrior
+freporte	East Freeport	10003	a_decaying_skeleton	367	1	2	Noobie Monsters KOS to Guards	3	Warrior
+freporte	East Freeport	10094	Opal_Darkbriar	6	30	61	Opal Darkbriar	1	Class 30
+freporte	East Freeport	10040	Saxarivza_Zaxun	6	2	40	Priests of Innoruuk	1	Cleric
+freporte	East Freeport	10163	Plnorrick_Spinecracker	9	1	30	Steel Warriors	1	Warrior
+freporte	East Freeport	10199	Sir_Edwin_Motte	1	3	33	Steel Warriors	1	Paladin
+freporte	East Freeport	10095	Zhem_Xecia	1	21	61	The Dead	1	Cleric (NPC)
+freporte	East Freeport	10145	Rin_Distlemor	55	9	4	The Freeport Militia	1	Rogue
+freporte	East Freeport	10017	Rin_Distlemor	55	9	5	The Freeport Militia	1	Rogue
+freporte	East Freeport	10170	Rin_Distlemor	55	9	6	The Freeport Militia	1	Rogue
+freporte	East Freeport	10016	Olunea_Miltin	1	1	8	The Freeport Militia	1	Warrior
+freporte	East Freeport	10084	Guard_Fentallin	44	1	16	The Freeport Militia	1	Warrior
+freporte	East Freeport	10152	Guard_Bittmin	44	1	27	The Freeport Militia	1	Warrior
+freporte	East Freeport	10021	Guard_Orpheen	44	1	28	The Freeport Militia	1	Warrior
+freporte	East Freeport	10174	Guard_Bittmin	44	1	28	The Freeport Militia	1	Warrior
+freporte	East Freeport	10142	Guard_Orpheen	44	1	29	The Freeport Militia	1	Warrior
+freporte	East Freeport	10109	Guard_Nlool	44	1	29	The Freeport Militia	1	Warrior
+freporte	East Freeport	10111	Guard_Bittmin	44	1	29	The Freeport Militia	1	Warrior
+freporte	East Freeport	10020	Guard_Xyxax	44	1	30	The Freeport Militia	1	Warrior
+freporte	East Freeport	10022	Guard_Yandellen	44	1	30	The Freeport Militia	1	Warrior
+freporte	East Freeport	10060	Runthar	1	1	30	The Freeport Militia	1	Warrior
+freporte	East Freeport	10151	Guard_Nlool	44	1	30	The Freeport Militia	1	Warrior
+freporte	East Freeport	10110	Guard_Drake	44	1	30	The Freeport Militia	1	Warrior
+freporte	East Freeport	10133	Exterminator_Larkey	1	1	30	The Freeport Militia	1	Warrior
+freporte	East Freeport	10148	Guard_Dreikin	44	1	31	The Freeport Militia	1	Warrior
+freporte	East Freeport	10025	Guard_Dreikin	44	1	33	The Freeport Militia	1	Warrior
+freporte	East Freeport	10168	Guard_Popal	44	1	34	The Freeport Militia	1	Warrior
+freporte	East Freeport	10144	Guard_Popal	44	1	35	The Freeport Militia	1	Warrior
+freporte	East Freeport	10085	Guard_Nekropo	44	1	35	The Freeport Militia	1	Warrior
+freporte	East Freeport	10019	Guard_Popal	44	1	36	The Freeport Militia	1	Warrior
+freporte	East Freeport	10023	Guard_Quallith	44	1	36	The Freeport Militia	1	Warrior
+freporte	East Freeport	10024	Guard_Goemin	44	1	36	The Freeport Militia	1	Warrior
+freporte	East Freeport	10018	Guard_Zeph	44	1	37	The Freeport Militia	1	Warrior
+freporte	East Freeport	10143	Guard_Quallith	44	1	37	The Freeport Militia	1	Warrior
+freporte	East Freeport	10027	Guard_Zintrin	44	1	37	The Freeport Militia	1	Warrior
+freporte	East Freeport	10015	Guard_Hirazen	44	1	40	The Freeport Militia	1	Warrior
+freporte	East Freeport	10103	Guard_Ranlan	44	1	48	The Freeport Militia	1	Warrior
+freporte	East Freeport	10039	Guard_Bribbely	44	1	50	The Freeport Militia	1	Warrior
+freporte	East Freeport	10054	Guard_Wytiffin	44	1	50	The Freeport Militia	1	Warrior
+freporte	East Freeport	10055	Guard_Ullindin	44	1	50	The Freeport Militia	1	Warrior
+freporte	East Freeport	10056	Guard_Topplo	44	1	50	The Freeport Militia	1	Warrior
+freporte	East Freeport	10057	Guard_Sheg	44	1	50	The Freeport Militia	1	Warrior
+freporte	East Freeport	10164	Tykar_Renlin	55	9	19	Truespirit	1	Rogue
+freporte	East Freeport	10157	Tykar_Renlin	55	9	21	Truespirit	1	Rogue
+freporte	East Freeport	10135	Bronto_Thudfoot	10	1	30	Wolves of the North	1	Warrior
+freportn	North Freeport	8109	Onytir_Seavin	12	1	15	NULL	1	Warrior
+freportn	North Freeport	8027	Karl_Saffio	7	63	65	NULL	1	Class 63
+freportn	North Freeport	8028	Gayle_Seesill	1	63	65	NULL	1	Class 63
+freportn	North Freeport	8104	Genniau_Noghce	7	8	65	NULL	1	Bard
+freportn	North Freeport	8115	#Elder_Spirit_of_Enlightenment	120	1	65	NULL	1	Warrior
+freportn	North Freeport	8114	Freeport_Harbormaster	240	1	99	NULL	11	Warrior
+freportn	North Freeport	8111	#Gubbly_Gippledo	330	3	34	Citizens of Gukta	1	Paladin
+freportn	North Freeport	8017	#Gubbly_Gippledo	330	3	36	Citizens of Gukta	1	Paladin
+freportn	North Freeport	8014	Gern_Tassel	44	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8029	Aimie_Moonspin	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8030	Kyrin_Steelbone	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8031	Winoyn	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8064	Amber	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8069	Rhensa_Steadirt	8	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8070	Ardiflah_Steadirt	8	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8072	Gibbon_Morfield	44	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8073	Yellus_Gravien	44	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8084	Tradesman_Lyna	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8085	Tradesman_Tulan	44	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8086	Innkeep_Palola	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8087	Galio	44	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8088	Bran_Greenglade	7	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8089	Alec_Greenglade	7	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8090	Wahnig_Nooz	44	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8091	Jallen_Nooz	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8094	Lystyn_Wyspin	12	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8095	Svinal_Wyspin	12	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8097	Judicla_Riverfield	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8098	Shania_Tassel	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8099	Innkeep_Rille	44	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8100	Innkeep_Evelona	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8105	Jade	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8106	Valla_Strongbranch	7	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8107	Timor_Strongbranch	1	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8108	Trudie_Steelbone	71	41	45	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8002	Rashinda_Elore	1	41	50	Coalition of Tradefolk	1	Class 41
+freportn	North Freeport	8013	Zigg_Flin	12	9	25	Gem Choppers	1	Rogue
+freportn	North Freeport	8001	Groflah_Steadirt	8	41	12	Kaladim Merchants	1	Class 41
+freportn	North Freeport	8000	a_minnow	74	1	1	Knights of Truth	21	Warrior
+freportn	North Freeport	8080	Sir_Fosco	44	3	25	Knights of Truth	1	Paladin
+freportn	North Freeport	8048	Markin_Ironwhite	44	41	26	Knights of Truth	1	Class 41
+freportn	North Freeport	8071	Sir_Mollin	44	3	26	Knights of Truth	1	Paladin
+freportn	North Freeport	8078	Jusia_Vapious	71	41	28	Knights of Truth	1	Class 41
+freportn	North Freeport	8004	Sir_Hallis	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8005	Sir_Arlin	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8006	Sir_Lishmin	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8010	Sir_Costkin	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8011	Sir_Breel	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8045	Sir_Ackmin	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8059	Sir_Phallin	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8060	Sir_Rophol	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8061	Sir_Penan	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8062	Sir_Ollin	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8063	Sir_Noshon	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8074	Sir_Artanis	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8081	Sir_Hogo	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8082	Sir_Glimmon	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8083	Sir_Folon	44	3	30	Knights of Truth	1	Paladin
+freportn	North Freeport	8007	Sir_Shalint	44	3	35	Knights of Truth	1	Paladin
+freportn	North Freeport	8046	Sir_Xantille	44	3	35	Knights of Truth	1	Paladin
+freportn	North Freeport	8079	Sir_Iot	44	3	35	Knights of Truth	1	Paladin
+freportn	North Freeport	8008	Sir_Willam	44	3	40	Knights of Truth	1	Paladin
+freportn	North Freeport	8009	Sir_Drolfis	44	3	41	Knights of Truth	1	Paladin
+freportn	North Freeport	8019	Orex_Nolus	44	41	45	Knights of Truth	1	Class 41
+freportn	North Freeport	8112	Donala_Baris	71	41	45	Knights of Truth	1	Class 41
+freportn	North Freeport	8015	Edwardian_Holyblade	1	22	61	Knights of Truth	1	Class 22
+freportn	North Freeport	8016	Salinsa_Delfdosan	1	21	61	Knights of Truth	1	Cleric (NPC)
+freportn	North Freeport	8034	Arem_Ulosia	1	22	61	Knights of Truth	1	Class 22
+freportn	North Freeport	8037	Gygus_Remnara	1	22	61	Knights of Truth	1	Class 22
+freportn	North Freeport	8039	Ghonic_Erharn	1	21	61	Knights of Truth	1	Cleric (NPC)
+freportn	North Freeport	8042	Celsar_Vestagon	1	21	61	Knights of Truth	1	Cleric (NPC)
+freportn	North Freeport	8043	Palious_Jarten	1	21	61	Knights of Truth	1	Cleric (NPC)
+freportn	North Freeport	8044	Merko_Quetalis	1	22	61	Knights of Truth	1	Class 22
+freportn	North Freeport	8049	Jemoz_Lerkarson	1	21	61	Knights of Truth	1	Cleric (NPC)
+freportn	North Freeport	8050	Eestyana_Naestra	1	21	61	Knights of Truth	1	Cleric (NPC)
+freportn	North Freeport	8075	Theron_Rolius	1	22	61	Knights of Truth	1	Class 22
+freportn	North Freeport	8076	Kalatrina_Plossen	1	22	61	Knights of Truth	1	Class 22
+freportn	North Freeport	8077	Valeron_Dushire	1	22	61	Knights of Truth	1	Class 22
+freportn	North Freeport	8012	a_piranha	74	1	2	KOS	21	Warrior
+freportn	North Freeport	8041	Lysric_Loresinger	71	41	22	League of Antonican Bards	1	Class 41
+freportn	North Freeport	8101	Ton_Twostring	1	8	25	League of Antonican Bards	1	Bard
+freportn	North Freeport	8102	Felisity_Starbright	1	8	25	League of Antonican Bards	1	Bard
+freportn	North Freeport	8065	Jekel_Enhied	71	41	28	League of Antonican Bards	1	Class 41
+freportn	North Freeport	8018	Inisis_Trimpet	71	41	45	League of Antonican Bards	1	Class 41
+freportn	North Freeport	8032	Nashia_Lanseb	4	27	61	League of Antonican Bards	1	Class 27
+freportn	North Freeport	8066	Marus_Kemson	1	27	61	League of Antonican Bards	1	Class 27
+freportn	North Freeport	8067	Sten_Harnak	1	27	61	League of Antonican Bards	1	Class 27
+freportn	North Freeport	8068	Caskin_Marsheart	1	27	61	League of Antonican Bards	1	Class 27
+freportn	North Freeport	8092	Soris_Silverfield	44	40	45	Merchants of Qeynos	1	Class 40
+freportn	North Freeport	8093	Peran_Silverfield	44	40	45	Merchants of Qeynos	1	Class 40
+freportn	North Freeport	8103	Falia_Frikniller	11	41	23	Merchants of Rivervale	1	Class 41
+freportn	North Freeport	8033	Mevah_Toklius	44	41	28	Priests of Marr	1	Class 41
+freportn	North Freeport	8056	Sentry_Janeal	1	3	30	Priests of Marr	1	Paladin
+freportn	North Freeport	8047	Hulos_Ghenar	44	41	31	Priests of Marr	1	Class 41
+freportn	North Freeport	8057	Sentry_Boris	1	3	33	Priests of Marr	1	Paladin
+freportn	North Freeport	8054	Sentry_Meighan	1	3	34	Priests of Marr	1	Paladin
+freportn	North Freeport	8052	Sentry_Warren	1	3	35	Priests of Marr	1	Paladin
+freportn	North Freeport	8055	Sentry_Gallius	1	3	35	Priests of Marr	1	Paladin
+freportn	North Freeport	8058	Sentry_Andlin	1	3	35	Priests of Marr	1	Paladin
+freportn	North Freeport	8053	Sentry_Theo	1	3	37	Priests of Marr	1	Paladin
+freportn	North Freeport	8020	Egasia_Reenix	71	41	45	Priests of Marr	1	Class 41
+freportn	North Freeport	8021	Nosspri_Andrika	71	41	45	Priests of Marr	1	Class 41
+freportn	North Freeport	8022	Perep_Chen	44	41	45	Priests of Marr	1	Class 41
+freportn	North Freeport	8023	Locarme_Zennix	44	41	45	Priests of Marr	1	Class 41
+freportn	North Freeport	8024	Amata_D`Lavi	71	41	45	Priests of Marr	1	Class 41
+freportn	North Freeport	8025	Direlee_Furme	71	41	45	Priests of Marr	1	Class 41
+freportn	North Freeport	8026	Geep_Tresoj	44	41	45	Priests of Marr	1	Class 41
+freportn	North Freeport	8035	Lanis_Herion	1	22	61	Priests of Marr	1	Class 22
+freportn	North Freeport	8036	Thurion_Desius	1	22	61	Priests of Marr	1	Class 22
+freportn	North Freeport	8038	Serna_Tasknon	1	21	61	Priests of Marr	1	Cleric (NPC)
+freportn	North Freeport	8040	Plur_Etinu	1	21	61	Priests of Marr	1	Cleric (NPC)
+freportn	North Freeport	8051	Tholius_Quey	1	21	61	Priests of Marr	1	Cleric (NPC)
+freportn	North Freeport	8113	Dunore_Moorwing	1	9	8	The Freeport Militia	1	Rogue
+freportn	North Freeport	8096	Dunore_Moorwing	1	9	10	The Freeport Militia	1	Rogue
+freportn	North Freeport	8117	a_greater_spirit	120	10	1	Truespirit	7	Shaman
+freportn	North Freeport	8003	Bondl_Felligan	2	1	45	Truespirit	1	Warrior
+freportw	West Freeport	9009	a_rodent	36	1	1	NULL	21	Warrior
+freportw	West Freeport	9012	a_drowned_citizen	55	1	11	NULL	3	Warrior
+freportw	West Freeport	9054	#Malloy_the_Songbird	7	1	61	NULL	1	Warrior
+freportw	West Freeport	9055	Taxonomist_Darwin_Grisk	330	13	65	NULL	1	Magician
+freportw	West Freeport	9127	Ginehl_Wiquar	1	12	65	NULL	1	Wizard
+freportw	West Freeport	382253	Lythe_Songbird	1	8	65	NULL	1	Bard
+freportw	West Freeport	9149	Freeport_Harbormaster	240	1	99	NULL	11	Warrior
+freportw	West Freeport	9117	Yovik_Splegle	1	12	11	Arcane Scientists	1	Wizard
+freportw	West Freeport	9061	Dulia_Jestes	71	41	28	Arcane Scientists	1	Class 41
+freportw	West Freeport	9062	Voglan_Dransed	71	41	31	Arcane Scientists	1	Class 41
+freportw	West Freeport	9079	Tyrsa_Henic	1	13	35	Arcane Scientists	1	Magician
+freportw	West Freeport	9132	Bello_Fruegnos	5	13	35	Arcane Scientists	1	Magician
+freportw	West Freeport	9080	Lynce_Renardo	1	12	35	Arcane Scientists	1	Wizard
+freportw	West Freeport	9148	Revesa_Temosa	3	12	35	Arcane Scientists	1	Wizard
+freportw	West Freeport	9038	Chardo_Ahdelia	44	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9039	Charia_Betou	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9040	Mirpa_Arana	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9041	Jonbe_Kressi	44	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9042	Cronte_Deloru	44	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9043	Odemi_Partun	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9044	Tharma_Jaremi	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9045	Trepo_Merrop	44	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9046	Jarel_Ranin	44	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9047	Yarina_Zarampo	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9048	Lasiris_Oncre	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9049	Atvo_Siro	44	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9051	Monat_D`Larme	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9052	Xinari_Anara	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9066	Lysa_Truegreen	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9070	Zasrin_Blueflame	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9075	Lysin_Smokkan	71	41	45	Arcane Scientists	1	Class 41
+freportw	West Freeport	9063	Nusk_Treton	1	31	61	Arcane Scientists	1	Class 31
+freportw	West Freeport	9067	Glyssa_Sonshaw	3	33	61	Arcane Scientists	1	Class 33
+freportw	West Freeport	9068	Shana_Liskia	5	33	61	Arcane Scientists	1	Class 33
+freportw	West Freeport	9069	Romiak_Jusathorn	13	33	61	Arcane Scientists	1	Class 33
+freportw	West Freeport	9071	Hemia_Skemner	1	31	61	Arcane Scientists	1	Class 31
+freportw	West Freeport	9072	Palon_Deskeb	3	31	61	Arcane Scientists	1	Class 31
+freportw	West Freeport	9073	Opal_Darkbriar	5	31	61	Arcane Scientists	1	Class 31
+freportw	West Freeport	9076	Dooly_Jonkers	12	32	61	Arcane Scientists	1	Class 32
+freportw	West Freeport	9077	Tara_Neklene	1	32	61	Arcane Scientists	1	Class 32
+freportw	West Freeport	9078	Lorme_Tredore	1	32	61	Arcane Scientists	1	Class 32
+freportw	West Freeport	9110	Besklor_Tyrenson	1	33	61	Arcane Scientists	1	Class 33
+freportw	West Freeport	9111	Respin_Yawg	5	32	61	Arcane Scientists	1	Class 32
+freportw	West Freeport	9083	Fania_Esruc	71	41	25	Ashen Order	1	Class 41
+freportw	West Freeport	9064	Asnod_Marnoc	71	41	30	Ashen Order	1	Class 41
+freportw	West Freeport	9027	Ran`un	1	26	35	Ashen Order	1	Class 26
+freportw	West Freeport	9087	Thena_Lonnes	1	26	35	Ashen Order	1	Class 26
+freportw	West Freeport	9065	Velan_Torresk	1	26	61	Ashen Order	1	Class 26
+freportw	West Freeport	9084	Reyia_Beslin	1	26	61	Ashen Order	1	Class 26
+freportw	West Freeport	9085	Klom_Jysun	1	26	61	Ashen Order	1	Class 26
+freportw	West Freeport	9086	Puab_Closk	1	26	61	Ashen Order	1	Class 26
+freportw	West Freeport	9114	Trithalis_Leredar	1	41	40	Beta Neutral	1	Class 41
+freportw	West Freeport	9013	Driana_Poxsbourne	1	11	25	Bloodsabers	1	Necromancer
+freportw	West Freeport	9103	Swin_Blackeye	44	41	20	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9126	Boomba_the_Big	10	41	20	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9053	Lindie_Rains	1	41	25	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9074	Mekoma_Buma	71	41	26	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9090	Tyeg_Envil	44	41	35	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9123	Toxdil	6	41	40	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9050	Remon_Zarga	44	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9059	Krystin_Charcoal	71	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9081	Olyna_Mudel	71	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9145	Olyna_Midel	71	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9082	Torlig_Mudel	44	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9088	Pincia_Brownloe	71	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9089	Ran_Brownloe	44	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9102	Drona_Whystlethin	71	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9104	Jynsa_Smithson	71	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9105	Gurb_Smithson	44	41	45	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9150	Phineas_Taylor	71	41	65	Coalition of Tradefolk	1	Class 41
+freportw	West Freeport	9056	Shintl_Lowbrew	11	12	7	Coalition of Tradefolk Underground	1	Wizard
+freportw	West Freeport	9116	Janam_Rekish	7	9	14	Coalition of Tradefolk Underground	1	Rogue
+freportw	West Freeport	9115	Rebby_Willend	11	9	27	Coalition of Tradefolk Underground	1	Rogue
+freportw	West Freeport	9060	Hyrill_Pon	1	9	8	Commons Residents	1	Rogue
+freportw	West Freeport	9001	a_deathfist_pawn	54	1	1	Death Fist Orcs	1	Warrior
+freportw	West Freeport	9130	Deathfist_Pawn	54	1	1	Death Fist Orcs	1	Warrior
+freportw	West Freeport	9002	a_deathfist_pawn	54	1	2	Death Fist Orcs	1	Warrior
+freportw	West Freeport	9129	Orc_Centurion	54	1	3	Death Fist Orcs	1	Warrior
+freportw	West Freeport	9058	Lady_Shae	5	1	12	Emerald Warriors	1	Warrior
+freportw	West Freeport	9057	Pandos_Flintside	8	1	28	Faydarks Champions	1	Warrior
+freportw	West Freeport	9008	Jyle_Windshot	1	4	30	Faydarks Champions	1	Ranger
+freportw	West Freeport	9093	Joffin_Sinclay	1	1	35	Guards of Qeynos	1	Warrior
+freportw	West Freeport	9011	Linadian	4	41	40	Kelethin Merchants	1	Class 41
+freportw	West Freeport	9138	a_prisoner	55	1	7	Knights of Truth	1	Warrior
+freportw	West Freeport	9035	a_prisoner	55	1	8	Knights of Truth	1	Warrior
+freportw	West Freeport	9118	Raenna_Griff	1	3	11	Knights of Truth	1	Paladin
+freportw	West Freeport	9101	Trissa_Whistlesong	7	8	35	League of Antonican Bards	1	Bard
+freportw	West Freeport	9000	a_fire_beetle	22	1	2	Nature Animal - Beetle	22	Warrior
+freportw	West Freeport	9006	a_decaying_skeleton	367	1	1	Noobie Monsters KOS to Guards	3	Warrior
+freportw	West Freeport	9005	a_myotis_bat	34	1	1	Noobie Monsters KOS to Guards	21	Warrior
+freportw	West Freeport	9010	a_snake	37	1	1	Noobie Monsters KOS to Guards	21	Warrior
+freportw	West Freeport	9004	a_large_rat	36	1	1	Noobie Monsters KOS to Guards	21	Warrior
+freportw	West Freeport	9003	a_decaying_skeleton	367	1	2	Noobie Monsters KOS to Guards	3	Warrior
+freportw	West Freeport	9133	Ping_Fuzzlecutter	12	41	37	Priests of Life	1	Class 41
+freportw	West Freeport	9119	Ulia_Yovar	1	2	11	Priests of Marr	1	Cleric
+freportw	West Freeport	9122	peasant_woman	71	1	20	Priests of Marr	1	Warrior
+freportw	West Freeport	9141	Guard_Alayle	44	1	8	Steel Warriors	1	Warrior
+freportw	West Freeport	9120	Tarsa_Yovar	1	1	11	Steel Warriors	1	Warrior
+freportw	West Freeport	9095	Vun_Winstone	1	1	35	Steel Warriors	1	Warrior
+freportw	West Freeport	9097	Monia_Oakstone	1	1	35	Steel Warriors	1	Warrior
+freportw	West Freeport	9098	Trancil_Clearpond	1	1	35	Steel Warriors	1	Warrior
+freportw	West Freeport	9099	Jakom_Herolon	1	1	35	Steel Warriors	1	Warrior
+freportw	West Freeport	9091	Toala_Nehron	1	20	61	Steel Warriors	1	Warrior (NPC)
+freportw	West Freeport	9092	Cain_Darkmoore	1	20	61	Steel Warriors	1	Warrior (NPC)
+freportw	West Freeport	9094	Brena_Donyld	1	20	61	Steel Warriors	1	Warrior (NPC)
+freportw	West Freeport	9096	Brina_Foxtripper	1	20	61	Steel Warriors	1	Warrior (NPC)
+freportw	West Freeport	9100	Arinna_Trueblade	1	20	61	Steel Warriors	1	Warrior (NPC)
+freportw	West Freeport	9112	Plagus_Ladeson	1	20	61	Steel Warriors	1	Warrior (NPC)
+freportw	West Freeport	9113	Larn_Brugal	1	20	61	Steel Warriors	1	Warrior (NPC)
+freportw	West Freeport	9144	Hollish_Tnoops	6	1	14	The Freeport Militia	1	Warrior
+freportw	West Freeport	9029	Guard_Ledshin	44	1	27	The Freeport Militia	1	Warrior
+freportw	West Freeport	9019	Guard_Hrakin	44	1	30	The Freeport Militia	1	Warrior
+freportw	West Freeport	9033	Guard_Jup	44	1	30	The Freeport Militia	1	Warrior
+freportw	West Freeport	9106	Guard_Lithnon	44	1	30	The Freeport Militia	1	Warrior
+freportw	West Freeport	9128	Exterminator_Qalantir	1	1	30	The Freeport Militia	1	Warrior
+freportw	West Freeport	9134	Guard_Cozak	44	1	32	The Freeport Militia	1	Warrior
+freportw	West Freeport	9020	Guard_Cozak	44	1	33	The Freeport Militia	1	Warrior
+freportw	West Freeport	9036	Guard_Corpillius	44	1	34	The Freeport Militia	1	Warrior
+freportw	West Freeport	9015	Guard_Mizraen	44	1	35	The Freeport Militia	1	Warrior
+freportw	West Freeport	9017	Guard_Imillin	44	1	35	The Freeport Militia	1	Warrior
+freportw	West Freeport	9022	Guard_Ogo	44	1	35	The Freeport Militia	1	Warrior
+freportw	West Freeport	9031	Guard_Hiron	44	1	35	The Freeport Militia	1	Warrior
+freportw	West Freeport	9032	Guard_Fralldo	44	1	35	The Freeport Militia	1	Warrior
+freportw	West Freeport	9136	Guard_Corpillius	44	1	35	The Freeport Militia	1	Warrior
+freportw	West Freeport	9140	Guard_Corpillius	44	1	36	The Freeport Militia	1	Warrior
+freportw	West Freeport	9030	Guard_Effel	44	1	36	The Freeport Militia	1	Warrior
+freportw	West Freeport	9021	Guard_Greedin	44	1	37	The Freeport Militia	1	Warrior
+freportw	West Freeport	9023	Guard_Fikus	44	1	37	The Freeport Militia	1	Warrior
+freportw	West Freeport	9037	Guard_Jendl	44	1	37	The Freeport Militia	1	Warrior
+freportw	West Freeport	9107	Guard_Gollus	44	1	37	The Freeport Militia	1	Warrior
+freportw	West Freeport	9007	Armorer_Dellin	44	1	40	The Freeport Militia	1	Warrior
+freportw	West Freeport	9016	Guard_Inofus	44	1	40	The Freeport Militia	1	Warrior
+freportw	West Freeport	9024	Brother_Jentry	44	2	40	The Freeport Militia	1	Cleric
+freportw	West Freeport	9025	Guard_Drazden	44	1	40	The Freeport Militia	1	Warrior
+freportw	West Freeport	9014	Guard_Kroon	44	1	40	The Freeport Militia	1	Warrior
+freportw	West Freeport	9018	Sir_Lucan_D`Lere	44	20	48	The Freeport Militia	1	Warrior (NPC)
+freportw	West Freeport	9034	Guard_Bonlo	44	1	50	The Freeport Militia	1	Warrior
+freportw	West Freeport	9108	Guard_Doolin	44	1	50	The Freeport Militia	1	Warrior
+freportw	West Freeport	9124	Guard_Munden	44	1	50	The Freeport Militia	1	Warrior
+freportw	West Freeport	9125	Guard_Jacsen	44	1	50	The Freeport Militia	1	Warrior
+freportw	West Freeport	9109	Captain_Hazran	44	20	61	The Freeport Militia	1	Warrior (NPC)
+freportw	West Freeport	9121	Joshua	1	1	5	Truespirit	1	Warrior
+grobb	Grobb	52104	a_jungle_hatchling	440	1	1	NULL	22	Warrior
+grobb	Grobb	52103	a_domesticated_bleeder	134	1	1	NULL	22	Warrior
+grobb	Grobb	52106	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+grobb	Grobb	52107	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+grobb	Grobb	52108	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+grobb	Grobb	40070	Grallvek	9	41	25	NULL	1	Class 41
+grobb	Grobb	52055	Savarixsa_Zexus	6	2	40	NULL	1	Cleric
+grobb	Grobb	52046	Priest_of_Discord	1	2	50	NULL	1	Cleric
+grobb	Grobb	52068	Soulbinder_Snog	9	1	60	NULL	1	Warrior
+grobb	Grobb	52071	Rasrok_the_Blotched	9	5	60	NULL	1	Shadowknight
+grobb	Grobb	52101	Zignal_Luk	9	63	65	NULL	1	Class 63
+grobb	Grobb	52105	Santug_Claugg	10	1	70	NULL	1	Warrior
+grobb	Grobb	52047	a_prisoner	330	1	10	Coalition of Tradefolk	1	Warrior
+grobb	Grobb	52110	a_froglok_prisoner	330	1	4	DaBashers	1	Warrior
+grobb	Grobb	52109	a_froglok_prisoner	330	1	5	DaBashers	1	Warrior
+grobb	Grobb	52111	a_froglok_prisoner	330	1	6	DaBashers	1	Warrior
+grobb	Grobb	52076	Gargh	9	15	30	DaBashers	1	Beastlord
+grobb	Grobb	52005	Basher_Bugak	9	1	35	DaBashers	1	Warrior
+grobb	Grobb	52009	Basher_Kankuk	9	1	35	DaBashers	1	Warrior
+grobb	Grobb	52011	Basher_Nagkuma	9	1	35	DaBashers	1	Warrior
+grobb	Grobb	52019	Basher_Wisthak	9	1	35	DaBashers	1	Warrior
+grobb	Grobb	52020	Basher_Zabaak	9	1	35	DaBashers	1	Warrior
+grobb	Grobb	52013	Basher_Rakguk	9	1	36	DaBashers	1	Warrior
+grobb	Grobb	52016	Basher_Stizik	9	1	36	DaBashers	1	Warrior
+grobb	Grobb	52115	Basher_Scintok	9	1	36	DaBashers	1	Warrior
+grobb	Grobb	52112	Basher_Gubaku	9	1	36	DaBashers	1	Warrior
+grobb	Grobb	52114	Basher_Kigak	9	1	36	DaBashers	1	Warrior
+grobb	Grobb	52116	Basher_Thintan	9	1	37	DaBashers	1	Warrior
+grobb	Grobb	52007	Basher_Glaum	9	1	38	DaBashers	1	Warrior
+grobb	Grobb	52015	Basher_Roruma	9	1	38	DaBashers	1	Warrior
+grobb	Grobb	52002	Basher_Avisk	9	1	39	DaBashers	1	Warrior
+grobb	Grobb	52003	Basher_Banzuk	9	1	39	DaBashers	1	Warrior
+grobb	Grobb	52006	Basher_Gamuk	9	1	39	DaBashers	1	Warrior
+grobb	Grobb	52008	Basher_Gobzin	9	1	39	DaBashers	1	Warrior
+grobb	Grobb	52014	Basher_Razbaz	9	1	39	DaBashers	1	Warrior
+grobb	Grobb	52017	Basher_Sutok	9	1	39	DaBashers	1	Warrior
+grobb	Grobb	52091	Basher_Zazluk	9	1	39	DaBashers	1	Warrior
+grobb	Grobb	52024	Carver_Cagrek	9	1	40	DaBashers	1	Warrior
+grobb	Grobb	52034	Hergor	9	20	41	DaBashers	1	Warrior (NPC)
+grobb	Grobb	52012	Basher_Nanrum	9	1	45	DaBashers	1	Warrior
+grobb	Grobb	52042	Kragia	9	20	45	DaBashers	1	Warrior (NPC)
+grobb	Grobb	52032	Gralok	9	20	46	DaBashers	1	Warrior (NPC)
+grobb	Grobb	52048	Ranjor	9	20	56	DaBashers	1	Warrior (NPC)
+grobb	Grobb	52100	Grigdor	9	1	61	DaBashers	1	Warrior
+grobb	Grobb	52095	Goldush	9	1	61	DaBashers	1	Warrior
+grobb	Grobb	52096	Ungia	10	41	40	Dark Bargainers	1	Class 41
+grobb	Grobb	52023	Bregna	9	29	41	Dark Ones	1	Class 29
+grobb	Grobb	52039	Jokca	9	29	50	Dark Ones	1	Class 29
+grobb	Grobb	52041	Kaglari	9	29	56	Dark Ones	1	Class 29
+grobb	Grobb	52062	Urako	9	29	57	Dark Ones	1	Class 29
+grobb	Grobb	52085	Daboo_Dogak	9	35	60	Dark Ones	1	Class 35
+grobb	Grobb	52070	Gardunk	9	34	60	Dark Ones	1	Class 34
+grobb	Grobb	52113	Mulg	9	1	61	Dark Ones	1	Warrior
+grobb	Grobb	52087	Prashnak	9	10	61	Dark Ones	1	Shaman
+grobb	Grobb	52001	Barsk	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52086	Luruk_Dridor	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52022	Bimuk	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52025	Chamt	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52026	Cralk	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52027	Crilt	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52028	Gartonka	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52029	Gluku	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52030	Grabah	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52031	Graktak	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52033	Hartok	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52035	Hoart	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52037	Iskopa	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52038	Jarlok	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52040	Kagbkek	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52043	Kramf	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52044	Okun	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52045	Ootok	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52049	Raztara	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52050	Rezslog	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52057	Spinkit	9	40	40	Grobb Merchants	1	Class 40
+grobb	Grobb	52058	Tangiz	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52059	Tokun	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52061	Trusk	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52063	Uzak	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52065	Wista	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52066	Zatok	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52067	Zazhar	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	40004	Exterminator_Filrog	9	1	40	Grobb Merchants	1	Warrior
+grobb	Grobb	52092	Zumzal	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52090	Korff	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52088	Bahagg	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52089	Blergrab	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52021	Beztopi	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52093	Bukton	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52094	Chopper_Brenga	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52098	Blorgok_Gkapbron	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52099	Gemcrafter_Tessu	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52102	Artisan_Zermak	9	41	40	Grobb Merchants	1	Class 41
+grobb	Grobb	52069	Vynugga	9	41	50	Grobb Merchants	1	Class 41
+grobb	Grobb	52072	Tracab	9	41	50	Grobb Merchants	1	Class 41
+grobb	Grobb	52073	Blergagg	9	41	50	Grobb Merchants	1	Class 41
+grobb	Grobb	52074	Glubtak	9	41	50	Grobb Merchants	1	Class 41
+grobb	Grobb	52075	Garklog	9	41	50	Grobb Merchants	1	Class 41
+grobb	Grobb	52117	a_sharptooth_caribe	74	1	2	KOS	21	Warrior
+grobb	Grobb	52064	Vergad	9	24	50	Shadowknights of Night Keep	1	Class 24
+grobb	Grobb	52036	Hukulk	9	24	56	Shadowknights of Night Keep	1	Class 24
+grobb	Grobb	52051	Rohga	9	24	60	Shadowknights of Night Keep	1	Class 24
+grobb	Grobb	52060	Treskar	9	24	60	Shadowknights of Night Keep	1	Class 24
+grobb	Grobb	52097	Kugaran	9	1	61	Shadowknights of Night Keep	1	Warrior
+halas	Halas	29028	The_Gwenavyne	73	1	1	NULL	5	Warrior
+halas	Halas	29086	betabstgmspawner	240	1	1	NULL	11	Warrior
+halas	Halas	29092	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+halas	Halas	29093	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+halas	Halas	29094	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+halas	Halas	29085	Priest_of_Discord	1	2	50	NULL	1	Cleric
+halas	Halas	29007	Wrait_Chimera	2	63	65	NULL	1	Class 63
+halas	Halas	29076	Soulbinder_Jarle	2	1	65	NULL	1	Warrior
+halas	Halas	29091	Santug_Claugg	10	1	70	NULL	1	Warrior
+halas	Halas	202372	bind_trap	240	1	80	NULL	11	Warrior
+halas	Halas	29013	Thadres_Thyme	1	9	5	Circle of Unseen Hands	1	Rogue
+halas	Halas	29081	Elgar_Donbrand	2	1	61	Deepmuses	1	Warrior
+halas	Halas	29077	Marton_Stringsinger	1	8	25	League of Antonican Bards	1	Bard
+halas	Halas	29008	Grots	2	41	25	Merchants of Halas	1	Class 41
+halas	Halas	29035	Teria_O`Danos	90	41	30	Merchants of Halas	1	Class 41
+halas	Halas	29043	Murtog_MacYee	90	41	35	Merchants of Halas	1	Class 41
+halas	Halas	29075	Jenkis_O`Malley	2	41	35	Merchants of Halas	1	Class 41
+halas	Halas	29082	Shenigan_Mc`Macky	2	41	35	Merchants of Halas	1	Class 41
+halas	Halas	29084	Boster_MacHadden	2	41	40	Merchants of Halas	1	Class 41
+halas	Halas	29001	Toralia	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29002	Bolace	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29003	Telvina	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29004	Boraskor	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29005	Tukanta	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29006	Corak	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29014	Greta_O`Reilly	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29015	Becka_McGuzzlin	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29017	Spirita	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29018	Lynda_McDobbs	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29019	Ambril_McRohrer	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29020	April	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29021	Sissia	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29022	Skoni	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29027	Holana_Oleary	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29029	Merin	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29030	Dok	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29036	Greta_Terrilon	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29037	Rose_McDowell	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29038	Hetie_McDonald	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29039	Brandyn_McDonald	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29041	Brin_McQuaid	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29042	Donald_McQuaid	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29044	Rain	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29045	Maggie_Shawnasy	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29046	Guthan_Shawnasy	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29047	Kevan_McPherson	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29049	Jil_McDaniel	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29051	Scon_McDaniel	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29052	Cindl	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29053	Mac	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29054	Kar_O`Dansin	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29061	Rosin_MacGrove	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29062	Jac_MacGrove	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29063	Leopok_Terrilon	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29067	Elona_McMahon	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29074	Quillion_O`Zinn	90	41	45	Merchants of Halas	1	Class 41
+halas	Halas	29066	Kevon_McTarnigal	90	40	45	Rogues of the White Rose	1	Class 40
+halas	Halas	29010	Haladorf_Wuirgon	2	9	61	Rogues of the White Rose	1	Rogue
+halas	Halas	29069	Dun_McDowell	2	28	61	Rogues of the White Rose	1	Class 28
+halas	Halas	29070	Ysanna_MacGibbon	2	28	61	Rogues of the White Rose	1	Class 28
+halas	Halas	29071	Cappi_McTarnigal	2	28	61	Rogues of the White Rose	1	Class 28
+halas	Halas	29080	Conladan_Kevellian	2	9	61	Rogues of the White Rose	1	Rogue
+halas	Halas	29083	Jowra_McGynnall	2	9	65	Rogues of the White Rose	1	Rogue
+halas	Halas	29068	Elyn_Connoy	2	28	70	Rogues of the White Rose	1	Class 28
+halas	Halas	29009	Lakgara_the_Righteous	2	10	61	Shamen of Justice	1	Shaman
+halas	Halas	29023	Jinkus_Felligan	2	29	61	Shamen of Justice	1	Class 29
+halas	Halas	29058	Waltor_Felligan	2	29	61	Shamen of Justice	1	Class 29
+halas	Halas	29059	Margyn_McCann	2	29	61	Shamen of Justice	1	Class 29
+halas	Halas	29060	Shamus_Felligan	2	29	61	Shamen of Justice	1	Class 29
+halas	Halas	29079	Balgros_McMichael	2	10	61	Shamen of Justice	1	Shaman
+halas	Halas	29040	Conner_O`Cooper	2	1	35	Steel Warriors	1	Warrior
+halas	Halas	29050	Cet_Hydorn	2	1	35	Steel Warriors	1	Warrior
+halas	Halas	29000	Dargon	90	41	45	Truespirit	1	Class 41
+halas	Halas	29026	a_Sled_Dog	42	1	3	Wolves of the North	21	Warrior
+halas	Halas	29025	a_Sled_Dog	42	1	5	Wolves of the North	21	Warrior
+halas	Halas	29048	Raven	2	1	35	Wolves of the North	1	Warrior
+halas	Halas	29012	Gorth_Bearsoul	2	10	40	Wolves of the North	1	Shaman
+halas	Halas	29031	Alec_McMarrin	90	1	40	Wolves of the North	1	Warrior
+halas	Halas	29032	Andres_McMarrin	90	1	40	Wolves of the North	1	Warrior
+halas	Halas	29033	Cian_McMarrin	90	1	40	Wolves of the North	1	Warrior
+halas	Halas	29034	Adon_McMarrin	90	1	40	Wolves of the North	1	Warrior
+halas	Halas	29064	Clovan_McMarrin	90	1	40	Wolves of the North	1	Warrior
+halas	Halas	29065	Nal_McMarrin	90	1	40	Wolves of the North	1	Warrior
+halas	Halas	29072	Oli_McMarrin	90	1	40	Wolves of the North	1	Warrior
+halas	Halas	29073	Mils_McMarrin	90	1	40	Wolves of the North	1	Warrior
+halas	Halas	29011	Hoyce_MacTaegan	2	15	50	Wolves of the North	1	Beastlord
+halas	Halas	29016	#Field_Priest_Keven	2	34	61	Wolves of the North	1	Class 34
+halas	Halas	29024	Renth_McLanis	2	20	61	Wolves of the North	1	Warrior (NPC)
+halas	Halas	29055	Dargon_McPherson	2	20	61	Wolves of the North	1	Warrior (NPC)
+halas	Halas	29056	Lysbith_McNaff	2	20	61	Wolves of the North	1	Warrior (NPC)
+halas	Halas	29057	Kylan_O`Danos	2	20	61	Wolves of the North	1	Warrior (NPC)
+halas	Halas	29078	Rollian_Galothar	2	1	61	Wolves of the North	1	Warrior
+halas	Halas	29090	Shanis_MacDarren	2	35	61	Wolves of the North	1	Class 35
+kaladima	South Kaladim	60086	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+kaladima	South Kaladim	60087	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+kaladima	South Kaladim	60088	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+kaladima	South Kaladim	60049	Priest_of_Discord	1	2	50	NULL	1	Cleric
+kaladima	South Kaladim	60026	Bronlor_Lightblade	8	1	61	NULL	1	Warrior
+kaladima	South Kaladim	60046	Barrith_the_Brave	8	1	61	NULL	1	Warrior
+kaladima	South Kaladim	60025	Grasill_Stoutale	8	63	65	NULL	1	Class 63
+kaladima	South Kaladim	60047	Soulbinder_Torvald	8	1	65	NULL	1	Warrior
+kaladima	South Kaladim	60048	Kennelia_Gwieal	8	2	65	NULL	1	Cleric
+kaladima	South Kaladim	60085	Santug_Claugg	10	1	70	NULL	1	Warrior
+kaladima	South Kaladim	60007	King_Kazon_Stormhammer	8	1	50	Kazon Stormhammer	1	Warrior
+kaladima	South Kaladim	60001	Kilam_Oresinger	4	8	25	League of Antonican Bards	1	Bard
+kaladima	South Kaladim	60000	Gretta_Mottle	8	41	35	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60019	Vacto_Molunel	8	41	35	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60037	Hindaek_Stormhammer	94	41	38	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60027	Dooni	94	41	39	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60069	Baldoleky_Rockfinder	94	41	39	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60071	Alanury_Stormhammer	94	41	39	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60080	Handaaf_Orcslicer	94	41	39	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60050	Dooni	94	41	40	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60073	Didek_Stormhammer	94	41	40	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60078	Kalameky_Darkfoam	94	41	40	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60079	Gurtha_Yaptongue	94	41	40	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60075	Hanamaf_Darkfoam	94	41	40	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60035	Aarina_Ratsbone	94	41	41	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60074	Dura_Darkfoam	94	41	41	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60076	Hanek_Ogerbane	94	41	41	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60011	Tumpy_Irontoe	8	41	42	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60070	Aarina_Ratsbone	94	41	42	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60042	Bindolmera_Greybloom	94	41	42	Merchants of Kaladim	1	Class 41
+kaladima	South Kaladim	60002	Guard_Ninaf	94	1	38	Storm Guard	1	Warrior
+kaladima	South Kaladim	60012	Guard_Gabbles	94	1	38	Storm Guard	1	Warrior
+kaladima	South Kaladim	60029	Guard_Humphet	94	1	38	Storm Guard	1	Warrior
+kaladima	South Kaladim	60067	Guard_Stump	94	1	38	Storm Guard	1	Warrior
+kaladima	South Kaladim	60068	Guard_Cardaff	94	1	38	Storm Guard	1	Warrior
+kaladima	South Kaladim	60006	Guard_Didek	94	1	39	Storm Guard	1	Warrior
+kaladima	South Kaladim	60014	Guard_Humkor	94	1	39	Storm Guard	1	Warrior
+kaladima	South Kaladim	60052	Guard_Kathur	94	1	39	Storm Guard	1	Warrior
+kaladima	South Kaladim	60061	Guard_Humphet	94	1	39	Storm Guard	1	Warrior
+kaladima	South Kaladim	60063	Guard_Anathur	94	1	39	Storm Guard	1	Warrior
+kaladima	South Kaladim	60060	Guard_Ninaf	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60004	Guard_Adolmer	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60058	Guard_Bobbin	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60059	Guard_Didek	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60066	Guard_Gabbles	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60013	Guard_Kindor	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60016	Guard_Kathur	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60030	Guard_Anathur	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60064	Guard_Dinler	94	1	40	Storm Guard	1	Warrior
+kaladima	South Kaladim	60005	Guard_Bobbin	94	1	41	Storm Guard	1	Warrior
+kaladima	South Kaladim	60008	Guard_Dinamin	94	1	41	Storm Guard	1	Warrior
+kaladima	South Kaladim	60009	Guard_Ninadek	94	1	41	Storm Guard	1	Warrior
+kaladima	South Kaladim	60065	Guard_Humkor	94	1	41	Storm Guard	1	Warrior
+kaladima	South Kaladim	60017	Guard_Adolar	94	1	41	Storm Guard	1	Warrior
+kaladima	South Kaladim	60028	Guard_Hinolmer	94	1	41	Storm Guard	1	Warrior
+kaladima	South Kaladim	60032	Guard_Stump	94	1	41	Storm Guard	1	Warrior
+kaladima	South Kaladim	60031	Guard_Dinler	94	1	41	Storm Guard	1	Warrior
+kaladima	South Kaladim	60003	Guard_Tantan	94	1	42	Storm Guard	1	Warrior
+kaladima	South Kaladim	60054	Guard_Adolmer	94	1	42	Storm Guard	1	Warrior
+kaladima	South Kaladim	60010	Guard_Badmer	94	1	42	Storm Guard	1	Warrior
+kaladima	South Kaladim	60015	Guard_Koranin	94	1	42	Storm Guard	1	Warrior
+kaladima	South Kaladim	60033	Guard_Cardaff	94	1	42	Storm Guard	1	Warrior
+kaladima	South Kaladim	60018	Dirjadak_Barbrawler	8	20	61	Storm Guard	1	Warrior (NPC)
+kaladima	South Kaladim	60020	Canloe_Nusback	8	20	61	Storm Guard	1	Warrior (NPC)
+kaladima	South Kaladim	60021	Hogunk_Ventille	8	20	61	Storm Guard	1	Warrior (NPC)
+kaladima	South Kaladim	60022	Beno_Targnarle	8	20	61	Storm Guard	1	Warrior (NPC)
+kaladima	South Kaladim	60023	Furtog_Ogrebane	8	20	61	Storm Guard	1	Warrior (NPC)
+kaladima	South Kaladim	60024	Byzar_Bloodforge	8	20	61	Storm Guard	1	Warrior (NPC)
+kaladimb	North Kaladim	67001	a_rodent	36	1	1	NULL	21	Warrior
+kaladimb	North Kaladim	67088	Cleaner_VII	36	1	4	NULL	21	Warrior
+kaladimb	North Kaladim	67087	Dravel_Axethrasher	8	35	65	NULL	1	Class 35
+kaladimb	North Kaladim	67091	Halthar_Mowestone	8	1	65	NULL	1	Warrior
+kaladimb	North Kaladim	67020	Busey_Nehart	94	41	34	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67068	Gralpa_Axeheft	94	41	38	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67025	Tempia_Lauley	94	41	38	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67086	Baleki_Nightseer	94	41	38	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67012	Duppa_Pickstone	94	41	39	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67065	Poriss_Splitrock	94	41	40	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67066	Dorlita_Splitshield	94	41	41	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67069	Krako_Stonesplitter	94	41	41	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67067	Zeffan_Holdsman	94	41	42	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67064	Fettar_Steelwield	94	41	42	Clerics of Underfoot	1	Class 41
+kaladimb	North Kaladim	67029	Datur_Nightseer	8	22	61	Clerics of Underfoot	1	Class 22
+kaladimb	North Kaladim	67005	Haldorak_Foamymugs	8	21	61	Clerics of Underfoot	1	Cleric (NPC)
+kaladimb	North Kaladim	67022	Resron_Silvern	8	21	61	Clerics of Underfoot	1	Cleric (NPC)
+kaladimb	North Kaladim	67023	Nultal_Malfoot	8	21	61	Clerics of Underfoot	1	Cleric (NPC)
+kaladimb	North Kaladim	67021	Phell_Gronback	8	21	61	Clerics of Underfoot	1	Cleric (NPC)
+kaladimb	North Kaladim	67024	Priestess_Ghalea	8	21	61	Clerics of Underfoot	1	Cleric (NPC)
+kaladimb	North Kaladim	67026	Bumle_Reminjar	8	22	61	Clerics of Underfoot	1	Class 22
+kaladimb	North Kaladim	67027	Dunony_Chestire	8	22	61	Clerics of Underfoot	1	Class 22
+kaladimb	North Kaladim	67028	Gunlok_Jure	8	22	61	Clerics of Underfoot	1	Class 22
+kaladimb	North Kaladim	67004	Brenthalion_Aleslammer	8	22	61	Clerics of Underfoot	1	Class 22
+kaladimb	North Kaladim	67057	Harnoff_Splitrock	8	41	1	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67058	Marsha_Stonepenner	8	41	25	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67016	Myre	8	41	30	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67080	Tortuk_Everhot	94	41	38	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67081	Dindaek_Everhot	94	41	38	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67084	Doramafi_Ratsbone	94	41	38	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67042	Banaf_Norkhitter	94	41	39	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67063	Axa_Stormshield	94	41	39	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67083	Kadek_Norkhitter	94	41	39	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67044	Serenk_Greybloom	8	41	39	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67008	Storn_Trueblade	94	41	39	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67045	Bndainy_Everhot	94	41	39	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67031	Tissin_Greybloom	8	41	40	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67047	Tortuk_Everhot	94	41	40	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67085	Donnel_Ratsbome	94	40	40	Merchants of Kaladim	1	Class 40
+kaladimb	North Kaladim	67060	Tabber_Varhund	8	41	40	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67032	Ragunk_Everhot	94	41	41	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67043	Aanina_Rockfinder	94	41	41	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67079	Murlond_Everhot	94	41	41	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67070	Tissin_Greybloom	8	41	42	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67052	Donnel_Ratsbome	94	40	42	Merchants of Kaladim	1	Class 40
+kaladimb	North Kaladim	67053	Kafia_Ratsbone	94	41	42	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67054	Darthur_Nightseer	94	41	42	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67039	Bloarn_Norkhitter	8	41	50	Merchants of Kaladim	1	Class 41
+kaladimb	North Kaladim	67076	Atheki_Norkhitter	8	1	9	Miners Guild 249	1	Warrior
+kaladimb	North Kaladim	67077	Kalamin_Norkhitter	8	1	9	Miners Guild 249	1	Warrior
+kaladimb	North Kaladim	67040	Atheki_Norkhitter	8	1	10	Miners Guild 249	1	Warrior
+kaladimb	North Kaladim	67041	Kalamin_Norkhitter	8	1	11	Miners Guild 249	1	Warrior
+kaladimb	North Kaladim	67056	Jark	8	1	50	Miners Guild 249	1	Warrior
+kaladimb	North Kaladim	67000	Founy_Jestands	8	28	45	Miners Guild 628	1	Class 28
+kaladimb	North Kaladim	67003	Crovsar_Dirkbringer	8	28	61	Miners Guild 628	1	Class 28
+kaladimb	North Kaladim	67017	Diggins	8	28	61	Miners Guild 628	1	Class 28
+kaladimb	North Kaladim	67018	Jeet	8	28	61	Miners Guild 628	1	Class 28
+kaladimb	North Kaladim	67059	Goriba_Thurgorson	8	1	61	Miners Guild 628	1	Warrior
+kaladimb	North Kaladim	67019	Mater	8	28	61	Miners Guild 628	1	Class 28
+kaladimb	North Kaladim	67092	Infected_Rat	36	1	2	Noobie Monsters KOS to Guards	21	Warrior
+kaladimb	North Kaladim	67093	Giant_Rat	36	1	2	Noobie Monsters KOS to Guards	21	Warrior
+kaladimb	North Kaladim	67094	Giant_Rat	36	1	2	Noobie Monsters KOS to Guards	21	Warrior
+kaladimb	North Kaladim	67002	Giant_Rat	36	1	3	Noobie Monsters KOS to Guards	21	Warrior
+kaladimb	North Kaladim	67033	Trantor_Everhot	94	1	35	Storm Guard	1	Warrior
+kaladimb	North Kaladim	67072	Guard_Dalammer	94	1	38	Storm Guard	1	Warrior
+kaladimb	North Kaladim	67038	Guard_Dalthur	94	1	38	Storm Guard	1	Warrior
+kaladimb	North Kaladim	67034	Guard_Ainamar	94	1	39	Storm Guard	1	Warrior
+kaladimb	North Kaladim	67074	Guard_Doradek	94	1	40	Storm Guard	1	Warrior
+kaladimb	North Kaladim	67035	Guard_Dalammer	94	1	41	Storm Guard	1	Warrior
+kaladimb	North Kaladim	67036	Guard_Kaldolar	94	1	41	Storm Guard	1	Warrior
+kaladimb	North Kaladim	67006	Exterminator_Vin	8	1	45	Storm Guard	1	Warrior
+kaladimb	North Kaladim	67030	Kinlo_Strongarm	8	1	50	Storm Guard	1	Warrior
+neriaka	Neriak - Foreign Quarter	40000	a_rodent	36	1	1	NULL	21	Warrior
+neriaka	Neriak - Foreign Quarter	40092	TimerTwo	240	1	1	NULL	11	Warrior
+neriaka	Neriak - Foreign Quarter	40093	TimerOne	240	1	1	NULL	11	Warrior
+neriaka	Neriak - Foreign Quarter	40105	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+neriaka	Neriak - Foreign Quarter	40106	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+neriaka	Neriak - Foreign Quarter	40107	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+neriaka	Neriak - Foreign Quarter	40077	a_Teir`Dal_correspondent	6	9	35	NULL	1	Rogue
+neriaka	Neriak - Foreign Quarter	40006	Nerta_D`Vile	6	63	65	NULL	1	Class 63
+neriaka	Neriak - Foreign Quarter	40104	Santug_Claugg	10	1	70	NULL	1	Warrior
+neriaka	Neriak - Foreign Quarter	40007	Soulbinder_Nola_Z`Ret	6	1	65	Beta Neutral	1	Warrior
+neriaka	Neriak - Foreign Quarter	40051	Pungla	10	1	14	Dark Bargainers	1	Warrior
+neriaka	Neriak - Foreign Quarter	40083	Pungla	10	1	16	Dark Bargainers	1	Warrior
+neriaka	Neriak - Foreign Quarter	40102	Namarg	9	41	32	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40098	Ghrag	10	41	36	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40089	Relgor	9	41	37	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40027	Mordant_Tather	44	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40028	Jasma_Tather	1	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40029	Canarie	9	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40033	Kruna	10	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40034	Smaka	10	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40037	Vala_Tanbor	8	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40038	ChonChon	10	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40040	The_Gobbler	10	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40042	Tal_Drana	71	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40043	Putad	10	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40048	Damar_Nislan	71	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40049	Bull_Crusher	10	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40050	Wiska	10	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40053	Palais_Derekor	71	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40054	Tala_Felton	71	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40055	Darien_Felton	71	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40056	Gambel_Quick	78	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40057	Tanai_Tanbor	8	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40058	Sera_Buelle	8	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40059	Uawn_Betell	8	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40060	Yala_Thiss	8	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40061	Dran_`slug`_Rembor	1	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40062	Farlain_Stonethrower	11	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40065	Slunga	9	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40066	Sal_Drana	71	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40068	Jarvah	9	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40069	Bronk	9	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40072	Javen_TaVos	6	41	40	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40076	Nalissi_K`Ten	6	41	65	Dark Bargainers	1	Class 41
+neriaka	Neriak - Foreign Quarter	40032	Divn_L`Crit	77	1	45	Dreadguard Inner	1	Warrior
+neriaka	Neriak - Foreign Quarter	40039	Guard_V`Retta	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40041	Guard_Punox	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40045	Guard_H`Rugla	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40081	Guard_F`Lok	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40085	Guard_N`Mar	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40095	Guard_LCrit	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40046	Guard_Swang	10	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40047	Guard_S`Kor	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40086	Guard_T`Kix	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40063	Guard_Tolax	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40084	Guard_Ixtaz	77	1	35	Dreadguard Outer	1	Warrior
+neriaka	Neriak - Foreign Quarter	40014	Spinkit	92	40	40	Grobb Merchants	1	Class 40
+neriaka	Neriak - Foreign Quarter	40003	Rolynn_B`Div	77	1	10	Indigo Brotherhood	1	Warrior
+neriaka	Neriak - Foreign Quarter	40094	Jacker	10	5	44	Neriak Ogre	1	Shadowknight
+neriaka	Neriak - Foreign Quarter	40103	Mrak	10	1	48	Neriak Ogre	1	Warrior
+neriaka	Neriak - Foreign Quarter	40067	Guard_Lumpin	9	1	18	Neriak Troll	1	Warrior
+neriaka	Neriak - Foreign Quarter	40090	Oosa_Shadowthumper	9	5	42	Neriak Troll	1	Shadowknight
+neriaka	Neriak - Foreign Quarter	40097	Karnan	9	1	47	Neriak Troll	1	Warrior
+neriaka	Neriak - Foreign Quarter	40052	Psal_G`Noir	77	2	40	Priests of Innoruuk	1	Cleric
+neriaka	Neriak - Foreign Quarter	40064	Lisv_D`Unnar	6	11	40	Queen Cristanos Thex	1	Necromancer
+neriaka	Neriak - Foreign Quarter	40001	X`Ta_Timpi	6	11	40	The Dead	1	Necromancer
+neriaka	Neriak - Foreign Quarter	40002	X`Ta_Tompi	6	11	40	The Dead	1	Necromancer
+neriaka	Neriak - Foreign Quarter	40044	X`Ta_Tempi	6	11	40	The Dead	1	Necromancer
+neriaka	Neriak - Foreign Quarter	40030	Uglan	10	1	50	The Dead	1	Warrior
+neriaka	Neriak - Foreign Quarter	40031	Capee	9	1	50	The Dead	1	Warrior
+neriaka	Neriak - Foreign Quarter	40035	Svunsa	9	1	50	The Dead	1	Warrior
+neriakb	Neriak - Commons	41001	a_rodent	36	1	1	NULL	21	Warrior
+neriakb	Neriak - Commons	41099	Timer	240	1	1	NULL	11	Warrior
+neriakb	Neriak - Commons	41039	Antian_F`Lok	77	40	40	NULL	1	Class 40
+neriakb	Neriak - Commons	41096	Priest_of_Discord	1	2	50	NULL	1	Cleric
+neriakb	Neriak - Commons	41089	Firon_Dernkal	6	1	61	NULL	1	Warrior
+neriakb	Neriak - Commons	41088	Fleshweaver_T`soma	6	13	65	NULL	1	Magician
+neriakb	Neriak - Commons	41105	Kwilrz_Vn`Ycxa	6	14	65	NULL	1	Enchanter
+neriakb	Neriak - Commons	41034	Isvan_S`Lon	6	1	10	Dark Bargainers	1	Warrior
+neriakb	Neriak - Commons	41048	Mirzna_N`Mar	6	41	23	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41021	Lynsalai_T`Nyal	6	41	25	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41022	Veca_S`Karn	6	41	27	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41023	Genzal_R`Jyen	77	41	30	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41064	Issva_H`Rugla	6	41	37	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41003	Mignar_Mi`Draskch	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41006	Kis_K`Jartan	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41007	Dissa_C`Luzz	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41008	Mak_Ixtaz	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41009	Ranza_S`lon	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41010	Pisna_H`Rugla	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41011	Mys_S`Tai	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41012	Riv_N`Mar	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41013	Cizzar_J`Axx	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41014	Tizzy_C`Luzz	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41015	Kizya_D`Dbth	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41016	Litz_B`Div	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41017	Tal_G`Noir	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41018	Lizza_D`Unnar	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41019	Syrn_L`Crit	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41020	Tkaz_H`Rugla	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41040	Marza_T`Kix	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41041	Dunred_M`Trik	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41042	Rysva_To`Biath	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41043	Marenkor_To`Biath	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41060	Myrva_N`Tan	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41044	Zanotix_Ixtaz	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41046	Krivn_S`Tai	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41047	Felok_N`Tan	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41058	Mikaela_S`Kor	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41059	Volkoon_D`Dbth	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41061	Lysanda_S`Kor	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41062	Frivsa_Punox	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41063	Svlis_C`Luzz	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41068	Dianax_C`Luzz	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41069	Mariz_Ixtaz	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41070	Rista_S`lon	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41071	Tenso_H`Rugla	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41084	Halvn_B`Div	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41085	Sivy_G`Noir	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41086	Glazn_D`Unnar	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41087	Niz_L`Crit	77	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41090	Zartox_Ru`Soe	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41091	Nekola_N`Ryt	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41092	Treven_Ru`Soe	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41093	Trista_N`Ryt	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41094	Garren_D`Vek	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41095	Andara_C`Luzz	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41045	Opal_H`Rugla	6	41	40	Dark Bargainers	1	Class 41
+neriakb	Neriak - Commons	41081	Vorshar_the_Despised	6	12	61	Dark Bargainers	1	Wizard
+neriakb	Neriak - Commons	41000	Footman_M`oze	77	1	25	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41102	Guard_Dmizza	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41031	Guard_To`Biath	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41032	Guard_N`Mar	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41033	Guard_Q`Tentu	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41097	Guard_F`Mazz	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41100	Guard_L`Crit	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41101	Guard_G`Noir	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41035	Guard_W`Selo	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41103	Guard_D`Bious	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41036	Guard_D`Unnar	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41037	Guard_J`Axx	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41038	Guard_V`Resh	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41072	Guard_K`Jartan	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41075	Guard_S`Lon	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41076	Guard_Tolax	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41077	Guard_Quexill	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41078	Guard_Zexus	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41080	Guard_F`Lok	77	1	40	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41079	Dragoon_V`Retta	77	1	45	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41005	Exterminator_Damasi	6	1	61	Dreadguard Inner	1	Warrior
+neriakb	Neriak - Commons	41067	Klan_K`Jartan	77	1	40	Indigo Brotherhood	1	Warrior
+neriakb	Neriak - Commons	41029	Yegek_B`Larin	6	20	61	Indigo Brotherhood	1	Warrior (NPC)
+neriakb	Neriak - Commons	41030	Narex_T`Vem	6	20	61	Indigo Brotherhood	1	Warrior (NPC)
+neriakb	Neriak - Commons	41065	Trizam_N`Tan	6	20	61	Indigo Brotherhood	1	Warrior (NPC)
+neriakb	Neriak - Commons	41066	Seloxia_Punox	6	20	61	Indigo Brotherhood	1	Warrior (NPC)
+neriakb	Neriak - Commons	41082	Jarrex_N`Ryt	6	20	61	Indigo Brotherhood	1	Warrior (NPC)
+neriakb	Neriak - Commons	41002	Leatherfoot_Deputy	11	1	12	Storm Reapers	1	Warrior
+neriakb	Neriak - Commons	41056	Razran_F`Lok	6	12	40	The Dead	1	Wizard
+neriakb	Neriak - Commons	41057	Olavn_N`Mar	6	12	40	The Dead	1	Wizard
+neriakb	Neriak - Commons	41073	Guard_S`Tai	6	12	40	The Dead	1	Wizard
+neriakb	Neriak - Commons	41074	Guard_N`Mar	6	12	40	The Dead	1	Wizard
+neriakb	Neriak - Commons	41083	Draxiz_N`Ryt	6	14	54	The Spurned	1	Enchanter
+neriakb	Neriak - Commons	41004	Morgalanth_Tal`Raeloen	6	13	61	The Spurned	1	Magician
+neriakb	Neriak - Commons	41024	Opizel_G`Efia	6	31	61	The Spurned	1	Class 31
+neriakb	Neriak - Commons	41025	Shanez_X`Teria	6	31	61	The Spurned	1	Class 31
+neriakb	Neriak - Commons	41026	Belux_J`Ver	6	32	61	The Spurned	1	Class 32
+neriakb	Neriak - Commons	41027	Utvex_D`Jerna	6	33	61	The Spurned	1	Class 33
+neriakb	Neriak - Commons	41028	Ryoz_K`Tarn	6	33	61	The Spurned	1	Class 33
+neriakb	Neriak - Commons	41049	Drizm_J`Axx	6	33	61	The Spurned	1	Class 33
+neriakb	Neriak - Commons	41050	Asyln_C`Luzz	6	31	61	The Spurned	1	Class 31
+neriakb	Neriak - Commons	41051	Mavin_D`Dbth	6	32	61	The Spurned	1	Class 32
+neriakb	Neriak - Commons	41052	Camia_V`Retta	6	33	61	The Spurned	1	Class 33
+neriakb	Neriak - Commons	41053	Gath_N`Mare	6	31	61	The Spurned	1	Class 31
+neriakb	Neriak - Commons	41054	Jayna_D`Bious	6	32	61	The Spurned	1	Class 32
+neriakb	Neriak - Commons	41055	Jucra_V`Lask	6	32	61	The Spurned	1	Class 32
+neriakc	Neriak - 3rd Gate	42001	a_rodent	36	1	1	NULL	21	Warrior
+neriakc	Neriak - 3rd Gate	42109	Timer	240	1	1	NULL	11	Warrior
+neriakc	Neriak - 3rd Gate	42116	Torxal_Smalane	6	1	65	NULL	1	Warrior
+neriakc	Neriak - 3rd Gate	42036	Lokar_To`Biath	6	11	10	Dark Bargainers	1	Necromancer
+neriakc	Neriak - 3rd Gate	42098	Lokar_To`Biath	6	11	11	Dark Bargainers	1	Necromancer
+neriakc	Neriak - 3rd Gate	42050	Dizra_To`Biath	6	1	11	Dark Bargainers	1	Warrior
+neriakc	Neriak - 3rd Gate	42002	Ratraz	9	1	19	Dark Bargainers	1	Warrior
+neriakc	Neriak - 3rd Gate	42051	Mare_X`Lottl	6	1	20	Dark Bargainers	1	Warrior
+neriakc	Neriak - 3rd Gate	42053	Cecile_K`Jartan	6	41	20	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42079	Tzanso_S`Tai	77	41	24	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42060	Xantis_Ixtax	6	41	25	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42071	Jerris_W`Selo	77	41	25	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42059	Cazum_N`Tan	77	41	28	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42075	Kanthu_M`Rekkor	77	41	28	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42052	Belyea_K`Jartan	77	41	29	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42101	Belyea_K`Jartan	77	41	30	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42008	Ash_C`Luzz	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42009	Drisi_J`Axx	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42010	Misar_D`Dbth	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42011	Mizr_N`Mar	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42012	Jusar_V`Lask	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42013	Hutyn_L`Lozz	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42014	Medron_Y`Lask	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42022	Jys_D`Bious	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42023	Camor_V`Retta	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42024	Gasia_N`Mare	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42025	Rizyra_F`Lok	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42026	Olak_N`Mar	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42027	Misal_S`Kor	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42108	Misal_S`Kor	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42028	Vissa_D`Dbth	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42029	Myris_N`Tan	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42030	Lyniv_S`Kor	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42031	Friz_Punox	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42032	Svlia_C`Luzz	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42033	Issia_H`Rugla	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42034	Trik_N`Tan	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42035	Sol_Punox	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42054	Yally_G`Noir	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42055	Telnor_D`Unnar	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42056	Grazis_L`Crit	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42057	Katara_L`Crit	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42088	Petra_D`Dbth	6	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42089	Dvis_Zexus	77	41	40	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42058	Nallar_Q`Tentu	6	11	42	Dark Bargainers	1	Necromancer
+neriakc	Neriak - 3rd Gate	42087	Krystiana_N`Ryt	6	41	45	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42104	Kristiana_N`Ryt	6	41	45	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42086	Draan_N`Ryt	6	41	50	Dark Bargainers	1	Class 41
+neriakc	Neriak - 3rd Gate	42003	Guard_Q`Tentu	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42094	Guard_V`Lask	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42114	Guard_D`Bious	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42004	Guard_N`Mar	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42095	Guard_K`Jartan	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42110	Guard_L`Crit	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42005	Guard_Quexill	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42096	Guard_Tolax	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42111	Guard_G`Noir	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42007	Guard_J`Axx	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42046	Guard_S`tai	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42100	Guard_Din`a	77	1	40	Dreadguard Inner	1	Warrior
+neriakc	Neriak - 3rd Gate	42021	Exterminator_Gilea	6	11	42	Dreadguard Inner	1	Necromancer
+neriakc	Neriak - 3rd Gate	42112	Verina_Tomb	6	2	60	dubious	1	Cleric
+neriakc	Neriak - 3rd Gate	42039	Molon_T`plth	6	9	14	Ebon Mask	1	Rogue
+neriakc	Neriak - 3rd Gate	42097	Molon_T`plth	6	9	15	Ebon Mask	1	Rogue
+neriakc	Neriak - 3rd Gate	42040	Spice	10	1	20	Ebon Mask	1	Warrior
+neriakc	Neriak - 3rd Gate	42076	Sazan_K`Jartan	6	9	24	Ebon Mask	1	Rogue
+neriakc	Neriak - 3rd Gate	42103	Vivish_S`Lon	6	9	35	Ebon Mask	1	Rogue
+neriakc	Neriak - 3rd Gate	42015	Yaz_Tolax	6	9	38	Ebon Mask	1	Rogue
+neriakc	Neriak - 3rd Gate	42000	Tani_N`Mar	6	28	45	Ebon Mask	1	Class 28
+neriakc	Neriak - 3rd Gate	42045	Hekzin_G`Zule	6	28	61	Ebon Mask	1	Class 28
+neriakc	Neriak - 3rd Gate	42072	Eolorn_J`Axx	6	28	61	Ebon Mask	1	Class 28
+neriakc	Neriak - 3rd Gate	42073	Pazin_Punox	6	28	61	Ebon Mask	1	Class 28
+neriakc	Neriak - 3rd Gate	42085	Selzar_L`Crit	6	28	61	Ebon Mask	1	Class 28
+neriakc	Neriak - 3rd Gate	42092	Ambassador_Rylan	6	1	25	Indigo Brotherhood	1	Warrior
+neriakc	Neriak - 3rd Gate	42016	#Gribnor`s_Thug_	9	1	50	KOS	1	Warrior
+neriakc	Neriak - 3rd Gate	42017	#Gribnor`s_Thug	9	1	50	KOS	1	Warrior
+neriakc	Neriak - 3rd Gate	42018	#Gribnor_the_Small	9	1	52	KOS	1	Warrior
+neriakc	Neriak - 3rd Gate	42067	a_ghoul	33	1	13	Neriak Ghoul	3	Warrior
+neriakc	Neriak - 3rd Gate	42069	a_ghoul	33	1	14	Neriak Ghoul	3	Warrior
+neriakc	Neriak - 3rd Gate	42068	a_ghoul	33	1	15	Neriak Ghoul	3	Warrior
+neriakc	Neriak - 3rd Gate	42070	a_ghoul	33	1	16	Neriak Ghoul	3	Warrior
+neriakc	Neriak - 3rd Gate	42102	a_ghoul	33	1	17	Neriak Ghoul	3	Warrior
+neriakc	Neriak - 3rd Gate	42099	a_ghoul	33	1	20	Neriak Ghoul	3	Warrior
+neriakc	Neriak - 3rd Gate	42077	Jabon_T`Kix	77	2	40	Priests of Innoruuk	1	Cleric
+neriakc	Neriak - 3rd Gate	42078	Krizon_G`Noir	77	2	40	Priests of Innoruuk	1	Cleric
+neriakc	Neriak - 3rd Gate	42082	Eruvin_T`Kix	77	2	40	Priests of Innoruuk	1	Cleric
+neriakc	Neriak - 3rd Gate	42083	Jacum_C`Luzz	77	2	40	Priests of Innoruuk	1	Cleric
+neriakc	Neriak - 3rd Gate	42084	Jsvan_Zexus	77	2	40	Priests of Innoruuk	1	Cleric
+neriakc	Neriak - 3rd Gate	42043	Ithvol_K`Jasn	6	21	61	Priests of Innoruuk	1	Cleric (NPC)
+neriakc	Neriak - 3rd Gate	42044	Kerton_R`Dev	6	21	61	Priests of Innoruuk	1	Cleric (NPC)
+neriakc	Neriak - 3rd Gate	42080	Ulazia_W`Selo	6	21	61	Priests of Innoruuk	1	Cleric (NPC)
+neriakc	Neriak - 3rd Gate	42081	Perrir_Zexus	6	21	61	Priests of Innoruuk	1	Cleric (NPC)
+neriakc	Neriak - 3rd Gate	42037	DeGarran_Kixl	6	1	38	The Dead	1	Warrior
+neriakc	Neriak - 3rd Gate	42006	Kszan_Punox	77	1	40	The Dead	1	Warrior
+neriakc	Neriak - 3rd Gate	42047	Lisvan_X`Lottl	6	12	40	The Dead	1	Wizard
+neriakc	Neriak - 3rd Gate	42048	Evin_X`Lottl	6	12	40	The Dead	1	Wizard
+neriakc	Neriak - 3rd Gate	42049	Krizin_J`Narus	6	11	40	The Dead	1	Necromancer
+neriakc	Neriak - 3rd Gate	42041	Noxhil_V`Sek	6	30	61	The Dead	1	Class 30
+neriakc	Neriak - 3rd Gate	42042	Loveal_S`Nez	6	24	61	The Dead	1	Class 24
+neriakc	Neriak - 3rd Gate	42061	Frizin_Q`Tentu	6	30	61	The Dead	1	Class 30
+neriakc	Neriak - 3rd Gate	42062	Glazin_K`Jartan	6	30	61	The Dead	1	Class 30
+neriakc	Neriak - 3rd Gate	42063	Xon_Quexill	6	30	61	The Dead	1	Class 30
+neriakc	Neriak - 3rd Gate	42064	Ulraz_S`Lon	6	24	61	The Dead	1	Class 24
+neriakc	Neriak - 3rd Gate	42065	Tralon_Din`a	6	24	61	The Dead	1	Class 24
+neriakc	Neriak - 3rd Gate	42066	Nezzka_Tolax	6	24	61	The Dead	1	Class 24
+neriakc	Neriak - 3rd Gate	42090	Qrixat_Du`voy	6	2	61	The Spurned	1	Cleric
+neriakc	Neriak - 3rd Gate	42019	High_Priestess_Alexandria	6	2	61	The Spurned	1	Cleric
+neriakc	Neriak - 3rd Gate	42020	Talorial_D`Estalian	6	11	61	The Spurned	1	Necromancer
+oggok	Oggok	49011	a_young_armadillo	87	1	1	NULL	21	Warrior
+oggok	Oggok	49126	betabstgmspawner	240	1	1	NULL	11	Warrior
+oggok	Oggok	49129	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+oggok	Oggok	49130	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+oggok	Oggok	49131	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+oggok	Oggok	49013	an_armadillo	87	1	2	NULL	21	Warrior
+oggok	Oggok	49015	Priest_of_Discord	1	2	50	NULL	1	Cleric
+oggok	Oggok	49023	Bozlum_Blossom	10	10	60	NULL	1	Shaman
+oggok	Oggok	49074	Kizrak_the_Tyrant	10	1	61	NULL	1	Warrior
+oggok	Oggok	49034	Goobast	10	63	65	NULL	1	Class 63
+oggok	Oggok	49083	Baddi_Waca	10	35	65	NULL	1	Class 35
+oggok	Oggok	49090	Puwdap	10	1	65	NULL	1	Warrior
+oggok	Oggok	49128	Santug_Claugg	10	1	70	NULL	1	Warrior
+oggok	Oggok	674	Trigger	240	1	99	NULL	11	Warrior
+oggok	Oggok	49082	Soulbinder_Trurg	10	1	65	Beta Neutral	1	Warrior
+oggok	Oggok	49049	Clurg	10	41	40	Clurg	1	Class 41
+oggok	Oggok	49043	Lork	10	20	61	Craknek Warriors	1	Warrior (NPC)
+oggok	Oggok	49044	Kogna	10	20	61	Craknek Warriors	1	Warrior (NPC)
+oggok	Oggok	49045	Horgus	10	20	61	Craknek Warriors	1	Warrior (NPC)
+oggok	Oggok	49046	Guntrik	10	20	61	Craknek Warriors	1	Warrior (NPC)
+oggok	Oggok	49026	Trusk	93	41	40	Green Blood Knights	1	Class 41
+oggok	Oggok	49027	Kramf	93	41	40	Green Blood Knights	1	Class 41
+oggok	Oggok	49071	Iksob_Darkchaser	93	41	40	Green Blood Knights	1	Class 41
+oggok	Oggok	49035	Ruksa	10	24	61	Green Blood Knights	1	Class 24
+oggok	Oggok	49036	Bonlarg	10	24	61	Green Blood Knights	1	Class 24
+oggok	Oggok	49037	Grevak	10	24	61	Green Blood Knights	1	Class 24
+oggok	Oggok	49038	Soonog	10	24	61	Green Blood Knights	1	Class 24
+oggok	Oggok	49092	Ambassador_K`Ryn	6	1	24	Indigo Brotherhood	1	Warrior
+oggok	Oggok	49073	Klob_Pulp	10	41	25	Merchants of Oggok	1	Class 41
+oggok	Oggok	49062	Chef_Dooga	93	41	35	Merchants of Oggok	1	Class 41
+oggok	Oggok	49016	Angrog	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49019	Cikoona	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49020	Praak	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49048	Garakbar	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49053	Puglala	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49055	Varrok_Neckchopper	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49056	Squeea	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49057	Hrak	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49058	Brana	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49059	Sinsaal	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49060	Grop	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49061	Brokk_Boxtripper	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49063	Crunga	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49064	Erung	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49065	Ungral_Silverstomp	93	40	40	Merchants of Oggok	1	Class 40
+oggok	Oggok	49066	Zarg_Knightbane	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49067	Lopuka	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49068	Juk_Hidebeater	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49069	Duuga_Tearstopper	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49070	Rora_Dirtstamp	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49072	Snarg_Bonesmacker	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49076	Korgarg_Swillchugger	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49077	Gretamog	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49078	Helgara_Dirtcarver	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49079	Kerplooe_Dirtcarver	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49080	Blergerda	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49088	Pordopa	93	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49091	Sheerie_Oglarum	10	41	40	Merchants of Oggok	1	Class 41
+oggok	Oggok	49024	Gralbug	10	41	50	Merchants of Oggok	1	Class 41
+oggok	Oggok	49054	Bubbgrib	93	41	50	Merchants of Oggok	1	Class 41
+oggok	Oggok	49081	Rognok	10	41	50	Merchants of Oggok	1	Class 41
+oggok	Oggok	49089	Brogdog	10	41	50	Merchants of Oggok	1	Class 41
+oggok	Oggok	49125	Kulver	93	41	65	Merchants of Oggok	1	Class 41
+oggok	Oggok	49000	Bouncer_Gronk	93	1	29	Oggok Guards	1	Warrior
+oggok	Oggok	49100	Bouncer_Bak	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49003	Bouncer_Scaar	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49004	Bouncer_Xak	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49097	Bouncer_Skon	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49119	Bouncer_Haraan	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49120	Bouncer_Tazak	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49123	Bouncer_Skuk	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49017	Bouncer_Wrok	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49113	Bouncer_Raan	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49103	Exterminator_Glurg	93	1	33	Oggok Guards	1	Warrior
+oggok	Oggok	49005	Bouncer_Skon	93	1	34	Oggok Guards	1	Warrior
+oggok	Oggok	49007	Bouncer_Tazak	93	1	34	Oggok Guards	1	Warrior
+oggok	Oggok	49102	Bouncer_Druk	93	1	34	Oggok Guards	1	Warrior
+oggok	Oggok	49105	Bouncer_Praag	93	1	34	Oggok Guards	1	Warrior
+oggok	Oggok	49101	Bouncer_Raan	93	1	34	Oggok Guards	1	Warrior
+oggok	Oggok	49111	Bouncer_Haraan	93	1	35	Oggok Guards	1	Warrior
+oggok	Oggok	49008	Bouncer_Skuk	93	1	35	Oggok Guards	1	Warrior
+oggok	Oggok	49009	Bouncer_Druk	93	1	35	Oggok Guards	1	Warrior
+oggok	Oggok	49104	Bouncer_Raan	93	1	35	Oggok Guards	1	Warrior
+oggok	Oggok	49106	Bouncer_Wrok	93	1	35	Oggok Guards	1	Warrior
+oggok	Oggok	49099	Bouncer_Thrang	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49002	Bouncer_Bak	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49094	Bouncer_Xak	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49096	Bouncer_Haraan	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49098	Bouncer_Tazak	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49112	Bouncer_Skuk	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49124	Bouncer_Druk	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49010	Bouncer_Praag	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49012	Bouncer_Mrang	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49014	Bouncer_Raan	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49021	Exterminator_Glurg	93	1	36	Oggok Guards	1	Warrior
+oggok	Oggok	49001	Bouncer_Thrang	93	1	37	Oggok Guards	1	Warrior
+oggok	Oggok	49122	Bouncer_Bak	93	1	37	Oggok Guards	1	Warrior
+oggok	Oggok	49110	Bouncer_Skon	93	1	37	Oggok Guards	1	Warrior
+oggok	Oggok	49006	Bouncer_Haraan	93	1	37	Oggok Guards	1	Warrior
+oggok	Oggok	49018	Bouncer_Raan	93	1	37	Oggok Guards	1	Warrior
+oggok	Oggok	49116	Bouncer_Wrok	93	1	37	Oggok Guards	1	Warrior
+oggok	Oggok	49115	Exterminator_Glurg	93	1	37	Oggok Guards	1	Warrior
+oggok	Oggok	49050	Bouncer_Krik	93	1	37	Oggok Guards	1	Warrior
+oggok	Oggok	49075	Ogomok	10	1	61	Oggok Resident	1	Warrior
+oggok	Oggok	49084	Gronk	10	1	61	Oggok Resident	1	Warrior
+oggok	Oggok	49085	Murak	10	10	61	Oggok Resident	1	Shaman
+oggok	Oggok	49086	Mooglan	10	1	61	Oggok Resident	1	Warrior
+oggok	Oggok	49087	Bakrishal	10	1	61	Oggok Resident	1	Warrior
+oggok	Oggok	49025	Crilt	93	41	40	Shamen of War	1	Class 41
+oggok	Oggok	49028	Chamt	93	41	40	Shamen of War	1	Class 41
+oggok	Oggok	49030	Cralk	93	41	40	Shamen of War	1	Class 41
+oggok	Oggok	49031	Barsk	93	41	40	Shamen of War	1	Class 41
+oggok	Oggok	49032	Hoart	93	41	40	Shamen of War	1	Class 41
+oggok	Oggok	49033	Tokun	93	41	40	Shamen of War	1	Class 41
+oggok	Oggok	49051	Uoola	93	41	40	Shamen of War	1	Class 41
+oggok	Oggok	49047	Grapok	10	15	50	Shamen of War	1	Beastlord
+oggok	Oggok	49029	Korff	93	41	50	Shamen of War	1	Class 41
+oggok	Oggok	49039	Fuga	10	29	61	Shamen of War	1	Class 29
+oggok	Oggok	49040	Jargo	10	29	61	Shamen of War	1	Class 29
+oggok	Oggok	49041	Marda	10	29	61	Shamen of War	1	Class 29
+oggok	Oggok	49042	Zulort	10	29	61	Shamen of War	1	Class 29
+oggok	Oggok	49052	#Bordag	10	34	61	Shamen of War	1	Class 34
+paineel	Paineel	75161	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+paineel	Paineel	75162	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+paineel	Paineel	75163	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+paineel	Paineel	75005	Erandi_Natasu	3	1	40	NULL	1	Warrior
+paineel	Paineel	75114	Tatalros_the_Cruel	367	5	61	NULL	1	Shadowknight
+paineel	Paineel	75115	Soulbinder_Tomas	3	1	65	NULL	1	Warrior
+paineel	Paineel	75116	Yenlr_Undraie	3	11	65	NULL	1	Necromancer
+paineel	Paineel	75160	Santug_Claugg	10	1	70	NULL	1	Warrior
+paineel	Paineel	75020	Elia_Athrex	3	11	5	Heretics	1	Necromancer
+paineel	Paineel	75047	Guard_Menbuknar	367	1	10	Heretics	3	Warrior
+paineel	Paineel	75048	Guard_Heridion	367	1	10	Heretics	3	Warrior
+paineel	Paineel	75039	Derena_Leflor	3	1	11	Heretics	1	Warrior
+paineel	Paineel	75043	Verolk_Kishneal	3	5	11	Heretics	1	Shadowknight
+paineel	Paineel	75045	Velana_Kelmuza	3	11	12	Heretics	1	Necromancer
+paineel	Paineel	75042	Telan_Buvare	3	5	13	Heretics	1	Shadowknight
+paineel	Paineel	75044	Keeshla_Levlora	3	11	14	Heretics	1	Necromancer
+paineel	Paineel	75049	Guard_Lomanres	367	1	14	Heretics	3	Warrior
+paineel	Paineel	75129	Guard_Lehlufa	367	1	14	Heretics	3	Warrior
+paineel	Paineel	75154	Guard_Perelin	367	1	14	Heretics	3	Warrior
+paineel	Paineel	75000	Noclin_Saah	3	1	15	Heretics	1	Warrior
+paineel	Paineel	75008	Guard_Kellolonren	367	1	15	Heretics	3	Warrior
+paineel	Paineel	75038	Guard_Rireboln	367	1	15	Heretics	3	Warrior
+paineel	Paineel	75040	Guard_Lecknar	367	1	15	Heretics	3	Warrior
+paineel	Paineel	75041	Guard_Korlack	367	1	15	Heretics	3	Warrior
+paineel	Paineel	75127	Guard_Lomanres	367	1	15	Heretics	3	Warrior
+paineel	Paineel	75128	Guard_Pomnares	367	1	15	Heretics	3	Warrior
+paineel	Paineel	75052	Guard_Perelin	367	1	15	Heretics	3	Warrior
+paineel	Paineel	75053	Guard_Lesunra	367	1	15	Heretics	3	Warrior
+paineel	Paineel	75153	Guard_Lomanres	367	1	16	Heretics	3	Warrior
+paineel	Paineel	75050	Guard_Pomnares	367	1	16	Heretics	3	Warrior
+paineel	Paineel	75051	Guard_Lehlufa	367	1	16	Heretics	3	Warrior
+paineel	Paineel	75130	Guard_Perelin	367	1	16	Heretics	3	Warrior
+paineel	Paineel	75009	Guard_Lelton	367	1	18	Heretics	3	Warrior
+paineel	Paineel	75037	Guard_Abbilash	367	1	18	Heretics	3	Warrior
+paineel	Paineel	75144	Guard_Tynaryn	367	1	23	Heretics	3	Warrior
+paineel	Paineel	75123	Guard_Notzxatl	367	1	23	Heretics	3	Warrior
+paineel	Paineel	75031	Guard_Buldoral	367	1	23	Heretics	3	Warrior
+paineel	Paineel	75032	Guard_Polzdurn	367	1	23	Heretics	3	Warrior
+paineel	Paineel	75126	Guard_Lidozarnn	367	1	23	Heretics	3	Warrior
+paineel	Paineel	75132	Guard_Pendleir	367	1	23	Heretics	3	Warrior
+paineel	Paineel	75158	Guard_Tynaryn	367	1	24	Heretics	3	Warrior
+paineel	Paineel	75017	library_assistant	33	1	24	Heretics	3	Warrior
+paineel	Paineel	75025	Guard_Nextloxtl	367	1	24	Heretics	3	Warrior
+paineel	Paineel	75141	Guard_Exclorpt	367	1	24	Heretics	3	Warrior
+paineel	Paineel	75122	Guard_Ezrothe	367	1	24	Heretics	3	Warrior
+paineel	Paineel	75028	Guard_Notzxatl	367	1	24	Heretics	3	Warrior
+paineel	Paineel	75054	Guard_Yerlash	367	1	24	Heretics	3	Warrior
+paineel	Paineel	75133	Guard_Tynaryn	367	1	25	Heretics	3	Warrior
+paineel	Paineel	75011	Azzar_Habbib	3	11	25	Heretics	1	Necromancer
+paineel	Paineel	75027	Guard_Ezrothe	367	1	25	Heretics	3	Warrior
+paineel	Paineel	75143	Guard_Lidozarnn	367	1	25	Heretics	3	Warrior
+paineel	Paineel	75113	Henly_Nictropus	3	41	25	Heretics	1	Class 41
+paineel	Paineel	75003	Guard_Tynaryn	367	1	26	Heretics	3	Warrior
+paineel	Paineel	75121	Guard_Nextloxtl	367	1	26	Heretics	3	Warrior
+paineel	Paineel	75026	Guard_Exclorpt	367	1	26	Heretics	3	Warrior
+paineel	Paineel	75152	Guard_Ezrothe	367	1	26	Heretics	3	Warrior
+paineel	Paineel	75140	Guard_Notzxatl	367	1	26	Heretics	3	Warrior
+paineel	Paineel	75131	Guard_Yerlash	367	1	26	Heretics	3	Warrior
+paineel	Paineel	75146	Guard_Pendleir	367	1	26	Heretics	3	Warrior
+paineel	Paineel	75150	Guard_Nextloxtl	367	1	27	Heretics	3	Warrior
+paineel	Paineel	75151	Guard_Exclorpt	367	1	27	Heretics	3	Warrior
+paineel	Paineel	75033	Guard_Lidozarnn	367	1	27	Heretics	3	Warrior
+paineel	Paineel	75034	Guard_Hetorzuz	367	1	27	Heretics	3	Warrior
+paineel	Paineel	75145	Guard_Yerlash	367	1	27	Heretics	3	Warrior
+paineel	Paineel	75055	Guard_Pendleir	367	1	27	Heretics	3	Warrior
+paineel	Paineel	75155	Guard_Ishvlor	367	1	33	Heretics	3	Warrior
+paineel	Paineel	75157	Guard_Mertanor	367	1	33	Heretics	3	Warrior
+paineel	Paineel	75134	Guard_Abrebla	367	1	34	Heretics	3	Warrior
+paineel	Paineel	75135	Guard_Potren	367	1	34	Heretics	3	Warrior
+paineel	Paineel	75136	Guard_Sheltuin	367	1	34	Heretics	3	Warrior
+paineel	Paineel	75137	Guard_Mertanor	367	1	34	Heretics	3	Warrior
+paineel	Paineel	75018	Dzan_Amo	3	2	35	Heretics	1	Cleric
+paineel	Paineel	75022	Medoris_Flalzm	118	1	35	Heretics	3	Warrior
+paineel	Paineel	75023	Ninna_Flalzm	118	1	35	Heretics	3	Warrior
+paineel	Paineel	75029	Ernax_the_Scholar	3	12	35	Heretics	1	Wizard
+paineel	Paineel	75148	Guard_Ishvlor	367	1	35	Heretics	3	Warrior
+paineel	Paineel	75149	Guard_Mertanor	367	1	35	Heretics	3	Warrior
+paineel	Paineel	75056	Guard_Abrebla	367	1	36	Heretics	3	Warrior
+paineel	Paineel	75156	Guard_Sheltuin	367	1	36	Heretics	3	Warrior
+paineel	Paineel	75061	Guard_Ackin	367	1	36	Heretics	3	Warrior
+paineel	Paineel	75142	Guard_Abrebla	367	1	37	Heretics	3	Warrior
+paineel	Paineel	75057	Guard_Potren	367	1	37	Heretics	3	Warrior
+paineel	Paineel	75058	Guard_Ishvlor	367	1	37	Heretics	3	Warrior
+paineel	Paineel	75059	Guard_Sheltuin	367	1	37	Heretics	3	Warrior
+paineel	Paineel	75060	Guard_Mertanor	367	1	37	Heretics	3	Warrior
+paineel	Paineel	75138	Guard_Ackin	367	1	37	Heretics	3	Warrior
+paineel	Paineel	75013	#Jerith	6	5	40	Heretics	1	Shadowknight
+paineel	Paineel	75024	Guard_Captain_Latorl	367	1	40	Heretics	3	Warrior
+paineel	Paineel	75117	Sejako_Mujan	3	11	40	Heretics	1	Necromancer
+paineel	Paineel	75118	Alaria_Mujan	3	11	40	Heretics	1	Necromancer
+paineel	Paineel	75019	Atdehim_Sqonci	3	2	45	Heretics	1	Cleric
+paineel	Paineel	75021	a_spirit_chanter	118	2	45	Heretics	3	Cleric
+paineel	Paineel	75030	Tormented_Soul	118	7	50	Heretics	3	Monk
+paineel	Paineel	75035	Loleluz	367	41	50	Heretics	3	Class 41
+paineel	Paineel	75036	Archenm	367	41	50	Heretics	3	Class 41
+paineel	Paineel	75046	Faratain	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75062	Jenkin_Fleetmore	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75063	Kervis_Ackblor	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75064	Ishen_Lelelan	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75065	Tenralus_Brackmar	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75066	Erelin_Verisue	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75067	Lillean_Han_Oni	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75068	Oren_Calferdo	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75069	Zarnlel_Apridor	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75073	Royal_Guard_Sheltuin	3	1	50	Heretics	1	Warrior
+paineel	Paineel	75074	Royal_Guard_Lilkus	3	1	50	Heretics	1	Warrior
+paineel	Paineel	75076	Librarian_Kesler	3	1	50	Heretics	1	Warrior
+paineel	Paineel	75077	Talloth_Vara	3	1	50	Heretics	1	Warrior
+paineel	Paineel	75078	Dannis_Faleet	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75079	Rallia_Hapera	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75080	Geomar_Hapera	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75081	Yvonne_Ani	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75082	Linnleu_Brackmar	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75083	Keletha_Nightweaver	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75084	Nedorl_Ipabrun	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75085	Leovre_Kieqmarn	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75086	Devinious_Natasu	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75087	Kilevra_Natasu	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75088	Danus_Kelmun	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75092	Lolenton	367	41	50	Heretics	3	Class 41
+paineel	Paineel	75093	Gernatis	367	41	50	Heretics	3	Class 41
+paineel	Paineel	75094	Kelkarn	367	41	50	Heretics	3	Class 41
+paineel	Paineel	75095	Taralani_Rahnta	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75096	Tentus_Brackmar	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75097	Evus_Doracmal	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75098	Taria_Clayspinner	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75099	Nadara_Reloclen	3	40	50	Heretics	1	Class 40
+paineel	Paineel	75100	Marsa_Folor	3	40	50	Heretics	1	Class 40
+paineel	Paineel	75101	Winnla_Crestus	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75102	Pardas_Nalue	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75103	Gorng_Alusnein	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75104	Iva_Tersala	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75105	Dilche_Orlezcha	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75106	Brettas_Norval	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75107	Sheras_Milaku	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75108	Dovan_Sires	3	41	50	Heretics	1	Class 41
+paineel	Paineel	75075	Overlord_Virate_Manaar	3	1	55	Heretics	1	Warrior
+paineel	Paineel	75015	Shwara_Volerno	3	30	61	Heretics	1	Class 30
+paineel	Paineel	75016	Sadorno_Chomosh	3	21	61	Heretics	1	Cleric (NPC)
+paineel	Paineel	75070	Miadera_Shadowfyre	3	21	61	Heretics	1	Cleric (NPC)
+paineel	Paineel	75071	Nivold_Predd	3	21	61	Heretics	1	Cleric (NPC)
+paineel	Paineel	75072	Sern_Adolia	3	21	61	Heretics	1	Cleric (NPC)
+paineel	Paineel	75089	Antus_Shelbra	3	30	61	Heretics	1	Class 30
+paineel	Paineel	75090	Auhrik_Siet`ka	3	30	61	Heretics	1	Class 30
+paineel	Paineel	75091	Coriante_Verisue	3	30	61	Heretics	1	Class 30
+paineel	Paineel	75109	Shevra_Kollintar	3	24	61	Heretics	1	Class 24
+paineel	Paineel	75110	Davorre_Bloodthorn	3	24	61	Heretics	1	Class 24
+paineel	Paineel	75111	Mandaril_Dark_Knife	3	24	61	Heretics	1	Class 24
+paineel	Paineel	75112	Shyna_Cintya	3	63	65	Heretics	1	Class 63
+paineel	Paineel	75139	Toryn_Roltaire	3	41	65	Heretics	1	Class 41
+paineel	Paineel	75159	Noclin`s_Pet	367	1	5	KOS	3	Warrior
+paineel	Paineel	75010	a_fire_beetle	22	1	2	Nature Animal - Beetle	22	Warrior
+paineel	Paineel	75001	a_decaying_skeleton	367	1	1	Noobie Monsters KOS to Guards	3	Warrior
+paineel	Paineel	75002	a_pack_rat	36	1	1	Noobie Monsters KOS to Guards	21	Warrior
+paineel	Paineel	75007	a_moss_snake	37	1	1	Noobie Monsters KOS to Guards	21	Warrior
+paineel	Paineel	75014	a_black_bat	34	1	1	Noobie Monsters KOS to Guards	21	Warrior
+paineel	Paineel	75004	a_decaying_skeleton	367	1	2	Noobie Monsters KOS to Guards	3	Warrior
+paineel	Paineel	75119	an_undead_rat	36	1	4	Noobie Monsters KOS to Guards	3	Warrior
+paineel	Paineel	75012	Gerot_Kastane	1	5	50	Truespirit	1	Shadowknight
+paineel	Paineel	75006	Duriek_Bloodpool	3	5	55	Truespirit	1	Shadowknight
+qeynos	South Qeynos	1026	a_rodent	36	1	1	NULL	21	Warrior
+qeynos	South Qeynos	1316	campnight	240	1	1	NULL	11	Warrior
+qeynos	South Qeynos	1315	campday	240	1	1	NULL	11	Warrior
+qeynos	South Qeynos	1154	Morty_Prysmith	55	8	5	NULL	1	Bard
+qeynos	South Qeynos	1073	Karl_Verhey	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1162	Cras_Snyder	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1164	Oscar_the_Brash	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1171	Dan_Wallin	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1176	Kazu_Kolden	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1185	Miles_Gordy	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1192	Philip_Tallman	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1195	Brian_Willman	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1198	Bobbin_Page	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1199	Graeme_Revall	1	9	10	NULL	1	Rogue
+qeynos	South Qeynos	1305	#Lanhern_Firepride	71	1	10	NULL	1	Warrior
+qeynos	South Qeynos	1177	Largon_Welsh	1	1	25	NULL	1	Warrior
+qeynos	South Qeynos	1083	Ellisha	3	12	25	NULL	1	Wizard
+qeynos	South Qeynos	1311	Gemcrafter_Anuk	1	41	25	NULL	1	Class 41
+qeynos	South Qeynos	1034	Jalorin_Tar`Visgur	1	12	31	NULL	1	Wizard
+qeynos	South Qeynos	1027	Xantomo_Salmor	1	1	50	NULL	1	Warrior
+qeynos	South Qeynos	1167	#seaweed	240	1	50	NULL	11	Warrior
+qeynos	South Qeynos	1178	#a_barnacle	240	1	50	NULL	11	Warrior
+qeynos	South Qeynos	1180	#a_broken_bottle	240	1	50	NULL	11	Warrior
+qeynos	South Qeynos	1188	#a_boot	240	1	50	NULL	11	Warrior
+qeynos	South Qeynos	1193	#broken_timepiece	240	1	50	NULL	11	Warrior
+qeynos	South Qeynos	1173	Golden_Maiden	72	1	50	NULL	11	Warrior
+qeynos	South Qeynos	1313	#Jane_Planesummoner	3	13	50	NULL	1	Magician
+qeynos	South Qeynos	1028	#D`mitrious_Irska	1	33	61	NULL	1	Class 33
+qeynos	South Qeynos	1060	Yestura_Rhamrey	1	32	61	NULL	1	Class 32
+qeynos	South Qeynos	1062	Tinshen_Brinth	1	32	61	NULL	1	Class 32
+qeynos	South Qeynos	1312	#a_furtive_figure	1	11	63	NULL	1	Necromancer
+qeynos	South Qeynos	1025	Christian_Hidken	7	63	65	NULL	1	Class 63
+qeynos	South Qeynos	1133	Warehnn_Awlne	1	7	65	NULL	1	Monk
+qeynos	South Qeynos	1194	Port_Authority_Officer	240	1	99	NULL	11	Warrior
+qeynos	South Qeynos	1031	an_investigator	1	1	10	Antonius Bayle	1	Warrior
+qeynos	South Qeynos	1047	Vicus_Nonad	1	9	26	Antonius Bayle	1	Rogue
+qeynos	South Qeynos	1086	Eracon_Krengon	2	1	45	Banker	1	Warrior
+qeynos	South Qeynos	1087	Dun	2	1	45	Banker	1	Warrior
+qeynos	South Qeynos	1107	Sorn_Copperhold	71	40	45	Banker	1	Class 40
+qeynos	South Qeynos	1108	Kendall_Copperhold	71	40	45	Banker	1	Class 40
+qeynos	South Qeynos	1135	#Translocator_Sedina	12	12	1	Beta Neutral	1	Wizard
+qeynos	South Qeynos	1033	Soulbinder_Novalu	7	1	65	Beta Neutral	1	Warrior
+qeynos	South Qeynos	1153	Den_Magason	1	9	3	Circle of Unseen Hands	1	Rogue
+qeynos	South Qeynos	1190	Lomarc	1	9	3	Circle of Unseen Hands	1	Rogue
+qeynos	South Qeynos	1042	Trumpy_Irontoe	8	9	5	Circle of Unseen Hands	1	Rogue
+qeynos	South Qeynos	1089	Raz_The_Rat_Misk	55	9	5	Circle of Unseen Hands	1	Rogue
+qeynos	South Qeynos	1071	Klieb_Torne	1	9	10	Circle of Unseen Hands	1	Rogue
+qeynos	South Qeynos	1072	Micc_Koter	1	9	10	Circle of Unseen Hands	1	Rogue
+qeynos	South Qeynos	1001	Guard_Mezzt	71	1	5	Corrupt Qeynos Guards	1	Warrior
+qeynos	South Qeynos	1006	Guard_Cyrillian	71	1	5	Corrupt Qeynos Guards	1	Warrior
+qeynos	South Qeynos	1306	Guard_Augos	71	1	5	Corrupt Qeynos Guards	1	Warrior
+qeynos	South Qeynos	1308	Guard_Perin	71	1	5	Corrupt Qeynos Guards	1	Warrior
+qeynos	South Qeynos	1310	Guard_Tyrak	71	1	5	Corrupt Qeynos Guards	1	Warrior
+qeynos	South Qeynos	1002	Guard_Jerith	71	1	7	Corrupt Qeynos Guards	1	Warrior
+qeynos	South Qeynos	1307	Guard_Oleph	71	1	9	Corrupt Qeynos Guards	1	Warrior
+qeynos	South Qeynos	1309	Guard_Quedal	71	1	10	Corrupt Qeynos Guards	1	Warrior
+qeynos	South Qeynos	1143	Umvera_Dekash	3	14	50	Erudin Citizens	1	Enchanter
+qeynos	South Qeynos	1084	Lylanthian	4	1	25	Fel Guard	1	Warrior
+qeynos	South Qeynos	1159	Faren	1	1	3	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1081	Gharin	7	1	5	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1082	Indaria	1	1	5	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1148	Guard_Relam	71	1	5	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1152	Guard_Naret	71	1	5	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1174	Guard_Forbly	71	1	5	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1189	Guard_Phaeton	71	1	5	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1181	Guard_Dunix	71	1	6	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1147	Guard_Wenbie	71	1	6	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1200	Guard_Urius	71	1	7	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1151	Guard_Kwint	71	1	8	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1149	Guard_Calik	71	1	9	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1079	Zamel	1	1	10	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1080	Endric	1	1	10	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1091	Guard_Corshin	71	1	10	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1092	Madame_Serena	71	14	10	Guards of Qeynos	1	Enchanter
+qeynos	South Qeynos	1150	Guard_Lasen	71	1	10	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1090	Guard_Beren	71	1	15	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1144	Exterminator_Rasmon	1	1	30	Guards of Qeynos	1	Warrior
+qeynos	South Qeynos	1085	Lieutenant_Arathur	71	3	50	Guards of Qeynos	1	Paladin
+qeynos	South Qeynos	1068	Captain_Tillin	71	20	61	Guards of Qeynos	1	Warrior (NPC)
+qeynos	South Qeynos	1138	Gash_Flockwalker	7	6	8	Jaggedpine Treefolk	1	Druid
+qeynos	South Qeynos	1166	Talym_Shoontar	2	1	15	Karana Residents	1	Warrior
+qeynos	South Qeynos	1099	McNeal_Jocub	71	41	20	Karana Residents	1	Class 41
+qeynos	South Qeynos	1163	Raffy_Conticede	71	41	22	Knights of Thunder	1	Class 41
+qeynos	South Qeynos	1126	Bisdlo_Ravtahm	71	41	26	Knights of Thunder	1	Class 41
+qeynos	South Qeynos	1070	Caton_Glimmerstep	1	3	30	Knights of Thunder	1	Paladin
+qeynos	South Qeynos	1186	Arthon_Spiritsight	1	3	30	Knights of Thunder	1	Paladin
+qeynos	South Qeynos	1040	Bogen_Chazel	71	41	32	Knights of Thunder	1	Class 41
+qeynos	South Qeynos	1041	Lisdon_Trekka	71	41	35	Knights of Thunder	1	Class 41
+qeynos	South Qeynos	1010	Fesse_Bontex	71	41	45	Knights of Thunder	1	Class 41
+qeynos	South Qeynos	1029	Lord_Mrallon	1	3	60	Knights of Thunder	1	Paladin
+qeynos	South Qeynos	1007	Miltiades_Tal`Azroth	1	22	61	Knights of Thunder	1	Class 22
+qeynos	South Qeynos	1043	Wolten_Grafe	1	22	61	Knights of Thunder	1	Class 22
+qeynos	South Qeynos	1044	Chesgard_Sydwen	1	22	61	Knights of Thunder	1	Class 22
+qeynos	South Qeynos	1045	Kasine_Paegra	1	22	61	Knights of Thunder	1	Class 22
+qeynos	South Qeynos	1046	Renic_Losaren	1	21	61	Knights of Thunder	1	Cleric (NPC)
+qeynos	South Qeynos	1067	Daedet_Losaren	1	21	61	Knights of Thunder	1	Cleric (NPC)
+qeynos	South Qeynos	1076	Gehna_Solbenya	1	21	61	Knights of Thunder	1	Cleric (NPC)
+qeynos	South Qeynos	1127	Vansted_Rohenga	1	21	61	Knights of Thunder	1	Cleric (NPC)
+qeynos	South Qeynos	1128	Runethar_Hamest	1	22	61	Knights of Thunder	1	Class 22
+qeynos	South Qeynos	1000	Behroe_Dlexon	1	8	18	League of Antonican Bards	1	Bard
+qeynos	South Qeynos	1048	Cassius_Messus	7	8	20	League of Antonican Bards	1	Bard
+qeynos	South Qeynos	1160	Cassius_Messus	7	8	21	League of Antonican Bards	1	Bard
+qeynos	South Qeynos	1035	Lysric_Loresinger	71	41	22	League of Antonican Bards	1	Class 41
+qeynos	South Qeynos	1158	Anehan_Treol	1	8	23	League of Antonican Bards	1	Bard
+qeynos	South Qeynos	1069	Dionna	1	8	25	League of Antonican Bards	1	Bard
+qeynos	South Qeynos	1131	Eve_Marsinger	1	8	25	League of Antonican Bards	1	Bard
+qeynos	South Qeynos	1132	Tralyn_Marsinger	1	8	25	League of Antonican Bards	1	Bard
+qeynos	South Qeynos	1124	Sansa_Nusk	71	41	27	League of Antonican Bards	1	Class 41
+qeynos	South Qeynos	1123	Joffrey_Clay	1	8	27	League of Antonican Bards	1	Bard
+qeynos	South Qeynos	1036	Chalea_Volesga	71	41	28	League of Antonican Bards	1	Class 41
+qeynos	South Qeynos	1008	Topala_Xenem	71	41	45	League of Antonican Bards	1	Class 41
+qeynos	South Qeynos	1049	Jusean_Evanesque	1	27	61	League of Antonican Bards	1	Class 27
+qeynos	South Qeynos	1050	Sollari_Bekines	1	27	61	League of Antonican Bards	1	Class 27
+qeynos	South Qeynos	1125	Belious_Naliedin	1	27	61	League of Antonican Bards	1	Class 27
+qeynos	South Qeynos	1066	Danaria_Hollin	3	14	20	Merchants of Erudin	1	Enchanter
+qeynos	South Qeynos	1004	Meera_Lylon	71	41	10	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1110	Karn_Tassen	71	41	10	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1111	Voleen_Tassen	71	41	11	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1106	Earron_Huntlan	71	41	13	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1105	Nug_Rellash	71	41	15	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1098	Nesiff_Tallaherd	71	41	20	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1102	Rucio_Divella	71	41	20	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1155	Lanhern_Firepride	71	41	20	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1052	Hanlore_Escaval	71	41	24	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1032	Ren_Pinemyer	7	41	25	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1119	Ton_Firepride	71	41	30	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1120	Gahna_Salbeen	71	41	30	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1146	Ghul_Rustem	71	41	34	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1075	Bruno_Barstomper	1	1	35	Merchants of Qeynos	1	Warrior
+qeynos	South Qeynos	1093	Tomas_Zelnik	1	1	35	Merchants of Qeynos	1	Warrior
+qeynos	South Qeynos	1115	Barthal	71	41	37	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1011	Trisco_Qental	1	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1014	Sinon_Loarpe	1	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1018	Tsuden_Korinte	1	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1065	Heidi_Grainsifter	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1074	Sunsa_Jocub	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1077	Danon_Fletcher	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1078	Moran_Smith	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1094	Solani_Dayadil	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1095	Bassanio_Weekin	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1097	Stan_Cloven	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1100	Fish_Ranamer	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1103	Sissy_Huntlan	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1104	Tasya_Huntlan	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1109	Fhara_Semhart	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1112	Liln_Sedder	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1113	Mar_Sedder	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1114	Rane_Sedder	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1116	Fellesha_Varshen	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1117	Raheim_Varshen	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1139	Wrin_Liltin	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1140	Byjan_Timbokker	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1141	Iala_Lenard	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1030	Yakem_Oreslinger	1	41	50	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1101	Captain_Rohand	71	41	50	Merchants of Qeynos	1	Class 41
+qeynos	South Qeynos	1145	a_sewer_rat	36	1	1	Noobie Monsters KOS to Guards	21	Warrior
+qeynos	South Qeynos	1156	a_sewer_rat	36	1	2	Noobie Monsters KOS to Guards	21	Warrior
+qeynos	South Qeynos	1157	a_sewer_rat	36	1	3	Noobie Monsters KOS to Guards	21	Warrior
+qeynos	South Qeynos	1051	Drawna_Opimsor	1	41	27	Order of Three	1	Class 41
+qeynos	South Qeynos	1118	Caleah_Herblender	71	41	28	Order of Three	1	Class 41
+qeynos	South Qeynos	1037	Chalios_Bensted	71	41	36	Order of Three	1	Class 41
+qeynos	South Qeynos	1039	Khensol_Undesta	71	41	38	Order of Three	1	Class 41
+qeynos	South Qeynos	1038	Neapha_Vesturo	71	41	41	Order of Three	1	Class 41
+qeynos	South Qeynos	1012	Dumisa_D`Enetti	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1013	Rosdaria_Sepria	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1015	Gende_Reldari	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1016	Headara_Ponido	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1017	Ingaria_Dinego	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1019	Moreo_O`Meek	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1020	Isobelle_Losiwoo	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1021	Corrao_Duperame	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1023	Celamari_Marre	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1024	Pai_Berenis	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1022	Gero_Yopetu	1	41	45	Order of Three	1	Class 41
+qeynos	South Qeynos	1053	Daenor_Casthopur	1	31	61	Order of Three	1	Class 31
+qeynos	South Qeynos	1054	Kazlo_Naedra	1	31	61	Order of Three	1	Class 31
+qeynos	South Qeynos	1055	Gahlith_Wrannstad	1	31	61	Order of Three	1	Class 31
+qeynos	South Qeynos	1056	Basten_Ghunret	1	33	61	Order of Three	1	Class 33
+qeynos	South Qeynos	1057	Unsar_Koldhagon	1	33	61	Order of Three	1	Class 33
+qeynos	South Qeynos	1058	Esdia_Moeba	1	33	61	Order of Three	1	Class 33
+qeynos	South Qeynos	1059	Mespha_Tevalian	1	33	61	Order of Three	1	Class 33
+qeynos	South Qeynos	1061	Juegile_Sohgohm	1	32	61	Order of Three	1	Class 32
+qeynos	South Qeynos	1121	Nostahla_Westfend	1	31	61	Order of Three	1	Class 31
+qeynos	South Qeynos	1122	Kinloc_Flamepaw	1	32	61	Order of Three	1	Class 32
+qeynos	South Qeynos	1009	Oriyame_Nelafre	71	41	45	Priests of Life	1	Class 41
+qeynos	South Qeynos	1142	Menkes_Tabolet	7	9	14	Qeynos Citizens	1	Rogue
+qeynos	South Qeynos	1003	Marlin_Bizmite	1	1	25	Qeynos Citizens	1	Warrior
+qeynos	South Qeynos	1191	Nindle_Hogster	1	1	25	Qeynos Citizens	1	Warrior
+qeynos	South Qeynos	1096	Hansl_Bigroon	1	1	25	Qeynos Citizens	1	Warrior
+qeynos	South Qeynos	1134	Edvard_Tommels	1	6	35	Qeynos Citizens	1	Druid
+qeynos	South Qeynos	1129	Rabley_Trumend	71	41	34	Steel Warriors	1	Class 41
+qeynos	South Qeynos	1137	Wylin_Dodmil	1	1	35	Steel Warriors	1	Warrior
+qeynos	South Qeynos	1063	Brin_Stolunger	1	20	61	Steel Warriors	1	Warrior (NPC)
+qeynos	South Qeynos	1064	Grahan_Rothkar	1	20	61	Steel Warriors	1	Warrior (NPC)
+qeynos	South Qeynos	1088	Tabure_Ahendle	1	20	61	Steel Warriors	1	Warrior (NPC)
+qeynos	South Qeynos	1130	Ebon_Strongbear	1	20	61	Steel Warriors	1	Warrior (NPC)
+qeynos	South Qeynos	1136	Ginleen_Harltop	1	20	61	Steel Warriors	1	Warrior (NPC)
+qeynos2	North Qeynos	2010	a_rodent	36	1	1	NULL	21	Warrior
+qeynos2	North Qeynos	2149	a_mangy_rat	36	1	1	NULL	0	Warrior
+qeynos2	North Qeynos	2153	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+qeynos2	North Qeynos	2154	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+qeynos2	North Qeynos	2155	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+qeynos2	North Qeynos	2041	Rineval_Talyas	1	14	39	NULL	1	Enchanter
+qeynos2	North Qeynos	2050	Gibson_Galliway	1	1	40	NULL	1	Warrior
+qeynos2	North Qeynos	2034	Priest_of_Discord	1	2	50	NULL	1	Cleric
+qeynos2	North Qeynos	2131	a_flower	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2133	#CheckOne	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2136	a_pebble	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2138	gnoll_dung	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2139	#broken_hourglass	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2141	#CheckThree	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2142	Puzzle_Trigger	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2144	#CheckTwo	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2147	Marker	240	1	50	NULL	11	Warrior
+qeynos2	North Qeynos	2150	Drun_Vorwig	1	1	50	NULL	1	Warrior
+qeynos2	North Qeynos	2060	Felodius_Sworddancer	7	8	55	NULL	1	Bard
+qeynos2	North Qeynos	2134	a_gruff_voice	240	1	60	NULL	11	Warrior
+qeynos2	North Qeynos	2056	Reldin_Harkolis	1	28	61	NULL	1	Class 28
+qeynos2	North Qeynos	2085	Zannsin_Resdinet	1	28	61	NULL	1	Class 28
+qeynos2	North Qeynos	2049	Gabrielle_Spirit	1	63	65	NULL	1	Class 63
+qeynos2	North Qeynos	2157	Artisan_Tar_Cordell	1	1	65	NULL	1	Warrior
+qeynos2	North Qeynos	2158	Artisan_Vor_Westrider	7	1	65	NULL	1	Warrior
+qeynos2	North Qeynos	2152	Santug_Claugg	10	1	70	NULL	1	Warrior
+qeynos2	North Qeynos	2051	Vegalys_Keldrane	1	3	60	Antonius Bayle	1	Paladin
+qeynos2	North Qeynos	2091	Flynn_Merrington	11	9	15	Circle of Unseen Hands	1	Rogue
+qeynos2	North Qeynos	2061	Nax_Ghruna	1	1	20	Circle of Unseen Hands	1	Warrior
+qeynos2	North Qeynos	2073	Pelshia_Thuxpire	71	41	23	Circle of Unseen Hands	1	Class 41
+qeynos2	North Qeynos	2084	Ghil_Starn	71	41	37	Circle of Unseen Hands	1	Class 41
+qeynos2	North Qeynos	2033	Renux_Herkanor	1	28	61	Circle of Unseen Hands	1	Class 28
+qeynos2	North Qeynos	2072	Knargon_Lanenda	1	28	61	Circle of Unseen Hands	1	Class 28
+qeynos2	North Qeynos	2074	Hanns_Krieghor	1	28	61	Circle of Unseen Hands	1	Class 28
+qeynos2	North Qeynos	2083	Sabnie_Blagard	71	41	10	Coalition of Tradefolk Underground	1	Class 41
+qeynos2	North Qeynos	2082	Ania_Klephia	71	41	45	Coalition of Tradefolk Underground	1	Class 41
+qeynos2	North Qeynos	2063	Crow	71	41	47	Coalition of Tradefolk Underground	1	Class 41
+qeynos2	North Qeynos	2114	Guard_Simkin	71	1	5	Corrupt Qeynos Guards	1	Warrior
+qeynos2	North Qeynos	2116	Guard_Furithane	71	1	8	Corrupt Qeynos Guards	1	Warrior
+qeynos2	North Qeynos	2112	Guard_Shorm	71	1	10	Corrupt Qeynos Guards	1	Warrior
+qeynos2	North Qeynos	2117	Guard_Deregan	71	1	10	Corrupt Qeynos Guards	1	Warrior
+qeynos2	North Qeynos	2062	Tubal_Weaver	71	41	14	Corrupt Qeynos Guards	1	Class 41
+qeynos2	North Qeynos	2110	Guard_Treitan	71	20	35	Corrupt Qeynos Guards	1	Warrior (NPC)
+qeynos2	North Qeynos	2020	Lieutenant_Dagarok	71	5	50	Corrupt Qeynos Guards	1	Shadowknight
+qeynos2	North Qeynos	2040	Moodoro_Finharn	3	12	13	Crimson Hands	1	Wizard
+qeynos2	North Qeynos	2122	Guard_Liben	71	1	5	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2121	Guard_Aerryn	71	1	5	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2113	Guard_Imkar	71	1	5	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2120	Guard_Erabb	71	1	5	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2106	Guard_Obyn	71	1	8	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2007	Guard_Hewet	71	1	10	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2008	Guard_Rashik	71	1	10	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2009	Guard_Ginton	71	1	10	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2115	Guard_Vaskif	71	1	10	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2016	Guard_Buce	71	1	10	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2079	Guard_Weleth	71	1	13	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2013	Guard_Drath	71	1	15	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2099	Exterminator_Wintloag	1	1	30	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2012	Guard_Wefnin	71	1	35	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2080	Guard_Elron	71	1	35	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2093	Guard_Gehnus	71	1	50	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2094	Guard_Hezlan	71	1	50	Guards of Qeynos	1	Warrior
+qeynos2	North Qeynos	2097	Corporal_Lancot	71	3	50	Guards of Qeynos	1	Paladin
+qeynos2	North Qeynos	2029	Jracol_Brestiage	6	9	12	Highpass Guards	1	Rogue
+qeynos2	North Qeynos	2006	Kane_Bayle	1	20	61	Kane Bayle	1	Warrior (NPC)
+qeynos2	North Qeynos	2035	Grennet_Stormhand	1	3	12	Knights of Thunder	1	Paladin
+qeynos2	North Qeynos	2043	Davloran_Girionlis	1	22	61	Knights of Thunder	1	Class 22
+qeynos2	North Qeynos	2053	Jaylia_the_Faithful	1	3	61	Knights of Thunder	1	Paladin
+qeynos2	North Qeynos	2118	a_skeleton	367	1	4	KOS	3	Warrior
+qeynos2	North Qeynos	2096	Aenia_Ghenson	1	9	13	League of Antonican Bards	1	Rogue
+qeynos2	North Qeynos	2123	Leanon_Ruksey	1	8	14	League of Antonican Bards	1	Bard
+qeynos2	North Qeynos	2027	Quinon_Hulleaf	1	8	21	League of Antonican Bards	1	Bard
+qeynos2	North Qeynos	2038	Hurrieta_Ironforge	71	1	5	Merchants of Qeynos	1	Warrior
+qeynos2	North Qeynos	2069	Ziska_Ironforge	71	41	7	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2070	Dren_Ironforge	71	41	11	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2036	Nerissa_Clothspinner	71	41	15	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2068	Svena_Ironforge	71	41	18	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2004	Tyokan_Mekase	71	41	25	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2071	Rendallen_Ironforge	71	41	25	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2076	Shenro_Kazpur	71	41	27	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2057	Brohan_Ironforge	71	1	29	Merchants of Qeynos	1	Warrior
+qeynos2	North Qeynos	2081	Segran_Rajhar	1	1	35	Merchants of Qeynos	1	Warrior
+qeynos2	North Qeynos	2095	Dranom_Ghenson	71	1	42	Merchants of Qeynos	1	Warrior
+qeynos2	North Qeynos	2064	Rodgar_the_Tall	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2065	Gerault_Takenmaul	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2066	Tanlyn_Galliway	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2067	Sneed_Galliway	71	41	45	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2098	Connie_Link	1	41	45	Merchants of Qeynos	1	Class 41
+qeynos2	North Qeynos	2021	a_klicnik_drone	22	1	2	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2014	a_klicnik_worker	22	1	2	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2024	a_fire_beetle	22	1	2	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2026	Prince_Klicnik	22	1	2	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2105	Princess_Klicnik	22	1	2	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2022	a_klicnik_worker	22	1	3	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2025	a_klicnik_worker	22	1	4	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2015	a_klicnik_warrior	22	1	5	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2023	a_klicnik_warrior	22	1	6	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2018	a_klicnik_noble	22	1	7	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2108	Queen_Klicnik	22	1	10	Nature Animal - Beetle	22	Warrior
+qeynos2	North Qeynos	2017	a_brown_myotis_bat	34	1	1	Noobie Monsters KOS to Guards	21	Warrior
+qeynos2	North Qeynos	2003	a_grass_snake	37	1	1	Noobie Monsters KOS to Guards	21	Warrior
+qeynos2	North Qeynos	2101	a_gopher_snake	37	1	1	Noobie Monsters KOS to Guards	21	Warrior
+qeynos2	North Qeynos	2011	a_large_rat	36	1	1	Noobie Monsters KOS to Guards	21	Warrior
+qeynos2	North Qeynos	2104	a_decaying_skeleton	367	1	1	Noobie Monsters KOS to Guards	3	Warrior
+qeynos2	North Qeynos	2000	a_decaying_skeleton	367	1	2	Noobie Monsters KOS to Guards	3	Warrior
+qeynos2	North Qeynos	2019	a_whiskered_bat	34	1	3	Noobie Monsters KOS to Guards	21	Warrior
+qeynos2	North Qeynos	2028	a_whiskered_bat	34	1	4	Noobie Monsters KOS to Guards	21	Warrior
+qeynos2	North Qeynos	2005	a_Koalindl	24	1	1	Priests of Life	21	Warrior
+qeynos2	North Qeynos	2032	Lashun_Novashine	1	2	5	Priests of Life	1	Cleric
+qeynos2	North Qeynos	2037	Rolon_Banari	1	2	12	Priests of Life	1	Cleric
+qeynos2	North Qeynos	2111	Whysia_Flock	71	41	25	Priests of Life	1	Class 41
+qeynos2	North Qeynos	2039	Enic_Ruklin	1	3	30	Priests of Life	1	Paladin
+qeynos2	North Qeynos	2054	Henlom_Visrek	71	41	34	Priests of Life	1	Class 41
+qeynos2	North Qeynos	2055	Berane_Constarg	71	41	38	Priests of Life	1	Class 41
+qeynos2	North Qeynos	2044	Balhallia	71	41	45	Priests of Life	1	Class 41
+qeynos2	North Qeynos	2045	Ladia_Qursii	71	41	45	Priests of Life	1	Class 41
+qeynos2	North Qeynos	2046	Enpero_Mesog	71	41	45	Priests of Life	1	Class 41
+qeynos2	North Qeynos	2047	Mellisa_Purgor	71	41	45	Priests of Life	1	Class 41
+qeynos2	North Qeynos	2048	Kragie_Rolana	71	41	45	Priests of Life	1	Class 41
+qeynos2	North Qeynos	2052	Velarte_Selire	1	2	50	Priests of Life	1	Cleric
+qeynos2	North Qeynos	2151	Koalindl	24	1	55	Priests of Life	21	Warrior
+qeynos2	North Qeynos	2042	Filian_Weagleross	1	22	61	Priests of Life	1	Class 22
+qeynos2	North Qeynos	2058	Suuspa_Clanim	1	22	61	Priests of Life	1	Class 22
+qeynos2	North Qeynos	2059	Roesager_Thusten	1	22	61	Priests of Life	1	Class 22
+qeynos2	North Qeynos	2078	Priestess_Jahnda	1	21	61	Priests of Life	1	Cleric (NPC)
+qeynos2	North Qeynos	2088	Nomsoe_Jusagta	1	21	61	Priests of Life	1	Cleric (NPC)
+qeynos2	North Qeynos	2089	Tonmerk_Plorsin	1	21	61	Priests of Life	1	Cleric (NPC)
+qeynos2	North Qeynos	2090	Priestess_Caulria	1	21	61	Priests of Life	1	Cleric (NPC)
+qeynos2	North Qeynos	2092	Camlend_Serbold	1	22	61	Priests of Life	1	Class 22
+qeynos2	North Qeynos	2100	Astaed_Wemor	1	22	61	Priests of Life	1	Class 22
+qeynos2	North Qeynos	2156	Anne_Bellsong	1	1	1	Qeynos Citizens	1	Warrior
+qeynos2	North Qeynos	2159	Audwin_Bellsong	1	1	1	Qeynos Citizens	1	Warrior
+qeynos2	North Qeynos	2140	Faldor_Hendrys	7	9	18	Qeynos Citizens	1	Rogue
+qeynos2	North Qeynos	2002	a_gnoll_pup	39	1	1	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2124	Djerr_Darkpaw	39	1	3	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2001	Fippy_Darkpaw	39	1	3	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2107	Djerr_Darkpaw	39	1	4	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2109	Fippy_Darkpaw	39	1	4	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2148	The_Fabled_Fippy_Darkpaw	39	1	4	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2119	Fippy_Darkpaw	39	1	5	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2127	Nixx_Darkpaw	39	1	6	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2102	Kraxz_Darkpaw	39	1	7	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2146	Holinix_Darkpaw	39	10	10	Sabertooths of Blackburrow	1	Shaman
+qeynos2	North Qeynos	2103	Grarrax_Darkpaw	39	1	10	Sabertooths of Blackburrow	1	Warrior
+qeynos2	North Qeynos	2030	Tomer_Instogle	1	7	1	Silent Fist Clan	1	Monk
+qeynos2	North Qeynos	2075	Phin_Esrinap	1	26	61	Silent Fist Clan	1	Class 26
+qeynos2	North Qeynos	2077	LuSun	1	26	61	Silent Fist Clan	1	Class 26
+qeynos2	North Qeynos	2086	Seta_Bakindo	1	26	61	Silent Fist Clan	1	Class 26
+qeynos2	North Qeynos	2087	Togahn_Sorast	1	26	61	Silent Fist Clan	1	Class 26
+rivervale	Rivervale	19016	a_rodent	36	1	1	NULL	21	Warrior
+rivervale	Rivervale	19047	a_trout	24	1	1	NULL	21	Warrior
+rivervale	Rivervale	19153	a_Frostfell_Goblin	433	1	1	NULL	1	Warrior
+rivervale	Rivervale	19154	Hargar_the_Velium_Chef	8	1	1	NULL	1	Warrior
+rivervale	Rivervale	19155	Fireworks_Engineer_Fabdabus	12	1	1	NULL	1	Warrior
+rivervale	Rivervale	19015	Nillipuss	15	4	15	NULL	1	Ranger
+rivervale	Rivervale	19150	Artisan_Bill_Whistletop	11	6	40	NULL	1	Druid
+rivervale	Rivervale	19116	Priest_of_Discord	1	2	50	NULL	1	Cleric
+rivervale	Rivervale	19030	Fento_Jalla	11	63	65	NULL	1	Class 63
+rivervale	Rivervale	19114	Jimbledorp_Heptybak	11	2	65	NULL	1	Cleric
+rivervale	Rivervale	19151	Laryen_Lycanthrope	8	0	70	NULL	1	Class 0
+rivervale	Rivervale	19152	Santug_Claugg	10	1	70	NULL	1	Warrior
+rivervale	Rivervale	19032	Soulbinder_Hoggle_Grubbytoe	11	1	65	Beta Neutral	1	Warrior
+rivervale	Rivervale	19088	Blinza_Toepopal	81	9	10	Deeppockets	1	Rogue
+rivervale	Rivervale	19048	Shayde_Higginsbot	11	9	15	Deeppockets	1	Rogue
+rivervale	Rivervale	19090	Ace_Slighthand	81	9	15	Deeppockets	1	Rogue
+rivervale	Rivervale	19131	Shutter_Silentstep	11	9	19	Deeppockets	1	Rogue
+rivervale	Rivervale	19069	Donlo_Goobler	81	40	20	Deeppockets	1	Class 40
+rivervale	Rivervale	19137	Shutter_Silentstep	11	9	20	Deeppockets	1	Rogue
+rivervale	Rivervale	19071	Shutter_Silentstep	11	9	22	Deeppockets	1	Rogue
+rivervale	Rivervale	19087	Mac_Deeppockets	81	41	30	Deeppockets	1	Class 41
+rivervale	Rivervale	19089	Flyndia_Deeppockets	81	41	30	Deeppockets	1	Class 41
+rivervale	Rivervale	19094	Bouncer_Bogglebin	11	9	30	Deeppockets	1	Rogue
+rivervale	Rivervale	19091	Bouncer_Bigboot	11	9	31	Deeppockets	1	Rogue
+rivervale	Rivervale	19070	Gaffin_Deeppockets	81	41	45	Deeppockets	1	Class 41
+rivervale	Rivervale	19059	Toelia_Snuckery	11	28	61	Deeppockets	1	Class 28
+rivervale	Rivervale	19060	Rueppy_Kutpurse	11	28	61	Deeppockets	1	Class 28
+rivervale	Rivervale	19061	Hebber_Druneny	11	28	61	Deeppockets	1	Class 28
+rivervale	Rivervale	19062	Lendel_Deeppockets	11	28	61	Deeppockets	1	Class 28
+rivervale	Rivervale	19999	Wendel_Deeppockets	11	28	70	Deeppockets	1	Class 28
+rivervale	Rivervale	19099	Nyla_Gubbin	11	1	4	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19135	Nyla_Gubbin	11	1	5	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19143	Nyla_Gubbin	11	1	6	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19092	a_tavern_patron	11	1	9	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19108	Deputy_Higley	81	1	9	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19117	Rellix	11	9	9	Guardians of the Vale	1	Rogue
+rivervale	Rivervale	19078	a_shady_halfling	11	9	10	Guardians of the Vale	1	Rogue
+rivervale	Rivervale	19133	a_tavern_patron	11	1	10	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19145	Deputy_Finlip	81	1	10	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19093	a_tavern_patron	11	1	11	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19103	Hobb_Tagglefoot	11	6	15	Guardians of the Vale	1	Druid
+rivervale	Rivervale	19110	Deputy_Tonlo	81	1	19	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19011	Deputy_Sertlin	81	1	20	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19121	Deputy_Olo	81	1	20	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19005	Deputy_Quillto	81	1	21	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19004	Deputy_Chopo	81	1	22	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19126	Deputy_Gozan	81	1	22	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19109	Deputy_Shelmy	81	1	22	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19138	Deputy_Tocat	81	1	24	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19008	Deputy_Banto	81	1	25	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19120	Deputy_Pigon	81	1	25	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19127	Deputy_Heepo	81	1	25	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19124	Deputy_Pittin	81	1	28	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19010	Deputy_Antana	81	1	28	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19125	Deputy_Deego	81	1	29	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19009	Deputy_Regno	81	1	29	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19002	Deputy_Raynin	81	1	30	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19119	Deputy_Alltin	81	1	30	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19136	Deputy_Hiltop	81	1	30	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19006	Deputy_Leeot	81	1	30	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19128	Deputy_Fozon	81	1	30	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19122	Deputy_Tilo	81	1	30	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19019	Exterminator_Sutten	81	1	30	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19147	Deputy_Niepo	81	1	30	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19003	Deputy_Kapop	81	1	31	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19130	Deputy_Zopo	81	1	31	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19014	Deputy_Goltin	81	1	32	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19146	Deputy_Tizzin	81	1	32	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19073	Deputy_Dopkin	81	1	33	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19144	Deputy_Cheel	81	1	33	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19129	Deputy_Beedo	81	1	35	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19013	Deputy_Higrin	81	1	35	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19012	Deputy_Percin	81	1	37	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19123	Deputy_Jeggin	81	1	37	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19111	Deputy_Lowmot	81	1	37	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19007	Deputy_Rollin	81	1	38	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19018	Dalorio_Blistbobble	11	1	61	Guardians of the Vale	1	Warrior
+rivervale	Rivervale	19055	Marshal_Anrey	11	20	61	Guardians of the Vale	1	Warrior (NPC)
+rivervale	Rivervale	19056	Marshal_Ghobber	11	20	61	Guardians of the Vale	1	Warrior (NPC)
+rivervale	Rivervale	19057	Marshal_Lanena	11	20	61	Guardians of the Vale	1	Warrior (NPC)
+rivervale	Rivervale	19058	Sheriff_Roglio	11	20	61	Guardians of the Vale	1	Warrior (NPC)
+rivervale	Rivervale	19001	Chomper	24	1	3	KOS	21	Warrior
+rivervale	Rivervale	19118	a_large_piranha	74	1	4	KOS	21	Warrior
+rivervale	Rivervale	19000	a_large_piranha	74	1	6	KOS	21	Warrior
+rivervale	Rivervale	19113	Silna_Songsmith	4	8	25	League of Antonican Bards	1	Bard
+rivervale	Rivervale	19100	a_young_halfling	11	1	1	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19101	a_young_halfling	11	1	1	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19141	a_halfling_mother	11	1	4	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19098	a_halfling_grandpa	11	1	4	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19142	a_halfling_father	11	1	4	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19095	a_halfling_mother	11	1	5	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19096	a_halfling_grandpa	11	1	5	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19134	a_halfling_grandma	11	1	5	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19097	a_halfling_mother	11	1	6	Mayor Gubbin	1	Warrior
+rivervale	Rivervale	19075	a_halfling_acolyte	11	2	9	Mayor Gubbin	1	Cleric
+rivervale	Rivervale	19139	a_halfling_acolyte	11	2	10	Mayor Gubbin	1	Cleric
+rivervale	Rivervale	19085	a_sage_apprentice	11	4	38	Mayor Gubbin	1	Ranger
+rivervale	Rivervale	19086	a_sage_apprentice	11	4	39	Mayor Gubbin	1	Ranger
+rivervale	Rivervale	19084	Innkeep	81	41	40	Mayor Gubbin	1	Class 41
+rivervale	Rivervale	19132	a_sage_apprentice	11	4	40	Mayor Gubbin	1	Ranger
+rivervale	Rivervale	19140	a_sage_apprentice	11	4	41	Mayor Gubbin	1	Ranger
+rivervale	Rivervale	19104	Mayor_Gubbin	11	4	50	Mayor Gubbin	1	Ranger
+rivervale	Rivervale	19115	Mangler	42	1	2	Merchants of Rivervale	21	Warrior
+rivervale	Rivervale	19031	Teelie_Meegles	11	41	25	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19033	Uma_Sweetcookie	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19034	Joana_Jinklebelly	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19035	Gerb_Jinklebelly	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19036	Frankle_Ironhair	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19037	Betty_Brickbaker	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19038	Yola_Sweetcookie	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19039	Burtle_Barrelbelly	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19040	Marta_Claytoe	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19050	Twippie_Diggs	81	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19081	Wibble_Bramblebush	11	41	30	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19051	Meeka_Diggs	81	41	31	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19021	Misty_Valefriend	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19022	Alice_Sweetoven	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19025	Gilth_Harvester	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19026	Altha_Shadowjumper	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19041	Bipdo_Hargin	11	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19042	Jimji_Bottletoe	11	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19043	Bartle_Barnick	11	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19049	Kevlin_Diggs	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19066	Kizzie_Mintopp	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19067	Byl_Babbinsbort	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19068	Bimble_Babbinsbort	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19074	Bodbin_Gimple	11	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19080	bag_merchant	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19082	dock_merchant	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19083	Fiddy_Bobick	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19106	Charlotte_Diggs	81	41	35	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19105	Rantho_Goobler	81	41	37	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19020	Slim_Waterman	81	41	45	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19023	Blippo_Stumbletoe	81	41	45	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19024	Frappy_Slimfinger	81	41	45	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19072	Crista_Tagglefoot	81	41	45	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19077	Pipple_Purpleroot	81	41	45	Merchants of Rivervale	1	Class 41
+rivervale	Rivervale	19063	Hendi_Mrubble	11	21	61	Priests of Mischief	1	Cleric (NPC)
+rivervale	Rivervale	19064	Thekela_Meepup	11	21	61	Priests of Mischief	1	Cleric (NPC)
+rivervale	Rivervale	19065	Gapeers_Johhanis	11	21	61	Priests of Mischief	1	Cleric (NPC)
+rivervale	Rivervale	19076	Jano_Jinglebelly	11	21	61	Priests of Mischief	1	Cleric (NPC)
+rivervale	Rivervale	19112	Beek_Guinders	11	21	61	Priests of Mischief	1	Cleric (NPC)
+rivervale	Rivervale	19046	Shakey_Scarecrow	82	1	30	Storm Reapers	3	Warrior
+rivervale	Rivervale	19028	Staria_Longhair	81	41	35	Storm Reapers	1	Class 41
+rivervale	Rivervale	19079	Daleen_Leafsway	81	41	35	Storm Reapers	1	Class 41
+rivervale	Rivervale	19017	Fralith_Thornbush	11	41	45	Storm Reapers	1	Class 41
+rivervale	Rivervale	19027	Torth_Largefoot	81	41	45	Storm Reapers	1	Class 41
+rivervale	Rivervale	19029	Bumpy_Quickfinger	81	41	45	Storm Reapers	1	Class 41
+rivervale	Rivervale	19102	Ilscent_Tagglefoot	81	41	50	Storm Reapers	1	Class 41
+rivervale	Rivervale	19052	Reebo_Leafsway	11	25	61	Storm Reapers	1	Class 25
+rivervale	Rivervale	19044	Kaya_Cloudfoot	11	22	61	Storm Reapers	1	Class 22
+rivervale	Rivervale	19045	Megosh_Thistlethorn	11	23	61	Storm Reapers	1	Class 23
+rivervale	Rivervale	19053	Uner_Gnarltrunk	11	25	61	Storm Reapers	1	Class 25
+rivervale	Rivervale	19054	Hibbs_Rootenpaw	11	25	61	Storm Reapers	1	Class 25

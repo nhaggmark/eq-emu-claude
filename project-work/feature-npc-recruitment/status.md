@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/npc-recruitment`
 > **Created:** 2026-02-25
-> **Last updated:** 2026-02-27 (Task 7 companion spell AI complete — all 24 c-expert tasks done)
+> **Last updated:** 2026-02-28 (Feature complete — all bugs resolved, in-game verified)
 
 ---
 
@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete | 2026-02-25 | 2026-02-26 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-02-26 | 2026-02-26 |
 | Implementation | c-expert + data-expert + lua-expert | Complete | 2026-02-27 | 2026-02-27 |
-| Validation | game-tester | In Progress | 2026-02-27 | |
-| Completion | _user_ | Not Started | | |
+| Validation | game-tester | Complete | 2026-02-27 | 2026-02-28 |
+| Completion | _user_ | Complete | 2026-02-28 | 2026-02-28 |
 
-**Current phase:** Validation — PASS (all 3 blockers resolved; ready for in-game testing)
+**Current phase:** Complete — all 24 tasks implemented, 8 bugs resolved, in-game verified
 
 ---
 
@@ -140,6 +140,24 @@ _Anything preventing progress. Remove when resolved._
 
 ---
 
+## Bug Reports
+
+_Bugs discovered during testing or play. Status flow:
+Open → Investigating → Fix In Progress → Resolved._
+
+| # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
+|---|-----|----------|-------------|--------|-------------|----------|
+| BUG-001 | [Group window click does not target companion](bugs/BUG-001-group-window-targeting/report.md) | High | user | Resolved | c-expert | 2026-02-27 |
+| BUG-002 | [Disband removes companion NPCs](bugs/BUG-002-disband-removes-companion/report.md) | High | user | Resolved | c-expert | 2026-02-27 |
+| BUG-003 | [Companion lost on logout/login](bugs/BUG-003-companion-lost-on-relog/report.md) | Critical | user | Resolved | c-expert | 2026-02-28 |
+| BUG-004 | [Dismiss command produces Lua error](bugs/BUG-004-dismiss-command-lua-error/report.md) | High | user | Resolved | lua-expert + c-expert | 2026-02-28 |
+| BUG-005 | [Companion AI unresponsive](bugs/BUG-005-companion-ai-unresponsive/report.md) | High | user | Resolved | c-expert + lua-expert | 2026-02-28 |
+| BUG-006 | [Companion attacks owner on self-target](bugs/BUG-006-companion-attacks-owner/report.md) | Critical | user | Resolved | c-expert | 2026-02-28 |
+| BUG-007 | [Companion does not regenerate HP](bugs/BUG-007-companion-no-regen/report.md) | High | user | Resolved | c-expert | 2026-02-28 |
+| BUG-008 | [Companion kills not lootable](bugs/BUG-008-companion-kill-no-loot/report.md) | High | user | Resolved | c-expert | 2026-02-28 |
+
+---
+
 ## Decision Log
 
 _Key decisions made during this feature's development._
@@ -166,15 +184,16 @@ _Key decisions made during this feature's development._
 
 _Filled in after game-tester validation passes._
 
-- [ ] All implementation tasks marked Complete
-- [ ] No open Blockers
-- [ ] game-tester validation: PASS
-- [ ] Feature branch merged to main
-- [ ] Server rebuilt (if C++ changed)
-- [ ] All phases marked Complete in Workflow Status table
+- [x] All implementation tasks marked Complete (24/24)
+- [x] No open Blockers (3 blockers resolved)
+- [x] game-tester validation: PASS
+- [x] Feature branch merged to main
+- [x] Server rebuilt (if C++ changed)
+- [x] All phases marked Complete in Workflow Status table
+- [x] All bugs resolved (8/8)
 
-**Merged by:** _name_
-**Merge date:** _YYYY-MM-DD_
+**Merged by:** user
+**Merge date:** 2026-02-28
 
 ---
 

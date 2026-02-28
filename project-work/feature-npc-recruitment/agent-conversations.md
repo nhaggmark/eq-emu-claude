@@ -1043,3 +1043,140 @@ Commits on quests repo branch `feature/npc-recruitment`:
 - `506e389d3` — IsCompanion() activation, stub replacement, Task 23 resolution
 
 **Outcome:** lua-expert scope fully delivered. Lua layer is production-ready pending c-expert Tasks 17/18 compile and test.
+
+---
+
+## Bug Diagnosis Team — BUG-001 (2026-02-27)
+
+### c-expert -> protocol-agent (BUG-001 diagnosis)
+
+**Context:** Investigating why clicking a companion's name in the Titanium
+group window does not target the companion NPC.
+
+**c-expert findings:**
+
+The previous fix (commit `26056651d`) is dead code. It added
+`strcpy(name, GetCleanName())` to `Companion::Spawn()`, but that method is
+never called. Both the Lua recruitment path (`lua_client.cpp:3654`) and the
+zone-in path (`companion.cpp:1715`) call `entity_list.AddCompanion()` directly.
+
+The spawn packet still sends the MakeNameUnique-suffixed name (e.g.
+`Guard_Liben001`) while the group window stores the clean name
+(`Guard Liben`). The Titanium client cannot match them.
+
+**Proposed fix:** Add `strcpy(new_companion->name, new_companion->GetCleanName())`
+inside `EntityList::AddCompanion()` before the spawn packet is sent.
+
+**Protocol questions sent to protocol-agent:**
+1. Case-sensitive vs case-insensitive name matching in client?
+2. Known issues with literal spaces in NPC spawn names?
+3. Does `Spawn_Struct.NPC = 1` affect group window targeting resolution?
+
+### protocol-agent -> c-expert (BUG-001 confirmation)
+
+Protocol-agent independently confirmed the same root cause:
+
+1. Group packets contain only names (no entity IDs). The client must resolve
+   names to spawns by exact string match.
+2. No ENCODE/DECODE entries for group packets in Titanium translation layer --
+   packets pass through unchanged.
+3. `Companion::Spawn()` is dead code -- both paths bypass it.
+4. Raised `clean_name` cache invalidation concern. c-expert analysis confirms
+   invalidation is not required (CleanMobName on the already-clean name
+   produces the same result), but `clean_name[0] = '\0'` could be added
+   defensively.
+
+**Consensus:** Both agents agree on root cause and recommend fixing inside
+`EntityList::AddCompanion()` (Option B) as the minimal single-point fix.
+Both agents' full findings written to the `diagnosis/` directory.
+
+**Outcome:** Diagnosis complete. Ready for fix implementation.
+
+---
+
+## BUG-002 Diagnosis Team (Round 2)
+
+### 2026-02-27 — c-expert Diagnosis and Protocol Question
+
+**From:** c-expert → **To:** protocol-agent
+
+> Completed full code-path analysis of BUG-002.
+>
+> **Key finding:** Previous fix (26056651d) only guards `Handle_OP_GroupDisband` —
+> one of 6+ code paths that call `Group::DisbandGroup()`. Protection needs to be
+> inside `DisbandGroup()` itself.
+>
+> **Question:** Which opcode does Titanium client send for the "Disband" button?
+> `OP_GroupDelete` (no protection) vs `OP_GroupDisband` (has protection)?
+> Neither has Titanium-specific translation.
+>
+> **Unprotected paths identified:**
+> 1. `Handle_OP_GroupDelete` — calls DisbandGroup directly
+> 2. `Client::LeaveGroup()` — called on disconnect/camp
+> 3. `Group::DelMember()` leader removal
+> 4. `ServerOP_DisbandGroup` cross-zone
+> 5. Lua/Perl scripting API
+>
+> **Recommended fix:** Add companion suspension into `Group::DisbandGroup()` itself.
+
+**Outcome:** Awaiting protocol-agent's opcode analysis.
+
+### 2026-02-27 — protocol-agent Response: Case 1 Is the Root Cause
+
+**From:** protocol-agent → **To:** c-expert
+
+> **Key finding:** The most likely root cause is Case 1 in the companion
+> protection block at client_packet.cpp:7322-7328.
+>
+> When the player has the companion targeted and clicks "Disband",
+> `memberToDisband = GetTarget()` resolves to the companion, and Case 1 fires:
+> `companion_in_group->Dismiss()` — destroying the companion.
+>
+> **Protocol facts:**
+> - Titanium sends OP_GroupDisband (0x0e76) for Disband button
+> - OP_GroupDelete is disabled in Titanium (mapped to 0x0000)
+> - GroupGeneric_Struct has no action discriminator — server infers from context
+>
+> **Recommendation:** Remove Case 1 entirely. Disband button should NEVER dismiss.
+
+**Outcome:** Both agents agree. Root cause is Case 1 calling Dismiss() when
+companion is targeted. OP_GroupDelete is not a factor for Titanium. Consensus
+fix: (1) remove Case 1, (2) add DisbandGroup() hardening, (3) fix LeaveGroup
+companion count.
+
+---
+
+## BUG-003 Diagnosis Phase (2026-02-27)
+
+### c-expert → data-expert: Request DB state verification
+
+> **c-expert:** Traced the C++ camp/logout flow. Found that `DisbandGroup()`
+> calls `Suspend()` which writes `is_suspended = 1` to companion_data. Then
+> `SpawnCompanionsOnZone()` skips rows with `is_suspended = 1`. The save works
+> but the load path filters out the saved companion. Asked data-expert to verify:
+> (1) rows exist in companion_data after recruitment, (2) is_suspended/is_dismissed
+> values, (3) whether rows persist after logout/login cycle.
+
+### data-expert → c-expert: DB state confirmation
+
+> **data-expert:** companion_data has 4 rows for owner Chelon (char_id 6). Data
+> is correct: is_suspended=0, is_dismissed=0 after recruitment. DB layer works.
+> Root cause confirmed in C++ -- Companion::Zone()/Suspend() exist but are never
+> called from the three disconnect paths (camp_timer, OnDisconnect, zone change).
+> Also found duplicate records for Guard Simkin (IDs 4/5, same npc_type_id 2114).
+> Zone change path (`zoning.cpp:39`) calls Bot::ProcessClientZoneChange but not
+> the companion equivalent.
+
+### c-expert response: Acknowledged, updated findings
+
+> **c-expert:** Confirmed. Updated diagnosis to include the zone change path
+> (zoning.cpp:39-42) as a third missing call site. Companion::ProcessClientZoneChange()
+> exists at companion.cpp:653 but is never wired up. All three paths need explicit
+> companion handling mirroring bot/merc patterns. Duplicate record issue noted as
+> separate bug.
+
+**Outcome:** Both agents agree on root cause. Three C++ call sites need companion
+save/depop logic added: (1) camp_timer.Check() in client_process.cpp, (2)
+OnDisconnect() in client_process.cpp, (3) Handle_OP_ZoneChange in zoning.cpp.
+DisbandGroup BUG-002 safety net should use Zone() instead of Suspend() to avoid
+setting is_suspended=1. All required helper methods already exist.
