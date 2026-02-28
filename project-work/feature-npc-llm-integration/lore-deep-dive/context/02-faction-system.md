@@ -147,7 +147,7 @@ The armor quests require collecting "Helms of the Lifebringer" — meaning Neria
 
 ### Halas
 
-Halas is the Barbarian city in Everfrost Peaks. The Barbarians worship Rallos Zek (god of war) and value martial strength above all.
+Halas is the Barbarian city in Everfrost Peaks. The Barbarians primarily worship The Tribunal (the Six Hammers, god of justice) and value martial strength and justice. Some warriors also pay homage to Rallos Zek, but The Tribunal is the dominant deity — confirmed by the Shamans of the Tribunal faction and the Church of Tribunal in Halas.
 
 **Factions present:**
 

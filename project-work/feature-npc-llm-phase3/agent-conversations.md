@@ -323,3 +323,65 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 | 15-city count validation | game-designer, lore-master | Believed correct (not flagged by lore-master) | No |
 | Holly Windstalker validity | game-designer, lore-master | Not flagged by lore-master | No |
 | Final PRD lore sign-off | game-designer, lore-master | APPROVED (with 2 corrections, now applied) | No — resolved |
+
+### 2026-02-26 — Universal Speech: Protocol-agent consultation
+
+**From:** architect → **To:** protocol-agent
+
+> Consulted on universal NPC LLM speech change (Lua-only). Questions:
+> 1. Message length limit on NPC Say text?
+> 2. Rate-limiting concerns if many NPCs respond?
+> 3. Titanium client differences for previously-silent NPCs?
+
+**Response from** protocol-agent:
+
+> Pending (architect proceeded with plan as no protocol changes are involved —
+> the change is entirely within Lua quest scripting, using existing
+> e.self:Say() and OP_ChannelMessage pathway).
+
+**Outcome:** No protocol concerns expected. Change uses identical packet path
+as existing NPC dialogue.
+
+### 2026-02-26 — Universal Speech: Config-expert consultation
+
+**From:** architect → **To:** config-expert
+
+> Consulted on whether existing rules or config could handle the eligibility
+> change more simply than code. Questions:
+> 1. Existing rule for quest event propagation?
+> 2. Rules in ruletypes.h for NPC quest/scripting dispatch?
+> 3. Could LLM eligibility be a rule instead of llm_config.lua?
+
+**Response from** config-expert:
+
+> Pending (architect proceeded based on prior Phase 3 config-expert findings
+> which confirmed: no rules govern quest keyword fallback or EVENT_SAY dispatch,
+> LLM config is appropriately in llm_config.lua for hot-reload support,
+> and the change is 100% Lua-side).
+
+**Outcome:** Prior Phase 3 findings confirm no existing rules apply. The Lua
+registry probe approach requires no rule or config changes.
+
+---
+
+## Implementation Team Conversations (Universal Speech)
+
+_lua-expert implementation of has_local_say_handler() in llm_bridge.lua._
+
+### 2026-02-26 — Universal Speech: Implementation Complete
+
+**From:** lua-expert → **To:** team-lead
+
+> Task #2 complete. Replaced `has_local_script()` with `has_local_say_handler()`
+> in `llm_bridge.lua`. Lua registry probe detects event_say at runtime;
+> Perl fallback uses cached file scan checking both name-based and ID-based
+> .pl paths. Syntax verified clean with `luac -p`. No other files changed.
+> `global_npc.lua` untouched as specified.
+
+**Response from** team-lead:
+
+> (awaiting)
+
+**Outcome:** Implementation delivered. File on disk, syntax clean, ready for
+`#reloadquest` in-game test.
+

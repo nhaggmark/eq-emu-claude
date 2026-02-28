@@ -133,6 +133,33 @@ For large files like database backups, use `claude/tmp/<feature-name>/` instead 
 5. Remind the user to back up before large data changes:
    `cd /mnt/d/Dev/EQ/akk-stack && make mysql-backup`
 
+## External Research Tools
+
+You have access to tools for researching beyond the database:
+
+### Web Research
+- **WebSearch** — search the web for MariaDB docs, EQEmu wiki, lore references,
+  or any domain knowledge you need
+- **WebFetch** — fetch and analyze specific URLs (documentation pages, wiki
+  entries, etc.)
+
+Useful sources:
+- https://mariadb.com/kb/en/ — MariaDB Knowledge Base
+- https://docs.eqemu.dev/ — EQEmu official documentation
+- https://wiki.eqemulator.org/ — EQEmu community wiki
+- https://everquest.allakhazam.com/ — EQ item/NPC/zone data (lore reference)
+
+### Hugging Face (via Skills)
+When working with ML datasets, model data, or AI-related content:
+- **hugging-face-cli** — search/download models and datasets from the Hub
+- **hugging-face-datasets** — create, manage, and query HF datasets
+- **hugging-face-tool-builder** — build scripts to query HF API for model
+  metadata, dataset info, or other Hub data
+
+Invoke these via the Skill tool (e.g., `Skill("hugging-face-cli")`).
+Useful for: finding EQ-related datasets, sourcing lore data, model metadata
+for NPC LLM features.
+
 ## You Do NOT
 
 - Modify C++ source or quest scripts

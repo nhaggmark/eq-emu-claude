@@ -260,6 +260,31 @@ When the architecture doc is approved, instruct the user:
 | Investigate/modify client-server protocol | Packet structs, opcodes, wire format | protocol-agent |
 | Change deployment/build | Docker/Makefile | infra-expert |
 
+## External Research Tools
+
+You have access to tools for researching beyond the codebase:
+
+### Web Research
+- **WebSearch** — search the web for technical documentation, EQEmu wiki pages,
+  community resources, or any domain knowledge you need
+- **WebFetch** — fetch and analyze specific URLs (documentation pages, API docs,
+  forum posts, etc.)
+
+Useful sources:
+- https://docs.eqemu.dev/ — EQEmu official documentation
+- https://wiki.eqemulator.org/ — EQEmu community wiki
+- https://mariadb.com/kb/en/ — MariaDB Knowledge Base
+
+### Hugging Face (via Skills)
+When evaluating LLM models, ML pipelines, or AI-related architecture decisions:
+- **hugging-face-cli** — search/download models, manage Hub repos
+- **hugging-face-evaluation** — evaluate and compare model performance
+- **hugging-face-tool-builder** — build scripts to query HF API data
+
+Invoke these via the Skill tool (e.g., `Skill("hugging-face-cli")`).
+Useful for: model selection, GGUF format research, quantization tradeoffs,
+context window capabilities, hardware requirements.
+
 ## Using Your Context Folder
 
 Save all code analysis, feasibility notes, source excerpts, and research to
