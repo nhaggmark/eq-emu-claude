@@ -9,7 +9,7 @@
 
 ## Problem Statement
 
-_What problem does this feature solve? Why does it matter for our 1–6 player
+_What problem does this feature solve? Why does it matter for our 1–3 player
 Classic-Luclin server?_
 
 ## Goals
@@ -53,7 +53,7 @@ not HOW it should be implemented (that is the architect's job)._
 
 ### Balance Considerations
 
-_How does this interact with the 1–6 player constraint? What prevents
+_How does this interact with the 1–3 player constraint? What prevents
 it from being too strong or too weak?_
 
 ### Era Compliance

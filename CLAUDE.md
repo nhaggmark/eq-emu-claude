@@ -92,7 +92,7 @@ bug-fix workflow. Work that is not committed and pushed is not protected.
 
 ## Project Context
 
-Custom EverQuest server: Classic through Luclin, 1–6 players, Titanium client.
+Custom EverQuest server: Classic through Luclin, 1–3 players, Titanium client.
 Signature feature: recruit-any-NPC companion system.
 
 ### Repositories

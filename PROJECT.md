@@ -2,14 +2,14 @@
 
 ## Vision & Goals
 
-A custom EverQuest server running Classic through Shadows of Luclin, designed for a small group of friends (1-6 players). Built on the EQEmu open-source emulator with the Titanium client.
+A custom EverQuest server running Classic through Shadows of Luclin, designed for a small group of friends (1-3 players). Built on the EQEmu open-source emulator with the Titanium client.
 
 **The defining feature**: a companion recruitment system that lets you convince any NPC in the world to join your party. This replaces the need for a full raid force and makes all content — from group dungeons to raid bosses — accessible to a small group.
 
 ### Goals
 
 1. **Recruit-Any-NPC Companion System** — NPCs can be persuaded to join your party based on faction, charisma, quests, or other in-game mechanics. The signature feature.
-2. **Small-Group Viability** — Rebalance encounters, loot, and progression so 1-6 players can experience all Classic-Luclin content meaningfully.
+2. **Small-Group Viability** — Rebalance encounters, loot, and progression so 1-3 players can experience all Classic-Luclin content meaningfully.
 3. **Custom Loot & Economy** — Fresh drop tables, new items, rebalanced merchants and tradeskills.
 4. **Custom Quests & Story** — New quest lines and NPC dialogue that tie into the companion system and give the world more life.
 5. **Class & Combat Tuning** — Adjusted spells, AAs, and combat formulas appropriate for small-group play.
@@ -175,7 +175,7 @@ All cloned as forks for customization:
 
 ### Phase 3: Small-Group Viability
 
-- [x] Audit and rebalance encounter difficulty for 1-6 players (small-group-scaling: 34 rule changes, ~45K NPC stat reductions)
+- [x] Audit and rebalance encounter difficulty for 1-3 players (small-group-scaling: 34 rule changes, ~45K NPC stat reductions)
 - [x] Adjust XP rates and progression curve
 - [x] Tune loot tables so gear progression feels rewarding at small scale (loot multipliers, spawn improvements)
 - [ ] Ensure all Classic-Luclin content is reachable (keys, flags, access quests)

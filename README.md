@@ -6,7 +6,7 @@ Human-friendly instructions for running the custom EverQuest server and doing pi
 
 ## What This Project Is
 
-A custom EverQuest server (Classic through Luclin, 1–6 players, Titanium client) with a signature recruit-any-NPC companion system. Built on three forked open-source projects:
+A custom EverQuest server (Classic through Luclin, 1–3 players, Titanium client) with a signature recruit-any-NPC companion system. Built on three forked open-source projects:
 
 | Directory | What It Is | When You Touch It |
 |-----------|-----------|-------------------|
