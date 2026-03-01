@@ -45,6 +45,21 @@ When the orchestrator does agent work directly, it:
 - Tasks the user explicitly asks to be done without the agent workflow
 - Infrastructure/tooling work outside the feature pipeline
 
+**Size/scope limits for direct work:**
+- Fewer than 10 lines of code changed across all files
+- Fewer than 3 files modified
+- Single-repo impact (not cross-repo changes)
+- No new files created (except docs/config)
+
+If a task exceeds any of these limits, it is NOT ad-hoc — use the pipeline.
+
+**These are NEVER ad-hoc, regardless of perceived simplicity:**
+- Bug fixes (always use the bug-fix pipeline)
+- Anything requiring a build/restart cycle
+- Changes to C++ source, quest scripts, or database schema
+- Cross-repo changes (eqemu + akk-stack, etc.)
+- Work that would benefit from peer review or testing
+
 ## Workflow Reference
 
 - **Full pipeline + agent catalog:** `claude/AGENTS.md`
@@ -65,7 +80,36 @@ but never performs the work itself.
 6. Complete     → commit/push ALL repos to feature branch
 ```
 
-Between phases: shut down the current team, then create the next one.
+Between phases: verify, shut down, verify, then create the next one.
+
+### Phase Transition Protocol (MANDATORY)
+
+Every phase transition follows this exact sequence. No exceptions.
+
+```
+1. COMMIT GATE — Before shutting down the current team:
+   Run in ALL repos (eqemu/, akk-stack/, claude/):
+     git status
+     git log --oneline -3
+   If ANY repo has uncommitted changes → STOP. Do not proceed.
+   Either the responsible agent commits, or the orchestrator
+   asks the user how to proceed. Never discard uncommitted work.
+
+2. TEAM SHUTDOWN — SendMessage(type="shutdown_request") to each agent,
+   then TeamDelete.
+
+3. DIRTY TREE GATE — Before creating the next team:
+   Run in ALL repos (eqemu/, akk-stack/, claude/):
+     git status
+   If ANY repo has uncommitted or untracked changes → STOP.
+   Resolve before proceeding. A dirty tree at phase start means
+   the previous phase left orphaned work.
+
+4. TEAM CREATE — TeamCreate for the next phase.
+```
+
+The orchestrator NEVER skips steps 1 or 3. If a gate fails, the orchestrator
+reports the state to the user and waits for instructions.
 
 ### Bug Fix Workflow Summary
 

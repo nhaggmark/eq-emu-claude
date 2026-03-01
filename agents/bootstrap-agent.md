@@ -36,11 +36,20 @@ Examples:
 - "rebalance classic loot tables" → `feature/classic-loot-rebalance`
 - "add new quest in North Karana" → `feature/nkarana-quest`
 
-### 2. Create feature branch
+### 2. Create feature branches in ALL repos
+
+Create the feature branch in every repo that might be affected. This ensures
+agents have a proper branch to commit to in every repo, and prevents commits
+landing on main accidentally.
 
 ```bash
 cd /mnt/d/Dev/EQ/eqemu && git checkout -b <branch-name>
+cd /mnt/d/Dev/EQ/akk-stack && git checkout -b <branch-name>
+cd /mnt/d/Dev/EQ/claude && git checkout -b <branch-name>
 ```
+
+All three repos MUST have matching branch names. If a repo ends up not needing
+changes, the empty branch is harmless and can be cleaned up at completion.
 
 ### 3. Create project-work folders
 
@@ -144,6 +153,6 @@ Print a summary of what was created and instruct the user:
 
 - Design features or write implementation plans
 - Modify any existing code
-- Create branches in akk-stack or spire (only eqemu)
+- Skip creating branches in any of the three repos (eqemu, akk-stack, claude)
 - Skip creating any agent folder — create all 11 even if not all will be used
 - Skip creating context/ subfolders — every agent gets one

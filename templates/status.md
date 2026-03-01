@@ -86,14 +86,27 @@ _Key decisions made during this feature's development._
 
 ## Completion Checklist
 
+### Implementation Complete (agents can check these)
+
 _Filled in after game-tester validation passes._
 
 - [ ] All implementation tasks marked Complete
 - [ ] No open Blockers
-- [ ] game-tester validation: PASS
-- [ ] Feature branch merged to main
+- [ ] game-tester server-side validation: PASS
+- [ ] User completed in-game testing guide: PASS
+- [ ] All changes committed and pushed to feature branch in ALL repos
 - [ ] Server rebuilt (if C++ changed)
 - [ ] All phases marked Complete in Workflow Status table
+
+### Merge & Cleanup (USER-INITIATED ONLY)
+
+_These items happen ONLY when the user explicitly confirms the feature is done.
+The orchestrator NEVER initiates merge or branch cleanup on its own._
+
+- [ ] User confirmed feature is complete
+- [ ] Feature branch merged to main in ALL affected repos
+- [ ] Main pushed to origin in ALL affected repos
+- [ ] Stale feature branches deleted (local + remote)
 
 **Merged by:** _name_
 **Merge date:** _YYYY-MM-DD_

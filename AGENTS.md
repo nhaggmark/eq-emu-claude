@@ -40,9 +40,55 @@ TeamCreate(team_name, description)
   → Task(agent1, team_name=...) + Task(agent2, team_name=...)
   → TaskCreate(tasks for the team)
   → Agents work via SendMessage + TaskUpdate
+  → COMMIT GATE (orchestrator verifies all repos clean — see below)
   → SendMessage(type="shutdown_request") to each agent
+  → Agents WIP-commit before approving shutdown (see below)
   → TeamDelete
+  → DIRTY TREE GATE (orchestrator verifies all repos clean before next phase)
 ```
+
+### Agent Shutdown Protocol (MANDATORY)
+
+When an agent receives `shutdown_request`, it MUST do the following
+BEFORE approving shutdown:
+
+1. Check `git status` in every repo it modified during this phase
+2. If ANY uncommitted changes exist:
+   - Stage only the files it changed (explicit paths, never `git add -A`)
+   - Commit with message: `WIP: <agent-name> - <brief task description>`
+   - Push to the feature branch
+3. Only THEN approve the shutdown via `shutdown_response`
+
+Agents that did not modify any files may approve shutdown immediately.
+
+### Orchestrator Phase Transition Gates (MANDATORY)
+
+Every phase transition follows this exact sequence. No exceptions.
+
+```
+1. COMMIT GATE — Before shutting down the current team:
+   Orchestrator runs in ALL repos (eqemu/, akk-stack/, claude/):
+     git status
+     git log --oneline -3
+   If ANY repo has uncommitted changes → STOP. Do not proceed.
+   Either the responsible agent commits, or the orchestrator
+   asks the user how to proceed. Never discard uncommitted work.
+
+2. TEAM SHUTDOWN — SendMessage(type="shutdown_request") to each agent,
+   then TeamDelete after all agents confirm shutdown.
+
+3. DIRTY TREE GATE — Before creating the next team:
+   Orchestrator runs in ALL repos (eqemu/, akk-stack/, claude/):
+     git status
+   If ANY repo has uncommitted or untracked changes → STOP.
+   Resolve before proceeding. A dirty tree at phase start means
+   the previous phase left orphaned work.
+
+4. TEAM CREATE — TeamCreate for the next phase.
+```
+
+The orchestrator NEVER skips steps 1 or 3. If a gate fails, the orchestrator
+reports the state to the user and waits for instructions.
 
 ---
 
@@ -83,6 +129,8 @@ TeamCreate(team_name, description)
 ║                                                                    ║
 ║  OUTPUTS:                                                          ║
 ║  ├── eqemu/ branch: feature/<branch-name>                          ║
+║  ├── akk-stack/ branch: feature/<branch-name>                      ║
+║  ├── claude/ branch: feature/<branch-name>                         ║
 ║  ├── claude/tmp/<branch-name>/  (gitignored temp storage)          ║
 ║  └── claude/project-work/<branch-name>/                            ║
 ║      ├── status.md               ◄── templates/status.md           ║
@@ -493,13 +541,28 @@ TeamCreate(team_name, description)
 ║  │ 18. Report completion to user                       │            ║
 ║  └─────────────────────────────────────────────────────┘          ║
 ║                                                                    ║
-║  COMMIT TARGETS (varies by expert):                                ║
+║  COMMIT PROTOCOL (MANDATORY — varies by expert):                   ║
+║                                                                    ║
+║  BEFORE committing, ALWAYS run:                                    ║
+║    git status                                                      ║
+║    git diff --stat                                                 ║
+║  Review the output. Only stage files YOU changed.                  ║
+║  NEVER use `git add -A` or `git add .` — always add files         ║
+║  by explicit path.                                                 ║
+║                                                                    ║
 ║  • c-expert, lua-expert, perl-expert, protocol-agent →             ║
-║    cd /mnt/d/Dev/EQ/eqemu && git add -A && git commit             ║
+║    cd /mnt/d/Dev/EQ/eqemu                                         ║
+║    git add <specific-files> && git commit                          ║
 ║  • data-expert →                                                   ║
-║    cd /mnt/d/Dev/EQ/claude && git add -A && git commit             ║
+║    cd /mnt/d/Dev/EQ/claude                                         ║
+║    git add <specific-files> && git commit                          ║
 ║  • config-expert, infra-expert →                                   ║
-║    cd /mnt/d/Dev/EQ/akk-stack && git add -A && git commit          ║
+║    cd /mnt/d/Dev/EQ/akk-stack                                     ║
+║    git add <specific-files> && git commit                          ║
+║                                                                    ║
+║  If `git status` shows unexpected changes you didn't make,         ║
+║  STOP and report to the team lead. Do not commit other             ║
+║  agents' work or unrecognized files.                               ║
 ║                                                                    ║
 ║  SPECIAL COORDINATION:                                             ║
 ║  • protocol-agent ←→ infra-expert: packet capture tooling          ║
@@ -638,23 +701,29 @@ TeamCreate(team_name, description)
 ║  Actor: User (not an agent)                                        ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                    ║
-║  CHECKLIST:                                                        ║
+║  IMPLEMENTATION COMPLETE (agents can check these):                  ║
 ║  ┌──────────────────────────────────────────────────┐              ║
 ║  │ □ All implementation tasks marked Complete       │              ║
 ║  │ □ No open Blockers in status.md                  │              ║
 ║  │ □ game-tester server-side validation: PASS       │              ║
 ║  │ □ User completed in-game testing guide: PASS     │              ║
-║  │ □ Commit all changes in ALL affected repos       │              ║
-║  │   (eqemu/, akk-stack/, claude/)                  │              ║
-║  │ □ Push ALL affected repos to origin              │              ║
+║  │ □ All changes committed and pushed to feature    │              ║
+║  │   branch in ALL repos (eqemu/, akk-stack/,       │              ║
+║  │   claude/)                                       │              ║
 ║  │ □ Server rebuilt (if C++ changed)                │              ║
 ║  │ □ All phases marked Complete in status.md        │              ║
+║  └──────────────────────────────────────────────────┘              ║
+║                                                                    ║
+║  MERGE & CLEANUP (USER-INITIATED ONLY):                            ║
+║  ┌──────────────────────────────────────────────────┐              ║
+║  │ The orchestrator NEVER initiates merge or branch │              ║
+║  │ cleanup. These happen ONLY when the user         │              ║
+║  │ explicitly confirms the feature is done.         │              ║
 ║  │                                                  │              ║
-║  │ MERGE & CLEANUP (user-initiated only):           │              ║
-║  │ □ User confirms feature/project is complete      │              ║
-║  │ □ Feature branch merged to main                  │              ║
-║  │ □ Push main to origin in ALL affected repos      │              ║
-║  │ □ Delete stale feature branches (local + remote) │              ║
+║  │ □ User confirmed feature is complete             │              ║
+║  │ □ Feature branch merged to main in ALL repos     │              ║
+║  │ □ Main pushed to origin in ALL repos             │              ║
+║  │ □ Stale feature branches deleted (local + remote)│              ║
 ║  └──────────────────────────────────────────────────┘              ║
 ║                                                                    ║
 ║  NOTE: Merge and branch cleanup happen ONLY when the user          ║
@@ -831,6 +900,32 @@ Template initialization (bootstrap-agent):
 │  • test-plan.md   — validation checks, in-game guide, results      │
 │  • agent-conversations.md — all SendMessage exchanges logged        │
 │  • context/       — raw artifacts (captures, dumps, excerpts)       │
+│                                                                     │
+│  WORK PROTECTION RULES (ALL agents MUST follow):                    │
+│                                                                     │
+│  1. NEVER use `git add -A` or `git add .`                           │
+│     Always add files by explicit path. Review `git status` first.   │
+│                                                                     │
+│  2. NEVER run destructive git ops without backing up first           │
+│     Before ANY reset, checkout --, clean, or index rebuild:          │
+│     tar czf /tmp/repo-backup-$(date +%s).tar.gz .                   │
+│     A 30-second backup beats hours of rework.                        │
+│                                                                     │
+│  3. ALWAYS check for dirty tree before destructive git ops           │
+│     Run `git diff --stat` and `git status` BEFORE any checkout,     │
+│     reset, clean, or index rebuild. If the tree has uncommitted      │
+│     changes → STOP and report to team lead. Never overwrite a        │
+│     dirty working tree.                                              │
+│                                                                     │
+│  4. NEVER take destructive action without asking                     │
+│     Commands that can destroy uncommitted work require               │
+│     confirmation from the team lead or user first:                   │
+│     git checkout -- ., git reset --hard, git clean, rm -rf           │
+│                                                                     │
+│  5. WIP commit before shutdown                                       │
+│     Before approving any shutdown_request, check `git status`.       │
+│     If dirty, commit with `WIP: <agent-name> - <task>` prefix.      │
+│     Uncommitted work is unprotected work.                            │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
