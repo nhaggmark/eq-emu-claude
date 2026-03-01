@@ -12,12 +12,12 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-03-01 | 2026-03-01 |
 | Design | game-designer + lore-master | Complete | 2026-03-01 | 2026-03-01 |
-| Architecture | architect + protocol-agent + config-expert | Not Started | | |
-| Implementation | _implementation team_ | Not Started | | |
+| Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-01 | 2026-03-01 |
+| Implementation | c-expert + lua-expert | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Architecture
+**Current phase:** Implementation
 
 ---
 
@@ -40,28 +40,46 @@ _Record each handoff between agents with context and any notes._
   See `game-designer/prd.md` for full details, repro steps, and acceptance
   criteria. Research notes in `game-designer/context/research-notes.md`.
 
+### architect → implementation team (c-expert + lua-expert)
+- **Date:** 2026-03-01
+- **Notes:** Architecture plan complete at `architect/architecture.md`.
+  Three implementation tasks:
+  1. **Task 1 → c-expert:** Fix equipment display — override
+     `GetEquipmentMaterial()` and `GetEquippedItemFromTextureSlot()` in
+     Companion class, sync `NPC::equipment[]` in GiveItem/RemoveItemFromSlot
+  2. **Task 2 → c-expert:** Fix equipment persistence — call
+     `LoadEquipment()` from `Load()`, sync `NPC::equipment[]` in LoadEquipment
+  3. **Task 3 → lua-expert:** Diagnose and fix LLM chat — sidecar is
+     confirmed healthy (config-expert verified), failure is in Lua code path
+     (`llm_bridge.lua` `generate_response()`), must diagnose root cause and
+     fix, plus add server-log error visibility
+  
+  Key findings from advisor consultations:
+  - protocol-agent: No Titanium constraints. OP_WearChange works for NPC=0
+    entities. All 9 material slots valid. Spawn packet handles zone-in visuals
+    once equipment[] is correct.
+  - config-expert: No existing rules address these bugs. Sidecar IS healthy
+    and reachable — Bug 1 is a Lua code issue, not infrastructure.
+
 ---
 
 ## Implementation Tasks
 
-_Populated by the architect after the architecture doc is approved._
-
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| | | | | |
+| 1 | Fix equipment display (override GetEquipmentMaterial, sync arrays) | c-expert | Not Started | ~50 lines C++ in companion.h and companion.cpp |
+| 2 | Fix equipment persistence (call LoadEquipment from Load, sync arrays) | c-expert | Not Started | ~10 lines C++ in companion.cpp. Depends on Task 1. |
+| 3 | Diagnose and fix LLM chat (find failure in llm_bridge.lua, fix it, add logging) | lua-expert | Not Started | Sidecar confirmed healthy. Root cause is in Lua code path. |
 
 ---
 
 ## Open Questions
 
-_Questions that need answers before work can proceed. Tag the agent or
-person responsible for answering._
-
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | Is the LLM sidecar container currently running? | game-designer | architect | Open | Verify before investigating code-level LLM issues |
-| 2 | Should Companion override GetEquipmentMaterial() or sync to NPC::equipment[]? | game-designer | architect | Open | Architect determines cleanest approach |
-| 3 | Does the spawn packet handle equipment visuals if arrays are populated before spawn? | game-designer | architect | Open | May affect whether explicit wear change packets are needed on zone-in |
+| 1 | Is the LLM sidecar container currently running? | game-designer | architect | Resolved | Yes — config-expert verified: container healthy, DNS resolves (172.18.0.9), health endpoint OK, model loaded. Bug is in Lua code, not infrastructure. |
+| 2 | Should Companion override GetEquipmentMaterial() or sync to NPC::equipment[]? | game-designer | architect | Resolved | Both: override for correct virtual dispatch + sync as belt-and-suspenders. See architecture.md. |
+| 3 | Does the spawn packet handle equipment visuals if arrays are populated before spawn? | game-designer | architect | Resolved | Yes — protocol-agent confirmed. FillSpawnStruct calls GetEquipmentMaterial per slot. Once override/sync is in place, spawn packet carries correct materials. No extra WearChange needed. |
 
 ---
 
@@ -82,9 +100,9 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| 1 | LLM Chat — companions show thinking emote but never respond | High | user | Open | architect | |
-| 2 | Equipment Display — traded items don't visually appear on companion | High | user | Open | architect | |
-| 3 | Equipment Persistence — equipment lost on zone/relog | High | user | Open | architect | |
+| 1 | LLM Chat — companions show thinking emote but never respond | High | user | Fix In Progress | lua-expert | |
+| 2 | Equipment Display — traded items don't visually appear on companion | High | user | Fix In Progress | c-expert | |
+| 3 | Equipment Persistence — equipment lost on zone/relog | High | user | Fix In Progress | c-expert | |
 
 ---
 
@@ -95,6 +113,9 @@ _Key decisions made during this feature's development._
 | # | Decision | Made By | Date | Rationale |
 |---|----------|---------|------|-----------|
 | 1 | Bug-fix PRD approved with no lore concerns | game-designer + lore-master | 2026-03-01 | Pure technical fixes, no narrative changes, era compliance confirmed |
+| 2 | All three bugs require code-level fixes (no config alternatives) | config-expert + architect | 2026-03-01 | 22 Companions rules checked — none cover equipment display, persistence, or LLM. Sidecar verified healthy. |
+| 3 | Override GetEquipmentMaterial + sync NPC::equipment[] (dual approach) | architect | 2026-03-01 | Virtual override ensures correct rendering pipeline. Sync catches direct equipment[] access. Better than alternatives (drop m_equipment, write-only). |
+| 4 | Implementation team: c-expert + lua-expert only | architect | 2026-03-01 | Minimal team — 2 experts for 3 tasks. No other agents needed. |
 
 ---
 
@@ -133,3 +154,10 @@ _Free-form notes, observations, or context that doesn't fit above._
 
 - Research notes from game-designer's codebase review are preserved at
   `game-designer/context/research-notes.md` for the architect's reference.
+- Config-expert verified sidecar health details: container akk-stack-npc-llm-1
+  is healthy, up 3+ hours. DNS resolves npc-llm → 172.18.0.9. Health endpoint
+  confirms model loaded, ChromaDB connected with 6 collections.
+- Protocol-agent verified: Titanium titanium_ops.h has both ENCODE (line 88)
+  and DECODE (line 133) for OP_WearChange. All 9 material slots valid. NPC=0
+  entities receive WearChange correctly. Spawn packet equipment fields populated
+  by GetEquipmentMaterial per slot.
