@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-02-28 | 2026-02-28 |
 | Design | game-designer + lore-master | Complete | 2026-02-28 | 2026-02-28 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-02-28 | 2026-02-28 |
-| Implementation | config-expert + lua-expert | In Progress | 2026-02-28 | |
-| Validation | game-tester | Not Started | | |
+| Implementation | config-expert + lua-expert | Complete | 2026-02-28 | 2026-02-28 |
+| Validation | game-tester | In Progress | 2026-02-28 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Validation
 
 ---
 
@@ -42,6 +42,16 @@ _Record each handoff between agents with context and any notes._
   recall cooldown, target/assist stance scope. C-expert prefix audit
   (dev-notes.md) confirms no C++ collision with `!` character.
 
+### implementation team → game-tester
+- **Date:** 2026-02-28
+- **Notes:** Server-side validation complete. Result: PASS WITH WARNINGS.
+  All 22 server-side checks pass. Two non-blocking warnings:
+  (1) status.md Task 1 showed "Not Started" though rule is implemented — corrected.
+  (2) Zone bootup failures in zone_187.log predate this feature; unrelated.
+  One recommendation: !gear and !unequipall aliases are undocumented in !help.
+  In-game testing guide is at `game-tester/test-plan.md` (25 tests + 7 edge cases).
+  Awaiting user to complete in-game tests.
+
 ### architect → implementation team (config-expert + lua-expert)
 - **Date:** 2026-02-28
 - **Notes:** Architecture plan complete at `architect/architecture.md`.
@@ -65,7 +75,7 @@ _Record each handoff between agents with context and any notes._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Add `Companions:RecallCooldownS` rule to `ruletypes.h` | config-expert | Not Started | 1 line: `RULE_INT(Companions, RecallCooldownS, 30, "...")` |
+| 1 | Add `Companions:RecallCooldownS` rule to `ruletypes.h` | config-expert | Complete | 1 line at ruletypes.h:1202. Rule seeded in DB. World log confirms rule loaded at 16:25. Status.md incorrectly showed "Not Started" — corrected by game-tester. |
 | 2 | Refactor `companion.lua`: prefix command dispatch, all 14 handlers, help system, lore phrases | lua-expert | Complete | ~350 lines changed/added |
 | 3 | Update `global_npc.lua`: prefix check instead of keyword interception | lua-expert | Complete | ~10 lines changed. |
 
