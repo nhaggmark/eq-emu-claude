@@ -15,14 +15,14 @@ manager and dispatcher only**. It does NOT do feature work directly.
 - Monitor progress via `TaskList` and agent messages
 - Shut down teams (`SendMessage` type `shutdown_request`, then `TeamDelete`)
 - Update `status.md` phase transitions between teams
-- Triage bug reports (read report, set severity, select relevant expert agents)
-- Create bug workspaces and update Bug Reports tables in status.md
+- Dispatch bug-fix features through the same pipeline as regular features
 
 ### The orchestrator does NOT:
 
 - Write PRDs, architecture docs, implementation code, or test plans
 - Research the codebase on behalf of agents
 - Make design, architecture, or implementation decisions
+- Triage, diagnose, or evaluate bug complexity (engineers do this)
 - Fill in templates or agent deliverables
 - Self-certify reviews that belong to a peer agent (e.g. lore review)
 - Bypass the workflow by doing an agent's job "because it's faster"
@@ -62,23 +62,33 @@ but never performs the work itself.
 3. Architecture → TeamCreate → architect + protocol-agent + config-expert
 4. Implement    → TeamCreate → assigned experts from architecture plan
 5. Validate     → game-tester (solo)
-6. Complete     → user merges branch
+6. Complete     → commit/push ALL repos, merge to main, branch cleanup
 ```
 
 Between phases: shut down the current team, then create the next one.
 
-### Bug Workflow Summary
+### Bug Fix Workflow Summary
 
-Bugs follow a lighter pipeline. The orchestrator triages and selects
-expert agents relevant to the bug based on its Affected Systems checklist.
+Bug fixes use the **same pipeline as features**. Standalone bugs (not part
+of an active feature) are treated as a new bug-fix feature. The orchestrator
+dispatches the pipeline — engineers own triage, diagnosis, and all decisions.
 
 ```
-1. Triage     → orchestrator (read report, select experts, create workspace)
-2. Diagnose   → TeamCreate → relevant experts investigate root cause
-3. Fix/Verify → solo expert fixes, game-tester verifies
+1. Bootstrap    → bootstrap-agent (workspace + branch, e.g. bugfix/companion-fixes)
+2. Design       → game-designer documents bugs, repro steps, acceptance criteria
+3. Architecture → architect triages affected systems, diagnoses root causes, plans fixes
+4. Implement    → assigned experts implement fixes
+5. Validate     → game-tester verifies all bugs resolved
+6. Complete     → commit/push ALL repos, merge to main, branch cleanup
 ```
 
-Trivial bugs skip diagnosis: Triage → solo expert → game-tester.
+Multiple related bugs can be batched into a single bug-fix feature.
+
+### Commit/Push Discipline
+
+Phase 6 (Complete) MUST include commit and push across ALL affected repos
+(eqemu/, akk-stack/, claude/). This is the final step of every feature and
+bug-fix workflow. Work that is not committed and pushed is not protected.
 
 ## Project Context
 

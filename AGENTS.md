@@ -644,9 +644,14 @@ TeamCreate(team_name, description)
 ║  │ □ No open Blockers in status.md                  │              ║
 ║  │ □ game-tester server-side validation: PASS       │              ║
 ║  │ □ User completed in-game testing guide: PASS     │              ║
+║  │ □ Commit all changes in ALL affected repos       │              ║
+║  │   (eqemu/, akk-stack/, claude/)                  │              ║
+║  │ □ Push ALL affected repos to origin              │              ║
 ║  │ □ Feature branch merged to main                  │              ║
 ║  │   cd /mnt/d/Dev/EQ/eqemu && git checkout main && │              ║
 ║  │   git merge <branch-name>                        │              ║
+║  │ □ Push main to origin in ALL affected repos      │              ║
+║  │ □ Delete stale feature branches (local + remote) │              ║
 ║  │ □ Server rebuilt (if C++ changed)                │              ║
 ║  │ □ All phases marked Complete in status.md        │              ║
 ║  └──────────────────────────────────────────────────┘              ║
@@ -658,109 +663,63 @@ TeamCreate(team_name, description)
 
 ---
 
-## Bug Workflow
+## Bug Fix Workflow
 
-A parallel track to the feature pipeline for reporting and resolving bugs.
-Lighter-weight: no PRD, no architecture team. Bugs found during feature
-testing live inside the feature workspace. General bugs get a standalone
-workspace.
+Bug fixes follow the **same pipeline as features**. This guarantees
+consistent execution: branch isolation, workspace, audit trail, peer
+review, validation, and commit/push.
 
-```
-┌──────────────┐    ┌────────────────────────┐    ┌────────────────────┐
-│  TRIAGE       │───▶│  DIAGNOSE (team)        │───▶│  FIX & VERIFY      │
-│  (Phase 1)    │    │  (Phase 2)              │    │  (Phase 3)         │
-└──────────────┘    └────────────────────────┘    └────────────────────┘
- Orchestrator        TeamCreate → relevant        Solo expert fixes,
- reads report,       experts investigate          game-tester verifies
- selects agents
-```
+### Two entry points, one pipeline
 
-### Bug Report Submission
+| Situation | What the orchestrator does |
+|-----------|--------------------------|
+| **Bugs within a feature context** | Handled inside the existing feature workspace and branch. Orchestrator dispatches the relevant phase. |
+| **Standalone bugs (no active feature)** | Orchestrator creates a new bug-fix feature. Runs the full pipeline from Phase 1. |
 
-Anyone (user or game-tester) can submit a bug using `claude/templates/bug-report.md`.
+In both cases the orchestrator is a dispatcher only — it does not triage,
+diagnose, select agents, or evaluate complexity. The engineers do that.
 
-**Feature bugs:** Copy template to `project-work/<feature>/bugs/BUG-NNN-short-name/report.md`
-**General bugs:** Copy template to `project-work/bugs/BUG-GNNN-short-name/report.md`
+### Standalone bug-fix pipeline
 
-Create the bug workspace:
-```bash
-mkdir -p claude/project-work/<feature>/bugs/BUG-NNN-short-name/{diagnosis,fix}
-# or for general bugs:
-mkdir -p claude/project-work/bugs/BUG-GNNN-short-name/{diagnosis,fix}
-```
-
-### Phase 1: Triage (orchestrator)
-
-The orchestrator reads the bug report and:
-
-1. **Sets severity** if not already specified by the submitter.
-2. **Selects expert agents relevant to the bug.** The Affected Systems
-   checklist in the report determines which agents are needed:
-   - C++ server source → c-expert
-   - Lua quest scripts → lua-expert
-   - Perl quest scripts → perl-expert
-   - Database / SQL → data-expert
-   - Rules / Configuration → config-expert
-   - Client protocol → protocol-agent
-   - Infrastructure / Docker → infra-expert
-   - Multiple systems → multiple experts
-   - Unclear root cause → start with systematic-debugging skill to narrow
-     down, then assign the relevant expert(s)
-3. **Evaluates complexity.** Trivial bugs (wrong rule value, typo, obvious
-   one-line fix) skip diagnosis and go directly to a solo expert fix.
-4. **Updates status.md** — adds a row to the Bug Reports table with status
-   `Investigating` and the assigned expert agents.
-5. **Creates the bug workspace** — folder, report.md, diagnosis/ and fix/
-   directories.
-
-### Phase 2: Diagnose (small team)
-
-A team of expert agents relevant to the bug is spawned via TeamCreate.
-The team composition is determined during triage based on the bug's
-Affected Systems — only agents whose expertise matches the bug are included.
+Standalone bugs (reported by user or discovered outside a feature) are
+treated as a new feature:
 
 ```
-TeamCreate(team_name="<feature>-bug-NNN", description="Diagnose BUG-NNN")
-  → Task(name="<expert-1>", team_name=...) + Task(name="<expert-2>", ...)
-  → Agents investigate root cause
-  → Findings written to diagnosis/ in the bug workspace
-  → Inter-agent discussion logged to agent-conversations.md
-  → SendMessage(type="shutdown_request") to each agent
-  → TeamDelete
+┌─────────────┐    ┌─────────────────┐    ┌───────────────────┐    ┌──────────────────────┐    ┌──────────────┐    ┌────────────┐
+│  BOOTSTRAP   │───▶│  DESIGN TEAM     │───▶│  ARCHITECTURE TEAM │───▶│  IMPLEMENTATION TEAM  │───▶│  GAME-TESTER  │───▶│  COMPLETE   │
+│  (Phase 1)   │    │  (Phase 2)       │    │  (Phase 3)         │    │  (Phase 4)            │    │  (Phase 5)    │    │  (Phase 6)  │
+└─────────────┘    └─────────────────┘    └───────────────────┘    └──────────────────────┘    └──────────────┘    └────────────┘
 ```
 
-The team:
-- Reads the bug report
-- Investigates root cause using the systematic-debugging approach
-- Writes findings to `diagnosis/` in the bug workspace
-- Identifies the fix (which files, what changes)
+Each phase is lighter than a full feature but follows the same structure:
 
-### Phase 3: Fix & Verify
+| Phase | Bug-fix equivalent |
+|-------|--------------------|
+| **Bootstrap** | bootstrap-agent creates workspace and branch (e.g. `bugfix/companion-equipment-persistence`) |
+| **Design** | game-designer documents the bugs: reproduction steps, expected vs actual behavior, acceptance criteria. Replaces PRD. |
+| **Architecture** | architect triages affected systems, diagnoses root causes, plans the fix approach across files/repos. Replaces full architecture doc. |
+| **Implement** | Assigned experts implement the fixes as specified by the architect. |
+| **Validate** | game-tester verifies all bugs are resolved via reproduction steps. |
+| **Complete** | Commit, push, merge to main across all affected repos. Branch cleanup. |
 
-- The expert identified during diagnosis implements the fix (commits on
-  the feature branch or relevant branch)
-- Status.md row updated to `Fix In Progress`
-- Game-tester runs the reproduction steps to confirm the fix
-- Status.md row updated to `Resolved` with the date
+### Why bugs use the full pipeline
 
-### Trivial Bug Shortcut
+The old bug workflow gave the orchestrator triage and diagnosis
+responsibilities. This violated the orchestrator's role as a state machine
+and led to:
+- Orchestrator making technical decisions it shouldn't make
+- No branch isolation (fixes applied to dirty working trees)
+- No commit/push discipline (work lost when sessions end)
+- No audit trail (no workspace, no agent conversations logged)
 
-For bugs where triage determines the fix is obvious:
+The full pipeline prevents all of these.
 
-```
-Triage → Solo expert fixes → Game-tester verifies
-```
+### Batching
 
-No team spawn, no diagnosis artifacts. The orchestrator makes this call.
-
-### Bug Status Flow
-
-```
-Open → Investigating → Fix In Progress → Resolved
-```
-
-Tracked in the feature's `status.md` Bug Reports table (feature bugs)
-or `project-work/bugs/status.md` (general bugs).
+Multiple related bugs can be grouped into a single bug-fix feature
+(e.g. "companion system bug fixes"). The design phase documents all bugs,
+the architecture phase plans all fixes, and implementation addresses them
+together. This is more efficient than running the pipeline per-bug.
 
 ---
 
