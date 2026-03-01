@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-01 | 2026-03-01 |
 | Design | game-designer + lore-master | Complete | 2026-03-01 | 2026-03-01 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-01 | 2026-03-01 |
-| Implementation | c-expert + lua-expert | Not Started | | |
+| Implementation | c-expert + lua-expert | Complete | 2026-03-01 | 2026-03-01 |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Validation
 
 ---
 
@@ -61,15 +61,25 @@ _Record each handoff between agents with context and any notes._
   - config-expert: No existing rules address these bugs. Sidecar IS healthy
     and reachable — Bug 1 is a Lua code issue, not infrastructure.
 
+### implementation team → game-tester
+- **Date:** 2026-03-01
+- **Notes:** All 3 implementation tasks complete. c-expert fixed equipment
+  display (override GetEquipmentMaterial/GetEquippedItemFromTextureSlot, sync
+  NPC::equipment[]) and equipment persistence (call LoadEquipment() from Load(),
+  sync arrays after loading). lua-expert fixed LLM chat (added pcall guards,
+  diagnostic logging, io.popen fallback, companion eligibility check in
+  llm_bridge.lua). All changes committed and pushed to feature branches.
+  C++ changes in eqemu/ require rebuild before testing.
+
 ---
 
 ## Implementation Tasks
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Fix equipment display (override GetEquipmentMaterial, sync arrays) | c-expert | Not Started | ~50 lines C++ in companion.h and companion.cpp |
-| 2 | Fix equipment persistence (call LoadEquipment from Load, sync arrays) | c-expert | Not Started | ~10 lines C++ in companion.cpp. Depends on Task 1. |
-| 3 | Diagnose and fix LLM chat (find failure in llm_bridge.lua, fix it, add logging) | lua-expert | Complete | Added eq.log(87) at all nil-return paths + os.execute fallback for io.popen=nil. Syntax checked. End-to-end tested in luajit. |
+| 1 | Fix equipment display (override GetEquipmentMaterial, sync arrays) | c-expert | Complete | Overrode GetEquipmentMaterial + GetEquippedItemFromTextureSlot, synced NPC::equipment[] |
+| 2 | Fix equipment persistence (call LoadEquipment from Load, sync arrays) | c-expert | Complete | Added LoadEquipment() call in Load(), syncs NPC::equipment[] after loading |
+| 3 | Diagnose and fix LLM chat (find failure in llm_bridge.lua, fix it, add logging) | lua-expert | Complete | Added pcall guards, diagnostic logging, io.popen fallback, companion eligibility check |
 
 ---
 
@@ -100,9 +110,9 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| 1 | LLM Chat — companions show thinking emote but never respond | High | user | Fix In Progress | lua-expert | |
-| 2 | Equipment Display — traded items don't visually appear on companion | High | user | Fix In Progress | c-expert | |
-| 3 | Equipment Persistence — equipment lost on zone/relog | High | user | Fix In Progress | c-expert | |
+| 1 | LLM Chat — companions show thinking emote but never respond | High | user | Fix Implemented | lua-expert | Pending validation |
+| 2 | Equipment Display — traded items don't visually appear on companion | High | user | Fix Implemented | c-expert | Pending validation |
+| 3 | Equipment Persistence — equipment lost on zone/relog | High | user | Fix Implemented | c-expert | Pending validation |
 
 ---
 
