@@ -69,7 +69,7 @@ _Record each handoff between agents with context and any notes._
 |---|------|-------|--------|-------|
 | 1 | Fix equipment display (override GetEquipmentMaterial, sync arrays) | c-expert | Not Started | ~50 lines C++ in companion.h and companion.cpp |
 | 2 | Fix equipment persistence (call LoadEquipment from Load, sync arrays) | c-expert | Not Started | ~10 lines C++ in companion.cpp. Depends on Task 1. |
-| 3 | Diagnose and fix LLM chat (find failure in llm_bridge.lua, fix it, add logging) | lua-expert | Not Started | Sidecar confirmed healthy. Root cause is in Lua code path. |
+| 3 | Diagnose and fix LLM chat (find failure in llm_bridge.lua, fix it, add logging) | lua-expert | Complete | Added eq.log(87) at all nil-return paths + os.execute fallback for io.popen=nil. Syntax checked. End-to-end tested in luajit. |
 
 ---
 
