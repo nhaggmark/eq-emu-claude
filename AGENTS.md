@@ -647,14 +647,19 @@ TeamCreate(team_name, description)
 ║  │ □ Commit all changes in ALL affected repos       │              ║
 ║  │   (eqemu/, akk-stack/, claude/)                  │              ║
 ║  │ □ Push ALL affected repos to origin              │              ║
-║  │ □ Feature branch merged to main                  │              ║
-║  │   cd /mnt/d/Dev/EQ/eqemu && git checkout main && │              ║
-║  │   git merge <branch-name>                        │              ║
-║  │ □ Push main to origin in ALL affected repos      │              ║
-║  │ □ Delete stale feature branches (local + remote) │              ║
 ║  │ □ Server rebuilt (if C++ changed)                │              ║
 ║  │ □ All phases marked Complete in status.md        │              ║
+║  │                                                  │              ║
+║  │ MERGE & CLEANUP (user-initiated only):           │              ║
+║  │ □ User confirms feature/project is complete      │              ║
+║  │ □ Feature branch merged to main                  │              ║
+║  │ □ Push main to origin in ALL affected repos      │              ║
+║  │ □ Delete stale feature branches (local + remote) │              ║
 ║  └──────────────────────────────────────────────────┘              ║
+║                                                                    ║
+║  NOTE: Merge and branch cleanup happen ONLY when the user          ║
+║  explicitly confirms the feature is done. The orchestrator          ║
+║  never merges or cleans up branches on its own.                    ║
 ║                                                                    ║
 ║  OUTPUTS:                                                          ║
 ║  └── status.md  ◄── All phases Complete, merge date recorded       ║
@@ -700,7 +705,7 @@ Each phase is lighter than a full feature but follows the same structure:
 | **Architecture** | architect triages affected systems, diagnoses root causes, plans the fix approach across files/repos. Replaces full architecture doc. |
 | **Implement** | Assigned experts implement the fixes as specified by the architect. |
 | **Validate** | game-tester verifies all bugs are resolved via reproduction steps. |
-| **Complete** | Commit, push, merge to main across all affected repos. Branch cleanup. |
+| **Complete** | Commit and push all affected repos to feature branch. Merge and branch cleanup only when user confirms completion. |
 
 ### Why bugs use the full pipeline
 

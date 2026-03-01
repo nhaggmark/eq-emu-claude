@@ -62,7 +62,7 @@ but never performs the work itself.
 3. Architecture → TeamCreate → architect + protocol-agent + config-expert
 4. Implement    → TeamCreate → assigned experts from architecture plan
 5. Validate     → game-tester (solo)
-6. Complete     → commit/push ALL repos, merge to main, branch cleanup
+6. Complete     → commit/push ALL repos to feature branch
 ```
 
 Between phases: shut down the current team, then create the next one.
@@ -79,16 +79,21 @@ dispatches the pipeline — engineers own triage, diagnosis, and all decisions.
 3. Architecture → architect triages affected systems, diagnoses root causes, plans fixes
 4. Implement    → assigned experts implement fixes
 5. Validate     → game-tester verifies all bugs resolved
-6. Complete     → commit/push ALL repos, merge to main, branch cleanup
+6. Complete     → commit/push ALL repos to feature branch
 ```
 
 Multiple related bugs can be batched into a single bug-fix feature.
 
 ### Commit/Push Discipline
 
-Phase 6 (Complete) MUST include commit and push across ALL affected repos
-(eqemu/, akk-stack/, claude/). This is the final step of every feature and
-bug-fix workflow. Work that is not committed and pushed is not protected.
+Every successful iteration of work MUST be committed and pushed to the
+feature branch across ALL affected repos (eqemu/, akk-stack/, claude/).
+This happens after each bug fix, each implementation task, each phase —
+not just at the end. Work that is not committed and pushed is not protected.
+
+Merging feature branches to main and cleaning up stale branches happens
+ONLY when the user explicitly confirms the feature or project is complete.
+The orchestrator never merges or cleans up branches on its own.
 
 ## Project Context
 
