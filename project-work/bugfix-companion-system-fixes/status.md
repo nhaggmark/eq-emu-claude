@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-01 | 2026-03-01 |
 | Design | game-designer + lore-master | Complete | 2026-03-01 | 2026-03-01 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-01 | 2026-03-01 |
-| Implementation | c-expert + lua-expert | Complete | 2026-03-01 | 2026-03-01 |
-| Validation | game-tester | Complete | 2026-03-01 | 2026-03-01 |
+| Implementation | c-expert + lua-expert | Complete (Bugs 1-4) | 2026-03-01 | 2026-03-01 |
+| Validation | game-tester | Server-side passed, awaiting user in-game testing | 2026-03-01 | — |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Completion
+**Current phase:** Architecture (Bug #4 regression cycle)
 
 ---
 
@@ -91,6 +91,7 @@ _Record each handoff between agents with context and any notes._
 | 1 | Fix equipment display (override GetEquipmentMaterial, sync arrays) | c-expert | Complete | Overrode GetEquipmentMaterial + GetEquippedItemFromTextureSlot, synced NPC::equipment[] |
 | 2 | Fix equipment persistence (call LoadEquipment from Load, sync arrays) | c-expert | Complete | Added LoadEquipment() call in Load(), syncs NPC::equipment[] after loading |
 | 3 | Diagnose and fix LLM chat (find failure in llm_bridge.lua, fix it, add logging) | lua-expert | Complete | Added pcall guards, diagnostic logging, io.popen fallback, companion eligibility check |
+| 4 | Fix equipment removal appearance: convert inventory slot to material slot before SendWearChange in GiveItem/RemoveItemFromSlot | c-expert | Complete | Fixed: CalcMaterialFromSlot() conversion + materialInvalid guard in both GiveItem and RemoveItemFromSlot |
 
 ---
 
@@ -124,6 +125,7 @@ Open → Investigating → Fix In Progress → Resolved._
 | 1 | LLM Chat — companions show thinking emote but never respond | High | user | Fix Implemented | lua-expert | Pending validation |
 | 2 | Equipment Display — traded items don't visually appear on companion | High | user | Fix Implemented | c-expert | Pending validation |
 | 3 | Equipment Persistence — equipment lost on zone/relog | High | user | Fix Implemented | c-expert | Pending validation |
+| 4 | Equipment Removal Appearance — removing item from companion does not reset visual model (e.g., spear still visible after removal) | High | user | Fix Implemented | c-expert | Pending validation |
 
 ---
 

@@ -351,3 +351,138 @@ Nothing can be deferred. Bugs 2 and 3 are interdependent. Bug 1 is independent b
 > **Next step:** Spawn the implementation team with ONLY the agents listed
 > in "Required Implementation Agents" above. Do not spawn experts without
 > assigned tasks.
+
+---
+
+## Bug #4 Fix Plan: Equipment Removal Appearance
+
+> **Added:** 2026-03-01  
+> **Bug:** Removing an item from a companion does not reset their visual model.  
+> **Example:** User removes a spear from a companion. The spear is confirmed gone from inventory, but the companion still visually holds it.
+
+### Root Cause Diagnosis
+
+The bug is a **slot type mismatch** in `Companion::GiveItem()` and `Companion::RemoveItemFromSlot()`. Both methods call `SendWearChange(slot)` where `slot` is an **inventory slot** (int16, range 0-22), but `Mob::SendWearChange()` expects a **material slot** (uint8, range 0-8).
+
+**The broken call chain (removal path):**
+
+```
+RemoveItemFromSlot(slot=13)    // slot=13 is EQ::invslot::slotPrimary
+  → m_equipment[13] = 0        // CORRECT: clears companion equipment
+  → equipment[13] = 0          // CORRECT: syncs NPC::equipment[]
+  → SendWearChange(13)         // BUG: passes inventory slot 13 as material slot
+    → Companion::SendWearChange(13)
+      → Mob::SendWearChange(13)
+        → GetEquipmentMaterial(13)     // material_slot=13 >= materialCount(9) → returns 0
+        → w->wear_slot_id = 13        // invalid material slot ID
+        → packet sent to client with wear_slot_id=13
+        → CLIENT IGNORES IT (only expects 0-8)
+```
+
+**The correct pattern** (used everywhere else in the codebase):
+
+```cpp
+// npc.cpp:1837 (disarm)
+int matslot = eslot == EQ::invslot::slotPrimary ? EQ::textures::weaponPrimary : EQ::textures::weaponSecondary;
+SendWearChange(matslot);
+
+// bot.cpp:4056 (remove equipment)
+uint8 material_slot = EQ::InventoryProfile::CalcMaterialFromSlot(slot_id);
+if (material_slot != EQ::textures::materialInvalid) {
+    SendWearChange(material_slot);
+}
+
+// loot.cpp:748, corpse.cpp:898, inventory.cpp:1250, merc.cpp:4600
+// All use CalcMaterialFromSlot() before calling SendWearChange()
+```
+
+Every other caller in the codebase (`bot.cpp`, `npc.cpp`, `loot.cpp`, `corpse.cpp`, `inventory.cpp`, `merc.cpp`) converts inventory slots to material slots using `EQ::InventoryProfile::CalcMaterialFromSlot()` before calling `SendWearChange()`. The Companion class is the only one that skips this conversion.
+
+**Why EQUIP appears to work but REMOVAL does not:**
+
+Both `GiveItem()` and `RemoveItemFromSlot()` have the same broken `SendWearChange(slot)` call. However, the equip case appears to work because:
+
+1. `GiveItem()` syncs to `NPC::equipment[]`, and `CalcBonuses()` may trigger a chain that causes a full appearance refresh
+2. The next `FillSpawnStruct()` call (from any client targeting/rendering the companion) picks up the correct data from `NPC::equipment[]` via the working `GetEquipmentMaterial()` override
+3. The invalid WearChange packet is silently ignored, but the appearance updates through other paths
+
+For removal, the companion's data is correctly cleared (`m_equipment[slot] = 0`, `equipment[slot] = 0`), but without a valid WearChange packet, the client retains the cached visual. The companion keeps "holding the spear" because the client was never told to clear material slot 7 (`weaponPrimary`).
+
+**Note:** Not all inventory slots map to material slots. Slots like `slotCharm` (0), `slotEar1` (1), `slotNeck` (5), `slotFinger1` (15), etc. have no visual representation. `CalcMaterialFromSlot()` returns `materialInvalid` for these. The fix must check for this and skip the `SendWearChange()` call for non-visual slots.
+
+### Fix: Two Changes in `companion.cpp`
+
+**File: `eqemu/zone/companion.cpp`**
+
+**Change 1: Fix `GiveItem()` (line 1182)**
+
+Replace:
+```cpp
+SendWearChange(slot);
+```
+
+With:
+```cpp
+uint8 mat_slot = EQ::InventoryProfile::CalcMaterialFromSlot(slot);
+if (mat_slot != EQ::textures::materialInvalid) {
+    SendWearChange(mat_slot);
+}
+```
+
+**Change 2: Fix `RemoveItemFromSlot()` (line 1195)**
+
+Replace:
+```cpp
+SendWearChange(slot);
+```
+
+With:
+```cpp
+uint8 mat_slot = EQ::InventoryProfile::CalcMaterialFromSlot(slot);
+if (mat_slot != EQ::textures::materialInvalid) {
+    SendWearChange(mat_slot);
+}
+```
+
+No changes to `companion.h` are needed. No changes to `Companion::SendWearChange()` itself are needed -- its signature and delegation to `Mob::SendWearChange()` are correct; only its callers pass wrong values.
+
+### Why This Fixes Both Equip AND Removal
+
+After the fix:
+
+```
+RemoveItemFromSlot(slot=13)              // slotPrimary
+  → m_equipment[13] = 0                  // clear companion data
+  → equipment[13] = 0                    // sync NPC array
+  → CalcMaterialFromSlot(13) → 7         // weaponPrimary material slot
+  → 7 != materialInvalid → yes
+  → SendWearChange(7)                    // CORRECT material slot
+    → Mob::SendWearChange(7)
+      → GetEquipmentMaterial(7)          // material=0 (weapon cleared)
+      → w->material = 0                 // tells client: no weapon
+      → w->wear_slot_id = 7             // valid slot
+      → client clears weapon visual     // SUCCESS
+```
+
+### Scope
+
+- **Files changed:** 1 (`eqemu/zone/companion.cpp`)
+- **Lines changed:** 6 (replace 2 lines with 4 lines in each of 2 methods, net +4 lines)
+- **Risk:** Very low -- follows the exact pattern used by bot.cpp, loot.cpp, corpse.cpp, inventory.cpp, and merc.cpp
+- **Backward compatible:** Yes -- no header changes, no DB changes, no packet format changes
+
+### Implementation Agent
+
+| Agent | Task | Rationale |
+|-------|------|-----------|
+| **c-expert** | Fix slot type mismatch in `GiveItem()` and `RemoveItemFromSlot()` | Same file (companion.cpp) as prior Bug #2/#3 fixes. Single C++ change following established codebase pattern. |
+
+### Validation Plan
+
+- [ ] Trade a weapon (e.g., Short Sword) to companion -- verify it appears visually (confirms equip path fix)
+- [ ] Use `!unequip primary` -- verify weapon disappears from companion's visual model
+- [ ] Trade armor (chest piece) to companion -- verify it appears
+- [ ] Use `!unequip chest` -- verify armor resets to NPC's base texture
+- [ ] Use `!unequip all` -- verify all visual equipment clears
+- [ ] Trade non-visual-slot item (ring, earring) -- verify no crash or error (CalcMaterialFromSlot returns materialInvalid, SendWearChange is skipped)
+- [ ] Zone after removal -- verify companion still shows no equipment on zone-in
