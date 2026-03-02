@@ -486,3 +486,129 @@ RemoveItemFromSlot(slot=13)              // slotPrimary
 - [ ] Use `!unequip all` -- verify all visual equipment clears
 - [ ] Trade non-visual-slot item (ring, earring) -- verify no crash or error (CalcMaterialFromSlot returns materialInvalid, SendWearChange is skipped)
 - [ ] Zone after removal -- verify companion still shows no equipment on zone-in
+
+---
+
+## Bug #5 Fix Plan: GetFactionLevel Overload Mismatch with Companion
+
+> **Added:** 2026-03-01
+> **Bug:** Error messages `[DEBUG] GetFaction error: No matching overload found, candidates: int GetFactionLevel(Client&,unsigned int,unsigned int,unsigned int,unsigned int,unsigned int,NPC)` and `[DEBUG] build_context error: No matching overload found, candidates: int GetFactionLevel(...)` when speaking to a companion NPC.
+> **Error locations:** `global_npc.lua:35` (GetFaction call), `global_npc.lua:56` (build_context call, which internally calls GetFaction at `llm_bridge.lua:123`)
+
+### Root Cause Diagnosis
+
+This is the same class of luabind inheritance bug as Bug #1 (GetPrimaryFaction). The C++ class hierarchy is:
+
+```
+Entity -> Mob -> NPC -> Companion
+```
+
+But the Lua binding hierarchy is:
+
+```
+Lua_Entity -> Lua_Mob -> Lua_NPC     (standard NPCs)
+Lua_Entity -> Lua_Mob -> Lua_Companion  (companions)
+```
+
+`Lua_Companion` inherits from `Lua_Mob`, NOT from `Lua_NPC` (see `lua_companion.h:20`: `class Lua_Companion : public Lua_Mob` and `lua_companion.cpp:219`: `luabind::class_<Lua_Companion, Lua_Mob>("Companion")`). This means luabind's overload resolution cannot implicitly convert a `Lua_Companion` to a `Lua_NPC`, even though the underlying C++ objects have an inheritance relationship.
+
+**The broken call chain:**
+
+```
+global_npc.lua:35    e.other:GetFaction(e.self)
+                     ↓ e.self is a Lua_Companion (pushed at lua_parser.cpp:510-512)
+client_ext.lua:67    self:GetFactionLevel(..., primary_faction, npc)
+                     ↓ last arg "npc" is a Lua_Companion
+lua_client.cpp:3923  .def("GetFactionLevel", ...&Lua_Client::GetFactionLevel)
+                     ↓ signature expects Lua_NPC as last parameter
+lua_client.h:150     int GetFactionLevel(uint32, uint32, uint32, uint32, uint32, uint32, Lua_NPC npc)
+                     ↓ luabind cannot match Lua_Companion to Lua_NPC
+                     ERROR: "No matching overload found"
+```
+
+**Two call sites fail:**
+
+1. `global_npc.lua:35` -- `local fac_ok, faction_level = pcall(function() return e.other:GetFaction(e.self) end)` -- caught by pcall, triggers `[DEBUG] GetFaction error:` message, faction_level defaults to 5 (indifferent)
+2. `llm_bridge.lua:123` -- `local faction_level = e.other:GetFaction(e.self)` inside `build_context()` -- this call is NOT wrapped in its own pcall, but `build_context()` itself is called under pcall at `global_npc.lua:56`, triggering `[DEBUG] build_context error:` and aborting the entire LLM context build
+
+**Impact:** Both errors are caught by pcall in `global_npc.lua`, so there is no crash. However:
+- Call site 1: Faction defaults to 5 (indifferent) -- tolerable but incorrect faction handling
+- Call site 2: `build_context()` fails entirely -- the LLM sidecar is never called, companion stays silent
+- This means **Bug #5 is a secondary cause of Bug #1's "companion silent" symptom**. Even after Bug #1 (LLM pipeline fix) is resolved, Bug #5 would still prevent LLM responses because `build_context()` would crash before reaching `generate_response()`.
+
+### Fix: Lua-Only Workaround in `client_ext.lua`
+
+The fix follows the same pattern established for Bug #1 (GetPrimaryFaction): detect when the NPC argument is a Companion and cast it to an NPC using `CastToNPC()` before passing it to `GetFactionLevel()`.
+
+`CastToNPC()` is available on all Entity objects (registered at `lua_entity.cpp:175`). When called on a Companion, it performs a `reinterpret_cast<NPC*>` on the underlying pointer (`lua_entity.cpp:115-118`), which is safe because `Companion*` is-a `NPC*` in C++. The result is a `Lua_NPC` wrapper that luabind can match to the `GetFactionLevel` overload.
+
+**File: `akk-stack/server/quests/lua_modules/client_ext.lua`**
+
+Replace the `Client:GetFaction` function (lines 64-68):
+
+```lua
+function Client:GetFaction(npc)
+	local _ok, _val = pcall(function() return npc:GetPrimaryFaction() end)
+	local primary_faction = _ok and _val or 0
+	return self:GetFactionLevel(self:CharacterID(), npc:GetID(), self:GetRace(), self:GetClass(), self:GetDeity(), primary_faction, npc);
+end
+```
+
+With:
+
+```lua
+function Client:GetFaction(npc)
+	local _ok, _val = pcall(function() return npc:GetPrimaryFaction() end)
+	local primary_faction = _ok and _val or 0
+	-- Companions are Lua_Companion (inherits Lua_Mob, not Lua_NPC).
+	-- GetFactionLevel expects Lua_NPC as its last arg. CastToNPC() produces
+	-- a Lua_NPC wrapper that luabind can match to the overload.
+	local npc_arg = npc
+	if npc.IsCompanion and npc:IsCompanion() then
+		npc_arg = npc:CastToNPC()
+	end
+	return self:GetFactionLevel(self:CharacterID(), npc:GetID(), self:GetRace(), self:GetClass(), self:GetDeity(), primary_faction, npc_arg)
+end
+```
+
+**Key design points:**
+
+1. **Guard with `npc.IsCompanion`:** The nil-guard (`npc.IsCompanion and npc:IsCompanion()`) ensures the code works even if `IsCompanion` is not defined on the object (e.g., when called with a regular NPC, Lua_NPC does inherit IsCompanion from Lua_Entity but this is a safety check).
+
+2. **CastToNPC before passing as argument:** Only the last argument (`npc_arg`) needs casting. The `npc:GetID()` call on line uses the original object since `GetID()` is inherited from `Lua_Entity` and works fine on Companion objects.
+
+3. **No changes to llm_bridge.lua or global_npc.lua:** Both call `e.other:GetFaction(e.self)` which flows through the fixed `Client:GetFaction`. The fix at the extension method level handles all callers.
+
+4. **No C++ changes needed:** This is a Lua-layer workaround. The underlying issue (Lua_Companion not inheriting from Lua_NPC in the luabind hierarchy) is a deliberate design choice documented at `lua_companion.h:62-63`: "Lua_Companion does not inherit Lua_NPC". Changing the luabind inheritance would be a much more invasive change with risk of breaking the separate Companion API surface.
+
+### Why Not Fix the C++ Binding Hierarchy?
+
+Making `Lua_Companion` inherit from `Lua_NPC` (instead of `Lua_Mob`) was considered but rejected:
+
+1. **Lua_NPC exposes methods that are wrong for Companions:** `Lua_NPC` has methods like `AddLootTable`, `RemoveLoot`, `GetLoottableID`, `SetNPCFactionID` that should not be called on companions. The current design intentionally limits the Companion Lua API surface.
+
+2. **Existing workaround pattern:** Bug #1 already established the `pcall` + `CastToNPC()` pattern for `GetPrimaryFaction`. Bug #5 follows the same pattern in the same function (`Client:GetFaction`), making the fix consistent.
+
+3. **Risk vs reward:** Changing luabind inheritance affects how all Companion objects are resolved across all Lua overloads. The Lua-layer workaround is surgical and only affects the specific call site.
+
+### Scope
+
+- **Files changed:** 1 (`akk-stack/server/quests/lua_modules/client_ext.lua`)
+- **Lines changed:** ~5 (replace 2 lines with 7 lines in `Client:GetFaction`)
+- **Risk:** Very low -- follows established Bug #1 workaround pattern, protected by nil-guard, no C++ or DB changes
+- **Backward compatible:** Yes -- `CastToNPC()` on a regular NPC is a no-op identity cast, so if this code is accidentally called with a non-companion NPC the guard clause skips the cast and behavior is unchanged
+
+### Implementation Agent
+
+| Agent | Task | Rationale |
+|-------|------|-----------|
+| **lua-expert** | Fix `Client:GetFaction()` in `client_ext.lua` to cast Companion to NPC before calling `GetFactionLevel` | Same file and same pattern as the Bug #1 `GetPrimaryFaction` workaround. Pure Lua change, no build required. |
+
+### Validation Plan
+
+- [ ] Speak to a companion NPC (non-`!` prefixed) -- verify NO `[DEBUG] GetFaction error:` message appears
+- [ ] Speak to a companion NPC -- verify NO `[DEBUG] build_context error:` message appears
+- [ ] Verify companion responds with LLM-generated dialogue (confirms `build_context()` succeeds and reaches `generate_response()`)
+- [ ] Speak to a regular (non-companion) NPC -- verify `GetFaction` still works correctly (regression check)
+- [ ] Speak to a hostile NPC (Scowling faction) -- verify hostile emote appears, no errors
+- [ ] Check server logs for any quest errors related to GetFactionLevel after the fix

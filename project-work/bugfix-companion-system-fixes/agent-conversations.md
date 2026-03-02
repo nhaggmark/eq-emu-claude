@@ -242,3 +242,26 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
 | _None_ | | | |
+
+### 2026-03-01 — Bug #5 Architecture Analysis (Solo)
+
+**From:** architect (solo analysis, no advisors spawned for this incremental bug)
+
+> Bug #5 is the same class of luabind inheritance issue as Bug #1. The analysis
+> does not require protocol-agent or config-expert consultation because:
+> 
+> 1. **No protocol impact:** Bug #5 is entirely in the Lua scripting layer.
+>    No packets, opcodes, or wire formats are involved. The error occurs before
+>    any server-to-client communication happens.
+> 
+> 2. **No configuration impact:** No rules or config settings control luabind
+>    overload resolution. This is a code-level type mismatch that can only be
+>    fixed in Lua (workaround) or C++ (binding hierarchy change).
+> 
+> 3. **Established pattern:** The fix follows the identical CastToNPC() workaround
+>    already used for GetPrimaryFaction in the same function (client_ext.lua:65).
+>    Config-expert and protocol-agent previously confirmed "no constraints" for
+>    Bug #1 which uses the same approach.
+> 
+> **Decision:** Lua-only fix in client_ext.lua. Assigned to lua-expert.
+> Same pattern as Bug #1 GetPrimaryFaction workaround.

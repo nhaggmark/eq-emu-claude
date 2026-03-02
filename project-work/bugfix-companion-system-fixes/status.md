@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete | 2026-03-01 | 2026-03-01 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-01 | 2026-03-01 |
 | Implementation | c-expert + lua-expert | Complete (Bugs 1-4) | 2026-03-01 | 2026-03-01 |
-| Validation | game-tester | Server-side passed, awaiting user in-game testing | 2026-03-01 | — |
+| Validation | game-tester | Complete — all 5 bugs validated in-game | 2026-03-01 | 2026-03-01 |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Architecture (Bug #4 regression cycle)
+**Current phase:** Completion
 
 ---
 
@@ -122,10 +122,11 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| 1 | LLM Chat — companions show thinking emote but never respond | High | user | Fix Implemented | lua-expert | Pending validation |
-| 2 | Equipment Display — traded items don't visually appear on companion | High | user | Fix Implemented | c-expert | Pending validation |
-| 3 | Equipment Persistence — equipment lost on zone/relog | High | user | Fix Implemented | c-expert | Pending validation |
+| 1 | LLM Chat — companions show thinking emote but never respond | High | user | Validated | lua-expert | 2026-03-01 |
+| 2 | Equipment Display — traded items don't visually appear on companion | High | user | Validated | c-expert | 2026-03-01 |
+| 3 | Equipment Persistence — equipment lost on zone/relog | High | user | Validated | c-expert | 2026-03-01 |
 | 4 | Equipment Removal Appearance — removing item from companion does not reset visual model (e.g., spear still visible after removal) | High | user | Fix Implemented | c-expert | Pending validation |
+| 5 | GetFactionLevel overload mismatch — Companion object not recognized as NPC by luabind, breaks faction lookup in client_ext.lua:67 | High | user | Validated | lua-expert | 2026-03-01 |
 
 ---
 
