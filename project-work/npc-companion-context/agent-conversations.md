@@ -118,17 +118,63 @@ Lore-master implementation notes added to technical appendix.
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-### [Date] — [Topic]
+### 2026-03-02 — Client Feasibility for Companion Context Feature
 
-**From:** [agent] → **To:** [agent]
+**From:** architect → **To:** protocol-agent
 
-> [Message content or summary]
+> Consulted on two questions:
+> 1. Client feasibility: Feature uses existing OP_ChannelMessage / NPC Say
+>    packets for companion dialogue. No new opcodes or structs. Are there
+>    message length limits in ChannelMessage_Struct that could be a concern?
+> 2. Unprompted commentary: Companion speaks from a Lua timer callback via
+>    e.self:Say(). Any packet-level concerns with NPC-initiated speech from
+>    timer events?
 
-**Response from** [agent]:
+**Response from** protocol-agent:
 
-> [Response content or summary]
+> Follow-up sent after context window compaction. The questions are confirmatory
+> — the feature uses standard OP_ChannelMessage/NPC Say packets and e.self:Say()
+> from timer callbacks, both well-established patterns. No response received
+> before architecture finalization. These are low-risk items: ChannelMessage_Struct
+> supports variable-length messages (LLM output is short), and NPC Say from
+> timer events is identical to NPC Say from any other script context.
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** Architecture finalized without blocking. Questions are confirmatory,
+not discovery. No new opcodes, structs, or translation layer changes needed.
+If protocol-agent identifies a constraint, it can be addressed before
+implementation begins.
+
+---
+
+### 2026-03-02 — Configuration Assessment for Companion Context Feature
+
+**From:** architect → **To:** config-expert
+
+> Consulted on four questions:
+> 1. Existing rules: Any rules in ruletypes.h related to companions, LLM,
+>    NPC dialogue, or chat?
+> 2. Companion rules: Complete list of existing companion rules beyond the
+>    ones identified (CompanionsEnabled, BaseRecruitChance, etc.)
+> 3. Can any of this be config-only? Core changes are Lua modifications to
+>    build_context() and new timer system.
+> 4. Unprompted commentary timing: Should values be hardcoded Lua constants,
+>    server rules, or llm_config.lua values? PRD suggests hardcoded.
+
+**Response from** config-expert:
+
+> Follow-up sent after context window compaction. The questions are confirmatory
+> — architect independently verified that existing companion rules (CompanionsEnabled,
+> BaseRecruitChance, etc.) are in the Companion category of ruletypes.h and are
+> recruitment/combat focused, not LLM/dialogue focused. No rules exist for LLM,
+> NPC dialogue, or chat systems. The decision to place commentary timing values
+> in llm_config.lua (hot-reloadable, colocated with other LLM settings) is
+> justified by the creative-tuning nature of the values.
+
+**Outcome:** Architecture finalized without blocking. Commentary timing values
+placed in llm_config.lua (Decision #8 in Decision Log). No existing rules
+conflict with or duplicate the planned configuration. If config-expert identifies
+an existing rule that could be leveraged, it can be incorporated before
+implementation begins.
 
 ---
 
@@ -162,6 +208,9 @@ This table is the quick-reference for anyone catching up._
 | 3 | Vah Shir oral culture (banned written records) is a defining personality trait | game-designer, lore-master | 2026-03-02 | Personality differentiation |
 | 4 | Iksar companions must not reference good-aligned old-world cities as familiar | game-designer, lore-master | 2026-03-02 | KOS lore constraint |
 | 5 | Erudite companions should distinguish Erudin vs Paineel origin by class | game-designer, lore-master | 2026-03-02 | Personality enrichment |
+| 6 | Feature is Lua-only except for 2 C++ Lua bindings — no protocol/DB changes | architect | 2026-03-02 | Least-invasive-first principle |
+| 7 | Commentary timing values in llm_config.lua, not ruletypes.h | architect | 2026-03-02 | Hot-reloadable, creative tuning, colocated with LLM settings |
+| 8 | Recent kill tracking via Lua entity variables, not C++ | architect | 2026-03-02 | Transient data; C++ only has counter, no NPC names |
 
 ---
 
@@ -171,5 +220,6 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
-| (none) | | | |
+| Protocol-agent confirmation on ChannelMessage limits and timer-Say | architect, protocol-agent | Follow-up sent, non-blocking | No |
+| Config-expert confirmation on existing rules and llm_config.lua placement | architect, config-expert | Follow-up sent, non-blocking | No |
 
