@@ -107,7 +107,7 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| | | | | | | |
+| BUG-001 | Companion identity shift not applied — guard gives boilerplate NPC dialogue | Critical | user | Investigating | lua-expert / sidecar | |
 
 ---
 
