@@ -484,6 +484,7 @@ reports the state to the user and waits for instructions.
 ║  │  c-expert       — C++ server, combat, AI, networking       │    ║
 ║  │  lua-expert     — Lua quests, lua_modules, mod hooks       │    ║
 ║  │  perl-expert    — Perl script maintenance, migration       │    ║
+║  │  python-expert  — NPC-LLM sidecar: prompts, context, API  │    ║
 ║  │  data-expert    — DB: NPCs, items, loot, spawns            │    ║
 ║  │  config-expert  — Rules, eqemu_config, login.json          │    ║
 ║  │  protocol-agent — Packets, opcodes, client protocol        │    ║
@@ -884,6 +885,8 @@ Template initialization (bootstrap-agent):
 │     • C++: cppreference.com, cmake.org, docs.eqemu.dev             │
 │     • Protocol: cppreference.com, tcpdump.org, wiki.wireshark.org  │
 │     • Infra: docs.docker.com, gnu.org/make, ninja-build.org        │
+│     • Python/Sidecar: docs.python.org, fastapi.tiangolo.com,       │
+│       docs.pydantic.dev, platform.openai.com/docs                  │
 │                                                                     │
 │  TOPOGRAPHY DOCS (read by architect + implementation experts):      │
 │  • claude/docs/topography/C-CODE.md                                 │
@@ -891,6 +894,7 @@ Template initialization (bootstrap-agent):
 │  • claude/docs/topography/LUA-CODE.md                               │
 │  • claude/docs/topography/PERL-CODE.md                              │
 │  • claude/docs/topography/SQL-CODE.md                               │
+│  • claude/docs/topography/SIDECAR-CODE.md                           │
 │                                                                     │
 │  CONTEXT DURABILITY PRINCIPLE:                                      │
 │  Every agent writes hard-earned context to persistent files so it   │
@@ -931,7 +935,7 @@ Template initialization (bootstrap-agent):
 
 ---
 
-## Agent Roster (12 agents)
+## Agent Roster (13 agents)
 
 ```
 ┌────────────────┬─────────┬────────────┬──────────────────────────────────────┐
@@ -947,6 +951,7 @@ Template initialization (bootstrap-agent):
 │ c-expert       │ sonnet  │ write      │ C++ server: combat, spells, AI, net  │
 │ lua-expert     │ sonnet  │ write      │ Lua quests, modules, mod hooks       │
 │ perl-expert    │ sonnet  │ write      │ Perl scripts, migration planning     │
+│ python-expert  │ sonnet  │ write      │ NPC-LLM sidecar: prompts, context    │
 │ data-expert    │ sonnet  │ write      │ DB: NPCs, items, loot, spawns        │
 │ config-expert  │ sonnet  │ write      │ Rules, eqemu_config, login.json      │
 │ protocol-agent │ sonnet  │ write      │ Packets, opcodes, client protocol    │
