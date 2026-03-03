@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-02 | 2026-03-02 |
 | Design | game-designer + lore-master | Complete | 2026-03-02 | 2026-03-02 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-02 | 2026-03-02 |
-| Implementation | c-expert + lua-expert | Not Started | | |
-| Validation | game-tester | Not Started | | |
+| Implementation | c-expert + lua-expert | Complete | 2026-03-02 | 2026-03-02 |
+| Validation | game-tester | In Progress | 2026-03-02 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Validation
 
 ---
 
@@ -42,11 +42,20 @@ _Record each handoff between agents with context and any notes._
 
 ### architect → implementation team (c-expert + lua-expert)
 - **Date:** 2026-03-02
-- **Notes:** Architecture plan complete at `architect/architecture.md`. 
+- **Notes:** Architecture plan complete at `architect/architecture.md`.
   Feature is primarily Lua with two small C++ additions. Implementation
   sequence: Task 1 (C++ getters, c-expert) must complete first with server
   rebuild, then Tasks 2-7 (all Lua, lua-expert) can proceed. Only two
   experts needed: c-expert for C++ bindings, lua-expert for all Lua modules.
+
+### implementation team → game-tester
+- **Date:** 2026-03-02
+- **Notes:** All 7 implementation tasks committed. C++ commit: e203d3dc0 (eqemu repo).
+  Lua commit: d497fd7 (akk-stack repo). Zone binary is stale — rebuild required before
+  in-game testing. Test plan written at `game-tester/test-plan.md`. Server-side result:
+  FAIL (pre-testing) due to stale binary. All Lua checks deferred until container running.
+  12 in-game test cases written covering all PRD acceptance criteria. 6 edge case tests
+  written from architecture antagonistic review. Blocker: C++ rebuild must run first.
 
 ---
 
@@ -56,7 +65,7 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Add GetTimeActive() and GetRecruitedZoneID() C++ getters + Lua bindings | c-expert | Not Started | ~30 lines across 4 files. Requires rebuild. |
+| 1 | Add GetTimeActive() and GetRecruitedZoneID() C++ getters + Lua bindings | c-expert | Complete | 2026-03-02. Commit e203d3dc0. Zone binary stale — rebuild required before testing. |
 | 2 | Create companion_context.lua module (context builder) | lua-expert | Complete | 2026-03-02 |
 | 3 | Extend companion_culture.lua with all Classic-Luclin race framings | lua-expert | Complete | 2026-03-02. Fixed race ID bugs (DarkElf=6, Troll=9, Ogre=10, Gnome=12). |
 | 4 | Modify llm_bridge.lua to integrate companion context | lua-expert | Complete | 2026-03-02 |
@@ -87,7 +96,7 @@ _Anything preventing progress. Remove when resolved._
 
 | Blocker | Raised By | Date | Resolved |
 |---------|-----------|------|----------|
-| | | | |
+| Zone binary stale — must rebuild after C++ commits before testing | game-tester | 2026-03-02 | No |
 
 ---
 
