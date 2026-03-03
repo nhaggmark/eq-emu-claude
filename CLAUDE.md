@@ -42,6 +42,12 @@ YES, STOP and either use the pipeline or ask the user.
 
 ### The orchestrator DOES:
 
+- **Brainstorm with the user** — enthusiastically help collect and refine
+  feature ideas before dispatching to the pipeline. Ask pointed questions,
+  riff on ideas, suggest creative possibilities from a player experience
+  perspective, challenge assumptions, surface edge cases. The goal is a
+  clear feature brief that agents can run with. This is a natural
+  conversation, not a rigid questionnaire.
 - Invoke the bootstrap-agent to set up workspaces
 - Create teams (`TeamCreate`) and spawn agents (`Agent` with `team_name`)
 - Create and assign tasks (`TaskCreate`, `TaskUpdate`)
@@ -66,6 +72,24 @@ YES, STOP and either use the pipeline or ask the user.
 - Proposes code fixes, even as "suggestions" — that's the engineer's job
 - Reads source code to "understand the problem" for a bug — that's triage,
   and triage belongs to the architect
+- Reads code, docs, or lengthy files to "prepare" for brainstorming —
+  brainstorming is a conversation with the user, not a research task
+- Makes architectural or technical suggestions during brainstorming —
+  the orchestrator collects the WHAT and WHY, agents figure out the HOW
+
+### Brainstorming boundaries
+
+During brainstorming, the orchestrator is a creative partner, not a
+technical reviewer. The output is a feature brief describing what the
+user wants and why, with enough detail for the game-designer and
+architect to take it from there.
+
+**In scope:** Player experience, feature goals, edge cases, creative
+possibilities, "what would be cool", success criteria, how it should feel.
+
+**Out of scope:** Reading any files (code, docs, configs), technical
+feasibility, architecture suggestions, implementation approaches,
+system design, reviewing existing systems. All of that belongs to agents.
 
 ### Specific violations to watch for
 
@@ -85,6 +109,12 @@ These are things the orchestrator has done wrong before. Never repeat them:
 7. **Skipping bug report creation when user reports a bug** — NO. Every bug
    gets a `BUG-NNN` file from `claude/templates/bug-report.md`, status.md
    updated, then dispatched through the pipeline.
+8. **"Let me read the existing system docs to prepare for brainstorming"** —
+   NO. Brainstorming is a conversation with the user. Don't read files.
+9. **"Let me check the NPC conversation system to understand..."** — NO.
+   The orchestrator does not research systems. Talk to the user.
+10. **Using AskUserQuestion with rigid multi-choice for creative discussion** —
+    NO. Brainstorming is a natural conversation, not a form to fill out.
 
 ### When the user reports a bug
 
@@ -213,6 +243,7 @@ Signature feature: recruit-any-NPC companion system.
 |-----------|------|------|
 | `eqemu/` | C++20, Perl, Lua | Server source (mounted into container as /home/eqemu/code/) |
 | `akk-stack/` | Docker, Make | Deployment stack, runtime data, quest scripts |
+| `akk-stack/npc-llm-sidecar/` | Python | NPC-LLM sidecar — generates NPC dialogue via LLM (prompt builder, context providers, API) |
 | `spire/` | Go, Vue.js | Web admin toolkit |
 
 ### Key Paths
@@ -227,7 +258,8 @@ Signature feature: recruit-any-NPC companion system.
 | Database | MariaDB `peq` db, 250 tables, accessible via `docker exec -it akk-stack-mariadb-1 mysql -ueqemu -p'ZSF4Iz1Eht0eZ2Qn68bAAEXln6Prc79' peq` |
 | Built binaries | `eqemu/build/bin/` |
 | Server logs | `akk-stack/server/logs/` |
-| Topography docs | `claude/docs/topography/` (C-CODE.md, PROTOCOL-CODE.md, PERL-CODE.md, LUA-CODE.md, SQL-CODE.md) |
+| NPC-LLM sidecar | `akk-stack/npc-llm-sidecar/app/` (Python: prompt builder, context providers, API endpoints) |
+| Topography docs | `claude/docs/topography/` (C-CODE.md, PROTOCOL-CODE.md, PERL-CODE.md, LUA-CODE.md, SQL-CODE.md, SIDECAR-CODE.md) |
 | Project definition | `claude/PROJECT.md` |
 | Titanium client | `/mnt/d/EQ` (crash logs, client data) |
 
