@@ -57,12 +57,12 @@ _Populated by the architect after the architecture doc is approved._
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
 | 1 | Add GetTimeActive() and GetRecruitedZoneID() C++ getters + Lua bindings | c-expert | Not Started | ~30 lines across 4 files. Requires rebuild. |
-| 2 | Create companion_context.lua module (context builder) | lua-expert | Not Started | New file, ~200 lines. Depends on Task 1. |
-| 3 | Extend companion_culture.lua with all Classic-Luclin race framings | lua-expert | Not Started | ~150 lines of cultural text. Independent. |
-| 4 | Modify llm_bridge.lua to integrate companion context | lua-expert | Not Started | ~30 lines. Depends on Task 2. |
-| 5 | Create companion_commentary.lua (unprompted commentary module) | lua-expert | Not Started | New file, ~120 lines. Depends on Tasks 2, 4. |
-| 6 | Modify global_npc.lua for companion timer setup and death tracking | lua-expert | Not Started | ~40 lines. Depends on Task 5. |
-| 7 | Add commentary config values to llm_config.lua | lua-expert | Not Started | ~10 lines. Independent. |
+| 2 | Create companion_context.lua module (context builder) | lua-expert | Complete | 2026-03-02 |
+| 3 | Extend companion_culture.lua with all Classic-Luclin race framings | lua-expert | Complete | 2026-03-02. Fixed race ID bugs (DarkElf=6, Troll=9, Ogre=10, Gnome=12). |
+| 4 | Modify llm_bridge.lua to integrate companion context | lua-expert | Complete | 2026-03-02 |
+| 5 | Create companion_commentary.lua (unprompted commentary module) | lua-expert | Complete | 2026-03-02 |
+| 6 | Modify global_npc.lua for companion timer setup and death tracking | lua-expert | Complete | 2026-03-02 |
+| 7 | Add commentary config values to llm_config.lua | lua-expert | Complete | 2026-03-02 |
 
 ---
 

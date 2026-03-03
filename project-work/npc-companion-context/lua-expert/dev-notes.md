@@ -2,9 +2,9 @@
 
 > **Feature branch:** `feature/npc-companion-context`
 > **Agent:** lua-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task(s):** #2, #3, #4, #5, #6, #7
+> **Date started:** 2026-03-02
+> **Current stage:** Complete
 
 ---
 
