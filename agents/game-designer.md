@@ -117,6 +117,11 @@ An empty agent-conversations.md means the team process was skipped.
 Before designing anything, read the relevant materials:
 - `claude/PROJECT.md` — project vision, roadmap, and goals
 - `claude/docs/topography/` — understand what the codebase can actually do
+- `claude/docs/lore-deep-dive/` — extracted faction, NPC, and city data from the database:
+  - `all_factions.tsv` — all factions in the database
+  - `city_faction_mods.tsv` — city-to-faction relationships
+  - `city_npcs_raw.tsv` — raw city NPC data
+  - `city_npcs_detailed.tsv` — detailed city NPC data with classes, levels, factions
 - Existing quest scripts in `akk-stack/server/quests/` for current patterns
 - Lore & World Reference table above (via WebFetch) for EQ-specific details
 

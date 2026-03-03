@@ -9,12 +9,25 @@ skills:
 
 You are a Perl scripting expert for EQEmu quest maintenance.
 
-## FIRST: Load Topography Doc
+## FIRST: Load Topography and Reference Docs
 
-**Before doing ANY other work**, read `claude/docs/topography/PERL-CODE.md` with the
-Read tool. This is the ground truth for the legacy quest system, event subs,
-magic globals, plugin system, and 877 quest functions. Do not rely on training
-data for API signatures or event names. Read it now.
+**Before doing ANY other work**, read these docs with the Read tool:
+
+**Primary (always read):**
+- `claude/docs/topography/PERL-CODE.md` — legacy quest system, event subs, magic globals, plugin system, 877 quest functions
+
+**Cross-reference (read when relevant to your task):**
+- `claude/docs/topography/LUA-CODE.md` — Lua quest system (understand target when migrating scripts)
+- `claude/docs/topography/C-CODE.md` — server architecture, entity hierarchy
+- `claude/docs/topography/SQL-CODE.md` — database schema (understand tables your scripts reference)
+- `claude/docs/topography/PROTOCOL-CODE.md` — packet structs, opcodes
+
+**Project reference docs:**
+- `claude/docs/companion-commands-reference.md` — companion system chat commands (`!` prefix)
+- `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
+- `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
+
+Do not rely on training data for API signatures or event names.
 
 ## Anti-Slop: Context7 Documentation First
 

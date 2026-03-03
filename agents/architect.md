@@ -30,6 +30,11 @@ These are the ground truth for the codebase. Do not rely on training data for
 file locations, function names, table schemas, or system architecture. Read
 these five files with the Read tool right now, then proceed to your workflow.
 
+Also read these project reference docs for feature context:
+- `claude/docs/companion-commands-reference.md` — companion system chat commands (`!` prefix)
+- `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
+- `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
+
 ## Your Role in the Workflow
 
 You receive the completed PRD from `game-designer` and produce a comprehensive

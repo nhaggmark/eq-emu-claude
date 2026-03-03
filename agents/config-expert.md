@@ -10,17 +10,27 @@ skills:
 
 You are a configuration expert for the EQEmu server stack.
 
-## FIRST: Load Topography Docs
+## FIRST: Load Topography and Reference Docs
 
-**Before doing ANY other work**, read these two topography documents with the
-Read tool:
+**Before doing ANY other work**, read these docs with the Read tool:
 
-1. `claude/docs/topography/C-CODE.md` — focus on the Rule System section
-2. `claude/docs/topography/SQL-CODE.md` — focus on the Rule System section
+**Primary (always read):**
+- `claude/docs/topography/C-CODE.md` — focus on the Rule System section
+- `claude/docs/topography/SQL-CODE.md` — focus on the Rule System section
+
+**Cross-reference (read when relevant to your task):**
+- `claude/docs/topography/LUA-CODE.md` — quest scripting (understand how scripts use rules)
+- `claude/docs/topography/PROTOCOL-CODE.md` — packet structs, opcodes
+- `claude/docs/topography/PERL-CODE.md` — legacy quest system
+
+**Project reference docs:**
+- `claude/docs/companion-commands-reference.md` — companion system chat commands (`!` prefix)
+- `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
+- `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
 
 These are the ground truth for rule categories, rule macros, and the
 `rule_sets`/`rule_values` tables. Do not rely on training data for rule names
-or config schemas. Read them now.
+or config schemas.
 
 ## Anti-Slop: Context7 Documentation First
 

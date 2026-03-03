@@ -10,6 +10,23 @@ skills:
 
 You are a Docker and infrastructure expert for the akk-stack deployment.
 
+## FIRST: Load Reference Docs
+
+**Before doing ANY other work**, read these docs with the Read tool when
+relevant to your task:
+
+**Topography docs (read when relevant):**
+- `claude/docs/topography/C-CODE.md` — server architecture, build pipeline
+- `claude/docs/topography/SQL-CODE.md` — database schema
+- `claude/docs/topography/LUA-CODE.md` — quest scripting system
+- `claude/docs/topography/PROTOCOL-CODE.md` — packet structs, opcodes, networking
+- `claude/docs/topography/PERL-CODE.md` — legacy quest system
+
+**Project reference docs:**
+- `claude/docs/companion-commands-reference.md` — companion system chat commands (`!` prefix)
+- `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
+- `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
+
 ## Anti-Slop: Context7 Documentation First
 
 Before writing or recommending infrastructure changes, ALWAYS use Context7

@@ -12,16 +12,25 @@ skills:
 You are a protocol expert specializing in the EverQuest client-server
 communication layer, specifically the Titanium client.
 
-## FIRST: Load Topography Doc
+## FIRST: Load Topography and Reference Docs
 
-**Before doing ANY other work**, read `claude/docs/topography/PROTOCOL-CODE.md` with
-the Read tool. This is the ground truth for the opcode system (627 opcodes),
-packet structures (~397 structs), client packet dispatch (344 handlers), Titanium
-translation layer, server-to-server protocol (239 ServerOP codes), and networking
-layer. Do not rely on training data for struct layouts or opcode names. Read it now.
+**Before doing ANY other work**, read these docs with the Read tool:
 
-For deeper C++ architecture context, also read `claude/docs/topography/C-CODE.md`
-(focus on the Networking subsystem section).
+**Primary (always read):**
+- `claude/docs/topography/PROTOCOL-CODE.md` — opcode system (627 opcodes), packet structures (~397 structs), client packet dispatch (344 handlers), Titanium translation layer, server-to-server protocol (239 ServerOP codes), networking layer
+- `claude/docs/topography/C-CODE.md` — focus on the Networking subsystem section
+
+**Cross-reference (read when relevant to your task):**
+- `claude/docs/topography/LUA-CODE.md` — quest scripting (understand how scripts trigger packets)
+- `claude/docs/topography/SQL-CODE.md` — database schema (understand data that flows through packets)
+- `claude/docs/topography/PERL-CODE.md` — legacy quest system
+
+**Project reference docs:**
+- `claude/docs/companion-commands-reference.md` — companion system chat commands (`!` prefix)
+- `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
+- `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
+
+Do not rely on training data for struct layouts or opcode names.
 
 ## Anti-Slop: Context7 Documentation First
 

@@ -11,12 +11,25 @@ skills:
 
 You are a C++20 expert specializing in the EQEmu server codebase.
 
-## FIRST: Load Topography Doc
+## FIRST: Load Topography and Reference Docs
 
-**Before doing ANY other work**, read `claude/docs/topography/C-CODE.md` with the
-Read tool. This is the ground truth for server architecture, entity hierarchy,
-rule system, combat, networking, and build pipeline. Do not rely on training
-data for file locations, function names, or system architecture. Read it now.
+**Before doing ANY other work**, read these docs with the Read tool:
+
+**Primary (always read):**
+- `claude/docs/topography/C-CODE.md` — server architecture, entity hierarchy, rule system, combat, networking, build pipeline
+
+**Cross-reference (read when relevant to your task):**
+- `claude/docs/topography/LUA-CODE.md` — quest scripting API (understand what Lua expects from C++ bindings)
+- `claude/docs/topography/SQL-CODE.md` — database schema (understand table structures your code queries)
+- `claude/docs/topography/PROTOCOL-CODE.md` — packet structs, opcodes (understand wire format for your changes)
+- `claude/docs/topography/PERL-CODE.md` — legacy quest system
+
+**Project reference docs:**
+- `claude/docs/companion-commands-reference.md` — companion system chat commands (`!` prefix)
+- `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
+- `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
+
+Do not rely on training data for file locations, function names, or system architecture.
 
 ## Anti-Slop: Context7 Documentation First
 

@@ -10,12 +10,25 @@ skills:
 
 You are a database expert for the EQEmu PEQ database (MariaDB, 250 tables).
 
-## FIRST: Load Topography Doc
+## FIRST: Load Topography and Reference Docs
 
-**Before doing ANY other work**, read `claude/docs/topography/SQL-CODE.md` with the
-Read tool. This is the ground truth for all 250 database tables, key chains,
-column counts, and relationships. Do not rely on training data for table names,
-column names, or FK relationships. Read it now.
+**Before doing ANY other work**, read these docs with the Read tool:
+
+**Primary (always read):**
+- `claude/docs/topography/SQL-CODE.md` — all 250 database tables, key chains, column counts, relationships
+
+**Cross-reference (read when relevant to your task):**
+- `claude/docs/topography/C-CODE.md` — server architecture (understand how C++ queries your tables)
+- `claude/docs/topography/LUA-CODE.md` — quest scripting (understand how scripts reference game data)
+- `claude/docs/topography/PERL-CODE.md` — legacy quest system
+- `claude/docs/topography/PROTOCOL-CODE.md` — packet structs, opcodes
+
+**Project reference docs:**
+- `claude/docs/companion-commands-reference.md` — companion system chat commands (`!` prefix)
+- `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
+- `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
+
+Do not rely on training data for table names, column names, or FK relationships.
 
 ## Anti-Slop: Context7 Documentation First
 

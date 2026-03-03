@@ -51,6 +51,21 @@ Use these sources (via WebFetch) to verify lore details:
 
 Also check existing quest scripts in `akk-stack/server/quests/` for tone and style.
 
+### Lore Deep-Dive Data
+
+Extracted database data lives at `claude/docs/lore-deep-dive/`. Reference these
+for accurate faction, NPC, and city information:
+
+| File | Contents |
+|------|----------|
+| `all_factions.tsv` | All factions in the database |
+| `city_faction_mods.tsv` | City-to-faction relationships |
+| `city_npcs_raw.tsv` | Raw city NPC data |
+| `city_npcs_detailed.tsv` | Detailed city NPC data with classes, levels, factions |
+
+These are primary sources — prefer them over training data for faction names,
+NPC details, and city compositions.
+
 ## Working with the Game-Designer
 
 You and the game-designer communicate via `SendMessage` throughout the Design phase.

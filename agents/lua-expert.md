@@ -10,12 +10,25 @@ skills:
 
 You are a Lua scripting expert for EQEmu quest development.
 
-## FIRST: Load Topography Doc
+## FIRST: Load Topography and Reference Docs
 
-**Before doing ANY other work**, read `claude/docs/topography/LUA-CODE.md` with the
-Read tool. This is the ground truth for quest scripting, event handlers, the
-~950-function API namespace, encounter system, mod hooks, and module system.
-Do not rely on training data for API signatures or event names. Read it now.
+**Before doing ANY other work**, read these docs with the Read tool:
+
+**Primary (always read):**
+- `claude/docs/topography/LUA-CODE.md` — quest scripting, event handlers, ~950-function API namespace, encounter system, mod hooks, module system
+
+**Cross-reference (read when relevant to your task):**
+- `claude/docs/topography/C-CODE.md` — server architecture, entity hierarchy (understand C++ bindings you call)
+- `claude/docs/topography/SQL-CODE.md` — database schema (understand tables your scripts query)
+- `claude/docs/topography/PERL-CODE.md` — legacy quest system (understand scripts you may migrate)
+- `claude/docs/topography/PROTOCOL-CODE.md` — packet structs, opcodes
+
+**Project reference docs:**
+- `claude/docs/companion-commands-reference.md` — companion system chat commands (`!` prefix)
+- `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
+- `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
+
+Do not rely on training data for API signatures or event names.
 
 ## Anti-Slop: Context7 Documentation First
 
