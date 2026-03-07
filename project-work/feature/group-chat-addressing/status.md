@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-03-07 | 2026-03-07 |
-| Design | game-designer + lore-master | Not Started | | |
-| Architecture | architect + protocol-agent + config-expert | Not Started | | |
-| Implementation | _implementation team_ | Not Started | | |
+| Design | game-designer + lore-master | Complete | 2026-03-07 | 2026-03-07 |
+| Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-07 | 2026-03-07 |
+| Implementation | c-expert + lua-expert + data-expert | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Design
+**Current phase:** Implementation
 
 ---
 
@@ -31,6 +31,19 @@ _Record each handoff between agents with context and any notes._
   Spawn both agents as teammates for the Design phase.
   Design doc reference: `claude/docs/plans/2026-03-07-group-chat-companion-addressing-design.md`
 
+### design team → architecture team (architect + protocol-agent + config-expert)
+- **Date:** 2026-03-07
+- **Notes:** PRD approved by lore-master. Prefix list expanded with 5 additions.
+  No lore concerns. PRD at `game-designer/prd.md`.
+
+### architecture team → implementation team (c-expert + lua-expert + data-expert)
+- **Date:** 2026-03-07
+- **Notes:** Architecture plan complete at `architect/architecture.md`.
+  5 implementation tasks assigned to 3 experts. Dependency chain:
+  Task 1 (rules) → Task 2 (SQL, parallel with 3) → Task 3 (C++ parser) → Task 4 (Lua routing) → Task 5 (build/deploy).
+  No database schema changes. No new opcodes. Entity variable signaling
+  for LLM response channel routing.
+
 ---
 
 ## Implementation Tasks
@@ -39,7 +52,11 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| | | | | |
+| 1 | Add Companion rule category + 3 rules to ruletypes.h | c-expert | Not Started | Small: RULE_CATEGORY block with 3 rules |
+| 2 | Insert rule_values rows for the 3 Companion rules | data-expert | Not Started | Small: 3 INSERT statements |
+| 3 | Implement @-mention parser and dispatch in client.cpp | c-expert | Not Started | Medium: new HandleGroupChatMentions() method |
+| 4 | Modify global_npc.lua for group chat response routing + stagger | lua-expert | Not Started | Medium: entity variable check + timer delivery |
+| 5 | Build, deploy, and validate | c-expert | Not Started | Small: ninja build, make restart, start processes |
 
 ---
 
@@ -50,7 +67,11 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| | | | | | |
+| 1 | Should non-player group members see @mentions in raw form? | PRD | architect | Resolved | Yes — show as-is for transparency |
+| 2 | Should there be feedback on unmatched @names? | PRD | architect | Resolved | No — silent failure per PRD design |
+| 3 | How to pass response channel flag to LLM sidecar? | PRD | architect | Resolved | Entity variable on companion; sidecar is unaware of channel |
+| 4 | Should companions respond to non-owner @mentions? | PRD | architect | Resolved | Yes — all group members can interact with all members |
+| 5 | Should prefix list be configurable via rules? | PRD | config-expert | Resolved | No — hardcode 20 prefixes in C++ |
 
 ---
 
@@ -60,7 +81,7 @@ _Anything preventing progress. Remove when resolved._
 
 | Blocker | Raised By | Date | Resolved |
 |---------|-----------|------|----------|
-| | | | |
+| None | — | — | — |
 
 ---
 
@@ -81,7 +102,12 @@ _Key decisions made during this feature's development._
 
 | # | Decision | Made By | Date | Rationale |
 |---|----------|---------|------|-----------|
-| | | | | |
+| 1 | Entity variable signaling for LLM response channel | architect | 2026-03-07 | Simpler than EVENT_GROUP_SAY; entity vars already used for companion state |
+| 2 | New Companion rule category with 3 rules | architect + config-expert | 2026-03-07 | Feature toggle + stagger timing; follows Bots:Enabled pattern |
+| 3 | Hardcode prefix strip list in C++ | architect + config-expert | 2026-03-07 | Rules are scalar-only; 20-prefix list is stable content |
+| 4 | Anti-spam does not affect group chat | architect | 2026-03-07 | Verified: EnableAntiSpam only checks Shout/Auction/OOC/Tell |
+| 5 | Non-owners can @mention companions | architect | 2026-03-07 | Matches EQ group chat semantics |
+| 6 | Show raw @mention text to all group members | architect | 2026-03-07 | Transparency; helps players understand companion commands |
 
 ---
 
@@ -119,3 +145,4 @@ The orchestrator NEVER initiates merge or branch cleanup on its own._
 _Free-form notes, observations, or context that doesn't fit above._
 
 Design doc saved at: `claude/docs/plans/2026-03-07-group-chat-companion-addressing-design.md`
+Architecture doc saved at: `claude/project-work/feature/group-chat-addressing/architect/architecture.md`
