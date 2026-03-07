@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-07 | 2026-03-07 |
 | Design | game-designer + lore-master | Complete | 2026-03-07 | 2026-03-07 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-07 | 2026-03-07 |
-| Implementation | c-expert + lua-expert + data-expert | Not Started | | |
-| Validation | game-tester | Not Started | | |
+| Implementation | c-expert + lua-expert + data-expert | Complete | 2026-03-07 | 2026-03-07 |
+| Validation | game-tester | In Progress | 2026-03-07 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Validation
 
 ---
 
@@ -44,6 +44,15 @@ _Record each handoff between agents with context and any notes._
   No database schema changes. No new opcodes. Entity variable signaling
   for LLM response channel routing.
 
+### implementation team → game-tester
+- **Date:** 2026-03-07
+- **Notes:** All 5 tasks implemented and verified by game-tester server-side
+  validation. Note: status.md tasks 4 and 5 were not updated by implementing
+  agents but the implementation is confirmed present in all files.
+  Server-side result: PASS WITH WARNINGS (status.md staleness only — no
+  functional issues). Full test plan at `game-tester/test-plan.md`.
+  In-game testing required to complete validation phase.
+
 ---
 
 ## Implementation Tasks
@@ -55,8 +64,8 @@ _Populated by the architect after the architecture doc is approved._
 | 1 | Add Companion rule category + 3 rules to ruletypes.h | c-expert | Complete | Companions (plural) category; build verified |
 | 2 | Insert rule_values rows for the 3 Companion rules | data-expert | Complete | 3 rows inserted and verified (Companions:* prefix) |
 | 3 | Implement @-mention parser and dispatch in client.cpp | c-expert | Complete | HandleGroupChatMentions() implemented, build clean |
-| 4 | Modify global_npc.lua for group chat response routing + stagger | lua-expert | Not Started | Medium: entity variable check + timer delivery |
-| 5 | Build, deploy, and validate | c-expert | Not Started | Small: ninja build, make restart, start processes |
+| 4 | Modify global_npc.lua for group chat response routing + stagger | lua-expert | Complete | Verified present in global_npc.lua lines 68-96 and 257-274; status.md not updated by agent |
+| 5 | Build, deploy, and validate | c-expert | Complete | zone binary built 14:11, server started 14:12, ninja no-op confirmed |
 
 ---
 
@@ -108,6 +117,7 @@ _Key decisions made during this feature's development._
 | 4 | Anti-spam does not affect group chat | architect | 2026-03-07 | Verified: EnableAntiSpam only checks Shout/Auction/OOC/Tell |
 | 5 | Non-owners can @mention companions | architect | 2026-03-07 | Matches EQ group chat semantics |
 | 6 | Show raw @mention text to all group members | architect | 2026-03-07 | Transparency; helps players understand companion commands |
+| 7 | Use existing Companions category (plural) not new Companion category | c-expert + data-expert | 2026-03-07 | ruletypes.h already had Companions category; architecture doc said Companion (singular) which would have created a duplicate |
 
 ---
 
@@ -117,12 +127,12 @@ _Key decisions made during this feature's development._
 
 _Filled in after game-tester validation passes._
 
-- [ ] All implementation tasks marked Complete
-- [ ] No open Blockers
-- [ ] game-tester server-side validation: PASS
+- [x] All implementation tasks marked Complete
+- [x] No open Blockers
+- [x] game-tester server-side validation: PASS WITH WARNINGS (staleness only)
 - [ ] User completed in-game testing guide: PASS
 - [ ] All changes committed and pushed to feature branch in ALL repos
-- [ ] Server rebuilt (if C++ changed)
+- [x] Server rebuilt (if C++ changed)
 - [ ] All phases marked Complete in Workflow Status table
 
 ### Merge & Cleanup (USER-INITIATED ONLY)
@@ -146,3 +156,4 @@ _Free-form notes, observations, or context that doesn't fit above._
 
 Design doc saved at: `claude/docs/plans/2026-03-07-group-chat-companion-addressing-design.md`
 Architecture doc saved at: `claude/project-work/feature/group-chat-addressing/architect/architecture.md`
+Test plan saved at: `claude/project-work/feature/group-chat-addressing/game-tester/test-plan.md`

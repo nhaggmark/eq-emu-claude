@@ -5,7 +5,7 @@
 | Feature | Phase | Branch | Status |
 |---------|-------|--------|--------|
 | companion-experience | Validation | bugfix/companion-experience | BUG-001 fix confirmed working, remaining tests pending |
-| group-chat-addressing | Design | feature/group-chat-addressing | Bootstrap complete, design team next |
+| group-chat-addressing | Validation | feature/group-chat-addressing | Implementation complete, build clean, server running, ready for game-tester |
 
 ## Bug Reports
 
