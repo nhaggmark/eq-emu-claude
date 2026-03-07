@@ -2,158 +2,112 @@
 
 > **Feature branch:** `feature/companion-equipment`
 > **Agent:** data-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task(s):** Task #2 — Insert 3 rule_values rows
+> **Date started:** 2026-03-07
+> **Current stage:** Complete
 
 ---
 
 ## Task Assignment
 
-_Copy your assigned task(s) from the architecture doc's Implementation Sequence._
-
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| | | | |
+| 2 | Insert 3 rule_values rows for equipment rules | None | Complete |
 
 ---
 
 ## Stage 1: Plan
 
-_What you learned from reading source code and your proposed approach. NO CODE
-is written during this stage._
-
 ### Files Examined
 
 | File | Lines | What You Found |
 |------|-------|----------------|
-| | | |
+| SQL-CODE.md (topography) | Rule System section | rule_values PK is (ruleset_id, rule_name); existing Companions: rules use ruleset_id=1 |
+| rule_values (live SELECT) | 3 rows | None of the 3 target rules existed; ruleset_id=1 is "default" ruleset |
 
 ### Key Findings
 
-_Summarize what you learned about the existing system that informs your approach._
+- `rule_values` schema: `ruleset_id` (tinyint unsigned), `rule_name` (varchar 64), `rule_value` (text), `notes` (text nullable)
+- Primary key is composite: `(ruleset_id, rule_name)` — no auto-increment, plain INSERT
+- Ruleset 1 = "default" — confirmed via `rule_sets` SELECT
+- 24 existing `Companions:*` rules; none of the 3 equipment rules existed
 
 ### Implementation Plan
 
-_Your proposed approach. Be specific enough that a fresh agent after context
-compaction could execute this plan without additional exploration._
-
-**Files to create or modify:**
-
-| File | Action | What Changes |
-|------|--------|-------------|
-| | Create / Modify | |
-
-**Change sequence:**
-1.
-2.
-3.
-
-**What to test:**
--
+Straight INSERT of 3 rows into `rule_values` with ruleset_id=1. No dependencies. Verify with SELECT after.
 
 ---
 
 ## Stage 2: Research
 
-_Context7 and documentation verification. Every API, function, and syntax in
-your plan must be verified against current docs before proceeding._
-
 ### Documentation Consulted
 
 | API / Function / Syntax | Source | Verified? | Notes |
 |------------------------|--------|-----------|-------|
-| | Context7 / WebFetch / Source | Yes / No | |
+| MariaDB INSERT syntax | Live schema inspection | Yes | Standard INSERT INTO ... VALUES, no auto-increment PK |
 
 ### Plan Amendments
 
-_What changed in your plan based on documentation research? If nothing, state
-"Plan confirmed — no amendments needed."_
-
-### Verified Plan
-
-_Final plan after research. This is the version you socialize. If no amendments
-were needed, write "See Implementation Plan above — confirmed by research."_
+Plan confirmed — no amendments needed.
 
 ---
 
 ## Stage 3: Socialize
 
-_Share your plan with relevant teammates. Get confirmation before writing code._
-
-### Messages Sent
-
-| To | Subject | Key Question |
-|----|---------|-------------|
-| | | |
-
-### Feedback Received
-
-| From | Feedback | Action Taken |
-|------|----------|-------------|
-| | | |
-
-### Consensus Plan
-
-_Final plan incorporating teammate feedback. This is what you build from.
-Write it self-contained — a fresh agent should be able to execute this section
-alone after context compaction._
-
-**Agreed approach:**
-
-**Files to create or modify:**
-
-| File | Action | What Changes |
-|------|--------|-------------|
-| | Create / Modify | |
-
-**Change sequence (final):**
-1.
-2.
-3.
+Task was self-contained (data-only, no cross-system dependencies). No socialization required per team-lead instructions.
 
 ---
 
 ## Stage 4: Build
 
-_Execute the consensus plan. Log every change._
-
 ### Implementation Log
 
-_Chronological record of what you did. Each entry should have enough detail
-that a fresh agent could understand the change without reading the diff._
+#### 2026-03-07 — Insert 3 Companions equipment rule_values
 
-#### [Date] — [Brief description]
+**What:** Inserted 3 rows into `rule_values` for companion equipment management rules.
 
-**What:** _What you changed_
-**Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the consensus plan_
-**Notes:** _Edge cases, gotchas, things the next agent should know_
+**Where:** MariaDB `peq` database, `rule_values` table, ruleset_id=1
+
+**Why:** C++ code (Task #1) reads these rule names via `RuleB(Companions, EnforceClassRestrictions)` etc. The rows must exist in the DB for the server to load them at startup.
+
+**SQL executed:**
+```sql
+INSERT INTO rule_values (ruleset_id, rule_name, rule_value, notes) VALUES
+(1, 'Companions:EnforceClassRestrictions', 'true', 'Enforce class-based item restrictions when equipping items on companions'),
+(1, 'Companions:EnforceRaceRestrictions', 'true', 'Enforce race-based item restrictions when equipping items on companions'),
+(1, 'Companions:EquipmentPersistsThroughDeath', 'true', 'If true, companion equipment is retained after death (not dropped on corpse)');
+```
+
+**Verified:** SELECT confirmed all 3 rows present with correct values.
+
+**Notes:** No schema changes needed — `rule_values` table already exists. No migration file required; these are content rows, not schema.
 
 ### Problems & Solutions
 
 | Problem | Root Cause | Solution |
 |---------|-----------|----------|
-| | | |
+| None | — | — |
 
 ### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
-| | Created / Modified | |
+| `peq.rule_values` (DB) | 3 rows inserted | Equipment restriction and death-persistence rules for companion system |
 
 ---
 
 ## Open Items
 
-_Anything unfinished, deferred, or flagged for attention._
-
-- [ ]
+- None
 
 ---
 
 ## Context for Next Agent
 
-_If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context.
-Reference the Consensus Plan section above._
+Task #2 is complete. Three `rule_values` rows now exist in ruleset_id=1:
+
+- `Companions:EnforceClassRestrictions` = `true`
+- `Companions:EnforceRaceRestrictions` = `true`
+- `Companions:EquipmentPersistsThroughDeath` = `true`
+
+These correspond to the `RULE_BOOL` entries being added in `common/ruletypes.h` (Task #1, c-expert). The C++ server reads these at startup via the rule system — no further DB work needed for this feature unless new rules are added.

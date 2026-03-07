@@ -4,7 +4,7 @@
 > **Agent:** config-expert
 > **Task(s):** Task #3 — Assess configuration needs for companion equipment
 > **Date started:** 2026-03-07
-> **Current stage:** Complete
+> **Current stage:** Complete (Architecture phase). Implementation task assigned — waiting for implementation phase spawn.
 
 ---
 
@@ -186,8 +186,24 @@ rules in `ruletypes.h` and insert their initial values into `rule_values`.
 
 ## Stage 4: Build
 
-_No build work in the Architecture phase. Rules will be added in the Implementation
-phase once the architect's plan is approved and tasks are assigned._
+### Implementation Log (2026-03-07)
+
+**Task #1: Add 3 new Companions rules to ruletypes.h**
+
+- File edited: `/mnt/d/Dev/eq/eqemu/common/ruletypes.h`
+- Inserted after line 1205 (GroupChatResponseStaggerMaxMS), before RULE_CATEGORY_END():
+  ```cpp
+  RULE_BOOL(Companions, EnforceClassRestrictions, true, "Enforce class-based item restrictions when equipping items on companions")
+  RULE_BOOL(Companions, EnforceRaceRestrictions, true, "Enforce race-based item restrictions when equipping items on companions")
+  RULE_BOOL(Companions, EquipmentPersistsThroughDeath, true, "If true, companion equipment is retained after death (not dropped on corpse)")
+  ```
+- Build result: common library (libcommon.a) compiled and linked cleanly — ruletypes.h changes are valid.
+  Build failure at companion.cpp (m_inv private member errors) is a pre-existing c-expert blocker unrelated to these rules.
+- Commit: `6d4c71f98` on `feature/companion-equipment` branch in eqemu/
+- Task #1: **Complete**
+
+**Pending: Task #2 (data-expert) — Insert rule_values rows**
+Data-expert is inserting the 3 DB rows for these rules. The SQL is in the "Context for Next Agent" section above.
 
 ---
 

@@ -210,17 +210,25 @@ choice (display 19, store 22).
 
 _Expert-to-expert exchanges during Phase 4._
 
-### [Date] — [Topic]
+### 2026-03-07 — lua-expert Tasks #7 and #9 complete; Task #8 blocked
 
-**From:** [agent] → **To:** [agent]
+**From:** lua-expert → **To:** team-lead
 
-> [Message content or summary]
+> Tasks #7 and #9 complete and committed to feature/companion-equipment.
+>
+> Task #7: companion_find_slot signature changed to accept companion object.
+> Now calls companion:GetEquipment(slot_id) to check occupancy. Returns first
+> empty matching slot; falls back to first match (displace) if all occupied.
+> Call site updated to pass e.self.
+>
+> Task #9: Added had_money flag across all four denominations. Sends
+> "[Companion Name] has no use for money." message when any coins returned.
+>
+> Task #8 blocked on Task #1 (config-expert ruletypes.h). Will implement
+> class/race restriction checks once Task #1 is complete.
 
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** Tasks #7 and #9 committed. Waiting for config-expert Task #1
+completion before Task #8 can proceed.
 
 ---
 
