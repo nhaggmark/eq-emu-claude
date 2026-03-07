@@ -112,7 +112,8 @@ This table is the quick-reference for anyone catching up._
 
 | # | Decision | Agents Involved | Date | Context |
 |---|----------|----------------|------|---------|
-| | | | | |
+| 1 | Equipment persists through companion death — no corpse/loot drop | game-designer, lore-master | 2026-03-07 | Lore-master confirmed companions are recruited Norrathians, not summoned constructs. Persistent gear is thematically correct. |
+| 2 | Basic class/race restrictions enforced; advanced restrictions (deity, expansion, level) deferred | game-designer, lore-master | 2026-03-07 | Lore-master flagged that unrestricted equipment would be lore-breaking. PRD revised to add Goal #7 and acceptance criteria. |
 
 ---
 
