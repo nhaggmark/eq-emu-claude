@@ -22,17 +22,28 @@ rationale are never lost.
 
 _game-designer + lore-master exchanges during Phase 2._
 
-### [Date] — [Topic]
+### 2026-03-07 — Lore Review: Complete PRD Draft
 
-**From:** [agent] → **To:** [agent]
+**From:** game-designer → **To:** lore-master
 
-> [Message content or summary]
+> Sent complete PRD draft for lore review. Key review areas:
+> 1. Era compliance — /gsay as Classic-era channel, @syntax server-side only
+> 2. Example scenario — Level 45 SK in Sebilis with companions discussing Kunark-era content
+> 3. NPC prefix stripping list — Guard, Captain, Lady, Lord, Sir, Priestess, High Priestess, Scout, Merchant, Innkeeper, Banker, Sage, Elder, Master, Apprentice
+> 4. Overall — purely mechanical QoL feature, no narrative content
 
-**Response from** [agent]:
+**Response from** lore-master:
 
-> [Response content or summary]
+> **APPROVED** with prefix list additions.
+>
+> 1. Era compliance: APPROVED. /gsay is Classic-era, @-syntax is server-side only, no post-Luclin references.
+> 2. Sebilis example scenario: APPROVED. Sebilite Juggernauts, Iksar necromancers, zone layout references all confirmed accurate to Kunark lore. Zone internal name is `sebilis`.
+> 3. Prefix list: APPROVED with additions — recommended adding Lieutenant, Warden, Keeper, Deputy, Sergeant based on PEQ database audit of Classic-Luclin city NPCs. Also noted Hierophant, Squire, Brother, Sheriff as rarer candidates.
+> 4. Overall concept: APPROVED. Purely mechanical routing feature, no lore or narrative content, no era concerns.
+>
+> Key notes for architect: (1) zone short name is `sebilis` internally, (2) prefix list should consider the five additions above.
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** PRD approved by lore-master. Prefix list updated to include Lieutenant, Warden, Keeper, Deputy, Sergeant. PRD status changed to Approved.
 
 ---
 
