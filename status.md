@@ -13,4 +13,4 @@
 | ID | Title | Severity | Feature | Status |
 |----|-------|----------|---------|--------|
 | BUG-001 | No XP gain when companion deals killing blow | Critical | companion-experience | Fix confirmed in-game |
-| BUG-002 | Companion combat hits not shown in "Other's Hit" windows | High | companion-equipment | Open |
+| BUG-002 | Companion combat hits not shown in "Other's Hit" windows | High | companion-equipment | Fix deployed, pending validation |
