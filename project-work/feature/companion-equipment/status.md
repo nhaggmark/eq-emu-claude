@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-03-07 | 2026-03-07 |
-| Design | game-designer + lore-master | Not Started | | |
+| Design | game-designer + lore-master | Complete | 2026-03-07 | 2026-03-07 |
 | Architecture | architect + protocol-agent + config-expert | Not Started | | |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Design
+**Current phase:** Architecture
 
 ---
 
@@ -30,6 +30,19 @@ _Record each handoff between agents with context and any notes._
 - **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
   Design doc reference at `claude/docs/plans/2026-03-07-companion-equipment-design.md`.
   Spawn both agents as teammates for the Design phase.
+
+### design team → architect
+- **Date:** 2026-03-07
+- **Notes:** PRD complete and approved at `game-designer/prd.md`. Lore review
+  approved by lore-master — class/race equipment restrictions added based on
+  lore feedback. PRD covers 7 goals: per-slot storage (19 slots), correct trade
+  replacement, full equipment visibility, slot-aware commands, combat stat
+  integration, equipment persistence, and class/race validation. 8 open
+  questions for architect to investigate (current storage mechanism, combat stat
+  wiring, command audit, trade handler logic, companion identity, multi-slot
+  edge cases, NO DROP handling, class/race bitmask mapping). Ready for
+  architecture phase.
+
 
 ---
 
