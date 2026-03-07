@@ -52,9 +52,9 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Add Companion rule category + 3 rules to ruletypes.h | c-expert | Not Started | Small: RULE_CATEGORY block with 3 rules |
-| 2 | Insert rule_values rows for the 3 Companion rules | data-expert | Not Started | Small: 3 INSERT statements |
-| 3 | Implement @-mention parser and dispatch in client.cpp | c-expert | Not Started | Medium: new HandleGroupChatMentions() method |
+| 1 | Add Companion rule category + 3 rules to ruletypes.h | c-expert | Complete | Companions (plural) category; build verified |
+| 2 | Insert rule_values rows for the 3 Companion rules | data-expert | Complete | 3 rows inserted and verified (Companions:* prefix) |
+| 3 | Implement @-mention parser and dispatch in client.cpp | c-expert | Complete | HandleGroupChatMentions() implemented, build clean |
 | 4 | Modify global_npc.lua for group chat response routing + stagger | lua-expert | Not Started | Medium: entity variable check + timer delivery |
 | 5 | Build, deploy, and validate | c-expert | Not Started | Small: ninja build, make restart, start processes |
 
