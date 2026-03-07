@@ -2,158 +2,173 @@
 
 > **Feature branch:** `feature/group-chat-addressing`
 > **Agent:** c-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task(s):** #1 (Add Companion rules), #3 (Implement @-parser), #5 (Build/validate)
+> **Date started:** 2026-03-07
+> **Current stage:** Build
 
 ---
 
 ## Task Assignment
 
-_Copy your assigned task(s) from the architecture doc's Implementation Sequence._
-
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| | | | |
+| 1 | Add 3 group-chat rules to Companions category in ruletypes.h | — | In Progress |
+| 3 | Implement @-mention parser and dispatch in client.cpp | #1 | Pending |
+| 5 | Build, deploy, and validate | #3, #4 | Pending |
 
 ---
 
 ## Stage 1: Plan
 
-_What you learned from reading source code and your proposed approach. NO CODE
-is written during this stage._
-
 ### Files Examined
 
 | File | Lines | What You Found |
 |------|-------|----------------|
-| | | |
+| `common/ruletypes.h` | 1181-1203 | Companions category already exists with 19 rules. Add 3 group-chat rules before RULE_CATEGORY_END() at line 1203 |
+| `zone/client.cpp` | 1360-1372 | `case ChatChannel_Group:` — interception point. Raid check at 1361, then `group->GroupMessage(...)` at 1369. Insert HandleGroupChatMentions() call before GroupMessage. |
+| `zone/client.cpp` | 1629 | `parse->EventBotMercNPC(EVENT_SAY, t, this, [&]() { return message; }, language)` — exact call signature for dispatch |
+| `zone/client.h` | 448 | `ChannelMessageReceived` declared in public section |
+| `zone/client.h` | 2403-2413 | Last private section — add `HandleGroupChatMentions()` declaration here |
 
 ### Key Findings
 
-_Summarize what you learned about the existing system that informs your approach._
+- The `Companions` rule category already exists (not `Companion` as architecture doc says). I'll add to the existing `Companions` category and use `RuleB(Companions, ...)` / `RuleI(Companions, ...)` macros consistently.
+- The architecture doc says `RULE_CATEGORY(Companion)` but the existing category is `Companions`. To avoid creating a duplicate category, I add the 3 rules to the existing `Companions` block.
+- IMPORTANT: The rule names must be `Companions:GroupChatAddressingEnabled` etc. (with 's') — this affects data-expert's SQL inserts. I must notify data-expert and lua-expert.
+- `EventBotMercNPC` signature confirmed: `(event_type, Mob* npc, Client* client, std::function<std::string()> message_fn, uint8 language)`
+- `group->members[]` is `Mob*[MAX_GROUP_MEMBERS]` — IsCompanion() check then cast
+- Architecture specifies entity variable names: `gsay_response_channel`, `gsay_stagger_ms`, `gsay_pending_response`
 
 ### Implementation Plan
-
-_Your proposed approach. Be specific enough that a fresh agent after context
-compaction could execute this plan without additional exploration._
 
 **Files to create or modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| | Create / Modify | |
+| `common/ruletypes.h` | Modify | Add 3 rules inside existing Companions category (before RULE_CATEGORY_END at line 1203) |
+| `zone/client.h` | Modify | Add private method declaration `HandleGroupChatMentions(Group*, uint8, uint8, const char*)` |
+| `zone/client.cpp` | Modify | Add `HandleGroupChatMentions()` call in `case ChatChannel_Group:` block; implement method |
 
 **Change sequence:**
-1.
-2.
-3.
-
-**What to test:**
--
+1. Add 3 rules to `common/ruletypes.h` Companions category
+2. Build to verify compilation of rules
+3. Add private method declaration to `zone/client.h`
+4. Implement `HandleGroupChatMentions()` in `zone/client.cpp`
+5. Modify `case ChatChannel_Group:` to call the method
+6. Build again to verify full compilation
+7. Commit to feature branch
 
 ---
 
 ## Stage 2: Research
 
-_Context7 and documentation verification. Every API, function, and syntax in
-your plan must be verified against current docs before proceeding._
-
 ### Documentation Consulted
 
 | API / Function / Syntax | Source | Verified? | Notes |
 |------------------------|--------|-----------|-------|
-| | Context7 / WebFetch / Source | Yes / No | |
+| RULE_BOOL / RULE_INT macros | Source: ruletypes.h lines 1-37, 1181-1203 | Yes | X-macro pattern confirmed |
+| EventBotMercNPC signature | Source: client.cpp:1629 | Yes | `(event, Mob*, Client*, lambda, language)` |
+| group->members[] array | Architecture doc + topography | Yes | Mob* array, null-check required |
+| IsCompanion() method | Architecture doc: verified at source | Yes | Returns true for Companion* |
+| SetEntityVariable / GetEntityVariable | Topography: lua_mob.cpp:2815,2845 | Yes | Already used by commentary system |
+| GetCleanName() | EQEmu standard Mob method | Yes | Returns name without underscores |
+| strchr for @ detection | C stdlib | Yes | Fast null-check before parsing |
 
 ### Plan Amendments
 
-_What changed in your plan based on documentation research? If nothing, state
-"Plan confirmed — no amendments needed."_
+Key finding: existing category is `Companions` (plural), not `Companion`. The architecture doc specifies `RULE_CATEGORY(Companion)` (singular) but that would create a second separate category. To maintain consistency with existing rules, add to `Companions`.
 
-### Verified Plan
+This changes the rule access pattern:
+- `RuleB(Companions, GroupChatAddressingEnabled)` (not `Companion`)
+- `RuleI(Companions, GroupChatResponseStaggerMinMS)`
+- `RuleI(Companions, GroupChatResponseStaggerMaxMS)`
 
-_Final plan after research. This is the version you socialize. If no amendments
-were needed, write "See Implementation Plan above — confirmed by research."_
+And the rule_values table entries become `Companions:GroupChatAddressingEnabled` etc.
+
+Must message data-expert with corrected category name.
+Must message lua-expert with confirmed entity variable names.
 
 ---
 
 ## Stage 3: Socialize
 
-_Share your plan with relevant teammates. Get confirmation before writing code._
-
 ### Messages Sent
 
 | To | Subject | Key Question |
 |----|---------|-------------|
-| | | |
-
-### Feedback Received
-
-| From | Feedback | Action Taken |
-|------|----------|-------------|
-| | | |
+| data-expert | Rule category name correction | Category is `Companions` not `Companion` — SQL inserts need `Companions:GroupChatAddressingEnabled` |
+| lua-expert | Entity variable names confirmed | gsay_response_channel, gsay_stagger_ms, gsay_pending_response — confirmed as per architecture doc |
 
 ### Consensus Plan
 
-_Final plan incorporating teammate feedback. This is what you build from.
-Write it self-contained — a fresh agent should be able to execute this section
-alone after context compaction._
-
 **Agreed approach:**
+- Add 3 rules to existing `Companions` category in ruletypes.h (not a new category)
+- Implement `HandleGroupChatMentions()` as private Client method
+- Use entity variable signaling as specified in architecture doc
+- Entity variable names confirmed: `gsay_response_channel`, `gsay_stagger_ms`, `gsay_pending_response`
 
 **Files to create or modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| | Create / Modify | |
+| `eqemu/common/ruletypes.h` | Modify | 3 new rules in Companions block (before RULE_CATEGORY_END) |
+| `eqemu/zone/client.h` | Modify | Private method declaration |
+| `eqemu/zone/client.cpp` | Modify | Method implementation + call in ChatChannel_Group case |
 
 **Change sequence (final):**
-1.
-2.
-3.
+1. Add rules to ruletypes.h → commit
+2. Add declaration to client.h + implement in client.cpp → commit
+3. Build → commit if clean
 
 ---
 
 ## Stage 4: Build
 
-_Execute the consensus plan. Log every change._
-
 ### Implementation Log
 
-_Chronological record of what you did. Each entry should have enough detail
-that a fresh agent could understand the change without reading the diff._
+#### 2026-03-07 — Task 1: Add rules to ruletypes.h
 
-#### [Date] — [Brief description]
+**What:** Added 3 new rules to the existing `Companions` category in ruletypes.h
+**Where:** `eqemu/common/ruletypes.h` lines 1202-1204 (before RULE_CATEGORY_END)
+**Why:** Feature requires tunable toggle and stagger timing. Placing in existing Companions category (not new Companion category) maintains consistency.
+**Notes:** Architecture doc said `RULE_CATEGORY(Companion)` but existing category is `Companions` — added to existing block.
 
-**What:** _What you changed_
-**Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the consensus plan_
-**Notes:** _Edge cases, gotchas, things the next agent should know_
+#### 2026-03-07 — Task 3: Implement @-parser in client.cpp
+
+**What:** Added private method `HandleGroupChatMentions()` to Client; modified `case ChatChannel_Group:` to call it.
+**Where:** `eqemu/zone/client.h` (declaration), `eqemu/zone/client.cpp` (implementation + call site)
+**Why:** @-mention parsing must intercept before GroupMessage() — no Lua hook available at this point.
+**Notes:** Entity variable names: gsay_response_channel, gsay_stagger_ms, gsay_pending_response (as architecture specifies).
 
 ### Problems & Solutions
 
 | Problem | Root Cause | Solution |
 |---------|-----------|----------|
-| | | |
+| Category name mismatch | Architecture doc says `Companion`, source has `Companions` | Added to existing `Companions` category; notified data-expert |
 
 ### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
-| | Created / Modified | |
+| `eqemu/common/ruletypes.h` | Modified | 3 group-chat rules added to Companions category |
+| `eqemu/zone/client.h` | Modified | HandleGroupChatMentions private method declared |
+| `eqemu/zone/client.cpp` | Modified | HandleGroupChatMentions implemented + called from ChatChannel_Group |
 
 ---
 
 ## Open Items
 
-_Anything unfinished, deferred, or flagged for attention._
-
-- [ ]
+- [ ] Task #5: Build and validate after lua-expert completes Task #4
 
 ---
 
 ## Context for Next Agent
 
-_If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context.
-Reference the Consensus Plan section above._
+If picking up this work after context compaction:
+
+1. The feature adds @-mention parsing to /gsay group chat.
+2. Three rules live in the `Companions` category (plural) of ruletypes.h: `GroupChatAddressingEnabled`, `GroupChatResponseStaggerMinMS`, `GroupChatResponseStaggerMaxMS`.
+3. The C++ parser is in `Client::HandleGroupChatMentions()` in client.cpp.
+4. Entity variable names used to signal Lua: `gsay_response_channel` (set to "group"), `gsay_stagger_ms` (delay in ms as string), `gsay_pending_response` (stored response text).
+5. Architecture doc: `claude/project-work/feature/group-chat-addressing/architect/architecture.md`
+6. For Task #5: build with `docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"` then restart server.

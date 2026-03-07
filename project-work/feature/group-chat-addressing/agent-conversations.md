@@ -141,17 +141,27 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 _Expert-to-expert exchanges during Phase 4._
 
-### [Date] — [Topic]
+### 2026-03-07 — Rule category name correction: `Companions` not `Companion`
 
-**From:** [agent] → **To:** [agent]
+**From:** c-expert → **To:** data-expert
 
-> [Message content or summary]
+> The existing rule category in ruletypes.h is named `Companions` (plural), not `Companion` as the architecture doc specifies. I added the 3 new rules to the existing `Companions` category. SQL inserts must use `Companions:GroupChatAddressingEnabled`, `Companions:GroupChatResponseStaggerMinMS`, `Companions:GroupChatResponseStaggerMaxMS`.
 
-**Response from** [agent]:
+**Outcome:** data-expert notified before executing SQL inserts. Prevents rule_values rows with wrong category name prefix.
 
-> [Response content or summary]
+---
 
-**Outcome:** _What was decided or changed as a result_
+### 2026-03-07 — Entity variable names confirmed for lua-expert
+
+**From:** c-expert → **To:** lua-expert
+
+> Confirmed entity variable names as implemented:
+> - `gsay_response_channel` — set to `"group"` before EventBotMercNPC dispatch for conversation payloads. Clear on read.
+> - `gsay_stagger_ms` — stagger delay in ms as string for companions 2..N. Companion 1 gets no stagger variable.
+> - `gsay_pending_response` — for timer-based deferred delivery in event_timer.
+> For `!command` payloads, no entity variables are set. `gsay_response_channel` is set BEFORE EventBotMercNPC fires.
+
+**Outcome:** lua-expert has confirmed variable names and timing guarantees to implement Task 4.
 
 ---
 
@@ -168,6 +178,7 @@ This table is the quick-reference for anyone catching up._
 | 4 | Anti-spam does NOT affect group chat — companion responses are safe | architect, config-expert | 2026-03-07 | Verified: EnableAntiSpam only checks Shout/Auction/OOC/Tell (client.cpp:1268) |
 | 5 | Non-owner group members can @mention companions | architect | 2026-03-07 | PRD Open Q4: matches EQ group chat semantics — all members interact with all members |
 | 6 | Show raw @mention text to all group members (no reformatting) | architect | 2026-03-07 | PRD Open Q1: transparent — helps other players understand commands being issued |
+| 7 | Rule category is `Companions` (plural), not `Companion` — affects SQL inserts | c-expert, data-expert | 2026-03-07 | Architecture doc said `Companion` but existing category is `Companions`. Added to existing block. |
 
 ---
 
