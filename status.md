@@ -16,3 +16,4 @@
 | BUG-002 | Companion combat hits not shown in "Other's Hit" windows | High | companion-equipment | Fix deployed, pending validation |
 | BUG-003 | Item lost when companion cannot equip it | Critical | companion-equipment | Fix deployed, pending validation |
 | BUG-004 | Equipping compatible item fails when slot already occupied | High | companion-equipment | Fix deployed, pending validation |
+| BUG-005 | Compatible item falsely rejected by class/race restriction | High | companion-equipment | Fix deployed, pending validation |
