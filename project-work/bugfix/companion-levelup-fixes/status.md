@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-03-08 | 2026-03-08 |
-| Design | game-designer + lore-master | Not Started | | |
-| Architecture | architect + protocol-agent + config-expert | Not Started | | |
-| Implementation | _implementation team_ | Not Started | | |
+| Design | game-designer + lore-master | Skipped | — | — |
+| Architecture | architect | Complete | 2026-03-08 | 2026-03-08 |
+| Implementation | c-expert | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Design
+**Current phase:** Implementation
 
 ---
 
@@ -30,6 +30,16 @@ _Record each handoff between agents with context and any notes._
 - **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
   Spawn both agents as teammates for the Design phase.
 
+### architect → implementation team (c-expert)
+- **Date:** 2026-03-08
+- **Notes:** Architecture doc complete at `architect/architecture.md`. Bug-fix
+  feature — design phase was skipped as the bug report (BUG-007) and user's
+  audit request serve as the requirements. Single implementation task assigned
+  to c-expert: add 2 missing packet calls (`SendHPUpdate()` and
+  `SendAppearancePacket(WhoLevel)`) in `Companion::CheckForLevelUp()` to fix
+  the group window disappearance issue. Fix is modeled on the bot level-up
+  pattern in `bot.cpp:4015-4016`.
+
 ---
 
 ## Implementation Tasks
@@ -38,7 +48,7 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| | | | | |
+| 1 | Add `SendHPUpdate()` and `SendAppearancePacket(WhoLevel, level, true, true)` in `CheckForLevelUp()` after SetHP/SetMana and before Save() | c-expert | Not Started | 2-line fix in companion.cpp ~line 1659 |
 
 ---
 
@@ -49,7 +59,7 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| | | | | | |
+| | None — fix is straightforward | | | | |
 
 ---
 
@@ -70,7 +80,7 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-007 | Companion disappears from group interface on level up | Critical | user | Open | | |
+| BUG-007 | Companion disappears from group interface on level up | Critical | user | Fix Planned | c-expert | |
 
 ---
 
@@ -80,7 +90,9 @@ _Key decisions made during this feature's development._
 
 | # | Decision | Made By | Date | Rationale |
 |---|----------|---------|------|-----------|
-| | | | | |
+| 1 | Fix by adding explicit packet calls in CheckForLevelUp() rather than overriding NPC::SetLevel() | architect | 2026-03-08 | More auditable, lower risk of side effects, matches bot/merc pattern exactly |
+| 2 | Skip OP_GroupUpdate during level-up | architect | 2026-03-08 | SendHPUpdate + WhoLevel appearance are sufficient; full group update is only needed for member add/remove |
+| 3 | Skip design phase for this bug fix | architect | 2026-03-08 | BUG-007 report + user audit request provide sufficient requirements; no game design decisions needed |
 
 ---
 
@@ -115,4 +127,21 @@ The orchestrator NEVER initiates merge or branch cleanup on its own._
 
 ## Notes
 
-_Free-form notes, observations, or context that doesn't fit above._
+_Free-form notes, observations, and context._
+
+### Audit Summary (2026-03-08)
+
+The architect performed a thorough audit of the entire companion level-up
+process, tracing every function call from `AddExperience()` through
+`CheckForLevelUp()` -> `ScaleStatsToLevel()` -> `NPC::SetLevel()`.
+
+**Root cause of BUG-007:** Two missing client notification packets:
+1. `SendHPUpdate()` — HP bar update never sent to group members
+2. `SendAppearancePacket(WhoLevel)` — level update never broadcast (wrong default params in NPC::SetLevel)
+
+**States verified preserved during level-up:** Group membership, equipment,
+hate list, target, follow state, stance, owner relationship, entity ID,
+entity variables, buff slots, spell recast timers.
+
+**No other bugs found** in the level-up process itself. The fix is a clean
+2-line addition matching the established bot level-up pattern.

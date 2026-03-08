@@ -20,55 +20,59 @@ rationale are never lost.
 
 ## Design Team Conversations
 
-_game-designer + lore-master exchanges during Phase 2._
-
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+_Design phase was skipped for this bug fix. BUG-007 report and user audit
+request serve as requirements._
 
 ---
 
 ## Architecture Team Conversations
 
-_architect + protocol-agent + config-expert exchanges during Phase 3._
+_The architect was spawned solo by the user for a direct code audit. Protocol-agent
+and config-expert were not co-spawned for this task. The architect performed
+all analysis independently, documented below._
 
-### [Date] — [Topic]
+### 2026-03-08 — Protocol Analysis (self-assessment, protocol-agent not available)
 
-**From:** [agent] → **To:** [agent]
+**Architect self-assessment of protocol concerns:**
 
-> [Message content or summary]
+> The bug involves missing client packets during companion level-up. The fix
+> adds two existing packet calls (`SendHPUpdate()` and `SendAppearancePacket()`)
+> that are already used by bots and mercs. No new opcodes, no new packet
+> structures, no Titanium translation changes needed.
+>
+> Titanium constraints verified:
+> - `OP_SpawnAppearance` with `AppearanceType::WhoLevel` is a standard packet
+>   the Titanium client handles for all entity types (NPCs, bots, mercs, players).
+> - `OP_MobHealth` (via `CreateHPPacket()` in `SendHPUpdate()`) is also standard.
+> - No new packet structs are introduced.
+> - The companion's spawn struct already sets `NPC=0` (player-like) which ensures
+>   the Titanium client treats it as a valid group member.
 
-**Response from** [agent]:
+**Outcome:** No protocol concerns. Fix uses existing, well-tested packet types.
 
-> [Response content or summary]
+### 2026-03-08 — Configuration Analysis (self-assessment, config-expert not available)
 
-**Outcome:** _What was decided or changed as a result_
+**Architect self-assessment of config/rules concerns:**
+
+> The fix does not add, modify, or depend on any rule values. No
+> `eqemu_config.json` changes needed. The existing `Companions::MaxLevelOffset`
+> rule is read but not modified. No new rules are required — the fix is
+> purely about missing packet calls, not tunable behavior.
+>
+> Checked `common/ruletypes.h` for relevant rules:
+> - `Companions::MaxLevelOffset` — used in CheckForLevelUp to cap level. No change needed.
+> - `Companions::CompanionsEnabled` — boolean toggle. Not relevant to level-up packets.
+> - No "level-up notification" or "group update" rules exist that would make
+>   these packet calls configurable. The packet calls are mandatory for correct
+>   client behavior, so they should not be behind a rule.
+
+**Outcome:** No configuration concerns. Fix requires no rule changes.
 
 ---
 
 ## Implementation Team Conversations
 
-_Expert-to-expert exchanges during Phase 4._
-
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+_To be populated during Phase 4 (implementation)._
 
 ---
 
@@ -79,7 +83,8 @@ This table is the quick-reference for anyone catching up._
 
 | # | Decision | Agents Involved | Date | Context |
 |---|----------|----------------|------|---------|
-| | | | | |
+| 1 | No protocol concerns — fix uses existing packet types (SpawnAppearance, MobHealth) | architect (self-assessment) | 2026-03-08 | Protocol-agent not co-spawned; architect verified Titanium compatibility independently |
+| 2 | No config/rules concerns — fix is packet-level, not tunable behavior | architect (self-assessment) | 2026-03-08 | Config-expert not co-spawned; architect verified no relevant rules exist |
 
 ---
 
