@@ -22,17 +22,22 @@ rationale are never lost.
 
 _game-designer + lore-master exchanges during Phase 2._
 
-### [Date] — [Topic]
+### 2026-03-08 — Early Lore Review: Thematic Framing of Companion AI Stances
 
-**From:** [agent] → **To:** [agent]
+**From:** game-designer → **To:** lore-master
 
-> [Message content or summary]
+> Sent feature concept for review: companion AI stances (Aggressive/Balanced/Passive) and
+> recruitment as a clean break from NPC AI. Asked three questions:
+> 1. Thematic framing: What's the in-world justification for a recruited NPC abandoning
+>    their original duties (e.g., a guard stopping guard behavior)?
+> 2. Stance names: Are Aggressive/Balanced/Passive appropriate for Classic-Luclin era?
+> 3. Stance change dialogue: Any lore concerns with the companion acknowledgment lines?
 
-**Response from** [agent]:
+**Response from** lore-master:
 
-> [Response content or summary]
+> _Awaiting response_
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** _Pending lore-master review_
 
 ---
 
