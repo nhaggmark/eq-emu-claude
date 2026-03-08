@@ -21,3 +21,4 @@
 | BUG-005 | Compatible item falsely rejected by class/race restriction | High | companion-equipment | Resolved |
 | BUG-006 | Balanced stance companion attacks when player merely targets mob | High | companion-ai-stances | Resolved |
 | BUG-007 | Companion disappears from group interface on level up | Critical | companion-levelup-fixes | Fix deployed, pending validation |
+| BUG-008 | Companions drop from group interface when zoning | Critical | companion-levelup-fixes | Open |
