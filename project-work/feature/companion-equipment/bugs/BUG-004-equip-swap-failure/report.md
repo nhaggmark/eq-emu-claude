@@ -226,3 +226,202 @@ Then restart the zone process.
 | `GetEquipment` return type mismatch | Low | C++ returns `uint32`, Lua binding returns `uint32`, Lua compares to `0` -- no type issues. Lua treats all numbers as doubles. |
 | Missing other unbound methods | Low | Scanned all Lua code calling companion methods. `GetEquipment` is the only unbound method called from Lua. `RemoveItemFromSlot` and `SetEquipment` exist in C++ but are NOT called from Lua (they are called internally by `GiveSlot` and `GiveItem` in C++). |
 | Rebuild required means downtime | Low | A zone binary rebuild and process restart is sufficient. No database migration, no shared_memory reload, no world restart needed. |
+
+---
+
+## Deeper Investigation
+
+**Investigated by:** architect
+**Date:** 2026-03-08
+
+### Which Hypothesis Was Correct
+
+**Hypothesis 1 is correct: `e.self` in `event_trade` is NOT a `Lua_Companion`.**
+
+Even though `GetEquipment` was successfully added to `lua_companion.h`,
+`lua_companion.cpp`, and registered in the luabind scope (confirmed at line
+257 of `lua_companion.cpp`), the method remains nil at Lua runtime because
+`e.self` is wrapped as `Lua_NPC`, not `Lua_Companion`, when the
+`event_trade` handler fires.
+
+### The Actual Mechanism
+
+The issue is a **double-write race in the event argument setup**. Here is
+the exact execution sequence in `_EventNPC()` (lua_parser.cpp lines 489-522):
+
+1. **`_EventNPC` creates the `e` table** (line 506: `lua_createtable`)
+
+2. **`_EventNPC` correctly sets `e.self` as `Lua_Companion`** (lines 509-513):
+   ```cpp
+   if (npc->IsCompanion()) {
+       Lua_Companion l_comp(npc->CastToCompanion());
+       luabind::adl::object l_comp_o = luabind::adl::object(L, l_comp);
+       l_comp_o.push(L);
+       lua_setfield(L, -2, "self");
+   }
+   ```
+   This code already exists and correctly wraps companions.
+
+3. **`_EventNPC` calls the per-event argument handler** (lines 521-522):
+   ```cpp
+   auto arg_function = NPCArgumentDispatch[evt];
+   arg_function(this, L, npc, init, data, extra_data, extra_pointers);
+   ```
+
+4. **`handle_npc_event_trade` OVERWRITES `e.self` with `Lua_NPC`**
+   (lua_parser_events.cpp lines 58-61):
+   ```cpp
+   Lua_NPC              l_npc(reinterpret_cast<NPC*>(npc));
+   luabind::adl::object l_npc_o = luabind::adl::object(L, l_npc);
+   l_npc_o.push(L);
+   lua_setfield(L, -2, "self");
+   ```
+
+The `handle_npc_event_trade` function creates a **brand new `Lua_NPC`
+wrapper** for the same C++ NPC pointer and writes it to `e.self`,
+destroying the `Lua_Companion` wrapper that `_EventNPC` just set. This
+is the ONLY NPC event handler that overwrites `e.self` --
+`handle_npc_event_say` and all other handlers leave `e.self` as set by
+`_EventNPC`.
+
+### Why `event_say` Works but `event_trade` Doesn't
+
+- `event_say`: `handle_npc_event_say` does NOT set `e.self`. It only sets
+  `e.other`, `e.message`, and `e.language`. The `Lua_Companion` wrapper
+  from `_EventNPC` survives. Companion methods like `ShowEquipment`,
+  `SetStance`, `Dismiss` all work correctly in `event_say`.
+
+- `event_trade`: `handle_npc_event_trade` OVERWRITES `e.self` with
+  `Lua_NPC`. All companion-specific methods (including `GetEquipment`,
+  `ShowEquipment`, `SetStance`, etc.) become nil. However, methods that
+  were ALSO registered on `Lua_NPC` (like `GiveItem`, `GiveSlot`,
+  `GiveAll`, `GetOwnerCharacterID`) still work because they are on the
+  `Lua_NPC` binding.
+
+### Why the Previous Fix Was Insufficient
+
+The previous fix correctly added `GetEquipment` to `Lua_Companion` class
+and luabind registration. This would work in `event_say` or any other
+event where `e.self` retains its `Lua_Companion` type. But in
+`event_trade`, `e.self` is overwritten to `Lua_NPC`, so the
+`Lua_Companion`-only method is still inaccessible.
+
+### The Correct Fix Approach
+
+There are two viable fixes. **Fix B is recommended** because it follows
+the established pattern used by all other companion methods that work in
+`event_trade`.
+
+#### Fix A: Remove the `e.self` overwrite from `handle_npc_event_trade`
+
+Remove lines 58-61 of `lua_parser_events.cpp` (the `Lua_NPC` construction
+and `lua_setfield(L, -2, "self")` lines). Since `_EventNPC` already sets
+`e.self` correctly (with companion-awareness), the handler does not need
+to re-set it.
+
+**Pros:** Fixes the root cause. All `Lua_Companion` methods work in
+`event_trade` automatically, now and in the future.
+
+**Cons:** Risk of unintended side effects. The `handle_npc_event_trade`
+handler also uses `l_npc_o` to set `e.trade.self` (line 110-111). If we
+remove the `Lua_NPC` variable entirely, we need to adjust the trade
+sub-table population. Additionally, this is a widely-used code path -- all
+NPC trades in the game flow through it. Must verify no other code depends
+on `e.self` being specifically `Lua_NPC` in trade context.
+
+Also note: even with Fix A, the `handle_npc_event_trade` handler still
+needs a `Lua_NPC` reference for the `e.trade.self` sub-table (line 110).
+So the fix would need to restructure that code to either skip setting
+`e.self` while still creating the NPC ref for `e.trade.self`, or use the
+companion-aware version there too.
+
+#### Fix B (RECOMMENDED): Add `GetEquipment` to `Lua_NPC` binding
+
+Following the exact pattern used by `GiveItem`, `GiveSlot`, `GiveAll`,
+and `GetOwnerCharacterID`, add `GetEquipment` to both `lua_npc.h` and
+`lua_npc.cpp` with an `IsCompanion()` guard:
+
+In `lua_npc.h`, add declaration:
+```cpp
+uint32 GetEquipment(int slot);
+```
+
+In `lua_npc.cpp`, add implementation:
+```cpp
+uint32 Lua_NPC::GetEquipment(int slot)
+{
+    Lua_Safe_Call_Int();
+    if (!self->IsCompanion()) {
+        return 0;
+    }
+    return self->CastToCompanion()->GetEquipment(static_cast<uint8>(slot));
+}
+```
+
+In `lua_register_npc()`, add registration:
+```cpp
+.def("GetEquipment", (uint32(Lua_NPC::*)(int))&Lua_NPC::GetEquipment)
+```
+
+**Pros:** Follows the established pattern exactly. Minimal risk -- the
+same approach used for 4 other companion methods that DO work. No change
+to event dispatch code. Works regardless of whether `e.self` is
+`Lua_Companion` or `Lua_NPC`.
+
+**Cons:** Methods end up duplicated across `Lua_NPC` and `Lua_Companion`.
+Does not fix the root cause (the overwrite in `handle_npc_event_trade`).
+Future companion methods will need the same dual-registration unless the
+root cause is fixed.
+
+### Why `GiveItem`, `GiveSlot`, `GiveAll` Work but `GetEquipment` Doesn't
+
+These methods were added to BOTH `Lua_Companion` AND `Lua_NPC`:
+
+| Method | On Lua_Companion | On Lua_NPC | Works in event_trade |
+|--------|-----------------|------------|---------------------|
+| `GiveItem` | Yes (line 260) | Yes (line 1045) | YES |
+| `GiveSlot` | Yes (line 268) | Yes (line 1046) | YES |
+| `GiveAll` | Yes (line 259) | Yes (line 1044) | YES |
+| `GetOwnerCharacterID` | Yes (line 251) | Yes (line 1069) | YES |
+| `GetEquipment` | Yes (line 257) | **NO** | **NO** |
+| `ShowEquipment` | Yes (line 268) | **NO** | Would fail if called |
+
+The pattern is clear: companion methods that are registered on `Lua_NPC`
+work in `event_trade`; those only on `Lua_Companion` do not.
+
+### Updated Task Breakdown
+
+**Task 1: Add `GetEquipment` to `Lua_NPC` binding** (c-expert)
+- File: `eqemu/zone/lua_npc.h` -- add `uint32 GetEquipment(int slot);`
+  declaration alongside existing companion methods (near `GiveItem`,
+  `GiveSlot`, `GiveAll`, `GetOwnerCharacterID`)
+- File: `eqemu/zone/lua_npc.cpp` -- add implementation with
+  `IsCompanion()` guard and `CastToCompanion()` delegation (follow the
+  exact pattern of `Lua_NPC::GiveItem` at line 962)
+- File: `eqemu/zone/lua_npc.cpp` -- add `.def("GetEquipment", ...)`
+  to `lua_register_npc()` (follow existing registration pattern)
+- The method on `Lua_Companion` can stay as-is (it works when `e.self` is
+  a `Lua_Companion`, e.g., in `event_say`)
+
+**Task 2: Rebuild zone binary** (c-expert or infra-expert)
+- `cd ~/code/build && ninja -j$(nproc)` inside the container
+- Restart zone process
+
+**Task 3: Validate** (game-tester)
+- Same test matrix as the original task breakdown
+- Additionally verify that `!equipment` command still works (it uses
+  `event_say`, where `e.self` is `Lua_Companion`)
+
+### Future Consideration
+
+The `handle_npc_event_trade` overwrite of `e.self` is a latent bug that
+will affect ANY future companion-only method called from `event_trade`.
+A follow-up task should be filed to either:
+
+1. Remove the redundant `e.self` overwrite from `handle_npc_event_trade`
+   (requires careful testing of all trade interactions), OR
+2. Document the requirement that all companion methods callable from
+   `event_trade` must be dual-registered on both `Lua_NPC` and
+   `Lua_Companion`
+
+For now, Fix B resolves the immediate blocker with minimal risk.
