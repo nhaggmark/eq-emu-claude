@@ -4,7 +4,7 @@
 > **Reported by:** user
 > **Date:** 2026-03-08
 > **Feature:** companion-levelup-fixes
-> **Status:** Open
+> **Status:** Fix deployed, pending validation
 
 ---
 
