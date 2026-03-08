@@ -157,6 +157,19 @@ _Expert-to-expert exchanges during Phase 4._
 
 **Outcome:** Task 6 marked Complete in status.md. Lua change is live on feature branch.
 
+### 2026-03-08 — c-expert: API corrections discovered during Stage 2 research
+
+**From:** c-expert (internal research)
+
+> Three corrections to the architecture doc's pseudocode were found during
+> source code verification:
+> 1. `FACTION_THREATENS` does not exist — correct enum is `FACTION_THREATENINGLY` (value 8) in common/faction.h
+> 2. `IsOffensiveSpell()` does not exist — correct function is `IsDetrimentalSpell(uint16)` from common/spdat.h
+> 3. `mob->IsOnHatelist(target)` does not exist on Mob — correct method is `mob->CheckAggro(target)` which wraps `hate_list.IsEntOnHateList()` (mob.h:1250)
+> All corrections applied. Build confirmed clean.
+
+**Outcome:** All c-expert tasks complete. Build passed. Rule values inserted. Both zones running. Changes committed and pushed to feature/companion-ai-stances in eqemu repo (commit 4d367b9c1).
+
 ---
 
 ## Key Decisions from Conversations
