@@ -53,13 +53,13 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Add `AggressiveScanRadius` and `CompanionFleeEnabled` rules to `common/ruletypes.h` | config-expert | Not Started | 2 lines in Companions category |
-| 2 | Add `IsCompanion()` guard to `Mob::CheckWillAggro()` in `zone/aggro.cpp` | c-expert | Not Started | 4 lines — prevent faction-based aggro initiation |
-| 3 | Add `IsCompanion()` guard to assist timer in `zone/npc.cpp` | c-expert | Not Started | 1 line — prevent companions calling for help |
-| 4 | Rewrite `Companion::Process()` for stance-aware AI | c-expert | Not Started | ~100 lines — passive/balanced/aggressive behavior |
-| 5 | Add flee suppression using `CompanionFleeEnabled` rule | c-expert | Not Started | 3 lines — depends on Task 1 & 4 |
-| 6 | Update `cmd_passive` in `companion.lua` to call `WipeHateList()` | lua-expert | Complete | 1 line — belt-and-suspenders with C++ |
-| 7 | Build, restart, and run manual validation | c-expert | Not Started | Depends on all other tasks |
+| 1 | Add `AggressiveScanRadius` and `CompanionFleeEnabled` rules to `common/ruletypes.h` | config-expert | Complete | 2026-03-08 — added by config-expert in earlier commit |
+| 2 | Add `IsCompanion()` guard to `Mob::CheckWillAggro()` in `zone/aggro.cpp` | c-expert | Complete | 2026-03-08 — 9 lines after GetOwner() check |
+| 3 | Add `IsCompanion()` guard to assist timer in `zone/npc.cpp` | c-expert | Complete | 2026-03-08 — !IsCompanion() added to assist_timer condition |
+| 4 | Rewrite `Companion::Process()` for stance-aware AI | c-expert | Complete | 2026-03-08 — full passive/balanced/aggressive behavior |
+| 5 | Add flee suppression using `CompanionFleeEnabled` rule | c-expert | Complete | 2026-03-08 — included in Process() rewrite |
+| 6 | Update `cmd_passive` in `companion.lua` to call `WipeHateList()` | lua-expert | Complete | 2026-03-08 |
+| 7 | Build, restart, and run manual validation | c-expert | Complete | 2026-03-08 — build clean, zones running, rule_values inserted |
 
 ---
 

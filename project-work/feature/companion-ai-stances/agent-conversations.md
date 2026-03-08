@@ -141,17 +141,21 @@ clear scope for their contribution.
 
 _Expert-to-expert exchanges during Phase 4._
 
-### [Date] — [Topic]
+### 2026-03-08 — Task 6 Complete: cmd_passive WipeHateList() added
 
-**From:** [agent] → **To:** [agent]
+**From:** lua-expert → **To:** team-lead
 
-> [Message content or summary]
+> Task 6 complete. Added `npc:WipeHateList()` to `cmd_passive` in
+> `akk-stack/server/quests/lua_modules/companion.lua` (line 449).
+> No dependencies — this task ran in parallel with c-expert tasks.
+> Committed and pushed to feature/companion-ai-stances in akk-stack repo
+> (commit 7c1ce02). No build required; `#reloadquests` picks it up in-game.
 
-**Response from** [agent]:
+**Response from** team-lead:
 
-> [Response content or summary]
+> Pending.
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** Task 6 marked Complete in status.md. Lua change is live on feature branch.
 
 ---
 

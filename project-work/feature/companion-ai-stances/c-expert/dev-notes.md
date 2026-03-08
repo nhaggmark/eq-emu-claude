@@ -2,158 +2,161 @@
 
 > **Feature branch:** `feature/companion-ai-stances`
 > **Agent:** c-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task(s):** #1, #2, #3, #4 (includes #5 flee suppression)
+> **Date started:** 2026-03-08
+> **Current stage:** Build
 
 ---
 
 ## Task Assignment
 
-_Copy your assigned task(s) from the architecture doc's Implementation Sequence._
-
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| | | | |
+| 1 | Add IsCompanion() guard in aggro.cpp | — | Complete |
+| 2 | Add IsCompanion() guard in npc.cpp | — | Complete |
+| 3 | Rewrite Companion::Process() for stance-aware AI | 1, 2, rules | Complete |
+| 4 | Flee suppression via CompanionFleeEnabled rule | 1, 3 | Complete |
 
 ---
 
 ## Stage 1: Plan
 
-_What you learned from reading source code and your proposed approach. NO CODE
-is written during this stage._
-
 ### Files Examined
 
 | File | Lines | What You Found |
 |------|-------|----------------|
-| | | |
+| zone/companion.cpp | 468-535 | Process() has owner-assist logic only. Calls NPC::Process() at end. |
+| zone/companion.h | 37-41, 255-256, 330 | COMPANION_STANCE_* defines, GetStance/SetStance, m_current_stance |
+| zone/aggro.cpp | 397-402 | GetOwner() check at line 400 prevents pets from aggro scanning; companions lack this |
+| zone/npc.cpp | 775-784 | assist_timer block calls AIYellForHelp() when engaged |
+| zone/merc.cpp | 2053-2100 | CheckHateList() template for balanced group-assist scanning |
+| zone/mob.h | 785, 793, 1365, 1514, 1731, 1882 | IsEngaged, WipeHateList, GetReverseFactionCon (virtual, overridden in Client), GetCloseMobList, casting_spell_id, currently_fleeing |
+| common/faction.h | 27-36 | FACTION_VALUE enum: FACTION_THREATENINGLY=8, FACTION_SCOWLS=9 |
+| common/spdat.h | 1778 | IsDetrimentalSpell(uint16 spell_id) |
+| common/ruletypes.h | 1209-1210 | AggressiveScanRadius and CompanionFleeEnabled already added by config-expert |
 
 ### Key Findings
 
-_Summarize what you learned about the existing system that informs your approach._
-
-### Implementation Plan
-
-_Your proposed approach. Be specific enough that a fresh agent after context
-compaction could execute this plan without additional exploration._
-
-**Files to create or modify:**
-
-| File | Action | What Changes |
-|------|--------|-------------|
-| | Create / Modify | |
-
-**Change sequence:**
-1.
-2.
-3.
-
-**What to test:**
--
+1. **Rules already added**: config-expert committed `AggressiveScanRadius` and `CompanionFleeEnabled` to ruletypes.h — Task 1 (rules) is complete.
+2. **aggro.cpp line 400**: `GetOwner()` check returns false for companions (they use `m_owner_char_id`, not the NPC owner system). Need `IsCompanion()` guard after this check.
+3. **npc.cpp line 775**: `assist_timer.Check()` block calls `AIYellForHelp()`. Need `!IsCompanion()` in the condition.
+4. **currently_fleeing**: Field in Mob (mob.h:1882), directly accessible. Set to false to suppress flee.
+5. **GetReverseFactionCon**: Virtual in Mob (returns INDIFFERENTLY), properly overridden in Client. Get owner Client* and call it with the NPC as arg.
+6. **FACTION_THREATENS**: Architecture doc uses this name but real enum is `FACTION_THREATENINGLY` (value 8).
+7. **IsOffensiveSpell**: Does not exist. Use `IsDetrimentalSpell(casting_spell_id)` from common/spdat.h instead.
+8. **GetCloseMobList**: Returns `std::unordered_map<uint16, Mob*>&`. Loop with `for (auto& [id, mob] : GetCloseMobList(dist))`.
+9. **Merc::CheckHateList()**: Uses entity_list.GetNPCList() not GetCloseMobList(). Architecture plan uses GetCloseMobList which is more efficient for our use case.
 
 ---
 
 ## Stage 2: Research
 
-_Context7 and documentation verification. Every API, function, and syntax in
-your plan must be verified against current docs before proceeding._
-
 ### Documentation Consulted
 
 | API / Function / Syntax | Source | Verified? | Notes |
 |------------------------|--------|-----------|-------|
-| | Context7 / WebFetch / Source | Yes / No | |
+| `GetCloseMobList(float)` | mob.h:1514, mob.cpp:8612 | Yes | Returns unordered_map<uint16, Mob*>& |
+| `IsDetrimentalSpell(uint16)` | common/spdat.h:1778 | Yes | Replaces IsOffensiveSpell which doesn't exist |
+| `FACTION_THREATENINGLY` | common/faction.h:35 | Yes | Architecture doc had wrong name (FACTION_THREATENS) |
+| `currently_fleeing` | mob.h:1882 | Yes | Protected member, accessible from Companion |
+| `IsCasting()` | mob.h:418 | Yes | Returns (casting_spell_id != 0) |
+| `InterruptSpell()` | zone/spells.cpp:1233 | Yes | No-arg form calls InterruptSpell(0, 0x121, SPELL_UNKNOWN) |
+| `WipeHateList()` | mob.h:793 | Yes | Exists, no params needed |
+| `GetReverseFactionCon` | client.h:819 | Yes | Properly overridden in Client |
+| `MAX_GROUP_MEMBERS` | common/eq_packet_structs.h:892 | Yes | = 6 |
 
 ### Plan Amendments
 
-_What changed in your plan based on documentation research? If nothing, state
-"Plan confirmed — no amendments needed."_
-
-### Verified Plan
-
-_Final plan after research. This is the version you socialize. If no amendments
-were needed, write "See Implementation Plan above — confirmed by research."_
+- Use `IsDetrimentalSpell(casting_spell_id)` instead of non-existent `IsOffensiveSpell()`
+- Use `FACTION_THREATENINGLY` not `FACTION_THREATENS`
+- For balanced scanning, iterate NPCs via `GetCloseMobList()` rather than `entity_list.GetNPCList()` for efficiency
+- The architecture's balanced scan logic needs a check: only scan for companions not already engaged
 
 ---
 
 ## Stage 3: Socialize
 
-_Share your plan with relevant teammates. Get confirmation before writing code._
-
 ### Messages Sent
 
 | To | Subject | Key Question |
 |----|---------|-------------|
-| | | |
-
-### Feedback Received
-
-| From | Feedback | Action Taken |
-|------|----------|-------------|
-| | | |
+| config-expert | Rules status | Confirmed rules already added to ruletypes.h — Task 1 prerequisite met |
 
 ### Consensus Plan
 
-_Final plan incorporating teammate feedback. This is what you build from.
-Write it self-contained — a fresh agent should be able to execute this section
-alone after context compaction._
-
-**Agreed approach:**
+**Agreed approach:** Implement all 4 tasks as described in architecture.md with the corrections noted in research:
+- Use `FACTION_THREATENINGLY` (not `FACTION_THREATENS`)
+- Use `IsDetrimentalSpell()` for spell check
+- Keep the `NPC::Process()` chain intact
 
 **Files to create or modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| | Create / Modify | |
+| zone/aggro.cpp | Modify | Add IsCompanion() guard after GetOwner() check (~line 402) |
+| zone/npc.cpp | Modify | Add !IsCompanion() to assist_timer condition (line 775) |
+| zone/companion.cpp | Modify | Rewrite Process() with stance-aware AI + flee suppression |
 
 **Change sequence (final):**
-1.
-2.
-3.
+1. aggro.cpp: 4-line IsCompanion() guard
+2. npc.cpp: 1-word addition to assist condition
+3. companion.cpp: Process() rewrite (~100 lines)
 
 ---
 
 ## Stage 4: Build
 
-_Execute the consensus plan. Log every change._
-
 ### Implementation Log
 
-_Chronological record of what you did. Each entry should have enough detail
-that a fresh agent could understand the change without reading the diff._
+#### 2026-03-08 — Task #1: aggro.cpp IsCompanion() guard
 
-#### [Date] — [Brief description]
+**What:** Added `IsCompanion()` early-return guard in `Mob::CheckWillAggro()` after the existing `GetOwner()` check
+**Where:** `/mnt/d/Dev/eq/eqemu/zone/aggro.cpp` after line 402
+**Why:** Companions don't use the NPC owner system (`GetOwner()` returns null), so the existing pet guard doesn't protect them. Without this, `DoNpcToNpcAggroScan()` would cause companions to aggro based on their original NPC faction.
+**Notes:** Guard is placed immediately after the GetOwner() block for logical grouping.
 
-**What:** _What you changed_
-**Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the consensus plan_
-**Notes:** _Edge cases, gotchas, things the next agent should know_
+#### 2026-03-08 — Task #2: npc.cpp assist guard
 
-### Problems & Solutions
+**What:** Added `!IsCompanion()` to the assist_timer condition
+**Where:** `/mnt/d/Dev/eq/eqemu/zone/npc.cpp` line 775
+**Why:** Prevents companions from calling `AIYellForHelp()` which would cause nearby same-faction NPCs to attack the companion's target — breaking the clean-break from NPC AI.
 
-| Problem | Root Cause | Solution |
-|---------|-----------|----------|
-| | | |
+#### 2026-03-08 — Task #3+4: companion.cpp Process() rewrite
+
+**What:** Rewrote `Companion::Process()` to implement stance-aware AI with flee suppression
+**Where:** `/mnt/d/Dev/eq/eqemu/zone/companion.cpp` lines 468-535
+**Why:** Implements the three stance behaviors: passive (clear hate/interrupt spell), balanced (group-assist), aggressive (hostile scan using owner's faction). Flee suppression via `CompanionFleeEnabled` rule.
+**Notes:**
+- Used `FACTION_THREATENINGLY` (value 8), not the non-existent `FACTION_THREATENS`
+- Used `IsDetrimentalSpell(casting_spell_id)` for offensive spell detection
+- `currently_fleeing` is a protected member of Mob — accessible from Companion
+- Balanced scan uses `GetCloseMobList(200.0f)` and checks if NPC is on any group member's hate list
 
 ### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
-| | Created / Modified | |
+| zone/aggro.cpp | Modified | +4 lines: IsCompanion() guard prevents faction-based aggro initiation |
+| zone/npc.cpp | Modified | +1 condition: !IsCompanion() prevents companion assist calls |
+| zone/companion.cpp | Modified | ~100 lines: stance-aware Process() rewrite + flee suppression |
 
 ---
 
 ## Open Items
 
-_Anything unfinished, deferred, or flagged for attention._
-
-- [ ]
+- [ ] Task #6: Build, validate, insert rule_values — pending after all C++ changes done
 
 ---
 
 ## Context for Next Agent
 
-_If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context.
-Reference the Consensus Plan section above._
+All C++ changes are complete. The three stance behaviors are implemented in `Companion::Process()`:
+- **Passive**: wipes hate list, sets target to null, interrupts detrimental spell casting, skips assist logic, falls through to `NPC::Process()` for regen/movement
+- **Balanced**: group-assist scan (checks if any group member is on a nearby NPC's hate list), plus existing owner-target assist logic
+- **Aggressive**: scans for NPCs hostile to the owner (using `owner->GetReverseFactionCon(npc)` >= FACTION_THREATENINGLY), engages closest hostile within `AggressiveScanRadius`
+
+Two guards added in other files:
+- `aggro.cpp`: `IsCompanion()` prevents faction-based aggro scanning initiation
+- `npc.cpp`: `!IsCompanion()` prevents assist yell calls
+
+Next step is Task #6: build, validate, and insert rule_values rows.

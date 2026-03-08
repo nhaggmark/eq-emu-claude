@@ -141,61 +141,83 @@ VALUES
 
 ## Stage 3: Socialize
 
-**Waiting on:** Architect to complete architecture.md. The architect's analysis may identify additional configurable parameters beyond what the PRD suggests (e.g., balanced-stance assist radius, passive stance HP regen modifier, AI tick rate tuning). I should not finalize the rule list until the architect's assessment is complete.
+### Architecture.md Review — 2026-03-08
 
-**Plan to send:** When architect posts architecture.md, I will:
-1. Read the Configuration Changes section
-2. Compare architect's rule recommendations against my Stage 2 plan
-3. Confirm rule names and types with c-expert (they own ruletypes.h)
-4. Finalize and post consensus plan
+Read full architecture.md. Key findings:
+
+- **Only 2 new rules confirmed** — `AggressiveScanRadius` (INT, 75) and `CompanionFleeEnabled` (BOOL, true). Matches Stage 2 plan exactly. No additional rules identified.
+- **Task 1 is config-expert's:** Add the two macros to ruletypes.h directly (not delegated to c-expert).
+- **DB inserts NOT required:** Verified against `rulesys.cpp._SaveRule()` — `SaveRules()` auto-INSERTs missing rule_values rows on world startup. Compile-time defaults used at runtime for any rule without a DB row.
 
 ### Messages Sent
 
 | To | Subject | Key Question |
 |----|---------|-------------|
-| (pending architect completion) | | |
+| team-lead | Rules audit complete, 2 new rules needed | Summary of findings |
+| architect | Confirmed: 2 new rules, C++ changes required | Answered 3 questions on existing rules, naming, config-only feasibility |
 
 ### Feedback Received
 
 | From | Feedback | Action Taken |
 |------|----------|-------------|
-| (pending) | | |
+| architect | Architecture complete. Task 1: add 2 macros to ruletypes.h. No manual DB inserts needed. | Verified auto-populate claim against rulesys.cpp. Confirmed correct. |
 
 ### Consensus Plan
 
-_Pending architect architecture.md completion. See Stage 2 Verified Plan for current best understanding._
+**Agreed approach:** Add exactly two new RULE macros to `eqemu/common/ruletypes.h` after line 1208. No manual DB inserts — rows auto-created on first post-build server startup.
+
+**Files to create or modify:**
+
+| File | Action | What Changes |
+|------|--------|-------------|
+| `eqemu/common/ruletypes.h` | Modify | Add 2 RULE macros to Companions category after line 1208 |
+
+**Change sequence (final):**
+1. Open `/mnt/d/Dev/eq/eqemu/common/ruletypes.h`, locate line 1208 (`EquipmentPersistsThroughDeath`)
+2. Insert two lines immediately after, before `RULE_CATEGORY_END()`:
+   ```cpp
+   RULE_INT(Companions, AggressiveScanRadius, 75, "Distance in game units that Aggressive stance scans for hostile targets")
+   RULE_BOOL(Companions, CompanionFleeEnabled, true, "Whether companions retain NPC flee behavior after recruitment")
+   ```
+3. Commit to feature branch.
+4. Notify c-expert that rules are defined — Task 4 (Process rewrite) can proceed.
+5. After build + restart: verify `#rules set Companions:AggressiveScanRadius` works; confirm DB rows auto-inserted.
 
 ---
 
 ## Stage 4: Build
 
-_Not started. Blocked on: (1) architect architecture.md, (2) c-expert adding macros to ruletypes.h, (3) server rebuild._
+### 2026-03-08 — Added two RULE macros to ruletypes.h
 
-### Implementation Log
+**What:** Added `RULE_INT(Companions, AggressiveScanRadius, 75, ...)` and `RULE_BOOL(Companions, CompanionFleeEnabled, true, ...)` to `eqemu/common/ruletypes.h` after line 1208.
 
-_No entries yet._
+**Where:** `/mnt/d/Dev/eq/eqemu/common/ruletypes.h` lines 1209–1210 (inserted after `EquipmentPersistsThroughDeath`)
+
+**Why:** Required for c-expert Tasks 4 and 5 — `companion.cpp` reads `RuleI(Companions, AggressiveScanRadius)` and `RuleB(Companions, CompanionFleeEnabled)`. Code won't compile without these macro definitions.
+
+**Notes:** No DB inserts needed. `SaveRules()` auto-inserts missing rows on world startup. Committed to feature branch. Notifying c-expert to proceed with Tasks 2–5.
 
 ### Problems & Solutions
 
 | Problem | Root Cause | Solution |
 |---------|-----------|----------|
-| | | |
+| Architect's claim that "X-macro auto-registers at compile time" was ambiguous | `SaveRules()` auto-insert behavior not obvious from ruletypes.h alone | Verified against `rulesys.cpp._SaveRule()` — confirmed compile-time defaults used at runtime, rows auto-created on SaveRules call |
 
 ### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
-| `eqemu/common/ruletypes.h` | Modify (c-expert task) | Add 2 new RULE macros to Companions category |
-| `peq.rule_values` (DB) | Insert | 2 new rows for AggressiveScanRadius and CompanionFleeEnabled |
+| `eqemu/common/ruletypes.h` | Modified | Added 2 new RULE macros to Companions category (lines 1209–1210) |
 
 ---
 
 ## Open Items
 
-- [ ] Wait for architect architecture.md — may reveal additional rules needed
-- [ ] Confirm with c-expert: exact line number and macro text for ruletypes.h additions
-- [ ] Insert rule_values rows after c-expert confirms build succeeds
-- [ ] Verify rules appear in-game via `#rules Companions`
+- [x] Read architecture.md
+- [x] Confirm rule names/types with architect
+- [x] Add macros to ruletypes.h (Task 1) — DONE
+- [ ] After build + restart: verify `#rules set Companions:AggressiveScanRadius` recognized
+- [ ] Confirm rule_values rows auto-inserted by checking DB post-restart
 
 ---
 
@@ -203,13 +225,13 @@ _No entries yet._
 
 If picking this up after context compaction:
 
-**What's done:** Full audit of existing Companion rules (27 rules, none stance-related). Confirmed `companion_data.stance` column exists (no schema change needed). Identified 2 new rules needed: `Companions:AggressiveScanRadius` (INT, 75) and `Companions:CompanionFleeEnabled` (BOOL, true).
+**What's done:** Full audit of existing Companion rules (27 rules, none stance-related). Confirmed `companion_data.stance` column exists. Added 2 new RULE macros to `eqemu/common/ruletypes.h` lines 1209–1210: `AggressiveScanRadius` (INT, 75) and `CompanionFleeEnabled` (BOOL, true). Committed to feature branch.
 
-**What's blocked:** Waiting for architect to finalize architecture.md (may add more rules). Waiting for c-expert to add macros to `eqemu/common/ruletypes.h` (lines 1181–1208, append before category end). After build, insert 2 rows into `peq.rule_values` (ruleset_id=1).
+**What remains:** Post-build verification only — after c-expert builds and restarts server, confirm rules appear via `#rules set Companions:AggressiveScanRadius` and check DB for auto-inserted rows.
 
 **Key files:**
-- `/mnt/d/Dev/eq/eqemu/common/ruletypes.h` lines 1181–1208 — Companions rule category (c-expert modifies)
-- `peq.rule_values` — needs 2 new rows (config-expert inserts after build)
+- `/mnt/d/Dev/eq/eqemu/common/ruletypes.h` lines 1181–1210 — Companions rule category (now includes 2 new rules)
+- `peq.rule_values` — will auto-populate on first post-build world startup (no manual inserts)
 - `peq.companion_data.stance` — already exists, no change needed
 
 **DB credentials:** `docker exec akk-stack-mariadb-1 mysql -ueqemu -p'ZSF4Iz1Eht0eZ2Qn68bAAEXln6Prc79' peq`
