@@ -4,6 +4,7 @@
 
 | Feature | Phase | Branch | Status |
 |---------|-------|--------|--------|
+| companion-ai-stances | Design | feature/companion-ai-stances | Bootstrap complete |
 | companion-experience | Validation | bugfix/companion-experience | BUG-001 fix confirmed working, remaining tests pending |
 | group-chat-addressing | Complete | feature/group-chat-addressing | Merged to main |
 | companion-equipment | Complete | feature/companion-equipment | All bugs resolved, validated in-game |
