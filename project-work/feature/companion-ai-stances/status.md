@@ -13,7 +13,7 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-08 | 2026-03-08 |
 | Design | game-designer + lore-master | Complete | 2026-03-08 | 2026-03-08 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-08 | 2026-03-08 |
-| Implementation | c-expert + config-expert + lua-expert | Not Started | | |
+| Implementation | c-expert + config-expert + lua-expert | In Progress | 2026-03-08 | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -58,7 +58,7 @@ _Populated by the architect after the architecture doc is approved._
 | 3 | Add `IsCompanion()` guard to assist timer in `zone/npc.cpp` | c-expert | Not Started | 1 line — prevent companions calling for help |
 | 4 | Rewrite `Companion::Process()` for stance-aware AI | c-expert | Not Started | ~100 lines — passive/balanced/aggressive behavior |
 | 5 | Add flee suppression using `CompanionFleeEnabled` rule | c-expert | Not Started | 3 lines — depends on Task 1 & 4 |
-| 6 | Update `cmd_passive` in `companion.lua` to call `WipeHateList()` | lua-expert | Not Started | 1 line — belt-and-suspenders with C++ |
+| 6 | Update `cmd_passive` in `companion.lua` to call `WipeHateList()` | lua-expert | Complete | 1 line — belt-and-suspenders with C++ |
 | 7 | Build, restart, and run manual validation | c-expert | Not Started | Depends on all other tasks |
 
 ---

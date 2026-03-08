@@ -2,158 +2,136 @@
 
 > **Feature branch:** `feature/companion-ai-stances`
 > **Agent:** lua-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task(s):** #6 (Task 6 from architecture.md)
+> **Date started:** 2026-03-08
+> **Current stage:** Complete
 
 ---
 
 ## Task Assignment
 
-_Copy your assigned task(s) from the architecture doc's Implementation Sequence._
-
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| | | | |
+| 6 | Update `cmd_passive` in `companion.lua` to call `WipeHateList()` | — (independent) | Complete |
 
 ---
 
 ## Stage 1: Plan
 
-_What you learned from reading source code and your proposed approach. NO CODE
-is written during this stage._
-
 ### Files Examined
 
 | File | Lines | What You Found |
 |------|-------|----------------|
-| | | |
+| `akk-stack/server/quests/lua_modules/companion.lua` | 735 | `cmd_passive` at line 447-450. Currently calls `SetStance(0)` and `Say()` only. No hate list clear. |
+| `claude/project-work/feature/companion-ai-stances/architect/architecture.md` | 404 | Lua Changes section specifies exactly: add `npc:WipeHateList()` after `SetStance(0)`. Notes WipeHateList() is already in Lua_Mob bindings. |
 
 ### Key Findings
 
-_Summarize what you learned about the existing system that informs your approach._
+- `cmd_passive` is at line 447–450 in companion.lua.
+- Architecture doc specifies the exact change: add `npc:WipeHateList()` after `npc:SetStance(0)`.
+- `WipeHateList()` is confirmed available via `Lua_Mob` bindings (architecture doc "Compatibility Risks" section).
+- `cmd_balanced` and `cmd_aggressive` require no Lua-side changes — no hate list manipulation needed on stance transition to those stances.
+- This task is independent — no dependency on c-expert tasks.
 
 ### Implementation Plan
-
-_Your proposed approach. Be specific enough that a fresh agent after context
-compaction could execute this plan without additional exploration._
 
 **Files to create or modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| | Create / Modify | |
+| `akk-stack/server/quests/lua_modules/companion.lua` | Modify | Add `npc:WipeHateList()` between `SetStance(0)` and `Say()` in `cmd_passive` |
 
 **Change sequence:**
-1.
-2.
-3.
+1. Add `npc:WipeHateList()` to `cmd_passive` at line 449.
 
 **What to test:**
--
+- Switch to passive while companion is in combat — companion should immediately disengage (belt-and-suspenders with C++ Companion::Process() which also clears hate list)
 
 ---
 
 ## Stage 2: Research
 
-_Context7 and documentation verification. Every API, function, and syntax in
-your plan must be verified against current docs before proceeding._
-
 ### Documentation Consulted
 
 | API / Function / Syntax | Source | Verified? | Notes |
 |------------------------|--------|-----------|-------|
-| | Context7 / WebFetch / Source | Yes / No | |
+| `npc:WipeHateList()` | architecture.md "Compatibility Risks" section | Yes | "WipeHateList() is already exposed via the Lua_Mob bindings (lua_mob.cpp)" — confirmed by architect |
 
 ### Plan Amendments
 
-_What changed in your plan based on documentation research? If nothing, state
-"Plan confirmed — no amendments needed."_
+Plan confirmed — no amendments needed.
 
 ### Verified Plan
 
-_Final plan after research. This is the version you socialize. If no amendments
-were needed, write "See Implementation Plan above — confirmed by research."_
+See Implementation Plan above — confirmed by research.
 
 ---
 
 ## Stage 3: Socialize
 
-_Share your plan with relevant teammates. Get confirmation before writing code._
-
 ### Messages Sent
 
 | To | Subject | Key Question |
 |----|---------|-------------|
-| | | |
+| team-lead | Task 6 is independent per architecture.md | No cross-agent coordination needed |
 
 ### Feedback Received
 
 | From | Feedback | Action Taken |
 |------|----------|-------------|
-| | | |
+| team-lead | Dispatched as independent parallel task | Proceeded directly to build |
 
 ### Consensus Plan
 
-_Final plan incorporating teammate feedback. This is what you build from.
-Write it self-contained — a fresh agent should be able to execute this section
-alone after context compaction._
+This task is independent per the architecture doc (Task 6 — no dependencies). The change is a single line addition. No cross-agent consultation required before building.
 
-**Agreed approach:**
+**Agreed approach:** Add `npc:WipeHateList()` to `cmd_passive` in companion.lua.
 
 **Files to create or modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| | Create / Modify | |
+| `akk-stack/server/quests/lua_modules/companion.lua` | Modify | Add `npc:WipeHateList()` at line 449 |
 
 **Change sequence (final):**
-1.
-2.
-3.
+1. Add `npc:WipeHateList()` between `npc:SetStance(0)` and `npc:Say(...)` in `cmd_passive`.
 
 ---
 
 ## Stage 4: Build
 
-_Execute the consensus plan. Log every change._
-
 ### Implementation Log
 
-_Chronological record of what you did. Each entry should have enough detail
-that a fresh agent could understand the change without reading the diff._
+#### 2026-03-08 — Add WipeHateList() to cmd_passive
 
-#### [Date] — [Brief description]
+**What:** Added `npc:WipeHateList()` between `npc:SetStance(0)` and `npc:Say("I will stand down.")` in `companion.cmd_passive`.
 
-**What:** _What you changed_
-**Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the consensus plan_
-**Notes:** _Edge cases, gotchas, things the next agent should know_
+**Where:** `/mnt/d/Dev/eq/akk-stack/server/quests/lua_modules/companion.lua`, lines 447–451.
+
+**Why:** When a player issues `!passive`, the companion should immediately disengage from any ongoing combat. `SetStance(0)` marks the stance, but without clearing the hate list the companion continues attacking its current target until the C++ `Companion::Process()` tick clears it (~100ms later). `WipeHateList()` provides immediate Lua-side disengagement. The C++ side also clears the hate list in `Companion::Process()` on every tick when stance is passive — this is the belt-and-suspenders guarantee from the architecture doc.
+
+**Notes:** `cmd_balanced` and `cmd_aggressive` do not need hate list manipulation — switching to those stances does not require clearing existing hate entries (the companion should continue fighting if already engaged).
 
 ### Problems & Solutions
 
 | Problem | Root Cause | Solution |
 |---------|-----------|----------|
-| | | |
+| None | — | — |
 
 ### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
-| | Created / Modified | |
+| `akk-stack/server/quests/lua_modules/companion.lua` | Modified | Added `npc:WipeHateList()` to `cmd_passive` at line 449 |
 
 ---
 
 ## Open Items
 
-_Anything unfinished, deferred, or flagged for attention._
-
-- [ ]
+- None.
 
 ---
 
 ## Context for Next Agent
 
-_If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context.
-Reference the Consensus Plan section above._
+Task 6 is complete. The only Lua change for this feature was adding `npc:WipeHateList()` to `cmd_passive` in companion.lua. The c-expert's changes to `Companion::Process()` (Task 4) also clear the hate list every tick when in passive stance — so there is redundancy by design. Lua changes require no build or restart; `#reloadquests` in-game picks them up immediately.
