@@ -14,3 +14,4 @@
 |----|-------|----------|---------|--------|
 | BUG-001 | No XP gain when companion deals killing blow | Critical | companion-experience | Fix confirmed in-game |
 | BUG-002 | Companion combat hits not shown in "Other's Hit" windows | High | companion-equipment | Fix deployed, pending validation |
+| BUG-003 | Item lost when companion cannot equip it | Critical | companion-equipment | Fix deployed, pending validation |
