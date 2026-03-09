@@ -4,7 +4,7 @@
 
 | Feature | Phase | Branch | Status |
 |---------|-------|--------|--------|
-| companion-aggro-fixes | Architecture | bugfix/companion-aggro-fixes | BUG-009 filed, architect investigating |
+| companion-aggro-fixes | Implementation | bugfix/companion-aggro-fixes | BUG-009 fix deployed, BUG-010 in progress |
 | companion-levelup-fixes | Complete | bugfix/companion-levelup-fixes | Merged to main |
 | companion-ai-stances | Complete | feature/companion-ai-stances | Merged to main |
 | companion-experience | Validation | bugfix/companion-experience | BUG-001 fix confirmed working, remaining tests pending |
@@ -23,4 +23,5 @@
 | BUG-006 | Balanced stance companion attacks when player merely targets mob | High | companion-ai-stances | Resolved |
 | BUG-007 | Companion disappears from group interface on level up | Critical | companion-levelup-fixes | Resolved |
 | BUG-008 | Companions drop from group interface when zoning | Critical | companion-levelup-fixes | Resolved |
-| BUG-009 | Companion NPCs generate zero hate/aggro on mobs | Critical | companion-aggro-fixes | Open |
+| BUG-009 | Companion NPCs generate zero hate/aggro on mobs | Critical | companion-aggro-fixes | Fix deployed, pending validation |
+| BUG-010 | Companion level reverts to base NPC level on zone-in | Critical | companion-aggro-fixes | Open |
