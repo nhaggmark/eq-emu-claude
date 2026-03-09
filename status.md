@@ -4,7 +4,7 @@
 
 | Feature | Phase | Branch | Status |
 |---------|-------|--------|--------|
-| companion-levelup-fixes | Validation | bugfix/companion-levelup-fixes | Fix deployed, pending in-game testing |
+| companion-levelup-fixes | Complete | bugfix/companion-levelup-fixes | Merged to main |
 | companion-ai-stances | Complete | feature/companion-ai-stances | Merged to main |
 | companion-experience | Validation | bugfix/companion-experience | BUG-001 fix confirmed working, remaining tests pending |
 | group-chat-addressing | Complete | feature/group-chat-addressing | Merged to main |
@@ -20,5 +20,5 @@
 | BUG-004 | Equipping compatible item fails when slot already occupied | High | companion-equipment | Resolved |
 | BUG-005 | Compatible item falsely rejected by class/race restriction | High | companion-equipment | Resolved |
 | BUG-006 | Balanced stance companion attacks when player merely targets mob | High | companion-ai-stances | Resolved |
-| BUG-007 | Companion disappears from group interface on level up | Critical | companion-levelup-fixes | Fix deployed, pending validation |
-| BUG-008 | Companions drop from group interface when zoning | Critical | companion-levelup-fixes | Open |
+| BUG-007 | Companion disappears from group interface on level up | Critical | companion-levelup-fixes | Resolved |
+| BUG-008 | Companions drop from group interface when zoning | Critical | companion-levelup-fixes | Resolved |
