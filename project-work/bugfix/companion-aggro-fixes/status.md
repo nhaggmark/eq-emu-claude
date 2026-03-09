@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-03-08 | 2026-03-08 |
-| Design | game-designer + lore-master | Not Started | | |
-| Architecture | architect + protocol-agent + config-expert | Not Started | | |
-| Implementation | _implementation team_ | Not Started | | |
+| Design | game-designer + lore-master | Skipped | — | — |
+| Architecture | architect | Complete | 2026-03-08 | 2026-03-08 |
+| Implementation | c-expert | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Design
+**Current phase:** Implementation
 
 ---
 
@@ -28,67 +28,64 @@ _Record each handoff between agents with context and any notes._
 ### bootstrap-agent → design team (game-designer + lore-master)
 - **Date:** 2026-03-08
 - **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
-  Spawn both agents as teammates for the Design phase.
+
+### architect → implementation team (c-expert)
+- **Date:** 2026-03-08
+- **Notes:** Root cause identified: `Companion` class does not override
+  `IsOfClientBotMerc()` or `IsOfClientBot()`, causing companions to be
+  wiped from NPC hate lists every AI tick by `WipeHateList(true)`.
+  Fix requires 2 lines in `companion.h` and ~6 lines in `hate_list.cpp`.
+  Only c-expert is needed — no SQL, Lua, or config changes required.
+  Architecture doc at `architect/architecture.md`.
 
 ---
 
 ## Implementation Tasks
 
-_Populated by the architect after the architecture doc is approved._
-
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| | | | | |
+| 1 | Add `IsOfClientBot()` and `IsOfClientBotMerc()` overrides to `companion.h` | c-expert | Not Started | 2 lines, type identification section |
+| 2 | Add companion recognition in SmartAggroList in `hate_list.cpp` | c-expert | Not Started | ~6 lines, after Merc check |
+| 3 | Build and verify compilation | c-expert | Not Started | Single build cycle |
 
 ---
 
 ## Open Questions
 
-_Questions that need answers before work can proceed. Tag the agent or
-person responsible for answering._
-
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| | | | | | |
+| | None | | | | |
 
 ---
 
 ## Blockers
 
-_Anything preventing progress. Remove when resolved._
-
 | Blocker | Raised By | Date | Resolved |
 |---------|-----------|------|----------|
-| | | | |
+| None | | | |
 
 ---
 
 ## Bug Reports
 
-_Bugs discovered during testing or play. Status flow:
-Open → Investigating → Fix In Progress → Resolved._
-
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| 1 | Companions generate no hate/aggro on mobs — melee, spells, heals, and taunt all ignored | Critical | user | Open | | |
+| 1 | Companions generate no hate/aggro on mobs — melee, spells, heals, and taunt all ignored | Critical | user | Fix Planned | c-expert | |
 
 ---
 
 ## Decision Log
 
-_Key decisions made during this feature's development._
-
 | # | Decision | Made By | Date | Rationale |
 |---|----------|---------|------|-----------|
-| | | | | |
+| 1 | Override `IsOfClientBotMerc()` and `IsOfClientBot()` rather than modifying `WipeHateList()` | architect | 2026-03-08 | Fixing the classification at the source (Companion class) fixes all systems that check these methods, not just the hate list wipe. Matches Bot and Merc patterns. |
+| 2 | Add companion check to SmartAggroList rather than using `AllowedToTank` special ability | architect | 2026-03-08 | `AllowedToTank` is a per-NPC special ability that would need to be set on every companion spawn. A class-level check is cleaner and guaranteed. |
 
 ---
 
 ## Completion Checklist
 
 ### Implementation Complete (agents can check these)
-
-_Filled in after game-tester validation passes._
 
 - [ ] All implementation tasks marked Complete
 - [ ] No open Blockers
@@ -99,9 +96,6 @@ _Filled in after game-tester validation passes._
 - [ ] All phases marked Complete in Workflow Status table
 
 ### Merge & Cleanup (USER-INITIATED ONLY)
-
-_These items happen ONLY when the user explicitly confirms the feature is done.
-The orchestrator NEVER initiates merge or branch cleanup on its own._
 
 - [ ] User confirmed feature is complete
 - [ ] Feature branch merged to main in ALL affected repos
@@ -115,17 +109,9 @@ The orchestrator NEVER initiates merge or branch cleanup on its own._
 
 ## Notes
 
-_Free-form notes, observations, or context that doesn't fit above._
+**Root cause:** `Companion::IsOfClientBotMerc()` returns `false` (inherited
+default), causing `WipeHateList(true)` in `mob_ai.cpp:1074` to purge
+companion entries from NPC hate lists every AI tick. Fix is 2 overrides in
+companion.h + SmartAggroList recognition in hate_list.cpp.
 
-**Bug summary:** Recruited NPC companions do not generate any hate/aggro on mobs. When
-companions deal melee damage, cast spells, heal, or use abilities like taunt, the mobs
-completely ignore them. Hate appears fundamentally broken for companion entities — mobs
-always stay glued to whoever initially pulled them regardless of companion actions. This
-breaks warrior tanking, rogue aggro management, cleric heal threat, and all class roles
-that depend on a functioning hate system.
-
-**Scope:** Fix hate generation for companion melee hits, spells, healing, and class
-abilities (taunt, backstab, etc.). All companion combat interactions should generate
-appropriate hate on mobs.
-
-**Primary fix location:** eqemu/ C++ server source.
+**Detailed analysis:** See `architect/context/root-cause-analysis.md`
