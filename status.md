@@ -24,4 +24,5 @@
 | BUG-007 | Companion disappears from group interface on level up | Critical | companion-levelup-fixes | Resolved |
 | BUG-008 | Companions drop from group interface when zoning | Critical | companion-levelup-fixes | Resolved |
 | BUG-009 | Companion NPCs generate zero hate/aggro on mobs | Critical | companion-aggro-fixes | Fix deployed, pending validation |
-| BUG-010 | Companion level reverts to base NPC level on zone-in | Critical | companion-aggro-fixes | Open |
+| BUG-010 | Companion level reverts to base NPC level on zone-in | Critical | companion-aggro-fixes | Fix deployed, pending validation |
+| BUG-011 | Zone crash when companion dies in combat | Critical | companion-aggro-fixes | Open |
