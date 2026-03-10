@@ -4,7 +4,7 @@
 
 | Feature | Phase | Branch | Status |
 |---------|-------|--------|--------|
-| companion-aggro-fixes | Implementation | bugfix/companion-aggro-fixes | BUG-009 fix deployed, BUG-010 in progress |
+| companion-aggro-fixes | Implementation | bugfix/companion-aggro-fixes | BUG-009 thru BUG-012 fixes deployed, BUG-013/014 fix deployed pending validation |
 | companion-levelup-fixes | Complete | bugfix/companion-levelup-fixes | Merged to main |
 | companion-ai-stances | Complete | feature/companion-ai-stances | Merged to main |
 | companion-experience | Validation | bugfix/companion-experience | BUG-001 fix confirmed working, remaining tests pending |
@@ -25,4 +25,7 @@
 | BUG-008 | Companions drop from group interface when zoning | Critical | companion-levelup-fixes | Resolved |
 | BUG-009 | Companion NPCs generate zero hate/aggro on mobs | Critical | companion-aggro-fixes | Fix deployed, pending validation |
 | BUG-010 | Companion level reverts to base NPC level on zone-in | Critical | companion-aggro-fixes | Fix deployed, pending validation |
-| BUG-011 | Zone crash when companion dies in combat | Critical | companion-aggro-fixes | Open |
+| BUG-011 | Zone crash when companion dies in combat | Critical | companion-aggro-fixes | Fix deployed (ValidateMember self-healing) |
+| BUG-012 | Companion loses equipment on death/re-recruitment | High | companion-aggro-fixes | Fix deployed (is_dismissed state management) |
+| BUG-013 | Dead companion re-recruitment blocked without DB cleanup | High | companion-aggro-fixes | Fix deployed, pending validation |
+| BUG-014 | Caster/healer combat positioning and casting broken | Critical | companion-aggro-fixes | Fix deployed, pending validation |
