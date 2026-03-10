@@ -4,7 +4,8 @@
 
 | Feature | Phase | Branch | Status |
 |---------|-------|--------|--------|
-| companion-aggro-fixes | Implementation | bugfix/companion-aggro-fixes | BUG-009 thru BUG-012 fixes deployed, BUG-013/014 fix deployed pending validation |
+| companion-aggro-fixes | Complete | bugfix/companion-aggro-fixes | Merged to main — all fixes validated |
+| improved-companion-stats | Implementation | feature/improved-companion-stats | !stats command + !equipment enhancement deployed |
 | companion-levelup-fixes | Complete | bugfix/companion-levelup-fixes | Merged to main |
 | companion-ai-stances | Complete | feature/companion-ai-stances | Merged to main |
 | companion-experience | Validation | bugfix/companion-experience | BUG-001 fix confirmed working, remaining tests pending |
