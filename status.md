@@ -30,3 +30,5 @@
 | BUG-012 | Companion loses equipment on death/re-recruitment | High | companion-aggro-fixes | Fix deployed (is_dismissed state management) |
 | BUG-013 | Dead companion re-recruitment blocked without DB cleanup | High | companion-aggro-fixes | Fix deployed, pending validation |
 | BUG-014 | Caster/healer combat positioning and casting broken | Critical | companion-aggro-fixes | Fix deployed, pending validation |
+| BUG-015 | Companion ranged attack flags not set when bow/arrows equipped | High | improved-companion-stats | Open |
+| BUG-016 | Stackable item quantity lost when trading to companion | Medium | improved-companion-stats | Open |
