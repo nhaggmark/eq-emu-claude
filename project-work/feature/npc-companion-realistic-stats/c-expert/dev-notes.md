@@ -236,3 +236,230 @@ Phase 1-3 complete. Key implementation files:
 - `companion.cpp`: All above implemented + Process() intercepts for melee and sitting regen
 - `attack.cpp`: ACSum() has IsCompanion() guard for defense skill divisor
 - Tests: Suites 9-12 cover weapon damage, ACSum regression, triple attack, Phase 3 survivability
+
+---
+
+## Phase 4 Stage 1: Plan
+
+### Task Assignment Update
+
+| # | Task | Status |
+|---|------|--------|
+| Phase 4 | Spell AI Tuning | In Progress |
+
+### Files Examined
+
+| File | Lines | What You Found |
+|------|-------|----------------|
+| `zone/companion_ai.cpp` | 1-1411 | All class-specific AI handlers. Key findings below. |
+| `zone/companion.cpp` | 1592-1636 | AI_EngagedCastCheck passes 0xFFFFFFFF (all types), AI_IdleCastCheck passes Buff|Heal|Pet |
+| `common/spdat.h` | 632-653 | SpellType_Buff=(1<<3), SpellType_InCombatBuff=(1<<10), SpellType_PreCombatBuff=(1<<20) |
+| `common/ruletypes.h` | 1181-1227 | Companions category — no HealThresholdPct or ManaCutoffPct rules yet |
+
+### Key Findings
+
+**Current behavior that needs changing:**
+
+1. **Cleric heal threshold**: `AI_HealGroupMember()` uses `lowest_hp = engaged ? 90 : 99`.
+   PRD says: heal below 80%. Fix: change 90 → 80.
+
+2. **Shaman slow priority**: `AI_Shaman()` uses `zone->random.Roll(70)` for slow.
+   PRD says: always attempt slow as first action (100% chance).
+   Fix: remove the roll (always attempt, or use roll(100) which always succeeds).
+   NOTE: The slow will only actually fire if the slow is available and target isn't immune.
+
+3. **Mana cutoff for DPS nuking**:
+   - Global OOM bail: `GetManaRatio() < 10.0f` in `AICastSpell()`.
+   - Wizard: `GetManaRatio() > 15.0f` check before nuking. PRD says 20%.
+   - Magician: `GetManaRatio() > 20.0f` — already 20%, correct.
+   - Necromancer: no mana check on nukes (50% roll for DoT, 40% for nuke). Add mana check.
+   - New rule `ManaCutoffPct` (default 20): DPS casters stop nuking below this %. Wizard + Necro need update.
+   - NOTE: We should also update the global OOM bail from 10% to use the ManaCutoffPct rule for cleanliness, but only for DPS — healers need to heal even when low mana.
+
+4. **No standard buffs during combat**:
+   - `AI_Cleric` (engaged) at line 857: calls `AI_BuffGroupMember()` when mana > 50%. REMOVE.
+   - `AI_IdleCastCheck()` already uses `SpellType_Buff | SpellType_Heal | SpellType_Pet` — correct.
+   - `AI_EngagedCastCheck()` passes 0xFFFFFFFF — includes SpellType_Buff and SpellType_PreCombatBuff.
+   - Simplest fix: in the engaged handlers, do NOT call `AI_BuffGroupMember()` unless the spell type is InCombatBuff.
+   - The AI_Cleric change is the main code fix; other class handlers already don't buff in combat.
+
+5. **Enchanter mez before slow**: Already implemented. `AI_Enchanter()` calls `AI_MezTarget()` first
+   then slow. PRD requirement is already satisfied.
+
+6. **Healers use efficient heals below 30% mana**:
+   - The current `SelectHealSpell()` helper picks spells from SpellType_Heal ordered by slot.
+   - To prefer efficient heals at low mana, we need to either tag spells with efficiency metadata
+     OR use the existing min_hp_pct / max_hp_pct column to order by mana cost.
+   - Simplest approach: when mana < 30%, skip expensive heals (mana cost > threshold) and use
+     smallest available heal. But spell data structures don't expose mana cost easily in the current
+     SelectHealSpell function.
+   - Better approach: add a `SelectEfficientHealSpell()` helper that picks the spell with the
+     lowest mana cost from the available heal spells. Use `spells[spellid].mana` for cost.
+   - When mana < `HealerManaConservePct` (30%), use SelectEfficientHealSpell instead.
+
+7. **Rebuff on combat→idle transition**:
+   - This requires detecting the transition from engaged to not-engaged.
+   - The `AI_IdleCastCheck()` already handles buffing via `SpellType_Buff | SpellType_Heal | SpellType_Pet`.
+   - The buffing will happen naturally on the next idle spell check tick.
+   - No code change needed — the idle check fires on the first idle tick after combat ends.
+   - PRD says "companions rebuff the group when transitioning from combat to idle" — this already works.
+
+### Rules to Add
+
+```cpp
+RULE_INT(Companions, HealThresholdPct, 80,
+    "HP percentage below which companion healers begin healing in combat (default 80)")
+RULE_INT(Companions, ManaCutoffPct, 20,
+    "Mana percentage below which companion DPS casters stop nuking (default 20)")
+RULE_INT(Companions, HealerManaConservePct, 30,
+    "Mana percentage below which healer companions use their most mana-efficient heal (default 30)")
+```
+
+### Implementation Plan
+
+**Files to modify:**
+
+| File | Action | What Changes |
+|------|--------|-------------|
+| `eqemu/common/ruletypes.h` | Modify | Add HealThresholdPct, ManaCutoffPct, HealerManaConservePct rules |
+| `eqemu/zone/companion_ai.cpp` | Modify | AI_HealGroupMember (80% threshold), AI_Shaman (100% slow), AI_Wizard/AI_Necromancer (mana cutoff), AI_Cleric (remove engaged buff), SelectEfficientHealSpell helper |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modify | Add Suite 13: Phase 4 Spell AI Tuning tests |
+
+**Change sequence (TDD):**
+1. Write Suite 13 failing tests (rules existence + behavioral checks)
+2. Add new rules to ruletypes.h
+3. Implement changes in companion_ai.cpp:
+   a. `AI_HealGroupMember`: change 90 → `RuleI(Companions, HealThresholdPct)`
+   b. `AI_Shaman`: remove 70% roll, always attempt slow
+   c. `AI_Wizard`: update mana cutoff to `RuleI(Companions, ManaCutoffPct)`
+   d. `AI_Necromancer`: add mana cutoff guard
+   e. `AI_Cleric`: remove buff casting during combat (remove line 857 block)
+   f. Add `SelectEfficientHealSpell()` helper and use it when mana < HealerManaConservePct
+4. Build and run ALL tests (suites 1-13)
+
+### TDD Test Design for Suite 13
+
+**Discriminating tests** (will FAIL before implementation):
+
+- `13.1`: Rule `HealThresholdPct` exists, default is 80
+- `13.2`: Rule `ManaCutoffPct` exists, default is 20
+- `13.3`: Rule `HealerManaConservePct` exists, default is 30
+- `13.4`: `AI_HealGroupMember()` behavior — threshold check. Since we can't call it directly with a mock group, we test via AICastSpell() with a cleric at low mana. But AICastSpell needs spells loaded and engaged state set. This is complex.
+
+The behavioral tests are hard to unit-test without a full group + engagement state. The most practical discriminating tests for Phase 4 are:
+- Rule existence tests (13.1-13.3) — trivial but verify rules were added
+- AICastSpell early-exit for OOM: test that a wizard with mana < 20% returns false from AICastSpell when mana OOM bail is set (but the 10% bail is global; this is harder to test)
+- Direct verification of the engagement-mode buff prevention: check that when the Cleric AI is in engaged state (IsEngaged() = false by default for test companions), AI_Cleric does not attempt to buff
+
+Since test companions are NOT engaged by default, and AI_Cleric only buffs in engaged state, the Cleric buff-in-combat change won't be directly testable without forcing engagement.
+
+**Pragmatic approach for Suite 13:**
+- Test rules exist (13.1-13.3) — will FAIL before rules are added
+- Test AICastSpell returns false for companion with no spells (already tested but validate)
+- Test AICastSpell called on a Wizard companion with mana below ManaCutoffPct — when spells loaded, should return false due to mana cutoff. This requires LoadCompanionSpells() + manipulating companion mana.
+- Test `AI_HealGroupMember` threshold indirectly: verify that the threshold constant comes from the rule (check RuleI value = 80).
+
+Given the difficulty of behavioral testing without a real group/engagement state, Suite 13 will:
+1. Test new rule existence and default values (3 tests)
+2. Test AICastSpell OOM behavior (wizard with 0 mana should return false)
+3. Test healer threshold value matches the PRD (80, not 90)
+4. Test that Shaman does not have a rand check — we can test the code path by calling AI_Shaman when mana is available but no target is set (should return false, not crash)
+
+---
+
+## Phase 4 Stage 2: Research
+
+### Verified Patterns
+
+| API / Function | Source | Verified? | Notes |
+|----------------|--------|-----------|-------|
+| `AI_HealGroupMember()` threshold | companion_ai.cpp:374 | Yes | `lowest_hp = engaged ? 90 : 99` — change 90 to RuleI |
+| `AI_Shaman()` slow roll | companion_ai.cpp:981 | Yes | `zone->random.Roll(70)` — change to always attempt |
+| `AI_Wizard()` mana guard | companion_ai.cpp:1180 | Yes | `GetManaRatio() > 15.0f` — change to ManaCutoffPct |
+| `AI_Magician()` mana guard | companion_ai.cpp:1214 | Yes | `GetManaRatio() > 20.0f` — already 20%, no change needed |
+| `AI_Necromancer()` no mana guard on nukes | companion_ai.cpp:1248-1261 | Yes | DoT at 70% roll, nuke at 40% roll — add mana check |
+| `AI_Cleric()` buff in engaged path | companion_ai.cpp:857 | Yes | Calls AI_BuffGroupMember() when mana > 50% during combat |
+| `spells[spellid].mana` | spdat.h | Yes | Mana cost field on SPDat_Spell_Struct |
+| Rule access pattern | rulesys.h | Yes | `RuleI(Companions, RuleName)` |
+
+### Plan Amendments from Research
+
+**Amendment 1**: For `SelectEfficientHealSpell()`, since the mana cost is in `spells[spellid].mana` (an int), sort candidates by ascending mana cost and return the cheapest one that satisfies HP threshold constraints. This is a new static helper function.
+
+**Amendment 2**: The `AI_HealGroupMember` threshold change from hardcoded 90 to `RuleI(Companions, HealThresholdPct)` needs to handle the case where the rule returns 80 but the function signature accepts `bool engaged`. When NOT engaged (idle), use 99 (same as before). When engaged, use the rule value.
+
+**Amendment 3**: For Shaman slow, simply remove `zone->random.Roll(70)` condition entirely. The slow attempt will always happen if:
+- SpellType_Slow is in iSpellTypes
+- A slow spell is available
+- Target is not slow-immune
+
+**Amendment 4**: Necromancer mana cutoff guard — add `GetManaRatio() > RuleI(Companions, ManaCutoffPct)` check for DoT and Nuke paths, same as wizard.
+
+---
+
+## Phase 4 Stage 3: Socialize
+
+No other agents in scope for Phase 4. All changes are in `companion_ai.cpp` (spell AI logic) and `ruletypes.h` (new rules). No cross-system dependencies.
+
+The changes:
+- Do NOT affect the `companion_spell_sets` database table (per PRD: "unchanged")
+- Do NOT change the SpellTypes bitmask system
+- Do NOT affect Phases 1-3 implementations
+- All gated by rule values (can revert by changing rules)
+
+---
+
+## Phase 4 Stage 4: Build
+
+### Status: Complete (2026-03-11)
+
+### Implementation Log
+
+#### 2026-03-11 — Phase 4 TDD and implementation
+
+**What:** Suite 13 tests (12 tests) + implementation of spell AI tuning
+
+**Where:**
+- `eqemu/common/ruletypes.h` — new rules HealThresholdPct, ManaCutoffPct, HealerManaConservePct
+- `eqemu/zone/companion_ai.cpp` — AI tuning in 6 handlers + new SelectEfficientHealSpell helper
+- `eqemu/zone/cli/tests/cli_companion_tests.cpp` — Suite 13
+
+### Files Modified
+
+| File | Action | Description |
+|------|--------|-------------|
+| `eqemu/common/ruletypes.h` | Modified | Added HealThresholdPct (80), ManaCutoffPct (20), HealerManaConservePct (30) rules |
+| `eqemu/zone/companion_ai.cpp` | Modified | 6 changes: (1) SelectEfficientHealSpell() helper, (2) AI_HealGroupMember 90→80% threshold via rule, (3) AI_HealGroupMember uses efficient heal below 30% mana, (4) AI_Shaman removes 70% slow roll, (5) AI_Wizard mana cutoff 15→20% via rule, (6) AI_Necromancer adds mana cutoff guards, (7) AI_Cleric removes buff-during-combat |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modified | Suite 13 tests (12 tests), updated Suite listing at top |
+
+**TDD result: All 13 suites pass (177 tests passing, 2 expected skips)**
+
+### Changes Summary
+
+1. **`SelectEfficientHealSpell()` helper**: new static helper that picks the heal spell with the lowest mana cost, used when healer mana < HealerManaConservePct.
+
+2. **`AI_HealGroupMember()` threshold**: `lowest_hp = engaged ? 90 : 99` changed to `engaged ? RuleI(Companions, HealThresholdPct) : 99`. Default 80%.
+
+3. **`AI_HealGroupMember()` mana conservation**: when mana < HealerManaConservePct, try SelectEfficientHealSpell first before falling back to SelectHealSpell.
+
+4. **`AI_Shaman()` slow**: removed `zone->random.Roll(70)` roll. Slow is now always attempted when the spell type is requested and a slow spell is available.
+
+5. **`AI_Wizard()` mana cutoff**: `GetManaRatio() > 15.0f` changed to `GetManaRatio() > static_cast<float>(RuleI(Companions, ManaCutoffPct))`. Default 20%.
+
+6. **`AI_Necromancer()` mana cutoff**: DoT and Nuke paths now also check `GetManaRatio() > ManaCutoffPct`. Lifetap is exempt (always allow for survival).
+
+7. **`AI_Cleric()` no combat buffs**: removed the engaged-path `AI_BuffGroupMember()` call. Replaced with `AI_InCombatBuff()` (only in-combat-type buffs during engagement). Idle path unchanged.
+
+8. **`AI_Shaman()` DoT mana guard**: added ManaCutoffPct check to DoT casting in engaged state.
+
+### PRD Acceptance Criteria Coverage
+
+| Criterion | Status |
+|-----------|--------|
+| Cleric begins healing at 80% HP in combat | Implemented (HealThresholdPct rule, default 80) |
+| Shaman reliably slows primary target as first action | Implemented (removed 70% roll, always attempts) |
+| DPS casters stop nuking below 20% mana | Implemented (ManaCutoffPct rule for Wizard + Necromancer; Magician was already 20%) |
+| No standard buffs cast during combat engagement | Implemented (AI_Cleric engaged buff removed; other classes already compliant) |
+| Enchanter prioritizes mez on adds | Already implemented (mez is first in AI_Enchanter engaged path) |
+| Healers switch to efficient heal below 30% mana | Implemented (HealerManaConservePct rule + SelectEfficientHealSpell) |
+| Companions rebuff on transition to idle | Already works (AI_IdleCastCheck includes SpellType_Buff) |
