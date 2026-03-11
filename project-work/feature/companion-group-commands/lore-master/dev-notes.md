@@ -89,3 +89,44 @@ This feature introduces no new world content (no zones, NPCs, factions, or quest
 3. The !flee hate-retention design is intentional and lore-correct. Do not "fix" it by adding hate clearing.
 
 4. Era lock holds. No new spell types, stat categories, or item properties needed.
+
+---
+
+## Implementation Audit — 2026-03-11
+
+### Files Reviewed
+- `akk-stack/server/quests/lua_modules/companion.lua` (full — group commands section lines 599–1156)
+- `akk-stack/server/quests/global/global_npc.lua`
+- `akk-stack/server/quests/lua_modules/companion_culture.lua`
+
+### Audit Results
+
+| Area | Rating | Notes |
+|------|--------|-------|
+| Era compliance | PASS | No post-Luclin content anywhere in new code |
+| !equipmentupgrade routing | PASS | Static formatted output confirmed; LLM sidecar not used; racial voice constraints not triggered |
+| !flee hate retention | PASS | No WipeHateList call; lore-correct per Norrath combat behavior |
+| Ogre voice constraints | PASS | N/A — all command responses are static system output, not LLM dialogue |
+| Mercenary voice constraints | PASS | !balanced correctly returns "Understood." for mercenary type (companion_type==1) |
+| Iksar/Vah Shir/Erudite constraints | PASS | No city, faction, or cultural references in new code |
+| Dialogue tone | PASS | Terse, functional, era-appropriate throughout |
+| Pre-existing recruitment lines | PASS WITH NOTES | Ogre saying "I will join you." is slightly verbose for the race; pre-existing issue outside this feature's scope |
+
+### Key Findings
+
+1. **!equipmentupgrade** (lines 1033–1150): Confirmed static string formatting only. Output format is `[name]: [new_item] (score: N) is an upgrade over [cur_item] (score: N) in my [slot] slot.` The companion name is a label prefix, not voiced dialogue — consistent with EQ system output conventions. Racial voice constraints from `companion_culture.lua` do not apply.
+
+2. **!flee** (lines 856–877): Comment on line 856 explicitly states hate list retention is intentional and lore-correct. Implementation calls `SetStance(0)`, `SetGuardMode(false)`, `RunTo()` — but NOT `WipeHateList()`. Correct. Compare to `!passive` (line 491) which does call `WipeHateList()`. The distinction is correct per lore.
+
+3. **!buffme / !buffs** (lines 941–987): SpellType_Buff=8 and SpellType_PreCombatBuff=1048576 constants are era-appropriate. Caster-only restriction implemented via `GetMaxMana() == 0` check. Correct for Classic EQ (warriors/rogues have 0 max mana).
+
+4. **!status** (lines 600–694): "Mana: N/A" for pure melee companions (line 623). Correct for Classic EQ.
+
+5. **Recruitment lines** (lines 456–459): `npc:Say("I will join you.")` applies to all races uniformly. An Ogre speaking this line is slightly verbose — Ogre vocabulary should be 1-2 words per `companion_culture.lua`. This is pre-existing code outside this feature's scope. Flagged for future lore refinement if desired; not blocking.
+
+### Final Sign-Off
+
+- **Date:** 2026-03-11
+- **Verdict:** APPROVED
+- **Summary:** Implementation is era-clean, tone-correct, and respects all established companion culture constraints. The primary concern from the PRD review — whether !equipmentupgrade would use the LLM sidecar — is resolved: it does not. All nine new commands use static formatted output only. No lore violations found in scope.
+- **Out-of-scope note:** Ogre recruitment line verbosity is a pre-existing issue; track separately if desired.
