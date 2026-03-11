@@ -463,3 +463,59 @@ The changes:
 | Enchanter prioritizes mez on adds | Already implemented (mez is first in AI_Enchanter engaged path) |
 | Healers switch to efficient heal below 30% mana | Implemented (HealerManaConservePct rule + SelectEfficientHealSpell) |
 | Companions rebuff on transition to idle | Already works (AI_IdleCastCheck includes SpellType_Buff) |
+
+---
+
+## Audit Fix Phase Stage 1–4
+
+### Task Assignment Update
+
+| # | Task | Status |
+|---|------|--------|
+| Audit Fixes | 8 issues identified by architect audit | In Progress |
+
+### Implementation Date: 2026-03-11
+
+### Issues Fixed
+
+| Issue | Priority | Fix Applied |
+|-------|----------|------------|
+| #1 Sitting regen timing | Critical | Added m_sitting_regen_timer(6000) to companion.h/cpp; gate sitting bonus behind timer in Process() |
+| #2 Magician mana cutoff | Medium | Replaced 20.0f hardcode with RuleI(Companions, ManaCutoffPct) in AI_Magician |
+| #3 Enchanter mana reserve | Medium | Added ManaCutoffPct+10 guard on nuke path in AI_Enchanter |
+| #4 int8 overflow | Medium | Widened int8 to int for lowest_hp, hpr, self_hp in AI_HealGroupMember; also widened SelectHealSpell/SelectEfficientHealSpell target_hp_pct param |
+| #5 Druid HoT preference | Enhancement | Added SelectHoTSpell() static helper; AI_Druid now prefers HoT above 50% HP, direct heal below |
+| #6 Shaman Cannibalize | Enhancement | Added FindCannibalizeSpell() method; AI_Shaman engaged+idle paths try canni at mana<40%/HP>80% |
+| #7 Pet spam | Enhancement | Added GetManaRatio()>25.0f guard to AI_Magician, AI_Necromancer, AI_Beastlord pet summon paths |
+| #8 Wizard DS spam | Enhancement | Added IsDamageShieldSpell() static helper; new AI_WizardBuff() restricts DS to melee targets only |
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `eqemu/zone/companion.h` | Added m_sitting_regen_timer to protected section; added FindCannibalizeSpell() and AI_WizardBuff() declarations |
+| `eqemu/zone/companion.cpp` | Added m_sitting_regen_timer(6000) to constructor initializer list; added .Check() gate on sitting regen in Process() |
+| `eqemu/zone/companion_ai.cpp` | Added #include "common/spdat.h"; widened SelectHealSpell/SelectEfficientHealSpell to int; added SelectHoTSpell(), IsDamageShieldSpell() helpers; fixed int8 in AI_HealGroupMember; fixed ManaCutoffPct in AI_Magician; added mana guard to AI_Enchanter nuke; added 25% mana guard to pet summon in 3 classes; added AI_WizardBuff(); updated AI_Wizard idle to use AI_WizardBuff; added cannibalize logic to AI_Shaman; added FindCannibalizeSpell() |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Added Suite 14 (TestCompanionAuditFixes), 27 tests for all 8 issues; added #include "common/spdat.h"; registered suite in entry point |
+
+### TDD Status
+
+All tests written BEFORE implementation. Tests will be verified passing after Docker/build is available.
+
+**NOTE on Test 14.20:** Test 14.20 (Cannibalize data presence in companion_spell_sets) is a SQL verification task belonging to the data-expert. It is listed in the architect's plan but was not written as a C++ test here — the C++ implementation correctly handles the case where no Cannibalize spells exist (safe degradation: FindCannibalizeSpell returns 0 and no cast happens).
+
+**NOTE on test discriminability:** Several tests (14.5, 14.6) verify structural correctness (no crash, mana ratio math) rather than behavioral output since behavioral testing requires a fully engaged entity with a group and valid spell targets. For tests that require real behavioral discrimination (e.g., 14.1 sitting regen), we test the guard condition directly by calling Process() twice and verifying the second call doesn't produce additional bonus.
+
+### Build Status
+
+PENDING — Docker Desktop not running. Build required before test verification.
+
+**Build command (when Docker available):**
+```
+docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"
+```
+
+**Test command:**
+```
+docker exec -it akk-stack-eqemu-server-1 bash -c "cd /home/eqemu/server && ./bin/zone tests:companion"
+```

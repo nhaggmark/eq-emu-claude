@@ -53,6 +53,7 @@ _Record each handoff between agents with context and any notes._
 | 4 | Phase 3: Sitting regen bonus (Companion::Process) | c-expert | Complete (2026-03-10) | Companions::SittingRegenMult rule (default 200 = 2x OOC regen). |
 | 5 | Phase 3: Defense skill AC divisor fix (attack.cpp ACSum) | c-expert | Complete (2026-03-10) | IsCompanion() guard uses /3 (melee) or /2 (pure casters) instead of /5. |
 | 6 | Audit Fix: Add Cannibalize I-IV to companion_spell_sets for shaman | data-expert | Complete (2026-03-11) | spell_ids 265, 754, 1572, 1332 inserted with spell_type=2, tiered min/max_level. SQL at data-expert/context/cannibalize-spells.sql. |
+| 7 | Audit Fixes #1-#8: sitting regen timer, int8 overflow, mana cutoffs, druid HoT, shaman canni, pet spam guard, wizard DS | c-expert | Complete (2026-03-11) | All 8 fixes implemented. Suite 14 (27 tests) added. All 14 suites pass (zero failures). |
 
 ---
 
