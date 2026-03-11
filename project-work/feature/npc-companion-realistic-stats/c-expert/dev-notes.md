@@ -508,14 +508,74 @@ All tests written BEFORE implementation. Tests will be verified passing after Do
 
 ### Build Status
 
-PENDING — Docker Desktop not running. Build required before test verification.
+COMPLETE — Build and tests verified on 2026-03-11.
 
-**Build command (when Docker available):**
-```
-docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"
-```
+All 15 suites pass: Suite 14 (27 tests) + prior suites all green.
+2 expected SKIPs (Monk below-60 NPC not in DB; ScaleStatsToLevel NPC at max level).
 
-**Test command:**
-```
-docker exec -it akk-stack-eqemu-server-1 bash -c "cd /home/eqemu/server && ./bin/zone tests:companion"
-```
+---
+
+## Phase 5 Stage 1: Plan
+
+### Task Assignment Update
+
+| # | Task | Status |
+|---|------|--------|
+| Phase 5 | Resist Caps + Focus Effects + Balance Documentation | **Complete** |
+
+### Files Modified in Phase 5
+
+| File | Action |
+|------|--------|
+| `eqemu/common/ruletypes.h` | Added `Companions::ResistCapBase` rule (default 50) |
+| `eqemu/zone/companion.h` | Added `#include <algorithm>`, `GetMaxResist()`, 5 resist getter overrides (GetMR/FR/DR/PR/CR inline), `GetFocusEffect()` override |
+| `eqemu/zone/companion.cpp` | Implemented `GetMaxResist()` (level*5+base, 0=disable), `GetFocusEffect()` (delegates to Mob:: base) |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Suite 15 (27 tests): resist caps + focus effects + rule defaults |
+| `claude/project-work/.../architect/context/balance-tuning.md` | Balance documentation created |
+
+---
+
+## Phase 5 Stage 4: Build (TDD)
+
+### Status: Complete (2026-03-11)
+
+### Implementation Log
+
+#### 2026-03-11 — Phase 5 TDD and implementation
+
+**What:** Resist caps (GetMaxResist + 5 inline getter overrides) + focus effect fix
+(GetFocusEffect override delegating to Mob base class) + ResistCapBase rule +
+Suite 15 tests (27 assertions).
+
+**TDD Order:**
+1. Suite 15 tests written FIRST (all discriminating: FAIL before implementation)
+2. ResistCapBase rule added → tests 15.1, 15.16 pass
+3. companion.h declarations + companion.cpp implementations added
+4. All Suite 15 tests pass
+5. All 14 prior suites verified still passing
+
+**Build result:** 244 targets, 0 errors, 0 warnings.
+**Test result:** All 15 suites pass. 2 expected SKIPs. 0 failures.
+
+### Key Design Decisions
+
+1. **Resist cap as inline GetMR/FR/DR/PR/CR overrides** (not CalcMR pre-calculation):
+   - Matches the plan: on-the-fly clamping, always reflects current state
+   - Bot uses CalcMR (pre-accumulation), we use the simpler inline pattern
+   - Requires `std::min` in companion.h → added `#include <algorithm>`
+
+2. **GetFocusEffect delegates to Mob::**
+   - Single line bypasses both NPC problems (rule gate + wrong array access)
+   - No changes to NPC, Mob, Client, or Bot code — zero regression risk
+
+3. **ResistCapBase=0 disables capping** (returns 32000):
+   - Clean disable mechanism: set rule to 0 via `#rules set` in-game
+   - Value 32000 is unreachable by realistic companion resists
+
+### PRD Acceptance Criteria Coverage
+
+| Criterion | Status |
+|-----------|--------|
+| No companion resist stat exceeds level-appropriate cap | Implemented (cap = level*5+ResistCapBase, default 350@60) |
+| Focus effect items produce measurable benefit | Implemented (GetFocusEffect → Mob::, bypasses NPC rule gate) |
+| Overall companion power evaluated + tuning knobs documented | Done (`balance-tuning.md` created) |
