@@ -22,17 +22,60 @@ rationale are never lost.
 
 _game-designer + lore-master exchanges during Phase 2._
 
-### [Date] — [Topic]
+### 2026-03-11 — Proactive Lore Context (Pre-PRD)
 
-**From:** [agent] → **To:** [agent]
+**From:** lore-master → **To:** game-designer
 
-> [Message content or summary]
+> Proactive lore review of brainstorm notes. Key findings:
+> - All 9 commands are mechanically clean, no era concerns
+> - !flee hate retention is lore-correct (mobs pursue in Norrath)
+> - !buffme/!buffs caster-only restriction matches Norrath class design
+> - !equipmentupgrade/!equipmentmissing are purely mechanical, no lore issues
+> - Companion response tone should respect racial voice from companion_culture.lua
+>   (Ogres: terse, Mercenaries: no warmth, Iksar: disciplined)
+> - !assist: loyal vs mercenary companions differ in flavor, not behavior
 
-**Response from** [agent]:
+**Response from** game-designer:
 
-> [Response content or summary]
+> Acknowledged all points. PRD uses functional message templates (not
+> personality-driven dialogue). Racial voice is a downstream implementation
+> concern handled by companion_culture.lua. Asked lore-master to do formal
+> review of completed PRD.
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** Lore context incorporated into PRD design decisions. No PRD changes needed.
+
+---
+
+### 2026-03-11 — Formal Lore Review: Complete PRD
+
+**From:** game-designer → **To:** lore-master
+
+> Sent completed PRD (game-designer/prd.md) for formal lore sign-off.
+> Requested review of: era compliance, feedback message tone, named NPCs
+> in examples, error messages for non-caster companions, thematic
+> appropriateness of !flee and !equipmentupgrade mechanics.
+
+**Response from** lore-master:
+
+> **VERDICT: APPROVED**
+>
+> Section-by-section review:
+> - Era Compliance: APPROVED — all stats, spells, equipment are Classic-Luclin
+> - !flee hate retention: APPROVED — lore-correct, authentic to Norrath
+> - !assist auto-stance-switch: APPROVED — pragmatic and lore-neutral
+> - Feedback message tone: APPROVED — functional system messages, correct approach
+> - !status output format: APPROVED — informational, no narrative needed
+> - !buffme/!buffs caster restriction: APPROVED — matches Norrath class design
+> - !help categories: APPROVED — logical organization, no lore concerns
+> - Named NPCs in examples: APPROVED — illustrative placeholders, no conflicts
+>
+> **One note (non-blocking):** !equipmentupgrade responses — clarify during
+> architecture whether these are static formatted output or LLM-routed dialogue.
+> If LLM-routed, racial voice constraints apply (e.g., Ogre cannot say
+> "stat sum: 45 vs 12"). This is an architecture question, not a PRD revision.
+
+**Outcome:** Lore sign-off granted. PRD approved for handoff to architect.
+One architecture-phase note logged about !equipmentupgrade response routing.
 
 ---
 
@@ -40,35 +83,11 @@ _game-designer + lore-master exchanges during Phase 2._
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
-
 ---
 
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._
-
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
 
 ---
 
@@ -79,7 +98,12 @@ This table is the quick-reference for anyone catching up._
 
 | # | Decision | Agents Involved | Date | Context |
 |---|----------|----------------|------|---------|
-| | | | | |
+| 1 | !flee does NOT clear hate list — realistic retreat | game-designer, lore-master | 2026-03-11 | Lore-master confirmed: lore-correct, mobs pursue in Norrath |
+| 2 | !equipmentupgrade uses simple stat sum (AC + all stats + HP + Mana) | game-designer | 2026-03-11 | Intentionally simplistic for quick actionable signal |
+| 3 | !buffme/!buffs queue for idle, never interrupt combat | game-designer | 2026-03-11 | Prevents breaking heal/combat spell rotations |
+| 4 | !assist auto-switches passive→balanced before engaging | game-designer, lore-master | 2026-03-11 | Lore-master confirmed: pragmatic and lore-neutral |
+| 5 | Feedback messages are functional templates, not personality-driven | game-designer, lore-master | 2026-03-11 | Racial voice handled downstream by companion_culture.lua |
+| 6 | !equipmentupgrade response routing TBD at architecture phase | lore-master | 2026-03-11 | If LLM-routed, racial voice constraints apply |
 
 ---
 
@@ -89,4 +113,4 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
-| | | | |
+| !equipmentupgrade response: static vs LLM-routed | lore-master flagged, architect to decide | Deferred to architecture phase | No |
