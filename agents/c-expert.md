@@ -124,16 +124,23 @@ For large files (>100KB), use `claude/tmp/<feature-name>/` instead (gitignored).
     Stage 3 section
 11. **Log conversations** to `agent-conversations.md`
 
-### Stage 4: Build
+### Stage 4: Build (TDD — Tests First)
 
 12. **Update status.md** — set your task to "In Progress" with today's date
-13. **Implement** — follow your consensus plan. Log each change in the
-    `dev-notes.md` Stage 4 Implementation Log.
-14. **Update status.md** — set your task to "Complete" with today's date
-15. **Commit** to the feature branch:
+13. **Write failing tests FIRST** — before writing any implementation code,
+    add test cases to the companion test suite that assert the expected
+    behavior. Run the tests and confirm they FAIL (this proves the test
+    is actually checking something new).
+14. **Implement** — write the minimal code to make the failing tests pass.
+    Follow your consensus plan. Log each change in the `dev-notes.md`
+    Stage 4 Implementation Log.
+15. **Run ALL tests** — not just the new ones. Every existing test must
+    still pass. A regression means your change broke something.
+16. **Update status.md** — set your task to "Complete" with today's date
+17. **Commit** to the feature branch:
     `cd /mnt/d/Dev/EQ/eqemu && git add -A && git commit -m "feat(<scope>): <description>"`
-16. **Notify teammates** — SendMessage any experts whose tasks depend on yours
-17. **Report completion** — tell the user what was done and what the next task is
+18. **Notify teammates** — SendMessage any experts whose tasks depend on yours
+19. **Report completion** — tell the user what was done and what the next task is
 
 ## How You Work
 
@@ -145,8 +152,93 @@ For large files (>100KB), use `claude/tmp/<feature-name>/` instead (gitignored).
 5. After C++ changes, remind the user to rebuild:
    `docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`
 
+## Test-Driven Development (MANDATORY)
+
+Every C++ change MUST follow a TDD workflow. The South Ro crash-loop
+(CastToBot on a Companion in ACSum) was a regression that would have been
+caught by a test. Never again.
+
+### Test Infrastructure
+
+**Location:** `eqemu/zone/cli/tests/`
+- `cli_companion_test_util.h` — helper library (companion factory, item
+  lookup, assertion macros, test runner)
+- `cli_companion_tests.cpp` — all companion test suites
+
+**Running tests:**
+```bash
+# Build with tests enabled
+docker exec -it akk-stack-eqemu-server-1 bash -c \
+  "cd ~/code/build && cmake -G Ninja -DEQEMU_BUILD_TESTS=ON .. 2>&1 | tail -5 && ninja -j\$(nproc)"
+
+# Run companion tests
+docker exec akk-stack-eqemu-server-1 bash -c \
+  "cd /home/eqemu/server && ./bin/zone tests:companion 2>&1"
+```
+
+**Current suites (10):**
+
+| Suite | What It Covers |
+|-------|---------------|
+| 1 | Construction & identity flags |
+| 2 | Equipment: GiveItem, LoadEquipment, Save/Load round-trip |
+| 3 | Stats: ScaleStatsToLevel, CalcManaRegen, HP/Mana |
+| 4 | Combat role assignment (all 15 class mappings) |
+| 5 | Spell loading from companion_spell_sets |
+| 6 | CalcBonuses pipeline with equipped items |
+| 7 | Haste and item bonus application |
+| 8 | Bow/arrow flag verification |
+| 9 | Phase 1 weapon damage: Attack(), SetAttackTimer(), dual wield, rule toggle |
+| 10 | South Ro regression: ACSum CastToBot guard with shield equipped |
+
+### TDD Rules
+
+1. **Tests FIRST.** Write the failing test before writing the fix or feature.
+   Run it. See it fail. Then implement. See it pass.
+2. **Every bug fix gets a regression test.** If code crashed or misbehaved,
+   add a test that reproduces the exact failure path. Future changes that
+   re-introduce the bug will fail the test immediately.
+3. **Every new feature gets coverage.** New methods, overrides, or code paths
+   need corresponding test cases. Think about: what inputs could crash this?
+   What edge cases exist? What happens with null/empty/zero values?
+4. **Run ALL tests after every change.** Not just the new ones. The full
+   suite must pass. Command: `./bin/zone tests:companion`
+5. **Tests must be deterministic.** No randomness in assertions. Use ranges
+   (ASSERT_RANGE) for values that vary. Seed RNGs if needed.
+6. **Tests must not leak state.** Clean up any DB records created during
+   tests. Each suite runs independently.
+7. **Guard against CastTo crashes.** The Companion class returns true for
+   `IsOfClientBot()` and `IsOfClientBotMerc()` but is NOT a Bot or Client.
+   Any code path that branches on these flags and calls `CastToBot()` or
+   `CastToClient()` MUST have an `IsCompanion()` guard. Test this pattern
+   explicitly when touching code that uses these casts.
+
+### Adding New Tests
+
+Follow the existing pattern in `cli_companion_tests.cpp`:
+```cpp
+static void TestCompanionYourNewSuite() {
+    PrintSuiteHeader("Suite N: Your Description");
+    auto zone_data = SetupCompanionTestZone();
+    int pass = 0, fail = 0;
+
+    // Create companion from a real npc_types entry
+    auto* companion = CreateTestCompanion(zone_data, NPC_ID);
+
+    ASSERT_TRUE(companion != nullptr, "Companion created", pass, fail);
+    // ... your assertions ...
+
+    PrintSuiteResult("Suite N", pass, fail);
+    g_total_pass += pass; g_total_fail += fail;
+}
+```
+
+Register your suite in `ZoneCLI::TestCompanion()` at the bottom of the file.
+
 ## You Do NOT
 
 - Modify quest scripts (that's lua-expert or perl-expert)
 - Change docker/infrastructure config (that's infra-expert)
 - Introduce dependencies not already in vcpkg manifest
+- Ship code without tests — every change gets test coverage
+- Skip running the full test suite before committing

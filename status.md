@@ -32,3 +32,5 @@
 | BUG-014 | Caster/healer combat positioning and casting broken | Critical | companion-aggro-fixes | Fix deployed, pending validation |
 | BUG-015 | Companion ranged attack flags not set when bow/arrows equipped | High | improved-companion-stats | Open |
 | BUG-016 | Stackable item quantity lost when trading to companion | Medium | improved-companion-stats | Open |
+| BUG-017 | Companion caster mana percentage chat messages show wrong values | High | npc-companion-realistic-stats | Open |
+| BUG-018 | Equipment trade to companion produces duplicate items when replacing gear | Critical | npc-companion-realistic-stats | Open |

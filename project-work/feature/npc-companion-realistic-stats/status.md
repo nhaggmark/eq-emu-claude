@@ -1,0 +1,176 @@
+# npc-companion-realistic-stats — Status Tracker
+
+> **Feature branch:** `feature/npc-companion-realistic-stats`
+> **Created:** 2026-03-10
+> **Last updated:** 2026-03-11 (validation complete)
+
+---
+
+## Workflow Status
+
+| Phase | Agent | Status | Started | Completed |
+|-------|-------|--------|---------|-----------|
+| Bootstrap | bootstrap-agent | Complete | 2026-03-10 | 2026-03-10 |
+| Design | game-designer + lore-master | Complete | 2026-03-10 | 2026-03-10 |
+| Architecture | architect + protocol-agent + config-expert | Complete (Phase 5) | 2026-03-11 | 2026-03-11 |
+| Implementation | _implementation team_ | Complete | 2026-03-10 | 2026-03-11 |
+| Validation | game-tester | Complete | 2026-03-11 | 2026-03-11 |
+| Completion | _user_ | Not Started | | |
+
+**Current phase:** Completion (awaiting user in-game testing confirmation)
+
+---
+
+## Handoff Log
+
+_Record each handoff between agents with context and any notes._
+
+### bootstrap-agent → design team (game-designer + lore-master)
+- **Date:** 2026-03-10
+- **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
+  Spawn both agents as teammates for the Design phase.
+
+### design team → architect
+- **Date:** 2026-03-10
+- **Notes:** PRD complete at `game-designer/prd.md`. Lore-master review: approved
+  (purely mechanical changes, no lore implications). PRD covers 5 phases:
+  Phase 1 (weapon damage/delay), Phase 2 (combat skills + damage bonus + triple attack),
+  Phase 3 (STA-to-HP + sitting regen + defense AC divisor), Phase 4 (spell AI tuning),
+  Phase 5 (resist caps + focus effects + balance pass). Primary input document:
+  `improved-companion-stats/architect/context/companion-mechanics-reference.md`
+  (22-item gap table). 6 open questions for architect investigation. 9 suggested
+  new rule names for tunability.
+
+### game-tester → completion
+- **Date:** 2026-03-11
+- **Server-side result:** PASS
+- **Test count:** 242 PASSED, 0 FAILED, 2 expected SKIPS (15 suites)
+- **Build:** Clean — `ninja: no work to do.`
+- **DB integrity:** 0 orphaned companion_spell_sets records; Cannibalize I-IV confirmed; ResistCapBase=50 in rule_values
+- **Log analysis:** No ERROR-level entries in zone logs; companion spawn/depop messages are expected Info-level
+- **In-game guide:** 21 functional tests + 5 edge case tests at `game-tester/test-plan.md`
+- **Recommendations:** Fill in balance-tuning.md after in-game testing; optionally insert Phase 3-4 rules to rule_values table for Spire UI visibility
+- **Blockers:** None
+
+### architect → implementation team (Phase 5)
+- **Date:** 2026-03-11
+- **Notes:** Phase 5 plan complete at `architect/context/phase5-plan.md`. Covers
+  resist caps (GetMR/FR/DR/PR/CR overrides + GetMaxResist with level*5+50 formula),
+  focus effect fix (GetFocusEffect override routing to Mob base class), and balance
+  documentation. 1 new rule: Companions::ResistCapBase. 17 tests in Suite 15.
+  8 implementation tasks. Required agents: c-expert (Tasks 8-14), data-expert (Task 15).
+
+---
+
+## Implementation Tasks
+
+| # | Task | Agent | Status | Notes |
+|---|------|-------|--------|-------|
+| 1 | Phase 1: Weapon damage/delay path | c-expert | Complete (2026-03-10) | SetAttackTimer() override, GetBaseDamage() uses equipped weapon. |
+| 2 | Phase 2: Triple attack (CheckTripleAttack, DoAttackRounds, Process() intercept) | c-expert | Complete (2026-03-10) | Warriors 56+, Monks/Rangers 60+. |
+| 3 | Phase 3: STA-to-HP conversion (CalcMaxHP override) | c-expert | Complete (2026-03-10) | Bonus STA from items+spells converted to HP via per-class formula. |
+| 4 | Phase 3: Sitting regen bonus (Companion::Process) | c-expert | Complete (2026-03-10) | Companions::SittingRegenMult rule (default 200 = 2x OOC regen). |
+| 5 | Phase 3: Defense skill AC divisor fix (attack.cpp ACSum) | c-expert | Complete (2026-03-10) | IsCompanion() guard uses /3 (melee) or /2 (pure casters) instead of /5. |
+| 6 | Audit Fix: Add Cannibalize I-IV to companion_spell_sets for shaman | data-expert | Complete (2026-03-11) | spell_ids 265, 754, 1572, 1332 inserted with spell_type=2, tiered min/max_level. SQL at data-expert/context/cannibalize-spells.sql. |
+| 7 | Audit Fixes #1-#8: sitting regen timer, int8 overflow, mana cutoffs, druid HoT, shaman canni, pet spam guard, wizard DS | c-expert | Complete (2026-03-11) | All 8 fixes implemented. Suite 14 (27 tests) added. All 14 suites pass (zero failures). |
+| 8 | Phase 5: Add ResistCapBase rule to ruletypes.h | c-expert | Complete (2026-03-11) | 3 lines in Companions rule category. Default 50. |
+| 9 | Phase 5: Declare resist cap + focus overrides in companion.h | c-expert | Complete (2026-03-11) | GetMaxResist, GetMR/FR/DR/PR/CR, GetFocusEffect declarations + #include <algorithm>. |
+| 10 | Phase 5: Implement GetMaxResist + resist getter overrides in companion.cpp | c-expert | Complete (2026-03-11) | level*5+ResistCapBase formula, std::min clamping (~15 lines). |
+| 11 | Phase 5: Implement GetFocusEffect override in companion.cpp | c-expert | Complete (2026-03-11) | Delegates to Mob::GetFocusEffect, bypassing NPC's broken path (~8 lines). |
+| 12 | Phase 5: Write Suite 15 tests (17 tests) | c-expert | Complete (2026-03-11) | 27 tests written and passing (expanded from 17 planned). |
+| 13 | Phase 5: Build + run all 15 suites, verify 221 tests pass | c-expert | Complete (2026-03-11) | 244 targets built. 242 PASSED, 0 FAILED, 2 expected SKIPs (exceeded 221 target). |
+| 14 | Phase 5: Create balance tuning documentation | c-expert | Complete (2026-03-11) | balance-tuning.md created with rule table, cap values, tuning guidance. |
+| 15 | Phase 5: Insert ResistCapBase rule value into database | data-expert | Complete (2026-03-11) | Companions:ResistCapBase=50 inserted into rule_values (ruleset_id=1). SQL at data-expert/context/phase5-rules.sql. |
+
+---
+
+## Open Questions
+
+_Questions that need answers before work can proceed. Tag the agent or
+person responsible for answering._
+
+| # | Question | Raised By | Assigned To | Status | Answer |
+|---|----------|-----------|-------------|--------|--------|
+| 1 | Monk fist damage scaling — use npc_types or monk H2H table? | game-designer | architect | Resolved | Using npc_types fallback when no weapon equipped (Phase 1 implemented). |
+| 2 | Weapon ratio validation — sanity bounds needed? | game-designer | architect | Resolved | Not needed; weapon items have pre-validated stats from PEQ database. |
+| 3 | Skill data source — reuse skill_caps table or companion-specific? | game-designer | architect | Resolved | Using skill_caps table (Phase 2 implemented). |
+| 4 | Focus effect code path — does Mob focus apply to companions? | game-designer | architect | Resolved | NPC::GetFocusEffect blocks item focus (NPC_UseFocusFromItems=false + wrong item access). Fix: override to call Mob::GetFocusEffect which uses correct GetInv() pattern. See phase5-plan.md. |
+| 5 | Spell AI thresholds — data-driven or code-driven? | game-designer | architect | Resolved | Code-driven with rules (Phase 4 implemented: HealThresholdPct, ManaCutoffPct, HealerManaConservePct). |
+| 6 | Attack path divergence risk — override vs IsCompanion() branch? | game-designer | architect | Resolved | Using Companion class overrides (Phases 1-3 implemented). AC divisor uses IsCompanion() branch in attack.cpp (shared code). |
+
+---
+
+## Blockers
+
+_Anything preventing progress. Remove when resolved._
+
+| Blocker | Raised By | Date | Resolved |
+|---------|-----------|------|----------|
+| | | | |
+
+---
+
+## Bug Reports
+
+_Bugs discovered during testing or play. Status flow:
+Open → Investigating → Fix In Progress → Resolved._
+
+| # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
+|---|-----|----------|-------------|--------|-------------|----------|
+| | | | | | | |
+
+---
+
+## Decision Log
+
+_Key decisions made during this feature's development._
+
+| # | Decision | Made By | Date | Rationale |
+|---|----------|---------|------|-----------|
+| 1 | Phase order: weapons first, then skills, then survivability | game-designer | 2026-03-10 | Weapon damage/delay is the highest-impact gap and the foundation for damage bonus (Phase 2). Skills must be in place before defense divisor change is meaningful (Phase 3). |
+| 2 | Fallback to npc_types when no weapon equipped | game-designer | 2026-03-10 | Preserves monk unarmed combat, freshly-recruited companion behavior, and prevents regression. |
+| 3 | Phase 4 (spell AI) is independent of Phases 1-3 | game-designer | 2026-03-10 | Spell AI tuning is behavioral, not dependent on stat/combat mechanics. Can be parallelized. |
+| 4 | Target companion power: 70-85% of player character | game-designer | 2026-03-10 | Effective enough for group roles, preserves player edge. Multiple tuning knobs available. |
+| 5 | Resist cap formula: level*5 + ResistCapBase (default 50) | architect | 2026-03-11 | Yields 350 at level 60, which is 70% of Client's 500 cap — matching the PRD power target. Rule-based for tunability. |
+| 6 | Focus fix: override GetFocusEffect to call Mob:: base class | architect | 2026-03-11 | Bypasses two NPC bugs (NPC_UseFocusFromItems=false, wrong equipment[] access) in one clean override. No existing code modified. |
+| 7 | Balance approach: rely on natural AA gap for 70-85% target | architect | 2026-03-11 | Companions lack AAs which add 10-25% effective power at level 60. Default rule values should produce correct balance without tuning. StatScalePct available as safety valve. |
+
+---
+
+## Completion Checklist
+
+### Implementation Complete (agents can check these)
+
+_Filled in after game-tester validation passes._
+
+- [x] All implementation tasks marked Complete
+- [x] No open Blockers
+- [x] game-tester server-side validation: PASS (242/242, 0 failures, 2 expected skips)
+- [ ] User completed in-game testing guide: PENDING (test-plan.md at game-tester/test-plan.md)
+- [ ] All changes committed and pushed to feature branch in ALL repos
+- [ ] Server rebuilt (if C++ changed)
+- [x] All phases marked Complete in Workflow Status table
+
+### Merge & Cleanup (USER-INITIATED ONLY)
+
+_These items happen ONLY when the user explicitly confirms the feature is done.
+The orchestrator NEVER initiates merge or branch cleanup on its own._
+
+- [ ] User confirmed feature is complete
+- [ ] Feature branch merged to main in ALL affected repos
+- [ ] Main pushed to origin in ALL affected repos
+- [ ] Stale feature branches deleted (local + remote)
+
+**Merged by:** _name_
+**Merge date:** _YYYY-MM-DD_
+
+---
+
+## Notes
+
+- Primary reference: `improved-companion-stats/architect/context/companion-mechanics-reference.md`
+- The companion system's dual identity (IsNPC()=true AND IsOfClientBot()=true) is a key
+  architectural constraint that affects how changes should be implemented.
+- This feature is expected to significantly increase companion effectiveness when well-geared.
+  The StatScalePct rule and other tuning knobs provide safety valves.
+- Phase 5 plan: `architect/context/phase5-plan.md` — resist caps, focus effects, balance pass.
