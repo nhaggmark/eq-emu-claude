@@ -45,11 +45,13 @@ _Record each handoff between agents with context and any notes._
 
 ## Implementation Tasks
 
-_Populated by the architect after the architecture doc is approved._
-
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| | | | | |
+| 1 | Phase 1: Weapon damage/delay path | c-expert | Complete (2026-03-10) | SetAttackTimer() override, GetBaseDamage() uses equipped weapon. |
+| 2 | Phase 2: Triple attack (CheckTripleAttack, DoAttackRounds, Process() intercept) | c-expert | Complete (2026-03-10) | Warriors 56+, Monks/Rangers 60+. |
+| 3 | Phase 3: STA-to-HP conversion (CalcMaxHP override) | c-expert | Complete (2026-03-10) | Bonus STA from items+spells converted to HP via per-class formula. |
+| 4 | Phase 3: Sitting regen bonus (Companion::Process) | c-expert | Complete (2026-03-10) | Companions::SittingRegenMult rule (default 200 = 2x OOC regen). |
+| 5 | Phase 3: Defense skill AC divisor fix (attack.cpp ACSum) | c-expert | Complete (2026-03-10) | IsCompanion() guard uses /3 (melee) or /2 (pure casters) instead of /5. |
 
 ---
 

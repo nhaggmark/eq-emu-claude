@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/npc-companion-realistic-stats`
 > **Agent:** c-expert
-> **Task(s):** Phase 2 — Combat Skills & Special Attacks
+> **Task(s):** Phase 3 — Stats Drive Survivability
 > **Date started:** 2026-03-10
 > **Current stage:** Build
 
@@ -12,163 +12,227 @@
 
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| Phase 1 | Weapon damage path, SetAttackTimer, rules | — | **Complete** (prior session) |
-| Phase 2 | Triple attack, CheckTripleAttack, DoAttackRounds | Phase 1 | **In Progress** |
+| Phase 1 | Weapon damage path, SetAttackTimer, rules | — | **Complete** |
+| Phase 2 | Triple attack, CheckTripleAttack, DoAttackRounds | Phase 1 | **Complete** |
+| Phase 3 | STA-to-HP, sitting regen, defense AC divisor | Phase 2 | **In Progress** |
 
 ---
 
-## Stage 1: Plan
+## Phase 3 Stage 1: Plan
 
 ### Files Examined
 
 | File | Lines | What You Found |
 |------|-------|----------------|
-| `zone/companion.h` | 432 | SetAttackTimer declared, Attack declared, Phase 1 done |
-| `zone/companion.cpp` | ~1500 | Attack() override with weapon damage + damage bonus already done in Phase 1 |
-| `zone/attack.cpp` | 6938-7000 | `Mob::DoMainHandAttackRounds()` — UseLiveCombatRounds=true path only does double attack, NO triple attack |
-| `zone/mob.cpp` | 4696-4712 | `CanThisClassTripleAttack()` — for non-IsClient, uses `GetSkill(SkillTripleAttack) > 0` |
-| `zone/bot.cpp` | 2047-2088 | `Bot::CheckTripleAttack()` — skill-based with ClassicTripleAttack=false path |
-| `zone/bot.cpp` | 2851-2947 | `Bot::DoAttackRounds()` — includes triple attack check, flurry |
-| `zone/mob_ai.cpp` | 1182-1183 | `DoMainHandAttackRounds(target)` called from `Mob::AI_Process()` |
-| `zone/mob.h` | 270-283 | `DoMainHandAttackRounds` NOT virtual; `ProcessAttackRounds` NOT virtual |
-| `common/ruletypes.h` | 606 | `UseLiveCombatRounds=true` (default and DB value confirmed) |
-| DB: skill_caps | skill_id=74 | Only class_id=16 (Berserker) has SkillTripleAttack; Warriors, Monks, Rangers do NOT |
-| DB: rule_values | | `UseLiveCombatRounds=true`, `ClassicTripleAttack=false`, `ClassicTripleAttackChance*=100` |
+| `zone/attack.cpp` | 896-965 | `Mob::ACSum()` — IsNPC() branch uses defense_skill/5; IsCompanion() must be guarded out |
+| `zone/mob.cpp` | 989-994 | `Mob::CalcMaxHP()` — virtual, uses base_hp + itembonuses.HP; no STA contribution |
+| `zone/client_mods.cpp` | 314-340 | `Client::CalcMaxHP()` — uses CalcBaseHP() which applies STA formula |
+| `zone/client_mods.cpp` | 479-506 | `Client::CalcBaseHP()` — STA-based formula: `5 + (level * lm/10) + STA * level * lm / 3000` |
+| `zone/companion.cpp` | 891-904 | `Companion::CalcHPRegen()` — already overridden; returns max(native_regen, floor_regen) |
+| `zone/npc.cpp` | 645-690 | `NPC::Process()` regen section — sitting adds 3 HP/tick; OOC regen used via ooc_regen field |
+| `common/ruletypes.h` | 1181-1219 | All existing Companion rules; need to add STAToHPFactor, SittingRegenMult |
 
 ### Key Findings
 
-1. **Phase 1 is fully done**: Damage bonus (GetWeaponDamageBonus) is already applied in Companion::Attack() at lines 566-581 of companion.cpp. Skills (dodge, parry, riposte, defense, offense) already work via the NPC constructor populating from SkillCaps.
+1. **ACSum defense divisor bug**: At attack.cpp:920, the `if (IsNPC())` block uses `GetSkill(SkillDefense) / 5`. Companions have `IsNPC()=true` so they enter this block. Fix: add `&& !IsCompanion()` to the condition so companions fall into the else branch and get `/3` or `/2`.
 
-2. **Triple attack gap**: `UseLiveCombatRounds=true` causes `Mob::DoMainHandAttackRounds()` to skip the triple attack block entirely. Only Bot (which has its own `DoAttackRounds()` called from Bot's Process) gets triple attack.
+   BUT: the NPC block also adds `GetAC()` (base NPC AC) and `GetPetACBonusFromOwner()`. Companions need `GetAC()` but not necessarily `GetPetACBonusFromOwner()` (they're not pets). Since companions DO have a meaningful `GetAC()` from their npc_types, we can't skip the whole NPC block. We must keep `GetAC()` and `GetPetACBonusFromOwner()` for companions too (companion owner bonus is 0 anyway), and only change the defense skill divisor.
 
-3. **No SkillTripleAttack in DB for Warriors/Monks/Rangers**: The skill_caps table only has SkillTripleAttack (74) for class_id=16 (Berserker). So `CanThisClassTripleAttack()` via GetSkill() returns false for all companion classes that should triple attack. We need our own level/class check.
+   **Revised approach**: Within the NPC branch, add an additional `if (IsCompanion())` check just for the defense skill part. Specifically:
+   ```cpp
+   // NPC branch keeps: ac += GetAC(); ac += GetPetACBonusFromOwner(); spell_aa_ac stuff
+   // Change just the defense skill line:
+   if (IsCompanion()) {
+       // Use Client/Bot divisor: /3 for melee, /2 for casters
+       if (EQ::ValueWithin(static_cast<int>(GetClass()), Class::Necromancer, Class::Enchanter))
+           ac += GetSkill(EQ::skills::SkillDefense) / 2 + spell_aa_ac / 3;
+       else
+           ac += GetSkill(EQ::skills::SkillDefense) / 3 + spell_aa_ac / 4;
+   } else {
+       // NPC path: /5
+       ac += GetSkill(EQ::skills::SkillDefense) / 5;
+       if (EQ::ValueWithin(...))
+           ac += spell_aa_ac / 3;
+       else
+           ac += spell_aa_ac / 4;
+   }
+   ```
 
-4. **Correct approach**: Add `CheckTripleAttack()` and `DoAttackRounds()` to Companion (same pattern as Bot), then intercept the attack_timer in Companion::Process() before NPC::Process() consumes it.
+2. **STA-to-HP**: Override `CalcMaxHP()` in Companion. Base formula from Mob::CalcMaxHP() adds `itembonuses.HP` to `base_hp`. We extend this: AFTER `Mob::CalcMaxHP()`, add STA bonus HP:
+   ```
+   bonus_hp = (itembonuses.STA + spellbonuses.STA) * hp_per_sta
+   ```
+   where `hp_per_sta` is level/class dependent, scaled by `Companions::STAToHPFactor` rule.
+
+   HP-per-STA table (per PRD): tanks ~8, melee DPS ~5, priest ~4, caster DPS ~3. These are at level 60; scale linearly with level.
+
+3. **Sitting HP regen bonus**: The `CalcHPRegen()` override already returns a base value. The NPC::Process() regen section adds 3 HP/tick for sitting (`npc_sitting_regen_bonus += 3`). For companions, the PRD wants 2-3x regen when sitting OOC. The approach: intercept in `Companion::CalcHPRegen()` — when sitting and not engaged, return a higher value. OR override the regen calculation in Process() before calling NPC::Process().
+
+   **Revised approach**: Instead of overriding Process() regen, let NPC::Process() use our CalcHPRegen() result. The issue is NPC::Process() at line 648 calls `GetNPCHPRegen()` (not `CalcHPRegen()`). Let's check what GetNPCHPRegen() returns.
+
+   Need to verify: does NPC::Process() call CalcHPRegen() or GetNPCHPRegen()? Looking at npc.cpp:648: `int64 npc_hp_regen = GetNPCHPRegen();` — this is what sets the regen rate. And CalcHPRegen() is only used in AI_Start() to seed `hp_regen`. So the sitting bonus is applied in NPC::Process via `npc_sitting_regen_bonus += 3`.
+
+   **Cleanest approach**: Add a `Companion::CalcHPRegen()` behavior that accounts for sitting, but the real sitting bonus comes from modifying the value set in `hp_regen`. Since companions' `hp_regen` is seeded in AI_Start() via CalcHPRegen(), we can't change hp_regen mid-process for sitting.
+
+   Alternative: Override the sitting bonus in Companion::Process() BEFORE calling NPC::Process(). Read the current HP, call NPC::Process(), then apply additional regen if we were sitting and not engaged and HP went up by the regular amount. This is messy.
+
+   **Better approach**: Override `GetNPCHPRegen()` if virtual. If not, we can add a `Companion::Process()` HP top-up after NPC::Process() returns. The simplest correct approach is to intercept in Process() and apply the sitting regen multiplier manually.
+
+   The plan:
+   - In `Companion::Process()`, AFTER calling `NPC::Process()`, check if we are sitting and not engaged.
+   - If sitting OOC, apply an additional `SittingRegenMult` percentage bonus to what NPC::Process() already added.
+   - Since we can't easily tell how much NPC::Process() added, we calculate the sitting bonus separately.
+
+   Actually the cleanest approach: in `Companion::Process()` BEFORE `NPC::Process()`, calculate the sitting bonus HP to add, add it manually, then call NPC::Process(). NPC::Process() will see HP below max and add its own regen. We effectively layer our sitting bonus on top.
+
+   Wait - that double-counts. Let's think differently.
+
+   **Final approach for sitting regen**: Override `CalcHPRegen()` to return a higher value when sitting. Then re-seed `hp_regen` in Process() before NPC::Process() runs.
+
+   Looking at npc.cpp:648: `int64 npc_hp_regen = GetNPCHPRegen();`
+   And GetNPCHPRegen() returns: `hp_regen + itembonuses.HPRegen + spellbonuses.HPRegen`
+   Where `hp_regen` is the field set in AI_Start().
+
+   If we update `hp_regen` in Companion::Process() based on sitting state, then NPC::Process() will use the updated value via GetNPCHPRegen(). This is clean and correct.
+
+   So: in `Companion::Process()`, BEFORE calling `NPC::Process()`, do:
+   ```cpp
+   // Update hp_regen based on sitting state for NPC::Process to use
+   hp_regen = CalcHPRegen(); // base value
+   if (IsSitting() && !IsEngaged()) {
+       int mult = RuleI(Companions, SittingRegenMult); // default 200 = 2x
+       hp_regen = (hp_regen * mult) / 100;
+   }
+   ```
+
+   But wait: CalcHPRegen() already returns `max(native_regen, floor_regen)`. If native_regen is already 0, floor is 1 HP/tick. With 2x that's 2 HP/tick. But companions use OOC regen (5% of max HP, set as `ooc_regen` field) which is much larger and is computed separately in NPC::Process() via `ooc_regen_calc`. So for companions, the dominant regen is OOC, not hp_regen.
+
+   The sitting bonus should multiply the OOC regen too. But `ooc_regen` is an integer percentage and NPC::Process() uses it directly.
+
+   **Simplest correct approach**: In Companion::Process(), after NPC::Process(), if sitting and not engaged and HP < max_hp, add extra HP based on sitting multiplier * base_regen. This gives the ADDITIVE sitting bonus on top of OOC regen.
+
+   Actually, re-reading npc.cpp:662-666:
+   ```cpp
+   npc_regen = std::max(npc_hp_regen, ooc_regen_calc);
+   if (GetHP() < GetMaxHP() && !IsPet()) {
+       if (!IsEngaged()) {
+           SetHP(GetHP() + npc_regen + npc_sitting_regen_bonus);
+   ```
+
+   For companions (not pets, not engaged), regen is `max(hp_regen, ooc_regen_calc) + 3`.
+   The `+ 3` sitting bonus is small. We want the SITTING state to amplify the total regen to 2-3x.
+
+   Cleanest approach: Override `CalcHPRegen()` to check IsSitting() and multiply the base by SittingRegenMult/100 when sitting. Then re-seed hp_regen from this at the start of each Process() call. This affects `npc_hp_regen` but NOT `ooc_regen_calc`.
+
+   To also multiply OOC regen when sitting, we'd need to change `ooc_regen` dynamically. That's possible.
+
+   **FINAL DECISION**: Keep it simple. In Companion::Process(), before NPC::Process():
+   ```cpp
+   // Sitting regen multiplier: when sitting OOC, amplify OOC regen
+   if (IsSitting() && !IsEngaged() && GetHP() < GetMaxHP()) {
+       int mult = RuleI(Companions, SittingRegenMult);
+       int base_ooc = (GetMaxHP() * RuleI(Companions, OOCRegenPct)) / 100;
+       int sitting_bonus = (base_ooc * (mult - 100)) / 100; // additive bonus beyond base
+       if (sitting_bonus > 0) {
+           SetHP(std::min(GetHP() + sitting_bonus, GetMaxHP()));
+       }
+   }
+   ```
+   This adds the extra sitting regen BEFORE NPC::Process() (which adds the OOC regen). Total sitting regen = ooc_regen + sitting_bonus. At SittingRegenMult=200 (2x), the bonus equals the base OOC amount, so total is 2x OOC.
 
 ### Implementation Plan
 
-**Files to create or modify:**
+**Files to modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| `eqemu/zone/companion.h` | Modify | Declare `CheckTripleAttack()`, `DoAttackRounds(Mob*, int)` |
-| `eqemu/zone/companion.cpp` | Modify | Implement both, intercept attack_timer in Process() |
-| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modify | Add Suite 11: Phase 2 triple attack tests |
+| `eqemu/common/ruletypes.h` | Modify | Add STAToHPFactor and SittingRegenMult rules before RULE_CATEGORY_END |
+| `eqemu/zone/attack.cpp` | Modify | ACSum() — add IsCompanion() branch for defense skill divisor |
+| `eqemu/zone/companion.h` | Modify | Declare `CalcMaxHP()` override |
+| `eqemu/zone/companion.cpp` | Modify | Implement `CalcMaxHP()` with STA bonus; add sitting regen in Process() |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modify | Add Suite 12: Phase 3 STA-to-HP, sitting regen, defense AC divisor tests |
 
-**Change sequence:**
-1. Write failing tests (Suite 11) for triple attack behavior
-2. Add declarations to companion.h
-3. Implement `CheckTripleAttack()` in companion.cpp
-4. Implement `DoAttackRounds()` in companion.cpp (mirrors Bot's version, no AA extras)
-5. Intercept attack_timer in Companion::Process() before NPC::Process()
-6. Build and run ALL tests (suites 1-11)
-
-**What to test:**
-- Warrior at 55 (below 56): CheckTripleAttack returns false
-- Warrior at 56+: CheckTripleAttack returns true (can triple)
-- Monk at 59 (below 60): CheckTripleAttack returns false
-- Monk at 60+: CheckTripleAttack returns true
-- Ranger at 60+: CheckTripleAttack returns true
-- Rogue at 60: CheckTripleAttack returns false (rogues don't triple)
-- Cleric at 60: CheckTripleAttack returns false
-- DoAttackRounds() doesn't crash with target
-- SetAttackTimer and Attack still work with Phase 1 (regression)
+**Change sequence (TDD):**
+1. Write Suite 12 tests (failing) for STA-to-HP, sitting regen, defense AC divisor
+2. Add rules to ruletypes.h
+3. Fix ACSum() in attack.cpp
+4. Add CalcMaxHP() declaration to companion.h
+5. Implement CalcMaxHP() in companion.cpp
+6. Add sitting regen intercept in Companion::Process()
+7. Build and run ALL tests (suites 1-12)
 
 ---
 
-## Stage 2: Research
+## Phase 3 Stage 2: Research
 
 ### Documentation Consulted
 
 | API / Function / Syntax | Source | Verified? | Notes |
 |------------------------|--------|-----------|-------|
-| `Bot::CheckTripleAttack()` | bot.cpp:2047 | Yes | Direct source read |
-| `Bot::DoAttackRounds()` | bot.cpp:2851 | Yes | Direct source read |
-| `Mob::CanThisClassTripleAttack()` | mob.cpp:4696 | Yes | Only Client/Bot via IsOfClientBot() |
-| `ClassicTripleAttack` rule | DB query | Yes | false on this server |
-| `UseLiveCombatRounds` rule | DB query | Yes | true on this server — confirms triple attack is blocked for base NPCs |
-| `SkillTripleAttack` in DB | DB query | Yes | Only Berserker (class_id=16); Warriors/Monks/Rangers have none |
-| PRD Phase 2 triple attack levels | PRD | Yes | Warriors 56+, Monks/Rangers 60+ |
+| `Mob::CalcMaxHP()` | mob.cpp:989 | Yes | Virtual, uses base_hp + itembonuses.HP |
+| `Mob::ACSum()` | attack.cpp:896 | Yes | IsNPC() at line 920, defense_skill/5 for NPCs |
+| `NPC::Process()` regen | npc.cpp:645-690 | Yes | npc_sitting_regen_bonus=3, ooc_regen used for OOC |
+| `Companion::CalcHPRegen()` | companion.cpp:891 | Yes | Already overridden, returns max(native, floor) |
+| `GetNPCHPRegen()` | Mob function | Yes | Returns hp_regen + itembonuses.HPRegen + spellbonuses.HPRegen |
+| Client::CalcBaseHP() STA formula | client_mods.cpp:503 | Yes | level * ClassLevelFactor * STA / 3000 at pre-SoD |
+| `itembonuses.STA` / `spellbonuses.STA` | bonuses.cpp | Yes | Set by CalcSpellBonuses/CalcItemBonuses |
 
 ### Plan Amendments
 
-**Amendment 1**: Since `ClassicTripleAttack=false` on our server but `ClassicTripleAttack` code checks level 60 for warrior even in classic mode, and PRD wants warrior at 56+, we bypass CanThisClassTripleAttack() entirely in our CheckTripleAttack() and implement our own level/class check.
+**Amendment 1**: The ACSum fix should keep the companion IN the NPC branch (to preserve GetAC() addition) but use client/bot defense divisor within that branch. This avoids disrupting the AC softcap logic which is in the `else if (!skip_caps && IsOfClientBot())` section that already applies to companions correctly.
 
-**Amendment 2**: The DoAttackRounds() does NOT replicate Bot's AA-based extra attack logic (ExtraAttackChance, GiveDoubleAttack thresholds, etc.) since companions don't have AAs. We implement a simpler version.
+**Amendment 2**: For CalcMaxHP() override, call `Mob::CalcMaxHP()` first to get the NPC base calculation (base_hp + itembonuses.HP), then add the STA bonus HP on top. This preserves full compatibility.
 
-**Amendment 3**: For the Process() interception - we check attack_timer.Check(false) first (non-consuming peek) to see if it's ready. Then handle melee ourselves. NPC::Process() will then see attack_timer already consumed and skip the attack block. This works because `attack_timer.Check()` calls `Check(true)` internally which resets the timer.
+**Amendment 3**: HP per STA per level. Use simplified formula rather than Client formula (which is complex). Per PRD: tanks 8, melee 5, priests 4, casters 3 at level 60. Scale by (level/60) to give proportional values at lower levels. Apply `STAToHPFactor` as percentage modifier (100 = full, 50 = half).
 
-Actually on re-reading: `Timer::Check()` with no arg resets the timer by default. If we call `attack_timer.Check()` in our Process() code, NPC::Process() will see it as NOT fired and won't attack again. This is exactly what we want.
+Formula: `hp_per_sta = base_per_sta * level / 60 * STAToHPFactor / 100`
+where base_per_sta is 8 (tank), 5 (melee), 4 (priest), 3 (caster).
 
-### Verified Plan
-
-**Plan confirmed with amendments above.**
-
-The companion's Companion::Process() will:
-1. Check if engaged and able to attack (same guard as Mob::AI_Process)
-2. If attack_timer.Check() fires, call DoAttackRounds(target, slotPrimary)
-3. If CanThisClassDualWield() and CheckDualWield() and attack_dw_timer.Check(), call DoAttackRounds(target, slotSecondary)
-4. Call NPC::Process() which handles movement, spell AI, regen, everything except the (now-consumed) attack timer
+Only bonus STA (itembonuses.STA + spellbonuses.STA) contributes, NOT base STA.
 
 ---
 
-## Stage 3: Socialize
+## Phase 3 Stage 3: Socialize
 
-No other agents are in the team for this phase. The architecture was reviewed and the approach is consistent with the architect's guidance (Bot pattern for DoAttackRounds). No cross-system impacts.
+No other agents in scope. Cross-system check: The defense divisor change in ACSum() (attack.cpp) only affects the code path for companions via `IsCompanion()` guard. It does not affect regular NPCs or bots. The STA-to-HP change is in Companion::CalcMaxHP() override — no shared code changed. The sitting regen is in Companion::Process(). All changes are companion-specific and additive.
 
 ---
 
-## Stage 4: Build
+## Phase 3 Stage 4: Build
+
+### Status: Complete (2026-03-10)
 
 ### Implementation Log
 
-#### 2026-03-10 — Phase 2 TDD and implementation
+#### 2026-03-10 — Phase 3 TDD and implementation
 
-**What:** Added Suite 11 tests for triple attack, implemented CheckTripleAttack() and DoAttackRounds(), intercepted attack_timer in Companion::Process()
+**What:** Suite 12 tests + implementation of STA-to-HP, sitting regen, defense AC divisor fix
 
 **Where:**
-- `eqemu/zone/companion.h` — declarations
-- `eqemu/zone/companion.cpp` — implementations + Process() intercept
-- `eqemu/zone/cli/tests/cli_companion_tests.cpp` — Suite 11
+- `eqemu/common/ruletypes.h` — new rules
+- `eqemu/zone/attack.cpp` — ACSum() companion defense divisor
+- `eqemu/zone/companion.h` — CalcMaxHP() declaration
+- `eqemu/zone/companion.cpp` — CalcMaxHP() + Process() sitting regen
+- `eqemu/zone/cli/tests/cli_companion_tests.cpp` — Suite 12
 
-**Why:** Warriors at 56+, Monks/Rangers at 60+ should triple attack. This is blocked by UseLiveCombatRounds=true which skips the NPC triple attack path. Following Bot pattern to add companion-specific attack round handling.
-
-**Notes:**
-- CheckTripleAttack uses our own level/class check (not CanThisClassTripleAttack()) since SkillCaps lacks SkillTripleAttack for Warriors/Monks/Rangers
-- DoAttackRounds omits AA-based extra attacks (companions don't have AAs)
-- Process() intercepts attack_timer.Check() before NPC::Process() to take over melee
-
-### Problems & Solutions
-
-| Problem | Root Cause | Solution |
-|---------|-----------|----------|
-| SkillCaps has no SkillTripleAttack for Warriors/Monks/Rangers | DB has it only for Berserker | Own level/class check in CheckTripleAttack() |
-| UseLiveCombatRounds=true skips triple attack | Mob::DoMainHandAttackRounds live path only does double | Intercept attack_timer in Companion::Process() |
-| DoMainHandAttackRounds is not virtual | mob.h design | Can't override, must intercept before NPC::Process() |
-
-### Files Modified (final)
+### Files Modified
 
 | File | Action | Description |
 |------|--------|-------------|
-| `eqemu/zone/companion.h` | Modified | Added CheckTripleAttack() and DoAttackRounds() declarations |
-| `eqemu/zone/companion.cpp` | Modified | Implemented both + Process() timer intercept |
-| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modified | Added Suite 11 triple attack tests |
+| `eqemu/common/ruletypes.h` | Modified | Added STAToHPFactor and SittingRegenMult rules |
+| `eqemu/zone/attack.cpp` | Modified | ACSum() — companion uses /3 or /2 for defense skill |
+| `eqemu/zone/companion.h` | Modified | CalcMaxHP() override declaration |
+| `eqemu/zone/companion.cpp` | Modified | CalcMaxHP() STA bonus + Process() sitting regen |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modified | Suite 12 tests (13 tests; test 12.12 corrected: Cleric->Wizard, since only Necromancer..Enchanter range gets /2) |
 
----
-
-## Open Items
-
-- [ ] After build succeeds, verify tests pass in Docker
-- [ ] Damage bonus (already in Phase 1 Attack()) — confirmed working
-- [ ] Combat skills (already working via SkillCaps) — confirmed by Suite 4 tests
+**TDD result: All 12 suites pass (120+ tests, 2 expected skips)**
 
 ---
 
 ## Context for Next Agent
 
-Phase 2 adds triple attack to companion combat. The key implementation files:
-- `companion.h`: `CheckTripleAttack()`, `DoAttackRounds()` declared
-- `companion.cpp`: Both implemented + Process() intercept
-- Test Suite 11 validates the level/class gating
-
-Phase 1 (weapon damage, weapon delay, damage bonus) is fully implemented in the existing `Companion::Attack()` and `Companion::SetAttackTimer()` overrides. Damage bonus is at companion.cpp lines ~566-581. Skills work via NPC constructor.
+Phase 1-3 complete. Key implementation files:
+- `companion.h`: SetAttackTimer, Attack, CalcMaxHP, CanCompanionTripleAttack, CheckTripleAttack, DoAttackRounds
+- `companion.cpp`: All above implemented + Process() intercepts for melee and sitting regen
+- `attack.cpp`: ACSum() has IsCompanion() guard for defense skill divisor
+- Tests: Suites 9-12 cover weapon damage, ACSum regression, triple attack, Phase 3 survivability
