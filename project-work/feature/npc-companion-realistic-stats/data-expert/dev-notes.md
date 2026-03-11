@@ -13,6 +13,7 @@
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
 | 1 | Add Cannibalize I-IV to companion_spell_sets (shaman, class_id=10) | audit-fix-plan.md Issue #6 | **Complete** |
+| 2 | Phase 5: Insert ResistCapBase rule value into database | phase5-plan.md Task 6 | **Complete** |
 
 ---
 
@@ -128,10 +129,51 @@ No external teammates needed. The C++ `FindCannibalizeSpell()` implementation (c
 
 ---
 
+## Phase 5: ResistCapBase Rule Insertion
+
+### Stage 1: Plan
+
+**Task:** Insert `Companions:ResistCapBase` into `rule_values` table.
+
+**Source:** phase5-plan.md Task 6. The c-expert's `GetMaxResist()` implementation reads `RuleI(Companions, ResistCapBase)` — this DB row is what backs that rule at runtime.
+
+**Key decisions:**
+- `ruleset_id=1` — matches all other Companions:* rules in the database
+- `rule_value='50'` — default from ruletypes.h RULE_INT definition; yields cap of 350 at level 60
+- Notes text mirrors the ruletypes.h description exactly for consistency
+
+### Stage 2: Research
+
+- Confirmed `ruleset_id=1` by querying 5 existing Companions:* rules — all use ruleset_id=1
+- Confirmed table schema: `rule_values (ruleset_id TINYINT UNSIGNED, rule_name VARCHAR(64), rule_value TEXT, notes TEXT)`
+- Used `WHERE NOT EXISTS` guard in INSERT to make migration idempotent (safe to re-run)
+
+### Stage 3: Socialize
+
+No coordination needed — this is a pure data task. The c-expert independently adds the same rule to `ruletypes.h`. The DB row and the C++ constant are parallel; the C++ rule manager loads the DB value at server startup and uses it at runtime.
+
+### Stage 4: Build
+
+**2026-03-11 — Insert Companions:ResistCapBase**
+
+- SQL written to: `data-expert/context/phase5-rules.sql`
+- Executed via: `docker exec akk-stack-mariadb-1 mysql ... peq`
+- Verification query result:
+
+```
+ruleset_id  rule_name                   rule_value  notes
+1           Companions:ResistCapBase    50          Phase 5: Base value for companion resist cap formula. ...
+```
+
+Row confirmed present with correct ruleset_id=1, rule_value=50.
+
+---
+
 ## Open Items
 
 - [x] Verify c-expert has implemented FindCannibalizeSpell() in companion_ai.cpp (Issue #6)
 - [x] Test 14.20 (SQL verification): Cannibalize I-IV present in companion_spell_sets for shaman at appropriate levels
+- [x] Phase 5: Companions:ResistCapBase=50 inserted into rule_values
 
 ---
 
@@ -146,3 +188,9 @@ The Cannibalize spells are now in `companion_spell_sets` for shaman (class_id=10
 The C++ `FindCannibalizeSpell()` helper will find these via effectid2=15 (SE_CurrentMana) positive base value and targettype=6 (ST_Self). The spell_type=2 tag just ensures they load into m_companion_spells.
 
 Migration script saved at: `data-expert/context/cannibalize-spells.sql`
+
+### Phase 5 additions:
+
+- `Companions:ResistCapBase` rule (`rule_value='50'`, `ruleset_id=1`) inserted into `rule_values`. Migration script: `data-expert/context/phase5-rules.sql`.
+- This backs the `RuleI(Companions, ResistCapBase)` call in `Companion::GetMaxResist()` at runtime.
+- cap formula: `level * 5 + ResistCapBase` → 350 at level 60 (70% of client cap 500, per PRD 70-85% target).

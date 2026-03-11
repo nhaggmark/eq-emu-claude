@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/npc-companion-realistic-stats`
 > **Created:** 2026-03-10
-> **Last updated:** 2026-03-10
+> **Last updated:** 2026-03-11
 
 ---
 
@@ -12,12 +12,12 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-03-10 | 2026-03-10 |
 | Design | game-designer + lore-master | Complete | 2026-03-10 | 2026-03-10 |
-| Architecture | architect + protocol-agent + config-expert | Not Started | | |
-| Implementation | _implementation team_ | Not Started | | |
+| Architecture | architect + protocol-agent + config-expert | Complete (Phase 5) | 2026-03-11 | 2026-03-11 |
+| Implementation | _implementation team_ | In Progress | 2026-03-10 | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Architecture
+**Current phase:** Implementation (Phase 5)
 
 ---
 
@@ -41,6 +41,14 @@ _Record each handoff between agents with context and any notes._
   (22-item gap table). 6 open questions for architect investigation. 9 suggested
   new rule names for tunability.
 
+### architect → implementation team (Phase 5)
+- **Date:** 2026-03-11
+- **Notes:** Phase 5 plan complete at `architect/context/phase5-plan.md`. Covers
+  resist caps (GetMR/FR/DR/PR/CR overrides + GetMaxResist with level*5+50 formula),
+  focus effect fix (GetFocusEffect override routing to Mob base class), and balance
+  documentation. 1 new rule: Companions::ResistCapBase. 17 tests in Suite 15.
+  8 implementation tasks. Required agents: c-expert (Tasks 8-14), data-expert (Task 15).
+
 ---
 
 ## Implementation Tasks
@@ -54,6 +62,14 @@ _Record each handoff between agents with context and any notes._
 | 5 | Phase 3: Defense skill AC divisor fix (attack.cpp ACSum) | c-expert | Complete (2026-03-10) | IsCompanion() guard uses /3 (melee) or /2 (pure casters) instead of /5. |
 | 6 | Audit Fix: Add Cannibalize I-IV to companion_spell_sets for shaman | data-expert | Complete (2026-03-11) | spell_ids 265, 754, 1572, 1332 inserted with spell_type=2, tiered min/max_level. SQL at data-expert/context/cannibalize-spells.sql. |
 | 7 | Audit Fixes #1-#8: sitting regen timer, int8 overflow, mana cutoffs, druid HoT, shaman canni, pet spam guard, wizard DS | c-expert | Complete (2026-03-11) | All 8 fixes implemented. Suite 14 (27 tests) added. All 14 suites pass (zero failures). |
+| 8 | Phase 5: Add ResistCapBase rule to ruletypes.h | c-expert | Not Started | 3 lines in Companions rule category. Default 50. |
+| 9 | Phase 5: Declare resist cap + focus overrides in companion.h | c-expert | Not Started | GetMaxResist, GetMR/FR/DR/PR/CR, GetFocusEffect declarations (~15 lines). |
+| 10 | Phase 5: Implement GetMaxResist + resist getter overrides in companion.cpp | c-expert | Not Started | level*5+ResistCapBase formula, std::min clamping (~15 lines). |
+| 11 | Phase 5: Implement GetFocusEffect override in companion.cpp | c-expert | Not Started | Delegates to Mob::GetFocusEffect, bypassing NPC's broken path (~8 lines). |
+| 12 | Phase 5: Write Suite 15 tests (17 tests) | c-expert | Not Started | TDD: resist cap tests (15.1-15.11), focus effect tests (15.12-15.15), rule validation (15.16-15.17). |
+| 13 | Phase 5: Build + run all 15 suites, verify 221 tests pass | c-expert | Not Started | 204 existing + 17 new = 221 total tests. |
+| 14 | Phase 5: Create balance tuning documentation | c-expert | Not Started | Document rule values, tuning knobs, balance metrics, recommendations. |
+| 15 | Phase 5: Insert ResistCapBase rule value into database | data-expert | Complete (2026-03-11) | Companions:ResistCapBase=50 inserted into rule_values (ruleset_id=1). SQL at data-expert/context/phase5-rules.sql. |
 
 ---
 
@@ -64,12 +80,12 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | Monk fist damage scaling — use npc_types or monk H2H table? | game-designer | architect | Open | |
-| 2 | Weapon ratio validation — sanity bounds needed? | game-designer | architect | Open | |
-| 3 | Skill data source — reuse skill_caps table or companion-specific? | game-designer | architect | Open | |
-| 4 | Focus effect code path — does Mob focus apply to companions? | game-designer | architect | Open | |
-| 5 | Spell AI thresholds — data-driven or code-driven? | game-designer | architect | Open | |
-| 6 | Attack path divergence risk — override vs IsCompanion() branch? | game-designer | architect | Open | |
+| 1 | Monk fist damage scaling — use npc_types or monk H2H table? | game-designer | architect | Resolved | Using npc_types fallback when no weapon equipped (Phase 1 implemented). |
+| 2 | Weapon ratio validation — sanity bounds needed? | game-designer | architect | Resolved | Not needed; weapon items have pre-validated stats from PEQ database. |
+| 3 | Skill data source — reuse skill_caps table or companion-specific? | game-designer | architect | Resolved | Using skill_caps table (Phase 2 implemented). |
+| 4 | Focus effect code path — does Mob focus apply to companions? | game-designer | architect | Resolved | NPC::GetFocusEffect blocks item focus (NPC_UseFocusFromItems=false + wrong item access). Fix: override to call Mob::GetFocusEffect which uses correct GetInv() pattern. See phase5-plan.md. |
+| 5 | Spell AI thresholds — data-driven or code-driven? | game-designer | architect | Resolved | Code-driven with rules (Phase 4 implemented: HealThresholdPct, ManaCutoffPct, HealerManaConservePct). |
+| 6 | Attack path divergence risk — override vs IsCompanion() branch? | game-designer | architect | Resolved | Using Companion class overrides (Phases 1-3 implemented). AC divisor uses IsCompanion() branch in attack.cpp (shared code). |
 
 ---
 
@@ -104,6 +120,9 @@ _Key decisions made during this feature's development._
 | 2 | Fallback to npc_types when no weapon equipped | game-designer | 2026-03-10 | Preserves monk unarmed combat, freshly-recruited companion behavior, and prevents regression. |
 | 3 | Phase 4 (spell AI) is independent of Phases 1-3 | game-designer | 2026-03-10 | Spell AI tuning is behavioral, not dependent on stat/combat mechanics. Can be parallelized. |
 | 4 | Target companion power: 70-85% of player character | game-designer | 2026-03-10 | Effective enough for group roles, preserves player edge. Multiple tuning knobs available. |
+| 5 | Resist cap formula: level*5 + ResistCapBase (default 50) | architect | 2026-03-11 | Yields 350 at level 60, which is 70% of Client's 500 cap — matching the PRD power target. Rule-based for tunability. |
+| 6 | Focus fix: override GetFocusEffect to call Mob:: base class | architect | 2026-03-11 | Bypasses two NPC bugs (NPC_UseFocusFromItems=false, wrong equipment[] access) in one clean override. No existing code modified. |
+| 7 | Balance approach: rely on natural AA gap for 70-85% target | architect | 2026-03-11 | Companions lack AAs which add 10-25% effective power at level 60. Default rule values should produce correct balance without tuning. StatScalePct available as safety valve. |
 
 ---
 
@@ -143,3 +162,4 @@ The orchestrator NEVER initiates merge or branch cleanup on its own._
   architectural constraint that affects how changes should be implemented.
 - This feature is expected to significantly increase companion effectiveness when well-geared.
   The StatScalePct rule and other tuning knobs provide safety valves.
+- Phase 5 plan: `architect/context/phase5-plan.md` — resist caps, focus effects, balance pass.
