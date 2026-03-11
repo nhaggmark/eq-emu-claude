@@ -11,6 +11,7 @@
 | companion-experience | Validation | bugfix/companion-experience | BUG-001 fix confirmed working, remaining tests pending |
 | group-chat-addressing | Complete | feature/group-chat-addressing | Merged to main |
 | companion-equipment | Complete | feature/companion-equipment | All bugs resolved, validated in-game |
+| npc-companion-realistic-stats | Complete | feature/npc-companion-realistic-stats | Merged to main — 5 phases + audit fixes + BUG-017/018 fixes, 16 suites 242+ tests |
 
 ## Bug Reports
 
@@ -32,5 +33,5 @@
 | BUG-014 | Caster/healer combat positioning and casting broken | Critical | companion-aggro-fixes | Fix deployed, pending validation |
 | BUG-015 | Companion ranged attack flags not set when bow/arrows equipped | High | improved-companion-stats | Open |
 | BUG-016 | Stackable item quantity lost when trading to companion | Medium | improved-companion-stats | Open |
-| BUG-017 | Companion caster mana percentage chat messages show wrong values | High | npc-companion-realistic-stats | Open |
-| BUG-018 | Equipment trade to companion produces duplicate items when replacing gear | Critical | npc-companion-realistic-stats | Open |
+| BUG-017 | Companion caster mana percentage chat messages show wrong values | High | npc-companion-realistic-stats | Resolved |
+| BUG-018 | Equipment trade to companion produces duplicate items when replacing gear | Critical | npc-companion-realistic-stats | Resolved |
