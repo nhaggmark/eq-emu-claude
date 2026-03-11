@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/npc-companion-realistic-stats`
 > **Created:** 2026-03-10
-> **Last updated:** 2026-03-11
+> **Last updated:** 2026-03-11 (validation complete)
 
 ---
 
@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-10 | 2026-03-10 |
 | Design | game-designer + lore-master | Complete | 2026-03-10 | 2026-03-10 |
 | Architecture | architect + protocol-agent + config-expert | Complete (Phase 5) | 2026-03-11 | 2026-03-11 |
-| Implementation | _implementation team_ | In Progress | 2026-03-10 | |
-| Validation | game-tester | Not Started | | |
+| Implementation | _implementation team_ | Complete | 2026-03-10 | 2026-03-11 |
+| Validation | game-tester | Complete | 2026-03-11 | 2026-03-11 |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation (Phase 5)
+**Current phase:** Completion (awaiting user in-game testing confirmation)
 
 ---
 
@@ -41,6 +41,17 @@ _Record each handoff between agents with context and any notes._
   (22-item gap table). 6 open questions for architect investigation. 9 suggested
   new rule names for tunability.
 
+### game-tester → completion
+- **Date:** 2026-03-11
+- **Server-side result:** PASS
+- **Test count:** 242 PASSED, 0 FAILED, 2 expected SKIPS (15 suites)
+- **Build:** Clean — `ninja: no work to do.`
+- **DB integrity:** 0 orphaned companion_spell_sets records; Cannibalize I-IV confirmed; ResistCapBase=50 in rule_values
+- **Log analysis:** No ERROR-level entries in zone logs; companion spawn/depop messages are expected Info-level
+- **In-game guide:** 21 functional tests + 5 edge case tests at `game-tester/test-plan.md`
+- **Recommendations:** Fill in balance-tuning.md after in-game testing; optionally insert Phase 3-4 rules to rule_values table for Spire UI visibility
+- **Blockers:** None
+
 ### architect → implementation team (Phase 5)
 - **Date:** 2026-03-11
 - **Notes:** Phase 5 plan complete at `architect/context/phase5-plan.md`. Covers
@@ -62,13 +73,13 @@ _Record each handoff between agents with context and any notes._
 | 5 | Phase 3: Defense skill AC divisor fix (attack.cpp ACSum) | c-expert | Complete (2026-03-10) | IsCompanion() guard uses /3 (melee) or /2 (pure casters) instead of /5. |
 | 6 | Audit Fix: Add Cannibalize I-IV to companion_spell_sets for shaman | data-expert | Complete (2026-03-11) | spell_ids 265, 754, 1572, 1332 inserted with spell_type=2, tiered min/max_level. SQL at data-expert/context/cannibalize-spells.sql. |
 | 7 | Audit Fixes #1-#8: sitting regen timer, int8 overflow, mana cutoffs, druid HoT, shaman canni, pet spam guard, wizard DS | c-expert | Complete (2026-03-11) | All 8 fixes implemented. Suite 14 (27 tests) added. All 14 suites pass (zero failures). |
-| 8 | Phase 5: Add ResistCapBase rule to ruletypes.h | c-expert | Not Started | 3 lines in Companions rule category. Default 50. |
-| 9 | Phase 5: Declare resist cap + focus overrides in companion.h | c-expert | Not Started | GetMaxResist, GetMR/FR/DR/PR/CR, GetFocusEffect declarations (~15 lines). |
-| 10 | Phase 5: Implement GetMaxResist + resist getter overrides in companion.cpp | c-expert | Not Started | level*5+ResistCapBase formula, std::min clamping (~15 lines). |
-| 11 | Phase 5: Implement GetFocusEffect override in companion.cpp | c-expert | Not Started | Delegates to Mob::GetFocusEffect, bypassing NPC's broken path (~8 lines). |
-| 12 | Phase 5: Write Suite 15 tests (17 tests) | c-expert | Not Started | TDD: resist cap tests (15.1-15.11), focus effect tests (15.12-15.15), rule validation (15.16-15.17). |
-| 13 | Phase 5: Build + run all 15 suites, verify 221 tests pass | c-expert | Not Started | 204 existing + 17 new = 221 total tests. |
-| 14 | Phase 5: Create balance tuning documentation | c-expert | Not Started | Document rule values, tuning knobs, balance metrics, recommendations. |
+| 8 | Phase 5: Add ResistCapBase rule to ruletypes.h | c-expert | Complete (2026-03-11) | 3 lines in Companions rule category. Default 50. |
+| 9 | Phase 5: Declare resist cap + focus overrides in companion.h | c-expert | Complete (2026-03-11) | GetMaxResist, GetMR/FR/DR/PR/CR, GetFocusEffect declarations + #include <algorithm>. |
+| 10 | Phase 5: Implement GetMaxResist + resist getter overrides in companion.cpp | c-expert | Complete (2026-03-11) | level*5+ResistCapBase formula, std::min clamping (~15 lines). |
+| 11 | Phase 5: Implement GetFocusEffect override in companion.cpp | c-expert | Complete (2026-03-11) | Delegates to Mob::GetFocusEffect, bypassing NPC's broken path (~8 lines). |
+| 12 | Phase 5: Write Suite 15 tests (17 tests) | c-expert | Complete (2026-03-11) | 27 tests written and passing (expanded from 17 planned). |
+| 13 | Phase 5: Build + run all 15 suites, verify 221 tests pass | c-expert | Complete (2026-03-11) | 244 targets built. 242 PASSED, 0 FAILED, 2 expected SKIPs (exceeded 221 target). |
+| 14 | Phase 5: Create balance tuning documentation | c-expert | Complete (2026-03-11) | balance-tuning.md created with rule table, cap values, tuning guidance. |
 | 15 | Phase 5: Insert ResistCapBase rule value into database | data-expert | Complete (2026-03-11) | Companions:ResistCapBase=50 inserted into rule_values (ruleset_id=1). SQL at data-expert/context/phase5-rules.sql. |
 
 ---
@@ -132,13 +143,13 @@ _Key decisions made during this feature's development._
 
 _Filled in after game-tester validation passes._
 
-- [ ] All implementation tasks marked Complete
-- [ ] No open Blockers
-- [ ] game-tester server-side validation: PASS
-- [ ] User completed in-game testing guide: PASS
+- [x] All implementation tasks marked Complete
+- [x] No open Blockers
+- [x] game-tester server-side validation: PASS (242/242, 0 failures, 2 expected skips)
+- [ ] User completed in-game testing guide: PENDING (test-plan.md at game-tester/test-plan.md)
 - [ ] All changes committed and pushed to feature branch in ALL repos
 - [ ] Server rebuilt (if C++ changed)
-- [ ] All phases marked Complete in Workflow Status table
+- [x] All phases marked Complete in Workflow Status table
 
 ### Merge & Cleanup (USER-INITIATED ONLY)
 
