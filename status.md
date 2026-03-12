@@ -35,3 +35,5 @@
 | BUG-016 | Stackable item quantity lost when trading to companion | Medium | improved-companion-stats | Open |
 | BUG-017 | Companion caster mana percentage chat messages show wrong values | High | npc-companion-realistic-stats | Resolved |
 | BUG-018 | Equipment trade to companion produces duplicate items when replacing gear | Critical | npc-companion-realistic-stats | Resolved |
+| BUG-019 | Wizard companion spams damage shield out of combat | High | companion-group-commands | Resolved |
+| BUG-020 | Companion NPCs cast buffs while sitting/meditating | High | companion-group-commands | Resolved |
