@@ -12,6 +12,7 @@
 | group-chat-addressing | Complete | feature/group-chat-addressing | Merged to main |
 | companion-equipment | Complete | feature/companion-equipment | All bugs resolved, validated in-game |
 | npc-companion-realistic-stats | Complete | feature/npc-companion-realistic-stats | Merged to main — 5 phases + audit fixes + BUG-017/018 fixes, 16 suites 242+ tests |
+| companion-group-commands | Complete | feature/companion-group-commands | Merged to main — 9 group chat commands + IsSitting binding + BUG-019/020 fixes, 17 suites |
 
 ## Bug Reports
 
