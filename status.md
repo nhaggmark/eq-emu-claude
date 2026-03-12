@@ -13,6 +13,7 @@
 | companion-equipment | Complete | feature/companion-equipment | All bugs resolved, validated in-game |
 | npc-companion-realistic-stats | Complete | feature/npc-companion-realistic-stats | Merged to main — 5 phases + audit fixes + BUG-017/018 fixes, 16 suites 242+ tests |
 | companion-group-commands | Complete | feature/companion-group-commands | Merged to main — 9 group chat commands + IsSitting binding + BUG-019/020 fixes, 17 suites |
+| companion-group-debugging | Architecture | bugfix/companion-group-debugging | BUG-021 (!assist stack trace) + BUG-022 (!tome no effect) |
 
 ## Bug Reports
 
@@ -38,3 +39,5 @@
 | BUG-018 | Equipment trade to companion produces duplicate items when replacing gear | Critical | npc-companion-realistic-stats | Resolved |
 | BUG-019 | Wizard companion spams damage shield out of combat | High | companion-group-commands | Resolved |
 | BUG-020 | Companion NPCs cast buffs while sitting/meditating | High | companion-group-commands | Resolved |
+| BUG-021 | @all !assist produces stack trace error in console | Critical | companion-group-debugging | Fix deployed (v2 — luabind __eq fix) |
+| BUG-022 | !tome command does not move companions to player location | High | companion-group-debugging | Fix deployed |
