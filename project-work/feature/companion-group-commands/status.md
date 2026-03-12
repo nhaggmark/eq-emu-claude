@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/companion-group-commands`
 > **Created:** 2026-03-11
-> **Last updated:** 2026-03-11
+> **Last updated:** 2026-03-11 (BUG-020 resolved)
 
 ---
 
@@ -96,7 +96,9 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| 1 | IsSitting() not bound in Lua — cmd_status always shows "Standing" | Low | game-tester | Open | lua-expert or c-expert | |
+| 1 | IsSitting() not bound in Lua — cmd_status always shows "Standing" | Low | game-tester | Resolved | c-expert | 2026-03-11 |
+| BUG-019 | Wizard companion spams DS spell out-of-combat | Medium | user | Resolved | c-expert | 2026-03-11 |
+| BUG-020 | Companion NPCs cast buff spells while sitting/meditating | High | user | Resolved | c-expert | 2026-03-11 |
 
 ---
 
