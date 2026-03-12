@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-11 | 2026-03-11 |
 | Design | game-designer + lore-master | Complete | 2026-03-11 | 2026-03-11 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-11 | 2026-03-11 |
-| Implementation | lua-expert | Not Started | | |
-| Validation | game-tester | Not Started | | |
+| Implementation | lua-expert | Complete | 2026-03-11 | 2026-03-11 |
+| Validation | game-tester | In Progress | 2026-03-11 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Validation
 
 ---
 
@@ -44,6 +44,14 @@ _Record each handoff between agents with context and any notes._
   handler functions), Task 5 depends on all of them (COMMANDS table + help text).
   Only spawn lua-expert for the implementation phase.
 
+### implementation team → game-tester
+- **Date:** 2026-03-11
+- **Notes:** All 5 tasks complete. Committed in efe7593 on feature/companion-group-commands.
+  2 files changed: companion.lua (+609/-106 lines), global_npc.lua (+124 lines).
+  Server-side validation: PASS WITH WARNINGS.
+  1 warning: IsSitting() not bound in Lua API (cmd_status always shows "Standing").
+  Non-blocking. In-game testing guide available at game-tester/test-plan.md.
+
 ---
 
 ## Implementation Tasks
@@ -52,11 +60,11 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Implement !status (enhanced), !help (updated), !equipmentmissing, !follow (enhanced feedback) | lua-expert | Not Started | ~150 lines: read-only information commands |
-| 2 | Implement !tome, !flee, !assist (enhanced with auto-stance), !follow confirmation | lua-expert | Not Started | ~120 lines: movement and combat action commands |
-| 3 | Implement !buffme, !buffs with timer-based buff queue | lua-expert | Not Started | ~150 lines: buff request queue + timer handler |
-| 4 | Implement !equipmentupgrade with item link parsing and stat comparison | lua-expert | Not Started | ~180 lines: item link parser, stat scoring |
-| 5 | Update COMMANDS table and cmd_help reference card | lua-expert | Not Started | ~30 lines: depends on Tasks 1-4 |
+| 1 | Implement !status (enhanced), !help (updated), !equipmentmissing, !follow (enhanced feedback) | lua-expert | Complete | Committed in efe7593 |
+| 2 | Implement !tome, !flee, !assist (enhanced with auto-stance), !follow confirmation | lua-expert | Complete | Committed in efe7593 |
+| 3 | Implement !buffme, !buffs with timer-based buff queue | lua-expert | Complete | Committed in efe7593 |
+| 4 | Implement !equipmentupgrade with item link parsing and stat comparison | lua-expert | Complete | Committed in efe7593 |
+| 5 | Update COMMANDS table and cmd_help reference card | lua-expert | Complete | Committed in efe7593 |
 
 ---
 
@@ -88,7 +96,7 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| | | | | | | |
+| 1 | IsSitting() not bound in Lua — cmd_status always shows "Standing" | Low | game-tester | Open | lua-expert or c-expert | |
 
 ---
 
