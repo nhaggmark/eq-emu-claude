@@ -42,8 +42,8 @@
 | BUG-020 | Companion NPCs cast buffs while sitting/meditating | High | companion-group-commands | Resolved |
 | BUG-021 | @all !assist produces stack trace error in console | Critical | companion-group-debugging | Resolved |
 | BUG-022 | !tome command does not move companions to player location | High | companion-group-debugging | Resolved |
-| BUG-023 | Rogue companion takes too wide a circle for backstab positioning | Medium | companion-behavior-improvements | Open |
-| BUG-024 | Caster companions should announce LOM at 15% mana | Medium | companion-behavior-improvements | Open |
-| BUG-025 | !buffs command only buffs player instead of all party members | High | companion-behavior-improvements | Open |
-| BUG-026 | Caster companions lose LOS when positioning at fixed distance | High | companion-behavior-improvements | Open |
-| BUG-027 | Companions should always regenerate mana at meditation rates | High | companion-behavior-improvements | Open |
+| BUG-023 | Rogue companion takes too wide a circle for backstab positioning | Medium | companion-behavior-improvements | Fix deployed |
+| BUG-024 | Caster companions should announce LOM at 15% mana | Medium | companion-behavior-improvements | Fix deployed |
+| BUG-025 | !buffs command only buffs player instead of all party members | High | companion-behavior-improvements | Fix deployed |
+| BUG-026 | Caster companions lose LOS when positioning at fixed distance | High | companion-behavior-improvements | Fix deployed |
+| BUG-027 | Companions should always regenerate mana at meditation rates | High | companion-behavior-improvements | Fix deployed |
