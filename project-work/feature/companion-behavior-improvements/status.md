@@ -55,12 +55,12 @@
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | BUG-023: Replace rogue backstab positioning with direct geometric calculation | c-expert | Not Started | companion.cpp UpdateCombatPositioning() |
-| 2 | BUG-024: Add m_lom_announced flag and LOM check in Process() | c-expert | Not Started | companion.h + companion.cpp |
-| 3 | BUG-024: Add LOMThresholdPct rule to ruletypes.h | c-expert | Not Started | ~1 line |
+| 1 | BUG-023: Replace rogue backstab positioning with direct geometric calculation | c-expert | Complete | companion.cpp UpdateCombatPositioning() — committed 2026-03-12 |
+| 2 | BUG-024: Add m_lom_announced flag and LOM check in Process() | c-expert | Complete | companion.h + companion.cpp — committed 2026-03-12 |
+| 3 | BUG-024: Add LOMThresholdPct rule to ruletypes.h | c-expert | Complete | ruletypes.h — committed 2026-03-12 |
 | 4 | BUG-025: Rewrite buff timer handler to sequential queue | lua-expert | Complete | global_npc.lua |
-| 5 | BUG-026: Add LOS validation to caster/healer positioning in UpdateCombatPositioning() | c-expert | Not Started | companion.cpp, ~30 lines |
-| 6 | BUG-027: Remove IsSitting() gate in CalcManaRegen(), add AlwaysMeditateRegen rule | c-expert | Not Started | companion.cpp (~3 lines) + ruletypes.h (~1 line) |
+| 5 | BUG-026: Add LOS validation to caster/healer positioning in UpdateCombatPositioning() | c-expert | Complete | companion.cpp — committed 2026-03-12 |
+| 6 | BUG-027: Remove IsSitting() gate in CalcManaRegen(), add AlwaysMeditateRegen rule | c-expert | Complete | companion.cpp + ruletypes.h — committed 2026-03-12 |
 
 ---
 
