@@ -80,17 +80,52 @@ Non-blocking !tome naming observation noted in lore-master/lore-notes.md.
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-### [Date] — [Topic]
+### 2026-03-13 — Protocol Feasibility Review
 
-**From:** [agent] → **To:** [agent]
+**From:** architect → **To:** protocol-agent
 
-> [Message content or summary]
+> Sent three questions for protocol feasibility review:
+> 1. !help without target routing: Confirmed that Player EVENT_SAY fires at
+>    client.cpp:1609 before NPC EVENT_SAY at line 1633. Proposed intercepting
+>    !help in global_player.lua via event_say(e). Asked about Titanium constraints.
+> 2. !hold command: Purely Lua-side using existing SetStance, WipeHateList,
+>    SetGuardMode bindings. Asked about protocol concerns.
+> 3. !tome target clearing: Adding WipeHateList after GMMove. Asked about
+>    protocol-level edge cases with clearing hate while mobs still pursue.
+>
+> Summary: All three changes appear pure Lua-layer, no C++ or protocol changes.
 
-**Response from** [agent]:
+**Response from** protocol-agent:
 
-> [Response content or summary]
+> **APPROVED — no protocol concerns.**
+> All three changes are server-side Lua. No new packets, opcodes, or struct
+> changes needed. Player EVENT_SAY interception is standard. WipeHateList is
+> server-side only and doesn't affect packet flow. No Titanium constraints.
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** Protocol feasibility confirmed. All changes stay in Lua layer.
+
+### 2026-03-13 — Configuration/Rules Review
+
+**From:** architect → **To:** config-expert
+
+> Sent three questions about existing rules and configuration:
+> 1. Is there an existing rule for "hold" behavior? Checked Companions category.
+> 2. Can !help rework be done without rule changes?
+> 3. Any existing rules controlling target-clearing behavior?
+>
+> Also asked about all Companions-category rules that might interact.
+
+**Response from** config-expert:
+
+> **CONFIRMED — no rule changes needed.**
+> No existing rules govern hold behavior, help display format, or
+> target-clearing. The Companions-category rules (CompanionsEnabled,
+> RecallCooldownS, EnforceClassRestrictions, EnforceRaceRestrictions)
+> are unaffected by any of the three changes. All changes require Lua
+> code, not configuration.
+
+**Outcome:** Configuration-first principle verified. No config shortcuts available;
+Lua implementation is the correct and least-invasive approach.
 
 ---
 
@@ -121,6 +156,11 @@ This table is the quick-reference for anyone catching up._
 |---|----------|----------------|------|---------|
 | 1 | PRD lore-approved for architecture | game-designer, lore-master | 2026-03-13 | All changes Classic-Luclin compliant. !hold name grounded in /pet hold precedent. |
 | 2 | !tome naming flagged as non-blocking | lore-master | 2026-03-13 | Tomes are books in EQ lore; existing name, not changed by this PRD. |
+| 3 | All changes confirmed pure Lua — no protocol impact | architect, protocol-agent | 2026-03-13 | Player EVENT_SAY interception, WipeHateList, SetGuardMode all server-side. No Titanium constraints. |
+| 4 | No existing rules can achieve these changes | architect, config-expert | 2026-03-13 | Companions-category rules unaffected. Lua code is required for all three features. |
+| 5 | !hold tracked as guard+passive, not new mode | architect | 2026-03-13 | companion_modes "guard" + stance==0 is sufficient. No third mode value needed. |
+| 6 | !tome uses WipeHateList, not SetTarget(nil) | architect | 2026-03-13 | Avoids luabind nil-conversion risk. WipeHateList is proven safe in codebase. |
+| 7 | !help uses Player EVENT_SAY, not C++ routing | architect | 2026-03-13 | global_player.lua event_say fires before NPC dispatch (client.cpp:1609 vs 1633). No C++ changes. |
 
 ---
 
@@ -131,3 +171,4 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
 | !tome command naming incongruity | lore-master | Non-blocking flag | No |
+| (No architecture-phase unresolved threads) | — | — | — |
