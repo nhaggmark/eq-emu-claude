@@ -13,7 +13,7 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-13 | 2026-03-13 |
 | Design | game-designer + lore-master | Complete | 2026-03-13 | 2026-03-13 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-13 | 2026-03-13 |
-| Implementation | lua-expert | Not Started | | |
+| Implementation | lua-expert | Complete | 2026-03-13 | 2026-03-13 |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -51,12 +51,12 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Implement !hold command (COMMANDS entry, cmd_hold handler, cmd_assist guard-break) | lua-expert | Not Started | Independent, can start immediately |
-| 2 | Implement !tome update (WipeHateList, SetGuardMode(false), follow mode after GMMove) | lua-expert | Not Started | Independent, can start immediately |
-| 3 | Implement !help reformat (alphabetical per-line output matching PRD format) | lua-expert | Not Started | Depends on Task 1 (!hold in list) |
-| 4 | Implement !help standalone (event_say in global_player.lua, cmd_help_standalone) | lua-expert | Not Started | Depends on Task 3 |
-| 5 | Rewrite companion-commands-reference.md documentation | lua-expert | Not Started | Depends on Tasks 1, 2, 3 |
-| 6 | Write comprehensive test suite (4 test files) | lua-expert | Not Started | Depends on Tasks 1-4 |
+| 1 | Implement !hold command (COMMANDS entry, cmd_hold handler, cmd_assist guard-break) | lua-expert | Complete | Independent, can start immediately |
+| 2 | Implement !tome update (WipeHateList, SetGuardMode(false), follow mode after GMMove) | lua-expert | Complete | Independent, can start immediately |
+| 3 | Implement !help reformat (alphabetical per-line output matching PRD format) | lua-expert | Complete | Depends on Task 1 (!hold in list) |
+| 4 | Implement !help standalone (event_say in global_player.lua, cmd_help_standalone) | lua-expert | Complete | Depends on Task 3 |
+| 5 | Rewrite companion-commands-reference.md documentation | lua-expert | Complete | Depends on Tasks 1, 2, 3 |
+| 6 | Write comprehensive test suite (4 test files) | lua-expert | Complete | Depends on Tasks 1-4 |
 
 ---
 
