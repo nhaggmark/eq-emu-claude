@@ -107,6 +107,34 @@ _Expert-to-expert exchanges during Phase 4._
 
 **Outcome:** Task 1 complete. Waiting on c-expert Task 2 before Task 3 can start.
 
+### 2026-03-14 — Integration Verification: Task 3 Contract Sign-off
+
+**From:** lua-expert (verification) | **Triggered by:** team-lead dispatch
+
+**Verification performed:** Read c-expert dev-notes and `eqemu/zone/companion.cpp` lines 159-253.
+
+**Contract Point 1 — Matching detection queries (CONFIRMED):**
+- Lua `check_existing_companion_record()`: `WHERE owner_id = ? AND npc_type_id = ? AND (is_dismissed = 1 OR is_suspended = 1) LIMIT 1`
+- C++ `CreateFromNPC()` line 189: identical WHERE clause. Both layers use the same matching criteria.
+
+**Contract Point 2 — Single entry point (CONFIRMED):**
+- `client:CreateCompanion(npc)` is the only Lua call into C++. No new methods were added.
+
+**Contract Point 3 — HP/mana restoration (CONFIRMED):**
+- C++ lines 224-225: `SetHP(GetMaxHP())` + `SetMana(GetMaxMana())` after `Load()` succeeds, before flag clearing.
+- Direct setters used (not `RestoreHealth()`) — correct: `SendHPUpdate()` requires an entity ID only available after `Spawn()`. Placement and approach are correct.
+
+**Contract Point 4 — Cooldown key format (CONFIRMED):**
+- Lua: `"companion_cooldown_" .. npc_type_id .. "_" .. char_id`
+- C++: `fmt::format("companion_cooldown_{}_{}", source_npc->GetNPCTypeID(), owner->CharacterID())`
+- Identical strings. `DataBucket::DeleteData(&database, key)` — correct two-argument form.
+
+**Architecture doc pseudocode discrepancy (noted, not a blocker):**
+- Architecture showed single-arg `DataBucket::DeleteData(key)` — actual API requires `(SharedDatabase*, key)`.
+- c-expert used correct two-arg form. Lua side (`eq.delete_data()`) is unaffected — it calls the Lua wrapper, not C++ directly.
+
+**Outcome:** All four contract invariants confirmed. Task 3 complete. SIGN-OFF GRANTED.
+
 ---
 
 ## Key Decisions from Conversations

@@ -67,8 +67,8 @@ _Populated by the architect after the architecture doc is approved._
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
 | 1 | Rewrite `attempt_recruitment()` with two-track detection | lua-expert | Complete | companion.lua + tests/test_companion_recruitment.lua |
-| 2 | Add cooldown cleanup and HP restoration in `CreateFromNPC()` | c-expert | Not Started | Minor C++: companion.cpp |
-| 3 | Integration verification: end-to-end testing | lua-expert + c-expert | Not Started | Depends on tasks 1 and 2 |
+| 2 | Add cooldown cleanup and HP restoration in `CreateFromNPC()` | c-expert | Complete | companion.cpp + cli_companion_tests.cpp Suite 19 |
+| 3 | Integration verification: end-to-end testing | lua-expert + c-expert | Complete | All 4 contract points confirmed — sign-off granted 2026-03-14 |
 
 ---
 
