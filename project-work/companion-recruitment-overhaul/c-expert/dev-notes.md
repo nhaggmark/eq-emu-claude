@@ -121,44 +121,82 @@ First-time recruitment path is unchanged.
 
 ## Stage 4: Build
 
-_Execute the consensus plan. Log every change._
+### Tests Added (Suite 19)
+
+`eqemu/zone/cli/tests/cli_companion_tests.cpp` — added includes for `data_bucket.h` and
+`companion_data_repository.h`, plus `inline void TestCompanionReRecruitmentHP()` with
+4 test cases registered in `ZoneCLI::TestCompanion()`.
+
+Note: `CreateFromNPC()` is not directly tested (requires live `Client*` unavailable in CLI
+test environment). Tests exercise Load() + SetHP/SetMana (same code path) and
+DataBucket::DeleteData directly.
 
 ### Implementation Log
 
-_Chronological record of what you did. Each entry should have enough detail
-that a fresh agent could understand the change without reading the diff._
+#### 2026-03-14 — HP/mana restoration in CreateFromNPC() re-recruitment path
 
-#### [Date] — [Brief description]
+**What:** `companion->SetHP(companion->GetMaxHP())` + `companion->SetMana(companion->GetMaxMana())`
+after `companion->Load()` succeeds, before flag clearing.
 
-**What:** _What you changed_
-**Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the consensus plan_
-**Notes:** _Edge cases, gotchas, things the next agent should know_
+**Where:** `eqemu/zone/companion.cpp` lines 224-225
+
+**Why:** Load() `if (cd.cur_hp > 0)` guard skips SetHP for dead companions. After
+ScaleStatsToLevel() raises max_hp, constructor HP < GetMaxHP(). Spawn() does not
+restore HP. Using SetHP/SetMana (not RestoreHealth/RestoreMana) because
+SendHPUpdate() in RestoreHealth() needs entity ID (assigned by Spawn() later).
+
+#### 2026-03-14 — DataBucket cooldown cleanup in CreateFromNPC() re-recruitment path
+
+**What:** `DataBucket::DeleteData(&database, fmt::format("companion_cooldown_{}_{}", ...))`
+after the UPDATE companion_data SET is_dismissed=0, is_suspended=0 call.
+
+**Where:** `eqemu/zone/companion.cpp` lines 243-246
+
+**Why:** Belt-and-suspenders. Lua also deletes it on success via `eq.delete_data()`.
+C++ ensures no stale cooldown survives if Lua cleanup is bypassed.
+Using non-scoped form (character_id=0) to match how Lua stores cooldowns.
 
 ### Problems & Solutions
 
 | Problem | Root Cause | Solution |
 |---------|-----------|----------|
-| | | |
+| Architecture doc showed single-arg `DataBucket::DeleteData(key)` | Pseudocode error | Used correct two-arg form `DeleteData(&database, key)` per header |
 
 ### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
-| | Created / Modified | |
+| `eqemu/zone/companion.cpp` | Modified | HP/mana restoration + DataBucket cleanup in re-recruitment path |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modified | Suite 19 (4 tests), new includes |
+
+### Commit
+
+`a7c8c7e87` feat(companion): restore HP/mana on re-recruitment and cleanup stale cooldowns
 
 ---
 
 ## Open Items
 
-_Anything unfinished, deferred, or flagged for attention._
-
-- [ ]
+- [ ] Build verification pending (Docker not accessible from this WSL session)
+  — Run: `docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && cmake -G Ninja -DEQEMU_BUILD_TESTS=ON .. 2>&1 | tail -5 && ninja -j\$(nproc)"`
+  — Then: `docker exec akk-stack-eqemu-server-1 bash -c "cd /home/eqemu/server && ./bin/zone tests:companion 2>&1"`
 
 ---
 
 ## Context for Next Agent
 
-_If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context.
-Reference the Consensus Plan section above._
+Task #2 is complete. The two C++ changes are in `eqemu/zone/companion.cpp`
+`CreateFromNPC()` re-recruitment branch (lines 224-246):
+
+1. `SetHP(GetMaxHP())` + `SetMana(GetMaxMana())` after Load() — ensures dead companions
+   spawn alive. Placed BEFORE flag clearing and before Spawn() (which needs entity ID
+   for SendHPUpdate).
+
+2. `DataBucket::DeleteData(&database, fmt::format("companion_cooldown_{}_{}", npc_type_id, char_id))`
+   after flag clearing — belt-and-suspenders cooldown cleanup matching Lua's `eq.delete_data()`.
+
+Suite 19 tests are in `cli_companion_tests.cpp` testing Load() + SetHP behavior and
+DataBucket::DeleteData API. The test function is `TestCompanionReRecruitmentHP()`.
+
+Task #3 (integration verification) requires lua-expert to confirm their Lua changes
+are complete and both sides agree on the Lua/C++ contract.
