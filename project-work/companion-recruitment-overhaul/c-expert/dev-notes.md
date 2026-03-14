@@ -2,115 +2,120 @@
 
 > **Feature branch:** `feature/companion-recruitment-overhaul`
 > **Agent:** c-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task(s):** Task #2
+> **Date started:** 2026-03-14
+> **Current stage:** Build
 
 ---
 
 ## Task Assignment
 
-_Copy your assigned task(s) from the architecture doc's Implementation Sequence._
-
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| | | | |
+| 2 | C++: Add cooldown cleanup and HP restoration in `CreateFromNPC()` | — | In Progress |
 
 ---
 
 ## Stage 1: Plan
 
-_What you learned from reading source code and your proposed approach. NO CODE
-is written during this stage._
-
 ### Files Examined
 
 | File | Lines | What You Found |
 |------|-------|----------------|
-| | | |
+| `eqemu/zone/companion.cpp` | 159-256 | `CreateFromNPC()` re-recruitment path: Load(), flag clearing, logging. No DataBucket calls. |
+| `eqemu/zone/companion.cpp` | 2449-2497 | `Load()`: restores cur_hp with `if (cd.cur_hp > 0)` guard — skips when dead |
+| `eqemu/zone/lua_client.cpp` | 3639-3681 | Sequence: `CreateFromNPC()` → `Save()` → `Spawn()` |
+| `eqemu/zone/companion.cpp` | 48-148 | Constructor: HP set from NPCType data, not max after scaling |
+| `common/data_bucket.h` | 39-71 | `DeleteData` requires `(SharedDatabase*, const std::string&)` |
+| `zone/mob.h` | 557, 673 | `SetHP(int64)`, `SetMana(int64)` exist on Mob |
+| `zone/mob.h` | 1389 | `RestoreHealth()` calls `SendHPUpdate()` — needs entity ID (post-Spawn) |
 
 ### Key Findings
 
-_Summarize what you learned about the existing system that informs your approach._
+1. `Load()` skips `SetHP()`/`SetMana()` when `cur_hp=0` (dead companion). After `Load()`, HP
+   is whatever the constructor initialized from NPCType base data. This is NOT max — after
+   `ScaleStatsToLevel()` raises max_hp above base, the constructor HP is stale. Must explicitly
+   set to max after Load().
+
+2. `RestoreHealth()` calls `SendHPUpdate()` which requires an entity ID. Companion only gets
+   an entity ID when added to entity_list in `Spawn()`. So we must use `SetHP(GetMaxHP())`
+   directly, NOT `RestoreHealth()`.
+
+3. `DataBucket::DeleteData` takes `(SharedDatabase*, key)`. Architecture doc pseudocode showed
+   one-argument form which doesn't exist. Correct form: `DataBucket::DeleteData(&database, key)`.
+
+4. `data_bucket.h` is already included in companion.cpp line 21.
 
 ### Implementation Plan
-
-_Your proposed approach. Be specific enough that a fresh agent after context
-compaction could execute this plan without additional exploration._
 
 **Files to create or modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| | Create / Modify | |
+| `eqemu/zone/companion.cpp` | Modify | Add 2 changes in `CreateFromNPC()` re-recruitment path |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modify | Add Suite 19: Re-recruitment HP + cooldown tests |
 
 **Change sequence:**
-1.
-2.
-3.
-
-**What to test:**
--
+1. Write Suite 19 tests (TDD — tests FIRST, they will fail before implementation)
+2. Add `SetHP(GetMaxHP())` + `SetMana(GetMaxMana())` after Load() succeeds
+3. Add `DataBucket::DeleteData(&database, ...)` after flag clear
+4. Build and run all tests — suite 19 must pass, no regressions
 
 ---
 
 ## Stage 2: Research
 
-_Context7 and documentation verification. Every API, function, and syntax in
-your plan must be verified against current docs before proceeding._
-
 ### Documentation Consulted
 
 | API / Function / Syntax | Source | Verified? | Notes |
 |------------------------|--------|-----------|-------|
-| | Context7 / WebFetch / Source | Yes / No | |
+| `DataBucket::DeleteData` signature | `common/data_bucket.h:43` | Yes | Requires `(SharedDatabase*, string)` — architecture doc pseudocode was wrong |
+| Callers of `DataBucket::DeleteData` | `zone/client.cpp:9847`, etc. | Yes | All use `&database` form |
+| `SetHP(int64)` / `SetMana(int64)` | `zone/mob.h:557,673` | Yes | Exist on Mob, direct field assignment |
+| `RestoreHealth()` | `zone/mob.h:1389` | Yes | Calls `SendHPUpdate()` — unsafe before Spawn() |
+| `Load()` dead-companion HP behavior | `companion.cpp:2485-2491` | Yes | `if (cd.cur_hp > 0)` guard — skips for dead companions |
+| `Spawn()` entity list add | `companion.cpp:2001` | Yes | `AddCompanion()` assigns entity ID — must happen before SendHPUpdate |
 
 ### Plan Amendments
 
-_What changed in your plan based on documentation research? If nothing, state
-"Plan confirmed — no amendments needed."_
+Architecture doc pseudocode for `DataBucket::DeleteData` showed single-arg form which
+does not exist. Actual API requires `(SharedDatabase*, const std::string&)`. Using
+`DataBucket::DeleteData(&database, fmt::format(...))`.
 
 ### Verified Plan
 
-_Final plan after research. This is the version you socialize. If no amendments
-were needed, write "See Implementation Plan above — confirmed by research."_
+See Implementation Plan above, with DataBucket signature corrected to two-argument form.
 
 ---
 
 ## Stage 3: Socialize
 
-_Share your plan with relevant teammates. Get confirmation before writing code._
-
-### Messages Sent
-
-| To | Subject | Key Question |
-|----|---------|-------------|
-| | | |
-
-### Feedback Received
-
-| From | Feedback | Action Taken |
-|------|----------|-------------|
-| | | |
+Architecture doc defines the Lua/C++ contract clearly. Task 2 is fully independent
+of Task 1 — different files, different repos. No cross-expert coordination needed
+before implementation. Contract invariant #5 explicitly assigns HP/mana restoration
+to C++. Proceeding.
 
 ### Consensus Plan
 
-_Final plan incorporating teammate feedback. This is what you build from.
-Write it self-contained — a fresh agent should be able to execute this section
-alone after context compaction._
+Per architecture.md contract and research findings:
 
-**Agreed approach:**
+**Agreed approach:** Two additions to `CreateFromNPC()` re-recruitment path only.
+First-time recruitment path is unchanged.
 
 **Files to create or modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| | Create / Modify | |
+| `eqemu/zone/companion.cpp` | Modify | 2 additions in re-recruitment branch of `CreateFromNPC()` |
+| `eqemu/zone/cli/tests/cli_companion_tests.cpp` | Modify | Suite 19 with 5 tests |
 
 **Change sequence (final):**
-1.
-2.
-3.
+1. Add Suite 19 failing tests to `cli_companion_tests.cpp` and register in `TestCompanion()`
+2. Build with tests — confirm Suite 19 tests FAIL
+3. Add HP/mana restoration after `Load()` success in `CreateFromNPC()`
+4. Add DataBucket cooldown cleanup after flag clear in `CreateFromNPC()`
+5. Build again — confirm Suite 19 passes, all prior suites still pass
+6. Commit
 
 ---
 
