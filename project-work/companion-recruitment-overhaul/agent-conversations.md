@@ -78,7 +78,34 @@ _(Not yet started — pending PRD handoff to architect)_
 
 _Expert-to-expert exchanges during Phase 4._
 
-_(Not yet started — pending architecture phase)_
+### 2026-03-14 — Implementation: lua-expert Task 1 Completion
+
+**From:** lua-expert → **To:** team-lead
+
+> Task 1 (Rewrite `attempt_recruitment()` with two-track detection) complete.
+>
+> Summary of changes in `akk-stack/server/quests/lua_modules/companion.lua`:
+> - Added `check_existing_companion_record(npc_type_id, char_id)` — queries
+>   `is_dismissed=1 OR is_suspended=1`, matching C++ CreateFromNPC() exactly.
+> - Added `is_re_recruitment_eligible(npc, client)` — 5 minimal safety checks:
+>   system enabled, group capacity, not-already-recruited, combat, not-IsCompanion.
+> - Rewrote `attempt_recruitment()` — existing record checked FIRST, before any
+>   cooldown or eligibility check. Re-recruitment track skips all first-time gates
+>   and deletes stale cooldown on success.
+> - Renamed `dismissed_record` param to `existing_record` in `_on_recruitment_success()`.
+> - Deprecated `check_dismissed_record()` with comment.
+>
+> New test file: `tests/test_companion_recruitment.lua` — 35 tests, all passing.
+> All 37 existing regression tests still pass.
+> Both commits pushed to `feature/companion-recruitment-overhaul`.
+>
+> Contract confirmation: `client:CreateCompanion(npc)` is the single entry point.
+> No new C++ methods needed. Lua queries `is_dismissed=1 OR is_suspended=1` — must
+> stay synchronized with C++ CreateFromNPC() query.
+>
+> Task 3 (integration verification) blocked on c-expert completing Task 2.
+
+**Outcome:** Task 1 complete. Waiting on c-expert Task 2 before Task 3 can start.
 
 ---
 

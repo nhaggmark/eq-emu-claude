@@ -13,7 +13,7 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-14 | 2026-03-14 |
 | Design | game-designer + lore-master | Complete | 2026-03-14 | 2026-03-14 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-14 | 2026-03-14 |
-| Implementation | lua-expert + c-expert | Not Started | | |
+| Implementation | lua-expert + c-expert | In Progress | 2026-03-14 | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -66,7 +66,7 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Rewrite `attempt_recruitment()` with two-track detection | lua-expert | Not Started | Primary change: companion.lua |
+| 1 | Rewrite `attempt_recruitment()` with two-track detection | lua-expert | Complete | companion.lua + tests/test_companion_recruitment.lua |
 | 2 | Add cooldown cleanup and HP restoration in `CreateFromNPC()` | c-expert | Not Started | Minor C++: companion.cpp |
 | 3 | Integration verification: end-to-end testing | lua-expert + c-expert | Not Started | Depends on tasks 1 and 2 |
 
