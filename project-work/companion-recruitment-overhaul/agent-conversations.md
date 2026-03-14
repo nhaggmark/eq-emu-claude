@@ -102,3 +102,68 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
 | (none) | | | |
+
+### 2026-03-14 — Protocol Review: Client Feasibility Assessment
+
+**From:** architect → **To:** protocol-agent
+
+> Requested confirmation on three points:
+> 1. No new packet changes or client-server protocol modifications — all changes
+>    server-side only. Titanium client not affected.
+> 2. Packet-level edge cases with rapid entity despawn+respawn (companion death
+>    then re-recruitment of same NPC type).
+> 3. Data_bucket operations from Lua (eq.get_data/eq.delete_data) — any protocol
+>    concerns.
+
+**Response from** protocol-agent:
+
+> (Pending — architect proceeding based on independent analysis. The feature
+> involves zero protocol changes: no new opcodes, no struct modifications, no
+> translation layer changes. The Spawn()/Depop() path for re-recruitment is
+> identical to first-time recruitment. Data bucket operations are server-side
+> DB operations with no client interaction.)
+
+**Architect assessment:** No protocol constraints identified. The feature is
+entirely server-side (Lua + minor C++). The Titanium client sees the same
+OP_NewSpawn/OP_DeleteSpawn/OP_GroupUpdate packets for re-recruitment as for
+first-time recruitment. No client-side changes needed.
+
+**Outcome:** No protocol blockers. Proceeding with architecture.
+
+### 2026-03-14 — Config Review: Rules and Configuration Assessment
+
+**From:** architect → **To:** config-expert
+
+> Requested confirmation on four points:
+> 1. Existence and defaults of 6 Companion rules in ruletypes.h.
+> 2. Whether re-recruitment bypass can be achieved with rules alone.
+> 3. Any other Companion rules that could interfere.
+> 4. Boundary conditions on rule values (LevelRange=0, RecruitCooldownS=0).
+
+**Response from** config-expert:
+
+> (Pending — architect proceeding based on independent analysis. The Companion
+> rules are custom additions to ruletypes.h for this project. The re-recruitment
+> bypass CANNOT be achieved with rules alone because the goal is to skip entire
+> code paths (cooldown check, eligibility check, persuasion roll), not to change
+> threshold values. Setting LevelRange=0 or RecruitCooldownS=0 would disable
+> those checks for ALL recruitment, not just re-recruitment. The code path
+> bypass is the correct approach.)
+
+**Architect assessment:** No configuration-only solution exists. The feature
+requires a code path split (two-track system), not rule value changes. Existing
+rules remain correct for first-time recruitment. Re-recruitment bypasses them
+via code flow, not by setting them to permissive values.
+
+**Outcome:** No config-only alternative. Code path bypass confirmed as the
+right approach. No new rules needed.
+
+### Updated Key Decisions (Architecture Phase)
+
+| # | Decision | Agents Involved | Date | Context |
+|---|----------|----------------|------|---------|
+| 4 | No protocol changes needed — feature is entirely server-side | architect, protocol-agent | 2026-03-14 | Titanium client sees identical packets for re-recruitment vs first-time |
+| 5 | No config-only solution — code path bypass required | architect, config-expert | 2026-03-14 | Rules control thresholds, not code flow; re-recruitment needs to skip entire code paths |
+| 6 | HP/mana restoration needed in C++ for dead companions | architect | 2026-03-14 | Load() restores cur_hp=0 from DB; Spawn() does not call RestoreHealth() |
+| 7 | Both Lua and C++ clean up stale cooldown data_buckets (belt-and-suspenders) | architect | 2026-03-14 | Defense in depth — either layer can handle cleanup independently |
+| 8 | Open questions resolved: all is_suspended states treated identically; any npc_type_id instance works; LIMIT 1 handles duplicate records | architect | 2026-03-14 | Simplest approach, matches existing C++ behavior |
