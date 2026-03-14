@@ -15,6 +15,7 @@
 | companion-group-commands | Complete | feature/companion-group-commands | Merged to main — 9 group chat commands + IsSitting binding + BUG-019/020 fixes, 17 suites |
 | companion-group-debugging | Complete | bugfix/companion-group-debugging | Merged to main — BUG-021/022 fixed, 14 tests |
 | companion-behavior-improvements | Architecture | feature/companion-behavior-improvements | BUG-023/024/025/026/027 — 5 behavior improvements |
+| companion-recruitment-overhaul | Design | feature/companion-recruitment-overhaul | Fix re-recruitment blocking (cooldowns, flags, level caps) + Lua/C++ contract alignment |
 
 ## Bug Reports
 
