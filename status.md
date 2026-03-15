@@ -48,3 +48,4 @@
 | BUG-025 | !buffs command only buffs player instead of all party members | High | companion-behavior-improvements | Fix deployed |
 | BUG-026 | Caster companions lose LOS when positioning at fixed distance | High | companion-behavior-improvements | Fix deployed |
 | BUG-027 | Companions should always regenerate mana at meditation rates | High | companion-behavior-improvements | Fix deployed |
+| BUG-028 | Previously recruited NPC refuses re-recruitment after group wipe | Critical | companion-recruitment-overhaul | Data recovery complete 2026-03-14 — companion_data restored, cooldown cleared; systemic fix (c-expert) pending |
