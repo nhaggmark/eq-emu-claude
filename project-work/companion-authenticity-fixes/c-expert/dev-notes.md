@@ -157,7 +157,22 @@ Added `TestCompanionAuthenticityFixes()` suite covering:
 
 ## Open Items
 
-- [ ] Build and run full test suite to confirm all 19 suites pass
+- [x] Build and run full test suite to confirm all 19 suites pass
+- [x] Expand Suite 19 with deep coverage (44 new tests, 54 total)
+
+## Task 1 Complete: Deep Test Coverage
+
+Suite 19 expanded from 10 to 54 tests:
+
+| Group | Tests | Coverage |
+|-------|-------|----------|
+| GAP-01 crit guard | 19.11–19.14 | Warrior innate crit at 12+, level gating, rogue/wizard have no innate melee crit |
+| GAP-02 spell targeting | 19.15–19.18 | PC-only single-target, NPC blocked, cone AE, NPC-only AE exclusion |
+| GAP-03 defensive skills | 19.19–19.26 | Warrior/monk/rogue/wizard at levels 1/20/60 per real skill_caps data, level-up scaling, CanThisClassParry/Dodge |
+| GAP-04 stat multipliers | 19.27–19.30 | Cleric WIS>STR, Wizard INT>=Warrior INT, HP non-zero post-scaling, STR grows on level-up |
+| GAP-06 unarmed damage | 19.31–19.34 | Priest between warrior/wizard, hybrid between priest/warrior, level scaling, min>=1 for all archetypes |
+
+Key discovery: This DB's skill_caps has Parry/Dodge for ALL classes (1-16), Block only for Monk (7) and Beastlord (15), Riposte for 9 classes (no wizards, clerics, etc.). Tests were calibrated against actual DB data.
 
 ---
 
