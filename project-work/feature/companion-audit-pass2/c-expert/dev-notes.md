@@ -204,11 +204,56 @@ Traced `lua_client.cpp` lines 3639–3680:
 
 ## Open Items
 
-- [ ] **RECOMMEND FIX:** Constructor should call `ScaleStatsToLevel()` after `ApplyStatScalePct()` so fresh-recruited companions have class-differentiated stats. (GAP-04 subtle issue)
+- [x] **FIXED (NEW-03):** Constructor now calls `ScaleStatsToLevel()` before `ApplyStatScalePct()`, then `CalcBonuses()`. Order: ScaleStats → ApplyStatScalePct → CalcBonuses.
 - [ ] **INVESTIGATE:** DataBucket::DeleteData() in CreateFromNPC() — confirm whether `character_id=0` scope is handled correctly for companion cooldown keys.
-- [ ] **MINOR FIX:** Process() safety net path should call `UpdateTimeActive()` before firing direct SQL, to keep `time_active` accurate.
+- [x] **FIXED (NEW-05):** Process() safety net now calls `UpdateTimeActive()` before the direct SQL UPDATE.
 - [ ] **STALE MEMORY.md:** Entry "GetPrimaryFaction() is nil on Companion objects" is stale. Should be removed — GAP-17 fix registers this method correctly.
-- [ ] **TEST GAPS:** 13 gaps identified above (3 Critical, 2 High, 5 Medium, 3 Low). Critical gaps should be addressed before the next audit.
+- [x] **TEST GAPS (pass-2):** 5 new suites added (24-28), covering TC-C01 through TC-C05. Remaining medium/low gaps not addressed in this pass.
+
+---
+
+## Pass-2 Implementation Log (2026-03-15)
+
+### Job 1: companion_spell_sets priority semantics
+
+Confirmed via `companion_ai.cpp`: `ORDER BY priority ASC` + sequential slot assignment + `GetSpellsForType()` sorts by slot ascending + `SelectHealSpell`/`SelectFirstSpell` returns first match.
+
+**Answer: priority=1 = HIGHEST PRIORITY (checked first). Lower number = checked earlier.**
+
+This is the OPPOSITE of `npc_spells_entries` semantics.
+
+Data-expert notified via SendMessage with full breakdown and recommended priority ranges per class.
+
+### Job 2: Constructor stat scaling (NEW-03)
+
+**File:** `eqemu/zone/companion.cpp`, constructor (lines 144-162)
+
+**Change:** Replaced `ApplyStatScalePct() + SetDefensiveSkillsFromCaps() + CalcBonuses()` with:
+1. `ScaleStatsToLevel(d->level)` — applies class multipliers from `m_base_*`
+2. `ApplyStatScalePct()` — applies global % on top
+3. `CalcBonuses()` — refresh bonuses after both scale passes
+
+**Why order matters:** `ScaleStatsToLevel()` overwrites Mob stat fields from `m_base_*`. If `ApplyStatScalePct()` ran first, its modifications to the Mob fields would be silently discarded. By calling `ScaleStatsToLevel()` first, the global scale percentage is applied correctly on top of the class-differentiated stats.
+
+### Job 2b: Process() safety net (NEW-05)
+
+**File:** `eqemu/zone/companion.cpp`, `Process()` (lines ~1746-1760)
+
+**Change:** Added `UpdateTimeActive()` call before the direct SQL UPDATE in the HP=0 safety net block. Mirrors the correct behavior in `Death()` at line 632.
+
+### Job 3: Test suites 24-28
+
+All 5 suites added to `eqemu/zone/cli/tests/cli_companion_tests.cpp` and registered in `ZoneCLI::TestCompanion()`.
+
+| Suite | TC | What It Tests | Result |
+|-------|-----|--------------|--------|
+| 24 | TC-C01 | Constructor stat scaling: warrior STR > wizard STR, wizard INT > warrior INT | PASS |
+| 25 | TC-C02 | DataBucket cooldown delete round-trip (SetData → GetData → DeleteData → GetData=empty) | PASS |
+| 26 | TC-C03 | Process() safety net: UpdateTimeActive() called, time_active column updated | PASS |
+| 27 | TC-C04 | ACSum() companion branch: non-trivial AC for both melee and caster | PASS |
+| 28 | TC-C05 | Save()-before-Spawn() orphan row: Load() succeeds, owner_id/npc_type_id correct | PASS |
+
+**Commit:** `ef05b2580` on `feature/companion-audit-pass2`
 
 ---
 
