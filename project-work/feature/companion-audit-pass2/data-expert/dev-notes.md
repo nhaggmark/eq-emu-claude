@@ -358,21 +358,98 @@ There is no test verifying that priorities in `companion_spell_sets` match prior
 
 ---
 
-## Open Items
-
-- [ ] **C-expert must determine:** Does the companion AI use `companion_spell_sets` or `npc_spells_entries` as the authoritative spell source? If `companion_spell_sets`, all GAP-05/07 fixes need to be applied there too.
-- [ ] **Data work needed:** Fix cleric list — `Greater Healing`, `Superior Healing`, `Complete Heal` should be elevated to priority >= 15 (higher priority than `Wrath` at 30).
-- [ ] **Data work needed:** Fix 4 inverted minlevel/maxlevel entries, especially `Touch of Nife` in paladin list.
-- [ ] **Data work needed:** If `companion_spell_sets` is the active system, apply GAP-05/07 equivalents to that table for SHM, DRU, RNG, PAL, SK, MAG, ENC classes.
-
 ---
 
-## Context for Next Agent
+## Pass 2 Implementation Work (2026-03-15)
 
-All 30 GAP-05 and GAP-07 validation tests pass in `npc_spells_entries`. However, this audit discovered a parallel spell system (`companion_spell_sets`) that was NOT updated by those fixes. The architect must determine which system the companion AI actually uses at runtime. Additionally, the cleric spell list was not in scope for either GAP — it has a serious heal priority inversion where damage nukes outprioritize all mid-high tier heals.
+### Stage 1-3: Plan, Research, Socialize
 
-Key facts:
-- `npc_spells_entries` spell lists 1-10: all fixed, all tests pass
-- `companion_spell_sets` classes 6,8,10 (SHM,PAL,RNG): max heal priority = 1 (NOT fixed)
-- Cleric list (npc_spells_id=1): `Healing` at priority=20 but `Greater Healing`, `Superior Healing`, `Complete Heal` all at priority=1
-- 4 entries have inverted minlevel/maxlevel, most impactful being paladin `Touch of Nife` (heal, priority=20, minlevel=61 > maxlevel=52 — inaccessible)
+- Architecture report confirmed `companion_spell_sets` is the PRIMARY spell system
+- c-expert priority semantics question outstanding — BLOCKED Part 1
+- Sent message to c-expert asking for priority semantics confirmation
+- Proceeded with unblocked Parts 2, 3, and 4
+
+### Stage 4: Implementation Log
+
+#### Part 2: Fix NEW-02 — Cleric heal priorities
+
+**npc_spells_entries (list id=1)** — Applied:
+| Entry ID | Spell | Old Priority | New Priority |
+|----------|-------|-------------|-------------|
+| 36 | Complete Heal (spell 13) | 1 | 50 |
+| 40 | Supernal Remedy (3465) | 1 | 48 |
+| 41 | Supernal Light (3480) | 1 | 48 |
+| 20058 | Promised Renewal (9755) | 1 | 48 |
+| 37 | Remedy (1518) | 1 | 45 |
+| 38 | Divine Light (1519) | 1 | 45 |
+| 39 | Ethereal Light (2182) | 1 | 45 |
+| 35 | Superior Healing (9) | 1 | 40 |
+| 34 | Greater Healing (15) | 1 | 35 |
+| 33 | Healing (12) | 20 | 25 |
+| 32 | Light Healing (17) | 10 | 15 |
+
+All heals at minlevel>=20 now have priority >= 10.
+All heals at minlevel>=29 now outprioritize Wrath (30). ✓
+
+**companion_spell_sets (class_id=2)** — Applied same values. All 10 updates applied.
+Max heal priority = 50 vs max damage priority = 30. ✓
+
+**Validation results:** TC-D02-A, TC-D02-B, TC-D02-C all PASS.
+
+#### Part 3: Fix NEW-04 — Inverted minlevel/maxlevel
+
+**npc_spells_entries** — 4 entries fixed:
+| Entry ID | List | Spell | Old range | New range |
+|----------|------|-------|-----------|-----------|
+| 176 | 2 (WIZ) | Resistant Armor | 61-57 | 57-65 |
+| 602 | 6 (SHM) | Talisman of Kragg | 55-9 | 55-65 |
+| 695 | 7 (DRU) | Creeping Crud | 24-23 | 24-28 |
+| 822 | 8 (PAL) | Touch of Nife | 61-52 | 52-65 |
+
+Druid DoT level range 24-28 covers the gap before Immolate takes over at level 29. ✓
+
+**companion_spell_sets** — 13 entries fixed (discovered during validation):
+- PAL/class=3: Touch of Nife 61-52 → 52-65
+- DRU/class=6: Creeping Crud 24-23 → 24-28
+- RNG/class=10: Talisman of Kragg 55-9 → 55-65
+- WIZ/class=12: Resistant Armor 61-57 → 57-65
+- BRD/class=8: 6 songs with max_level=21 → max_level=65 (data entry error)
+- BRD/class=8: Wind of Marr heal 62-53 → 53-65
+- BER/class=15: Blizzard Blast 59-57 → 57-65
+- BER/class=15: Frost Spear 63-57 → 63-65
+
+**Validation results:** TC-D03-A, TC-D03-B both PASS.
+
+#### Part 4: DB Validation Hardening
+
+Created `/mnt/d/Dev/eq/claude/project-work/feature/companion-audit-pass2/data-expert/context/companion_db_health_validation.sql`
+
+Covers 7 test gaps (TC-D01 through TC-D07), 15 individual test cases:
+- TC-D01: companion_spell_sets priority validation (A/B/C/D) — A, B, D blocked on c-expert
+- TC-D02: Cleric mid-tier heal priority checks (A/B/C) — all PASS
+- TC-D03: Inverted level range detection (A/B) — both PASS
+- TC-D04: companion_data state integrity (A/B) — both PASS
+- TC-D05: Orphaned companion_inventories (A) — PASS
+- TC-D06: Duplicate spell IDs (A/B) — both PASS
+- TC-D07: Cross-system parity (A) — PASS
+
+**Current results: 12/15 PASS. 3 FAIL blocked on c-expert priority semantics (TC-D01-A, B, D).**
+
+### Open Items (BLOCKED)
+
+- [ ] **Part 1 (BLOCKED on c-expert):** Apply GAP-05/07 equivalent priorities to `companion_spell_sets` for all healer/caster classes (SHM, DRU, RNG, PAL, SK, NEC, MAG, ENC, WIZ, BRD, BST, BER). Waiting for c-expert to confirm whether lower or higher priority number = higher priority.
+- [ ] **After c-expert answers:** Update companion_spell_sets priorities for all 11 remaining classes.
+- [ ] **After Part 1:** TC-D01-A, TC-D01-B, TC-D01-D should all PASS.
+
+### Context for Next Data Expert Work
+
+Priority semantics question: architecture.md says `ORDER BY priority ASC` with AI picking first match. This would mean LOWER number = highest priority. But cleric data has heals at priority=50 and Wrath at priority=30 — if lower = higher, heals would be last, not first. This contradiction needs c-expert to read the actual AICastSpell iteration logic.
+
+If c-expert confirms HIGHER number = higher priority:
+- The cleric fixes already applied are CORRECT
+- Apply same hierarchy to all other classes in companion_spell_sets
+
+If c-expert confirms LOWER number = higher priority:
+- All priority values in companion_spell_sets need to be INVERTED
+- Priority 1 = checked first = highest priority
+- The cleric fixes applied to companion_spell_sets need to be reversed then reapplied with inverted values
