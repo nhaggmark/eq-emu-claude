@@ -62,16 +62,18 @@ _Expert-to-expert exchanges during Phase 4._
 
 **From:** c-expert → **To:** data-expert
 
-> Sent full analysis of AICastSpell priority semantics after reading companion_ai.cpp.
-> Key findings:
-> - `ORDER BY priority ASC` + sequential slot assignment means priority=1 is slot 0
-> - `GetSpellsForType()` sorts by slot ascending, all selectors pick first match
-> - **Result: priority=1 = HIGHEST PRIORITY (checked first). OPPOSITE of npc_spells_entries.**
+> Full analysis from companion_ai.cpp:
+> - `LoadCompanionSpells()` queries `ORDER BY priority ASC, id ASC` — priority=1 rows come first
+> - Each row assigned sequential `slot` counter (0, 1, 2...) on insertion into `m_companion_spells`
+> - `GetSpellsForType()` sorts by `a.slot < b.slot` (ascending). Comment at line 117: "lower slot = higher priority in DB"
+> - All selectors (`SelectHealSpell()`, `SelectFirstSpell()`, etc.) iterate front-to-back and return FIRST eligible spell
+> - **CONFIRMED: priority=1 = HIGHEST PRIORITY (checked first). OPPOSITE of npc_spells_entries.**
 > - Cleric heals at priority=20 are checked LAST — damage at priority=1 always fires first
 > - Shaman heals at priority=1 are correct by accident (already highest priority)
-> - Recommended priority scheme for companion_spell_sets: heals=1, cures=2, debuffs=5, buffs=8, damage=10+
+> - Recommended scheme: heals=1, cures=2, debuffs=5, buffs=8, damage=10+
+> - AI handles healer-vs-DPS routing via class-specific methods (AI_Cleric, AI_Shaman etc.) — priority within a spell type determines WHICH spell is selected when multiple options exist
 
-**Outcome:** data-expert unblocked to apply companion_spell_sets priority fixes using correct semantics.
+**Outcome:** data-expert applied all fixes using confirmed semantics. All 16 validation tests PASS.
 
 ### 2026-03-15 — data-expert self-correction: initial cleric fix was wrong
 
