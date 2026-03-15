@@ -13,7 +13,7 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-15 | 2026-03-15 |
 | Design | game-designer + lore-master | Complete | 2026-03-15 | 2026-03-15 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-15 | 2026-03-15 |
-| Implementation | c-expert + data-expert | Not Started | | |
+| Implementation | c-expert + data-expert | In Progress | 2026-03-15 | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -62,7 +62,7 @@ _Populated by the architect after the architecture doc is approved._
 | 8 | Add rez delay timer + update `AI_IdleCastCheck()` | c-expert | Not Started | Depends on 1 |
 | 9 | Implement full rez AI: `AI_ResurrectDeadGroupMember()`, `FindDeadGroupMemberCorpse()`, `SelectBestRezSpell()`, deity dialogue | c-expert | Not Started | Depends on 1, 2, 5, 8 |
 | 10 | Wire rez AI into `AI_Cleric()`, `AI_Paladin()`, `AI_Necromancer()` | c-expert | Not Started | Depends on 9 |
-| 11 | Verify rez spell IDs from `spells_new`, populate `companion_spell_sets` | data-expert | Not Started | Independent — can start immediately |
+| 11 | Verify rez spell IDs from `spells_new`, populate `companion_spell_sets` | data-expert | Complete | 2026-03-15. 17 rows: 9 CLR + 7 PAL + 1 NEC. 5 rule_values inserted. SQL at data-expert/context/add_rez_spells.sql |
 | 12 | Multiple-healer coordination: only highest-rez-capable companion attempts | c-expert | Not Started | Depends on 9 |
 
 ---

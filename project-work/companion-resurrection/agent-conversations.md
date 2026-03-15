@@ -102,6 +102,37 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 _Expert-to-expert exchanges during Phase 4._
 
+### 2026-03-15 — data-expert → c-expert: Confirmed spell IDs and effect data
+
+**From:** data-expert → **To:** c-expert
+
+> Task 11 complete. Queried `spells_new` for all effectid=81 (SE_Resurrection) spells under ID 3000.
+>
+> **Confirmed rez spell IDs for C++ implementation:**
+>
+> | ID | Name | CLR lvl | PAL lvl | NEC lvl | Mana | XP% (effect_base_value1) |
+> |----|------|---------|---------|---------|------|--------------------------|
+> | 2168 | Reanimation | 12 | 22 | — | 150 | 0% |
+> | 2169 | Reconstitution | 18 | 30 | — | 200 | 10% |
+> | 2170 | Reparation | 22 | 31 | — | 250 | 20% |
+> | 391 | Revive | 27 | 39 | — | 300 | 35% |
+> | 2171 | Renewal | 32 | 49 | — | 400 | 50% |
+> | 388 | Resuscitate | 37 | — | — | 500 | 60% (CLR-only) |
+> | 2172 | Restoration | 42 | 55 | — | 600 | 75% |
+> | 392 | Resurrection | 47 | 59 | — | 700 | 90% |
+> | 1524 | Reviviscence | 56 | — | — | 600 | 96% |
+> | 1733 | Convergence | — | — | 53 | 700 | 93% |
+>
+> **Key notes for C++ implementation:**
+> - `effect_base_value1` is the XP restore percentage for all rez spells (effect ID 81)
+> - Convergence (1733): `effect_base_value1=93` (XP%), `effect_base_value2=-90` (HP restore to target) — the XP% is in slot 1
+> - All 17 rows now in `companion_spell_sets` with `spell_type=65536`, `priority=1`
+> - 5 rule_values inserted: RezEnabled, RezPostCombatDelayS, RezRange, XPDeathPenaltyPct, RezWaiveReagents (all ruleset_id=1)
+> - The architecture doc listed only 5 CLR + 2 PAL spells — database had 9 CLR + 7 PAL. All included as fallback ladder for mana management.
+> - SQL migration: `claude/project-work/companion-resurrection/data-expert/context/add_rez_spells.sql`
+
+**Awaiting response from c-expert.**
+
 ---
 
 ## Key Decisions from Conversations
