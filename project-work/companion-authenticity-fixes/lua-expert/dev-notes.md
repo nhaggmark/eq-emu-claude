@@ -2,158 +2,144 @@
 
 > **Feature branch:** `feature/companion-authenticity-fixes`
 > **Agent:** lua-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task:** Lua tests — recruitment overhaul edge cases and regression (Task #2)
+> **Date started:** 2026-03-14
+> **Current stage:** Build (Stage 4)
 
 ---
 
 ## Task Assignment
 
-_Copy your assigned task(s) from the architecture doc's Implementation Sequence._
-
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| | | | |
+| 2 | Lua tests: recruitment overhaul edge cases and regression | — | Complete |
 
 ---
 
 ## Stage 1: Plan
 
-_What you learned from reading source code and your proposed approach. NO CODE
-is written during this stage._
+### Context
+
+The two-track companion recruitment overhaul was implemented on
+`feature/companion-recruitment-overhaul` (commit 5544ec5). The current branch
+(`feature/companion-authenticity-fixes`) does NOT have those changes.
+Task #2 requires:
+1. Bringing the overhaul changes to this branch
+2. Expanding the 35 existing tests with additional edge cases
 
 ### Files Examined
 
 | File | Lines | What You Found |
 |------|-------|----------------|
-| | | |
+| `akk-stack/server/quests/lua_modules/companion.lua` (current) | ~1100 | Missing `check_existing_companion_record()`, `is_re_recruitment_eligible()`, and updated `attempt_recruitment()` |
+| `5544ec5:server/quests/lua_modules/companion.lua` (overhaul) | 1472 | Has all new functions; `attempt_recruitment()` rewrote with two-track logic |
+| `5544ec5:server/quests/tests/test_companion_recruitment.lua` | 793 lines | 35 tests — covers core paths but missing 9 specific edge cases |
 
 ### Key Findings
 
-_Summarize what you learned about the existing system that informs your approach._
+- The overhaul commit adds `check_existing_companion_record()` which queries for
+  `is_dismissed=1 OR is_suspended=1` (vs the old `check_dismissed_record()` which
+  only checked `is_dismissed=1`)
+- `is_re_recruitment_eligible()` is a new minimal-safety-check subset of
+  `is_eligible_npc()` — skips level range, faction, exclusions, persuasion
+- `attempt_recruitment()` now checks for existing record FIRST (before cooldown check),
+  routing to re-recruitment track if found
+- Stale cooldown `eq.delete_data()` happens AFTER `_on_recruitment_success()` in the
+  re-recruitment track
+- `check_dismissed_record()` deprecated but kept for backward compat
 
 ### Implementation Plan
-
-_Your proposed approach. Be specific enough that a fresh agent after context
-compaction could execute this plan without additional exploration._
 
 **Files to create or modify:**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| | Create / Modify | |
+| `akk-stack/server/quests/lua_modules/companion.lua` | Modify | Apply overhaul diff: add `check_existing_companion_record()`, `is_re_recruitment_eligible()`, rewrite `attempt_recruitment()` |
+| `akk-stack/server/quests/tests/test_companion_recruitment.lua` | Create | 35 base tests + 9 new edge case tests = 44 total |
 
-**Change sequence:**
-1.
-2.
-3.
-
-**What to test:**
--
+**Missing edge cases to add:**
+1. Re-recruitment when `cur_hp=0` in DB row (Lua proceeds, C++ handles HP)
+2. `is_suspended=1 AND is_dismissed=1` simultaneously (both flags set — still re-recruits)
+3. Re-recruitment ignores faction (faction=4/Amiably would block first-time but not re-recruit)
+4. Re-recruitment ignores persuasion roll (math.random always returns 100 but still succeeds)
+5. Re-recruitment: `is_recruited=1` entity var blocks (safety check still enforced)
+6. Cooldown NOT cleaned up after first-time failure
+7. Multiple companions from same npc_type_id: LIMIT 1 — first result used
+8. `check_existing_companion_record()` with both flags=0 returns nil (neither dismissed nor suspended)
+9. Re-recruitment: first-time NPC exclusion/bodytype checks are bypassed
 
 ---
 
 ## Stage 2: Research
 
-_Context7 and documentation verification. Every API, function, and syntax in
-your plan must be verified against current docs before proceeding._
-
 ### Documentation Consulted
 
 | API / Function / Syntax | Source | Verified? | Notes |
 |------------------------|--------|-----------|-------|
-| | Context7 / WebFetch / Source | Yes / No | |
+| `eq.delete_data(key)` | LUA-CODE.md | Yes | Data bucket delete — verified in module |
+| `eq.get_data(key)` | LUA-CODE.md | Yes | Returns nil or empty string when no record |
+| `eq.set_data(key, val, ttl)` | LUA-CODE.md | Yes | TTL in seconds as string |
+| `Database():prepare()` / `fetch_hash()` | LUA-CODE.md | Yes | Lua_Database prepared statement pattern |
+| `client:GetAggroCount()` | companion.lua source | Yes | Returns 0 when not in combat |
+| `npc:IsCompanion()` | companion.lua source | Yes | Returns false for regular NPC |
 
 ### Plan Amendments
 
-_What changed in your plan based on documentation research? If nothing, state
-"Plan confirmed — no amendments needed."_
-
-### Verified Plan
-
-_Final plan after research. This is the version you socialize. If no amendments
-were needed, write "See Implementation Plan above — confirmed by research."_
+Plan confirmed — no amendments needed. The overhaul diff is clean and the test
+gap analysis is complete.
 
 ---
 
 ## Stage 3: Socialize
 
-_Share your plan with relevant teammates. Get confirmation before writing code._
-
-### Messages Sent
-
-| To | Subject | Key Question |
-|----|---------|-------------|
-| | | |
-
-### Feedback Received
-
-| From | Feedback | Action Taken |
-|------|----------|-------------|
-| | | |
-
-### Consensus Plan
-
-_Final plan incorporating teammate feedback. This is what you build from.
-Write it self-contained — a fresh agent should be able to execute this section
-alone after context compaction._
-
-**Agreed approach:**
-
-**Files to create or modify:**
-
-| File | Action | What Changes |
-|------|--------|-------------|
-| | Create / Modify | |
-
-**Change sequence (final):**
-1.
-2.
-3.
+This is a testing-only task on a standalone branch. No dependencies on other agents'
+current work — the overhaul companion.lua is fully defined in the overhaul branch.
+No socialization needed.
 
 ---
 
 ## Stage 4: Build
 
-_Execute the consensus plan. Log every change._
-
 ### Implementation Log
 
-_Chronological record of what you did. Each entry should have enough detail
-that a fresh agent could understand the change without reading the diff._
+#### 2026-03-14 — Apply companion.lua overhaul to this branch
 
-#### [Date] — [Brief description]
+**What:** Applied the two-track recruitment diff from `feature/companion-recruitment-overhaul`
+(commit 5544ec5) to the current `companion.lua`:
+- Updated `check_dismissed_record()` comment to mark as DEPRECATED
+- Added `check_existing_companion_record()` (queries `is_dismissed=1 OR is_suspended=1`)
+- Added `is_re_recruitment_eligible()` (minimal safety checks subset)
+- Rewrote `attempt_recruitment()` with two-track dispatch
+- Updated `_on_recruitment_success()` parameter name: `dismissed_record` → `existing_record`
 
-**What:** _What you changed_
-**Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the consensus plan_
-**Notes:** _Edge cases, gotchas, things the next agent should know_
+**Where:** `/mnt/d/Dev/eq/akk-stack/server/quests/lua_modules/companion.lua` lines 365-471
 
-### Problems & Solutions
+**Why:** The overhaul functions are required for the tests to load and pass.
+The test file calls `companion.check_existing_companion_record()` and
+`companion.is_re_recruitment_eligible()` which don't exist on this branch yet.
 
-| Problem | Root Cause | Solution |
-|---------|-----------|----------|
-| | | |
+#### 2026-03-14 — Create test_companion_recruitment.lua with full coverage
+
+**What:** Created test file with 44 tests total:
+- 35 base tests ported from overhaul branch (all existing scenarios)
+- 9 new edge case tests covering the scenarios listed in Task #2
+
+**Where:** `/mnt/d/Dev/eq/akk-stack/server/quests/tests/test_companion_recruitment.lua`
+
+**New edge case tests added:**
+1. `cur_hp=0` in DB row — Lua proceeds (C++ handles HP)
+2. `is_suspended=1 AND is_dismissed=1` simultaneously — re-recruits (either flag triggers track 1)
+3. Re-recruitment ignores faction below Kindly
+4. Re-recruitment ignores persuasion roll (always-fail random returns 100)
+5. `is_recruited=1` entity var blocks re-recruitment (safety check enforced)
+6. Cooldown NOT deleted after first-time failure
+7. `check_existing_companion_record()` returns nil when both flags=0
+8. Multiple companions same npc_type_id: LIMIT 1 returns first (whichever DB returns)
+9. Re-recruitment bypasses bodytype/exclusion checks
 
 ### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
-| | Created / Modified | |
-
----
-
-## Open Items
-
-_Anything unfinished, deferred, or flagged for attention._
-
-- [ ]
-
----
-
-## Context for Next Agent
-
-_If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context.
-Reference the Consensus Plan section above._
+| `akk-stack/server/quests/lua_modules/companion.lua` | Modified | Two-track overhaul applied |
+| `akk-stack/server/quests/tests/test_companion_recruitment.lua` | Created | 44-test suite |
