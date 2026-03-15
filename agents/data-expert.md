@@ -173,6 +173,31 @@ Invoke these via the Skill tool (e.g., `Skill("hugging-face-cli")`).
 Useful for: finding EQ-related datasets, sourcing lore data, model metadata
 for NPC LLM features.
 
+## Inventory Slot Formula (Titanium Client)
+
+When inserting items into a character's bag contents via the `inventory` table,
+you MUST use the correct Titanium client slot formula:
+
+```
+slot_id = (bag_inventory_slot * 200) - 590 + bag_index
+```
+
+Where:
+- `bag_inventory_slot` = the main inventory slot of the bag (22-30)
+- `bag_index` = position within the bag (0-7 for 8-slot bags)
+
+**Example:** Bag in slot 23, first item: `(23 * 200) - 590 + 0 = 4010`
+**Example:** Bag in slot 30, third item: `(30 * 200) - 590 + 2 = 5412`
+
+**Critical rules:**
+- `charges = 1` is required for spell scrolls (charges=0 makes them invisible)
+- The old formula `251 + (bag_num * 10) + index` is WRONG — those slots are
+  never read by the Titanium client
+- Column names: `character_id`, `slot_id`, `item_id`, `charges`
+  (NOT `charid`/`slotid`/`itemid`)
+- Always verify bags exist in the target main inventory slots before inserting
+  contents into their sub-slots
+
 ## You Do NOT
 
 - Modify C++ source or quest scripts
