@@ -200,6 +200,61 @@ None.
 
 ---
 
+## Task #3 — SQL Validation Script (2026-03-14)
+
+### Assignment
+
+Create automated SQL validation script for spell priority changes and run it against the live database.
+
+### File Created
+
+`claude/project-work/companion-authenticity-fixes/data-expert/context/test_spell_priorities.sql`
+
+Note: `akk-stack/server/` is gitignored, so the script is stored in the
+project context directory. Deploy to the server for runtime use if needed.
+
+Run via:
+```
+docker exec -i akk-stack-mariadb-1 mysql -ueqemu -p'ZSF4Iz1Eht0eZ2Qn68bAAEXln6Prc79' peq \
+  --skip-column-names < /mnt/d/Dev/eq/claude/project-work/companion-authenticity-fixes/data-expert/context/test_spell_priorities.sql
+```
+
+### Tests Implemented
+
+| # | Test Description | Method |
+|---|-----------------|--------|
+| 1 | Shaman heals all priority >= 15 | COUNT type=2, list 6, priority < 15 must be 0 |
+| 2 | Shaman damage (DD nukes) deprioritized below heals | max(heal) > max(DD/DoT) for list 6 |
+| 3 | Shaman slows/debuffs have mid-priority | 18 specific spellids with 5 < priority < 20 |
+| 4 | Druid heals all priority >= 10 | COUNT type=2, list 7, priority < 10 must be 0 |
+| 5 | Druid damage deprioritized below heals | max(heal) > max(DD/DoT) for list 7 |
+| 6 | Ranger heals all priority >= 5 | COUNT type=2, list 10, priority < 5 must be 0 |
+| 7 | Cleric baseline unchanged (regression) | spellid=12 at 20, spellid=17 at 10 |
+| 8 | No healer list (6,7,10) has heals at priority=1 | COUNT type=2 at priority=1 in lists 6/7/10 must be 0 |
+| 9 | Priority hierarchy per list (heal > damage > utility) | Per-list max comparison for lists 6, 7, 10 |
+
+**Note on Cleric (ID 1):** The cleric list is excluded from tests 8 and 9's hierarchy check. It has many heals at priority=1 (lower-tier heals cast when CH is on cooldown) and DD nukes at priority=30 — both are intentional pre-existing behavior not touched by GAP-05.
+
+### Validation Results (2026-03-14, live peq database)
+
+```
+PASS: Shaman heals all priority >= 15
+PASS: Shaman heal priority > Shaman damage priority
+PASS: Shaman slows/debuffs all have mid-priority (5 < priority < 20)
+PASS: Druid heals all priority >= 10
+PASS: Druid heal priority > Druid damage priority
+PASS: Ranger heals all priority >= 5
+PASS: Cleric baseline heals unchanged (CH=20, Celestial=10)
+PASS: No healer list (6, 7, 10) has heals at priority=1
+PASS: List 6 hierarchy: heal(20) > damage(10) > utility(3)
+PASS: List 7 hierarchy: heal(15) > damage(7) > utility(3)
+PASS: List 10 hierarchy: heal(8) > damage(6) > utility(3)
+```
+
+**Result: 11/11 PASS**
+
+---
+
 ## Context for Next Agent
 
 Task is fully complete. The migration was applied to the live `peq` database
