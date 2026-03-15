@@ -68,6 +68,34 @@ _game-designer + lore-master exchanges during Phase 2._
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
+### 2026-03-15 — Protocol Feasibility Check
+
+**From:** architect → **To:** protocol-agent
+
+> Requested assessment on three protocol-level questions:
+> 1. Does the Titanium client correctly display `OP_RezzRequest` when `rezzer_name` is an NPC name? (e.g., "Priestess Grel")
+> 2. For auto-accept companion rez (bypassing `OP_RezzRequest`), are there packet-level requirements for the client to see the rez? Specifically: `OP_Action`/`OP_BeginCast` for cast animation, `OP_DeleteSpawn` for corpse removal, standard spawn packets for companion reappearance.
+> 3. Any Titanium client quirks around NPC corpse targeting by NPCs, or rez spell visual effects?
+
+**Response from** protocol-agent: _Pending — architect proceeded with draft based on protocol analysis from source code. The `Resurrect_Struct` at `eq_packet_structs.h:2968` has `rezzer_name[64]` as a plain char array — no player-specific validation. The companion rez path bypasses `OP_RezzRequest` entirely (auto-accept), using only standard spawn/despawn packets._
+
+**Architect's assessment (pre-response):** No new opcodes needed. Player rez uses existing `Corpse::CastRezz()` → `OP_RezzRequest` flow. Companion rez uses entity creation/deletion which the client handles via standard packets. Low protocol risk.
+
+### 2026-03-15 — Config/Rules Assessment
+
+**From:** architect → **To:** config-expert
+
+> Requested assessment on rule/config coverage for rez system:
+> 1. Do any existing rules overlap with the 5 proposed new rules? (Specifically: `Mercs:ResurrectRadius` vs `Companions:RezRange`)
+> 2. Does any existing rule control NPC XP death penalty?
+> 3. Is there an existing rule for waiving spell reagent requirements?
+> 4. Can any rez behavior be achieved through config alone without C++ changes?
+
+**Response from** config-expert: _Pending — architect proceeded with draft. Analysis of `ruletypes.h` confirms no overlapping Companion rules exist. `Mercs:ResurrectRadius` is merc-specific. No NPC XP death penalty rule exists. No reagent waiver rule exists. The core rez logic (NPC corpse targeting, auto-accept, companion respawn) requires C++ — config/rules handle only the tunable values._
+
+**Architect's assessment (pre-response):** All 5 proposed rules are new and non-overlapping. The core feature cannot be achieved through config alone — C++ is required for the spell effect handler extension, corpse metadata, rez AI, and companion resurrection lifecycle. Rules control all tunable parameters (enabled/disabled, range, delay, XP penalty, reagent waiver).
+
+
 ---
 
 ## Implementation Team Conversations
