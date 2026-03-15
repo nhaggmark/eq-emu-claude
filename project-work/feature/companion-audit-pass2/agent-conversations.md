@@ -58,17 +58,20 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 _Expert-to-expert exchanges during Phase 4._
 
-### [Date] — [Topic]
+### 2026-03-15 — companion_spell_sets priority semantics (CRITICAL BLOCKER)
 
-**From:** [agent] → **To:** [agent]
+**From:** c-expert → **To:** data-expert
 
-> [Message content or summary]
+> Sent full analysis of AICastSpell priority semantics after reading companion_ai.cpp.
+> Key findings:
+> - `ORDER BY priority ASC` + sequential slot assignment means priority=1 is slot 0
+> - `GetSpellsForType()` sorts by slot ascending, all selectors pick first match
+> - **Result: priority=1 = HIGHEST PRIORITY (checked first). OPPOSITE of npc_spells_entries.**
+> - Cleric heals at priority=20 are checked LAST — damage at priority=1 always fires first
+> - Shaman heals at priority=1 are correct by accident (already highest priority)
+> - Recommended priority scheme for companion_spell_sets: heals=1, cures=2, debuffs=5, buffs=8, damage=10+
 
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** data-expert unblocked to apply companion_spell_sets priority fixes using correct semantics.
 
 ---
 
@@ -79,7 +82,8 @@ This table is the quick-reference for anyone catching up._
 
 | # | Decision | Agents Involved | Date | Context |
 |---|----------|----------------|------|---------|
-| | | | | |
+| 1 | `companion_spell_sets` priority=1 means HIGHEST priority (checked first). Opposite of `npc_spells_entries`. | c-expert → data-expert | 2026-03-15 | Data-expert was blocked on priority direction before applying companion_spell_sets fixes. |
+| 2 | Constructor call order: ScaleStatsToLevel() → ApplyStatScalePct() → CalcBonuses(). ApplyStatScalePct must come AFTER ScaleStatsToLevel or the % scale is overwritten. | c-expert | 2026-03-15 | NEW-03 fix — fresh companions had homogeneous stats until first level-up. |
 
 ---
 
