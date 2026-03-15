@@ -13,7 +13,7 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-15 | 2026-03-15 |
 | Design | game-designer + lore-master | Complete | 2026-03-15 | 2026-03-15 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-15 | 2026-03-15 |
-| Implementation | c-expert + data-expert | In Progress | 2026-03-15 | |
+| Implementation | c-expert + data-expert | Complete | 2026-03-15 | 2026-03-15 |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -52,18 +52,18 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Add 5 new rules to `ruletypes.h` + `rule_values` SQL | c-expert | Not Started | Independent — can start immediately |
-| 2 | Add companion metadata to Corpse class (`corpse.h/cpp`) | c-expert | Not Started | Independent — can start immediately |
-| 3 | Strip loot from companion corpses + set companion data in `attack.cpp` | c-expert | Not Started | Depends on 2 |
-| 4 | Extend `SpellEffect::Revive` in `spell_effects.cpp` for companion corpses | c-expert | Not Started | Depends on 2 |
-| 5 | Add `GetCompanionCorpseByOwnerWithinRange()` to `entity.h/cpp` | c-expert | Not Started | Depends on 2 |
-| 6 | Implement `ApplyDeathXPPenalty()` + call from `Death()` | c-expert | Not Started | Depends on 1 |
-| 7 | Implement `ResurrectFromCorpse()` static method | c-expert | Not Started | Depends on 2, 5, 6 |
-| 8 | Add rez delay timer + update `AI_IdleCastCheck()` | c-expert | Not Started | Depends on 1 |
-| 9 | Implement full rez AI: `AI_ResurrectDeadGroupMember()`, `FindDeadGroupMemberCorpse()`, `SelectBestRezSpell()`, deity dialogue | c-expert | Not Started | Depends on 1, 2, 5, 8 |
-| 10 | Wire rez AI into `AI_Cleric()`, `AI_Paladin()`, `AI_Necromancer()` | c-expert | Not Started | Depends on 9 |
+| 1 | Add 5 new rules to `ruletypes.h` + `rule_values` SQL | c-expert | Complete | 2026-03-15. ruletypes.h updated; data-expert inserted rule_values. |
+| 2 | Add companion metadata to Corpse class (`corpse.h/cpp`) | c-expert | Complete | 2026-03-15. IsCompanionCorpse(), SetCompanionData(), ClearAllLoot() added. |
+| 3 | Strip loot from companion corpses + set companion data in `attack.cpp` | c-expert | Complete | 2026-03-15. Hook after AddCorpse in attack.cpp NPC death path. |
+| 4 | Extend `SpellEffect::Revive` in `spell_effects.cpp` for companion corpses | c-expert | Complete | 2026-03-15. companion corpse path added alongside existing player path. |
+| 5 | Add `GetCompanionCorpseByOwnerWithinRange()` to `entity.h/cpp` | c-expert | Complete | 2026-03-15. Scans corpse_list for companion corpses within range. |
+| 6 | Implement `ApplyDeathXPPenalty()` + call from `Death()` | c-expert | Complete | 2026-03-15. Deducts XPDeathPenaltyPct% of level XP on death. |
+| 7 | Implement `ResurrectFromCorpse()` static method | c-expert | Complete | 2026-03-15. Full lifecycle: DB load, spawn at corpse pos, rez HP%, 0 mana, no buffs, XP restore, group join. |
+| 8 | Add rez delay timer + update `AI_IdleCastCheck()` | c-expert | Complete | 2026-03-15. m_rez_delay_timer + m_was_engaged tracking in Process(). SpellType_Resurrect added to AI_IdleCastCheck. |
+| 9 | Implement full rez AI: `AI_ResurrectDeadGroupMember()`, `FindDeadGroupMemberCorpse()`, mana-aware spell selection, deity dialogue | c-expert | Complete | 2026-03-15. Full pipeline: delay gate, multi-healer check, corpse scan, mana-aware selection, meditation fallback, deity-themed dialogue. |
+| 10 | Wire rez AI into `AI_Cleric()`, `AI_Paladin()`, `AI_Necromancer()` | c-expert | Complete | 2026-03-15. Stub replaced in AI_Cleric(); added to AI_Paladin() and AI_Necromancer() idle paths. |
 | 11 | Verify rez spell IDs from `spells_new`, populate `companion_spell_sets` | data-expert | Complete | 2026-03-15. 17 rows: 9 CLR + 7 PAL + 1 NEC. 5 rule_values inserted. SQL at data-expert/context/add_rez_spells.sql |
-| 12 | Multiple-healer coordination: only highest-rez-capable companion attempts | c-expert | Not Started | Depends on 9 |
+| 12 | Multiple-healer coordination: only highest-rez-capable companion attempts | c-expert | Complete | 2026-03-15. AnotherCompanionIsRezzing() static helper in companion_ai.cpp. |
 
 ---
 
