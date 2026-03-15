@@ -3,6 +3,14 @@
 -- Fills 7 test coverage gaps identified in architecture report Section 3
 -- Date: 2026-03-15
 -- Run: docker exec akk-stack-mariadb-1 mysql -ueqemu -p'...' peq < this_file.sql
+--
+-- IMPORTANT: companion_spell_sets priority semantics (confirmed by c-expert, 2026-03-15):
+-- priority=1 = HIGHEST PRIORITY (checked/cast first) — OPPOSITE of npc_spells_entries.
+-- The AI loads spells ORDER BY priority ASC and picks the FIRST match.
+-- Therefore: heals should have LOWER priority numbers (1) than damage (10-30).
+-- Healer class_id mapping: CLR=2, PAL=3, RNG=4, DRU=6, BRD=8, SHM=10, BST=15
+-- Caster class_id mapping: SK=5, NEC=11, WIZ=12, MAG=13, ENC=14
+-- Non-casters (no entries expected): WAR=1, MNK=7, ROG=9
 
 -- ============================================================
 -- SECTION 1: companion_spell_sets priority validation (TC-D01)
@@ -10,39 +18,40 @@
 
 SELECT '=== TC-D01: companion_spell_sets priority validation ===' AS section;
 
--- TC-D01-A: Healer classes must have heals at higher priority than damage spells
+-- TC-D01-A: Healer classes must have heals at LOWER priority number than damage
+-- (Lower number = checked first = effectively higher priority in companion_spell_sets)
 SELECT CASE
-  WHEN COUNT(*) = 0 THEN 'PASS TC-D01-A: All healer classes have heal priority > damage priority'
-  ELSE CONCAT('FAIL TC-D01-A: ', COUNT(*), ' healer class(es) have heal priority <= damage priority')
+  WHEN COUNT(*) = 0 THEN 'PASS TC-D01-A: All healer classes have heals checked before damage (lower priority number)'
+  ELSE CONCAT('FAIL TC-D01-A: ', COUNT(*), ' healer class(es) have max_heal_prio >= min_damage_prio')
   END AS test_result
 FROM (
   SELECT class_id,
-         MAX(CASE WHEN spell_type = 2 THEN priority ELSE 0 END) AS max_heal_prio,
-         MAX(CASE WHEN spell_type = 1 THEN priority ELSE 0 END) AS max_damage_prio
+         MAX(CASE WHEN spell_type = 2 THEN priority ELSE -1 END) AS max_heal_prio,
+         MIN(CASE WHEN spell_type = 1 THEN priority ELSE 999 END) AS min_damage_prio
   FROM companion_spell_sets
-  WHERE class_id IN (2, 6, 8, 10)  -- CLR, SHM, PAL, RNG
+  WHERE class_id IN (2, 3, 4, 6, 8, 10, 15)  -- CLR, PAL, RNG, DRU, BRD, SHM, BST
   GROUP BY class_id
-  HAVING max_heal_prio <= max_damage_prio
+  HAVING max_heal_prio >= min_damage_prio
 ) failing;
 
--- TC-D01-B: All healer classes must have at least one heal at priority >= 15
+-- TC-D01-B: All healer classes must have at least one heal at priority <= 5 (high priority)
 SELECT CASE
-  WHEN COUNT(*) = 0 THEN 'PASS TC-D01-B: All healer classes have at least one heal at priority >= 15'
-  ELSE CONCAT('FAIL TC-D01-B: ', COUNT(*), ' healer class(es) missing high-priority heal (>=15)')
+  WHEN COUNT(*) = 0 THEN 'PASS TC-D01-B: All healer classes have at least one heal at priority <= 5'
+  ELSE CONCAT('FAIL TC-D01-B: ', COUNT(*), ' healer class(es) missing high-priority heal (priority<=5)')
   END AS test_result
 FROM (
   SELECT class_id,
-         MAX(CASE WHEN spell_type = 2 THEN priority ELSE 0 END) AS max_heal_prio
+         MIN(CASE WHEN spell_type = 2 THEN priority ELSE 999 END) AS min_heal_prio
   FROM companion_spell_sets
-  WHERE class_id IN (2, 6, 8, 10)
+  WHERE class_id IN (2, 3, 4, 6, 8, 10, 15)
   GROUP BY class_id
-  HAVING max_heal_prio < 15
+  HAVING min_heal_prio > 5
 ) failing;
 
 -- TC-D01-C: All spellcasting companion classes have entries in companion_spell_sets
 -- WAR(1), MNK(7), ROG(9) are non-spellcasting and intentionally excluded.
--- Spellcasting classes: CLR(2), PAL(3), RNG(4), SHM(5), DRU(6), BRD(8), SK(10),
---   BST(11), WIZ(12), MAG(13), ENC(14), BER(15)
+-- Spellcasting class_ids: 2=CLR, 3=PAL, 4=RNG, 5=SK, 6=DRU, 8=BRD,
+--   10=SHM, 11=NEC, 12=WIZ, 13=MAG, 14=ENC, 15=BST
 SELECT CASE
   WHEN COUNT(*) = 0 THEN 'PASS TC-D01-C: All 12 spellcasting companion classes have spell entries'
   ELSE CONCAT('FAIL TC-D01-C: Missing spellcasting class_ids: ', GROUP_CONCAT(v.class_id ORDER BY v.class_id))
@@ -56,7 +65,7 @@ WHERE NOT EXISTS (
   SELECT 1 FROM companion_spell_sets css WHERE css.class_id = v.class_id
 );
 
--- TC-D01-D: Caster classes (WIZ, NEC, ENC, MAG) should have differentiated priorities (not all=1)
+-- TC-D01-D: Caster classes (NEC=11, WIZ=12, MAG=13, ENC=14) should have differentiated priorities
 SELECT CASE
   WHEN COUNT(*) = 0 THEN 'PASS TC-D01-D: All caster classes have differentiated spell priorities'
   ELSE CONCAT('FAIL TC-D01-D: ', COUNT(*), ' caster class(es) have flat (all priority=1) entries')
@@ -65,7 +74,7 @@ FROM (
   SELECT class_id,
          COUNT(DISTINCT priority) AS distinct_priorities
   FROM companion_spell_sets
-  WHERE class_id IN (3, 12, 14, 13)  -- NEC, WIZ, ENC, MAG
+  WHERE class_id IN (11, 12, 13, 14)  -- NEC, WIZ, MAG, ENC
   GROUP BY class_id
   HAVING distinct_priorities <= 1
 ) flat_casters;
@@ -76,29 +85,31 @@ FROM (
 
 SELECT '=== TC-D02: Cleric heal priority validation (npc_spells_entries) ===' AS section;
 
--- TC-D02-A: All cleric heals at minlevel >= 20 must have priority >= 10
+-- NOTE: npc_spells_entries uses OPPOSITE semantics — HIGHER number = higher priority.
+-- TC-D02-A: All cleric heals at minlevel >= 20 must have priority >= 10 (in npc_spells_entries)
 SELECT CASE
-  WHEN COUNT(*) = 0 THEN 'PASS TC-D02-A: All cleric mid-high heals have priority >= 10'
+  WHEN COUNT(*) = 0 THEN 'PASS TC-D02-A: All cleric mid-high heals have priority >= 10 (npc_spells_entries)'
   ELSE CONCAT('FAIL TC-D02-A: ', COUNT(*), ' cleric heals (minlevel>=20) at priority < 10')
   END AS test_result
 FROM npc_spells_entries
 WHERE npc_spells_id = 1 AND type = 2 AND minlevel >= 20 AND priority < 10;
 
--- TC-D02-B: Cleric heals at levels 29+ must outprioritize Wrath (priority=30)
+-- TC-D02-B: Cleric heals at levels 29+ must outprioritize Wrath (priority=30) in npc_spells_entries
 SELECT CASE
-  WHEN COUNT(*) = 0 THEN 'PASS TC-D02-B: Cleric heals (minlevel>=29) outprioritize Wrath'
+  WHEN COUNT(*) = 0 THEN 'PASS TC-D02-B: Cleric heals (minlevel>=29) outprioritize Wrath (priority>30)'
   ELSE CONCAT('FAIL TC-D02-B: ', COUNT(*), ' cleric heals in Wrath range with priority <= 30')
   END AS test_result
 FROM npc_spells_entries
 WHERE npc_spells_id = 1 AND type = 2 AND minlevel >= 29 AND priority <= 30;
 
--- TC-D02-C: companion_spell_sets cleric heals match npc_spells_entries hierarchy
+-- TC-D02-C: companion_spell_sets cleric heals are at low priority numbers (checked first)
+-- All heals should be at priority=1, damage at priority >= 10
 SELECT CASE
-  WHEN COUNT(*) = 0 THEN 'PASS TC-D02-C: companion_spell_sets cleric heals are elevated (>=25)'
-  ELSE CONCAT('FAIL TC-D02-C: ', COUNT(*), ' companion_spell_sets cleric heals at priority < 25 (minlevel>=14)')
+  WHEN COUNT(*) = 0 THEN 'PASS TC-D02-C: companion_spell_sets cleric heals at priority=1 (checked first)'
+  ELSE CONCAT('FAIL TC-D02-C: ', COUNT(*), ' cleric companion heals at priority > 1')
   END AS test_result
 FROM companion_spell_sets
-WHERE class_id = 2 AND spell_type = 2 AND min_level >= 14 AND priority < 25;
+WHERE class_id = 2 AND spell_type = 2 AND priority > 1;
 
 -- ============================================================
 -- SECTION 3: Inverted minlevel/maxlevel detection (TC-D03)
@@ -218,14 +229,14 @@ FROM (
 SELECT '=== TC-D07: Cross-system spell parity check ===' AS section;
 
 -- TC-D07-A: Both tables should have heal entries for healer classes
--- (Classes that have type=2 heals in npc_spells_entries should also have spell_type=2 in companion_spell_sets)
 SELECT CASE
   WHEN COUNT(*) = 0 THEN 'PASS TC-D07-A: All healer classes have heals in both spell systems'
   ELSE CONCAT('FAIL TC-D07-A: ', COUNT(*), ' healer class(es) missing heals in companion_spell_sets')
   END AS test_result
 FROM (
   SELECT v.class_id FROM (
-    SELECT 2 class_id UNION SELECT 6 UNION SELECT 8 UNION SELECT 10  -- CLR, SHM, PAL, RNG
+    SELECT 2 class_id UNION SELECT 3 UNION SELECT 4 UNION SELECT 6
+    UNION SELECT 8 UNION SELECT 10 UNION SELECT 15
   ) v
   WHERE NOT EXISTS (
     SELECT 1 FROM companion_spell_sets css
@@ -233,37 +244,18 @@ FROM (
   )
 ) missing_heals;
 
--- TC-D07-B: companion_spell_sets healer max heal priority >= npc_spells_entries healer max heal priority
--- (The companion system should not have lower heal priorities than the NPC fallback system)
-SELECT
-  css_data.class_id,
-  css_data.css_max_heal,
-  nse_data.nse_max_heal,
-  CASE
-    WHEN css_data.css_max_heal >= nse_data.nse_max_heal THEN 'PASS: companion_spell_sets >= npc_spells_entries'
-    ELSE CONCAT('WARN: companion_spell_sets heal priority (', css_data.css_max_heal,
-                ') < npc_spells_entries (', nse_data.nse_max_heal, ')')
-  END AS parity_check
+-- TC-D07-B: companion_spell_sets healer heal priority <= 5 (ensuring heals are checked first)
+SELECT CASE
+  WHEN COUNT(*) = 0 THEN 'PASS TC-D07-B: All healer companion heals have high priority (<=5)'
+  ELSE CONCAT('WARN TC-D07-B: ', COUNT(*), ' healer class(es) with min heal priority > 5')
+  END AS test_result
 FROM (
-  SELECT class_id, MAX(CASE WHEN spell_type = 2 THEN priority ELSE 0 END) AS css_max_heal
+  SELECT class_id, MIN(CASE WHEN spell_type=2 THEN priority ELSE 999 END) AS min_heal_prio
   FROM companion_spell_sets
-  WHERE class_id IN (2, 6, 8, 10)
+  WHERE class_id IN (2, 3, 4, 6, 8, 10, 15)
   GROUP BY class_id
-) css_data
-JOIN (
-  -- Map class_id to npc_spells_id: 2=CLR→1, 6=SHM→6, 8=PAL→8, 10=RNG→10
-  SELECT class_id, MAX(priority) AS nse_max_heal
-  FROM (
-    SELECT 2 AS class_id, priority FROM npc_spells_entries WHERE npc_spells_id = 1 AND type = 2
-    UNION ALL
-    SELECT 6 AS class_id, priority FROM npc_spells_entries WHERE npc_spells_id = 6 AND type = 2
-    UNION ALL
-    SELECT 8 AS class_id, priority FROM npc_spells_entries WHERE npc_spells_id = 8 AND type = 2
-    UNION ALL
-    SELECT 10 AS class_id, priority FROM npc_spells_entries WHERE npc_spells_id = 10 AND type = 2
-  ) nse_mapped
-  GROUP BY class_id
-) nse_data ON css_data.class_id = nse_data.class_id;
+  HAVING min_heal_prio > 5
+) check_result;
 
 -- ============================================================
 -- SUMMARY
@@ -271,4 +263,4 @@ JOIN (
 
 SELECT '=== SUMMARY ===' AS section;
 SELECT 'Run complete. Review FAIL/WARN lines above for issues.' AS note;
-SELECT 'Expected results after pass2 fixes: all tests PASS.' AS note;
+SELECT 'Expected results after all pass2 fixes: all tests PASS.' AS note;

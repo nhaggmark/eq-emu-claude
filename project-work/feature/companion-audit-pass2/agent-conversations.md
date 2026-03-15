@@ -73,6 +73,17 @@ _Expert-to-expert exchanges during Phase 4._
 
 **Outcome:** data-expert unblocked to apply companion_spell_sets priority fixes using correct semantics.
 
+### 2026-03-15 — data-expert self-correction: initial cleric fix was wrong
+
+**From:** data-expert (self-correction after c-expert response)
+
+> Initial cleric companion_spell_sets fix set Complete Heal to priority=50 (WRONG — lowest priority,
+> checked last). After c-expert confirmation, reverted all cleric heals back to priority=1 and
+> bumped all offensive spells from priority=1 to priority=30. The correct fix was the OPPOSITE
+> of what was initially applied.
+
+**Outcome:** Reverted and reapplied. All 12 spellcasting classes updated. All 16 validation tests PASS.
+
 ---
 
 ## Key Decisions from Conversations

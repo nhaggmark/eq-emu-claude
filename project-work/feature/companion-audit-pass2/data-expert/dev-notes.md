@@ -435,21 +435,53 @@ Covers 7 test gaps (TC-D01 through TC-D07), 15 individual test cases:
 
 **Current results: 12/15 PASS. 3 FAIL blocked on c-expert priority semantics (TC-D01-A, B, D).**
 
-### Open Items (BLOCKED)
+#### Critical discovery: companion_spell_sets priority semantics
 
-- [ ] **Part 1 (BLOCKED on c-expert):** Apply GAP-05/07 equivalent priorities to `companion_spell_sets` for all healer/caster classes (SHM, DRU, RNG, PAL, SK, NEC, MAG, ENC, WIZ, BRD, BST, BER). Waiting for c-expert to confirm whether lower or higher priority number = higher priority.
-- [ ] **After c-expert answers:** Update companion_spell_sets priorities for all 11 remaining classes.
-- [ ] **After Part 1:** TC-D01-A, TC-D01-B, TC-D01-D should all PASS.
+c-expert confirmed: **priority=1 = HIGHEST PRIORITY** (checked/cast first) in companion_spell_sets.
+This is the OPPOSITE of npc_spells_entries where higher number = higher priority.
 
-### Context for Next Data Expert Work
+This meant my initial cleric companion_spell_sets fix was WRONG (I had set Complete Heal to priority=50,
+which is lowest priority = checked last). Reverted and corrected.
 
-Priority semantics question: architecture.md says `ORDER BY priority ASC` with AI picking first match. This would mean LOWER number = highest priority. But cleric data has heals at priority=50 and Wrath at priority=30 — if lower = higher, heals would be last, not first. This contradiction needs c-expert to read the actual AICastSpell iteration logic.
+**Correct approach for companion_spell_sets:**
+- Heals: priority=1 (lowest number = checked first = cast first)
+- Lifetaps/pets: priority=1 (SK, NEC primary tools)
+- Snare/root: priority=5
+- Buffs: priority=10
+- DoTs: priority=20
+- Damage/nukes: priority=30+
 
-If c-expert confirms HIGHER number = higher priority:
-- The cleric fixes already applied are CORRECT
-- Apply same hierarchy to all other classes in companion_spell_sets
+**companion_spell_sets class_id mapping** (not standard EQ class numbering in all cases):
+- 2=CLR, 3=PAL, 4=RNG, 5=SK, 6=DRU, 8=BRD, 10=SHM, 11=NEC, 12=WIZ, 13=MAG, 14=ENC, 15=BST
 
-If c-expert confirms LOWER number = higher priority:
-- All priority values in companion_spell_sets need to be INVERTED
-- Priority 1 = checked first = highest priority
-- The cleric fixes applied to companion_spell_sets need to be reversed then reapplied with inverted values
+#### Part 1: Fix companion_spell_sets priorities — ALL CLASSES
+
+Applied priority differentiation to all 12 spellcasting classes:
+- **CLR (2):** Heals at 1; offensive spells bumped from 1 to 30; existing Furor=10, Smite=20, Wrath=30 preserved
+- **PAL (3):** Heals at 1; damage=30; roots=5; buffs=10; dispels=2
+- **RNG (4):** Heals at 1; damage=30; DoTs=20; snare=5; buffs=10; dispels=2
+- **SK (5):** Lifetaps at 1 (primary tool); damage=30; root=5; buffs=10; dispels=2
+- **DRU (6):** Heals at 1; damage=30; DoTs=20; snare=5; buffs=10; dispels=2
+- **BRD (8):** Heals at 1; damage=30; DoTs=20; snare=5; buffs=10
+- **SHM (10):** Heals at 1; damage=30; DoTs=20; snare=5; buffs=10; dispels=2
+- **NEC (11):** Lifetaps/pets at 1; DoTs=20; damage=30; buffs=10
+- **WIZ (12):** Already had 24 distinct priorities; bumped buffs from 1 to 20
+- **MAG (13):** Pets/pet haste at 1; damage=30; DoTs=20; buffs=10; dispels=5
+- **ENC (14):** Mez at 1; roots=5; dispels=5; slow=15; DoTs=20; damage=30; buffs=10
+- **BST (15):** Heals at 1; damage=30; DoTs=20; buffs=10; dispels=2
+
+#### Final Validation Results (All PASS)
+
+All 16 TC-D01 through TC-D07 tests PASS:
+- TC-D01-A: All healer classes have heals checked before damage ✓
+- TC-D01-B: All healer classes have heal at priority<=5 ✓
+- TC-D01-C: All 12 spellcasting classes have entries ✓
+- TC-D01-D: All caster classes have differentiated priorities ✓
+- TC-D02-A/B/C: Cleric heal priorities correct in both tables ✓
+- TC-D03-A/B: No inverted level ranges in either table ✓
+- TC-D04-A/B: companion_data state integrity clean ✓
+- TC-D05-A: No orphaned inventory rows ✓
+- TC-D06-A/B: No duplicate spell IDs ✓
+- TC-D07-A/B: Cross-system parity checks pass ✓
+
+### Status: ALL PARTS COMPLETE
