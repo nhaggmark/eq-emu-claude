@@ -14,8 +14,12 @@
 | npc-companion-realistic-stats | Complete | feature/npc-companion-realistic-stats | Merged to main — 5 phases + audit fixes + BUG-017/018 fixes, 16 suites 242+ tests |
 | companion-group-commands | Complete | feature/companion-group-commands | Merged to main — 9 group chat commands + IsSitting binding + BUG-019/020 fixes, 17 suites |
 | companion-group-debugging | Complete | bugfix/companion-group-debugging | Merged to main — BUG-021/022 fixed, 14 tests |
-| companion-behavior-improvements | Architecture | feature/companion-behavior-improvements | BUG-023/024/025/026/027 — 5 behavior improvements |
-| companion-recruitment-overhaul | Design | feature/companion-recruitment-overhaul | Fix re-recruitment blocking (cooldowns, flags, level caps) + Lua/C++ contract alignment |
+| companion-behavior-improvements | Complete | feature/companion-behavior-improvements | Merged to main — BUG-023/024/025/026/027 fixed |
+| companion-recruitment-overhaul | Complete | feature/companion-recruitment-overhaul | Merged to main — two-track recruitment, Lua/C++ contract aligned, BUG-028 fixed |
+| companion-authenticity-audit | Complete | feature/companion-authenticity-audit | Merged to main — 17-gap report, all gaps addressed |
+| companion-authenticity-fixes | Complete | feature/companion-authenticity-fixes | Merged to main — GAP-01 through GAP-06 (crits, spell targeting, defensive skills, stats, spell priorities, melee damage) |
+| companion-authenticity-phase3-4 | Complete | feature/companion-authenticity-phase3-4 | Merged to main — GAP-07/09/10/12/13/14/17 (caster spells, luabind, commentary, level-up, attack skills) |
+| companion-audit-pass2 | Complete | feature/companion-audit-pass2 | Merged to main — companion_spell_sets priorities, cleric heals, contract fixes, constructor scaling, 164+ new tests |
 
 ## Bug Reports
 
@@ -43,9 +47,9 @@
 | BUG-020 | Companion NPCs cast buffs while sitting/meditating | High | companion-group-commands | Resolved |
 | BUG-021 | @all !assist produces stack trace error in console | Critical | companion-group-debugging | Resolved |
 | BUG-022 | !tome command does not move companions to player location | High | companion-group-debugging | Resolved |
-| BUG-023 | Rogue companion takes too wide a circle for backstab positioning | Medium | companion-behavior-improvements | Fix deployed |
-| BUG-024 | Caster companions should announce LOM at 15% mana | Medium | companion-behavior-improvements | Fix deployed |
-| BUG-025 | !buffs command only buffs player instead of all party members | High | companion-behavior-improvements | Fix deployed |
-| BUG-026 | Caster companions lose LOS when positioning at fixed distance | High | companion-behavior-improvements | Fix deployed |
-| BUG-027 | Companions should always regenerate mana at meditation rates | High | companion-behavior-improvements | Fix deployed |
-| BUG-028 | Previously recruited NPC refuses re-recruitment after group wipe | Critical | companion-recruitment-overhaul | Data recovery complete 2026-03-14 — companion_data restored, cooldown cleared; systemic fix (c-expert) pending |
+| BUG-023 | Rogue companion takes too wide a circle for backstab positioning | Medium | companion-behavior-improvements | Resolved |
+| BUG-024 | Caster companions should announce LOM at 15% mana | Medium | companion-behavior-improvements | Resolved |
+| BUG-025 | !buffs command only buffs player instead of all party members | High | companion-behavior-improvements | Resolved |
+| BUG-026 | Caster companions lose LOS when positioning at fixed distance | High | companion-behavior-improvements | Resolved |
+| BUG-027 | Companions should always regenerate mana at meditation rates | High | companion-behavior-improvements | Resolved |
+| BUG-028 | Previously recruited NPC refuses re-recruitment after group wipe | Critical | companion-recruitment-overhaul | Resolved — data recovered, Death() hardened with direct SQL fallback |
