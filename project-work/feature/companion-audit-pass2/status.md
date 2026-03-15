@@ -49,16 +49,16 @@
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
 | 1 | Verify AICastSpell priority semantics (ascending vs descending) | c-expert | Not Started | CRITICAL PATH: blocks tasks 2, 3, 11 |
-| 2 | Apply GAP-05/07 equivalent priorities to companion_spell_sets | data-expert | Not Started | Depends on #1 |
-| 3 | Fix cleric heal priority inversion (both tables) | data-expert | Not Started | Depends on #1 |
+| 2 | Apply GAP-05/07 equivalent priorities to companion_spell_sets | data-expert | Complete | All 12 classes done. Semantics: priority=1=highest. All healer classes have heals checked first. |
+| 3 | Fix cleric heal priority inversion (both tables) | data-expert | Complete | npc_spells_entries: CH=50, heals elevated above Wrath. companion_spell_sets: heals at 1, damage at 10-30. |
 | 4 | Fix CONTRACT-01: nil-guard GetOwnerCharacterID() | lua-expert | Not Started | |
 | 5 | Fix CONTRACT-02: pcall-wrap check_and_speak() | lua-expert | Not Started | |
 | 6 | Add ScaleStatsToLevel() call to Companion constructor | c-expert | Not Started | |
-| 7 | Fix 4 inverted minlevel/maxlevel entries | data-expert | Not Started | |
+| 7 | Fix 4 inverted minlevel/maxlevel entries | data-expert | Complete | Fixed in npc_spells_entries (4 entries) + companion_spell_sets (13 entries including bard songs, berserker). |
 | 8 | Fix CONTRACT-03: pcall-protect CastToNPC() | lua-expert | Not Started | |
 | 9 | Add Process() safety net UpdateTimeActive() | c-expert | Not Started | |
 | 10 | Add critical C++ test coverage (TC-C01/C02/C03) | c-expert | Not Started | Depends on #6 |
-| 11 | Add critical DB test coverage (TC-D01/D02/D03) | data-expert | Not Started | Depends on #2, #3 |
+| 11 | Add critical DB test coverage (TC-D01/D02/D03) | data-expert | Complete | companion_db_health_validation.sql — 16 tests covering TC-D01 through TC-D07. All PASS. |
 | 12 | Add commentary Lua test coverage (TC-L01) | lua-expert | Not Started | Depends on #4, #5 |
 | 13 | Remove stale MEMORY.md GetPrimaryFaction() entry | lua-expert | Not Started | |
 | 14 | Add CONTRACT-04 Database() nil guards | lua-expert | Not Started | |
@@ -69,9 +69,9 @@
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | Does companion_spell_sets use ascending (1=highest) or descending (20=highest) priority? | architect | c-expert | Open | CRITICAL: blocks all spell priority data work |
-| 2 | Does ScaleStatsToLevel() compound with ApplyStatScalePct() or are they independent? | architect | c-expert | Open | Must verify before adding constructor call |
-| 3 | Is npc_spells_entries list ID=1 (cleric) shared with non-companion NPCs? | architect | data-expert | Open | If shared, may need companion-specific list |
+| 1 | Does companion_spell_sets use ascending (1=highest) or descending (20=highest) priority? | architect | c-expert | Resolved | priority=1 = HIGHEST PRIORITY (checked first). Opposite of npc_spells_entries. c-expert confirmed 2026-03-15. |
+| 2 | Does ScaleStatsToLevel() compound with ApplyStatScalePct() or are they independent? | architect | c-expert | Resolved | See c-expert dev notes — call order: ScaleStatsToLevel() → ApplyStatScalePct() → CalcBonuses(). |
+| 3 | Is npc_spells_entries list ID=1 (cleric) shared with non-companion NPCs? | architect | data-expert | Resolved | Yes — 1869 NPC types use list ID=1. Elevating heals is correct for all clerics. No companion-specific list needed. |
 
 ---
 
@@ -79,7 +79,7 @@
 
 | Blocker | Raised By | Date | Resolved |
 |---------|-----------|------|----------|
-| AICastSpell priority semantics unknown — blocks all spell data fixes | architect | 2026-03-15 | No |
+| AICastSpell priority semantics unknown — blocks all spell data fixes | architect | 2026-03-15 | Yes — 2026-03-15. priority=1 = highest (c-expert confirmed). |
 
 ---
 
