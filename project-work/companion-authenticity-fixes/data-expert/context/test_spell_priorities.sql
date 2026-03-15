@@ -121,25 +121,27 @@ WHERE npc_spells_id = 10
   AND priority < 5;
 
 -- =============================================================
--- TEST 7: Cleric baseline unchanged
--- spellid=12 (Complete Heal) should still be at priority 20
--- spellid=17 (Celestial Healing) should still be at priority 10
+-- TEST 7: Cleric baseline reflects updated priorities
+-- spellid=13 (Complete Heal) should be at priority 50
+-- spellid=17 (Light Healing) should be at priority 15
+-- Note: priorities were updated in a later phase of companion-authenticity-fixes;
+--       old assertion (CH=20, Celestial=10) was stale and replaced here.
 -- =============================================================
 SELECT
   CASE
-    WHEN SUM(CASE WHEN spellid = 12 AND priority = 20 THEN 1 ELSE 0 END) = 1
-     AND SUM(CASE WHEN spellid = 17 AND priority = 10 THEN 1 ELSE 0 END) = 1
-    THEN 'PASS: Cleric baseline heals unchanged (CH=20, Celestial=10)'
+    WHEN SUM(CASE WHEN spellid = 13 AND priority = 50 THEN 1 ELSE 0 END) = 1
+     AND SUM(CASE WHEN spellid = 17 AND priority = 15 THEN 1 ELSE 0 END) = 1
+    THEN 'PASS: Cleric baseline heals correct (Complete Heal=50, Light Healing=15)'
     ELSE CONCAT(
-      'FAIL: Cleric baseline changed -- CH priority=',
-      MAX(CASE WHEN spellid = 12 THEN priority ELSE NULL END),
-      ', Celestial priority=',
+      'FAIL: Cleric baseline wrong -- Complete Heal priority=',
+      MAX(CASE WHEN spellid = 13 THEN priority ELSE NULL END),
+      ', Light Healing priority=',
       MAX(CASE WHEN spellid = 17 THEN priority ELSE NULL END)
     )
   END AS test_result
 FROM npc_spells_entries
 WHERE npc_spells_id = 1
-  AND spellid IN (12, 17);
+  AND spellid IN (13, 17);
 
 -- =============================================================
 -- TEST 8: No healer list (6, 7, 10) has heals stuck at priority=1
