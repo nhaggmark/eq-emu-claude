@@ -53,3 +53,6 @@
 | BUG-026 | Caster companions lose LOS when positioning at fixed distance | High | companion-behavior-improvements | Resolved |
 | BUG-027 | Companions should always regenerate mana at meditation rates | High | companion-behavior-improvements | Resolved |
 | BUG-028 | Previously recruited NPC refuses re-recruitment after group wipe | Critical | companion-recruitment-overhaul | Resolved — data recovered, Death() hardened with direct SQL fallback |
+| BUG-029 | Buffs not taking hold on NPC companions (e.g., Alacrity) | High | companion-bug-batch-2 | Open |
+| BUG-030 | Enchanter charm pet controls UX broken on Titanium client | High | companion-bug-batch-2 | Open |
+| BUG-031 | Gear duplication when trading to companions | Critical | companion-bug-batch-2 | Open |
