@@ -13,7 +13,7 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-15 | 2026-03-15 |
 | Design | game-designer + lore-master | Skipped | — | — |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-15 | 2026-03-15 |
-| Implementation | c-expert | Not Started | | |
+| Implementation | c-expert | Complete | 2026-03-15 | 2026-03-15 |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -46,9 +46,9 @@
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | BUG-029: Add SetAllowBeneficial(true) to Companion constructor + NPC group member resolution in SpellOnTarget | c-expert | Not Started | companion.cpp, spells.cpp |
-| 2 | BUG-031: Skip local EVENT_TRADE for companions in FinishTrade | c-expert | Not Started | trading.cpp |
-| 3 | BUG-030: Add diagnostic logging to pet command handler for charmed pets; investigate and fix if server-side | c-expert | Not Started | client_packet.cpp, spell_effects.cpp |
+| 1 | BUG-029: Add SetAllowBeneficial(true) to Companion constructor + NPC group member resolution in SpellOnTarget | c-expert | Complete | companion.cpp, spells.cpp, quest_parser_collection.h — commit c1dbbfe |
+| 2 | BUG-031: Skip local EVENT_TRADE for companions in FinishTrade | c-expert | Complete | trading.cpp — commit c1dbbfe |
+| 3 | BUG-030: Add diagnostic logging to pet command handler for charmed pets; investigate and fix if server-side | c-expert | Complete (diagnostic) | client_packet.cpp — commit 6b541e5; follow-up may be needed after log review |
 
 ---
 
@@ -56,8 +56,8 @@
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | Is BUG-030 a Titanium client limitation or server-side issue? | architect | c-expert | Open | Needs investigation with diagnostic logging |
-| 2 | Is EventNPCGlobal public or private in QuestParserCollection? | architect | c-expert | Open | May need to be made public for BUG-031 fix |
+| 1 | Is BUG-030 a Titanium client limitation or server-side issue? | architect | c-expert | In Progress | Diagnostic logging added to Handle_OP_PetCommands — requires enchanter session to confirm |
+| 2 | Is EventNPCGlobal public or private in QuestParserCollection? | architect | c-expert | Resolved | Was private — moved to public section in quest_parser_collection.h (commit c1dbbfe) |
 
 ---
 
@@ -73,9 +73,9 @@
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-029 | Buffs not taking hold on companion | High | user | Investigating | c-expert | |
-| BUG-030 | Charm pet controls UX issues | Medium | user | Investigating | c-expert | |
-| BUG-031 | Gear duplication on trade | Critical | user | Investigating | c-expert | |
+| BUG-029 | Buffs not taking hold on companion | High | user | Fixed | c-expert | 2026-03-15 |
+| BUG-030 | Charm pet controls UX issues | Medium | user | Investigation Complete / Diagnostic Added | c-expert | Pending log review |
+| BUG-031 | Gear duplication on trade | Critical | user | Fixed | c-expert | 2026-03-15 |
 
 ---
 
@@ -94,12 +94,12 @@
 
 ### Implementation Complete (agents can check these)
 
-- [ ] All implementation tasks marked Complete
+- [x] All implementation tasks marked Complete
 - [ ] No open Blockers
 - [ ] game-tester server-side validation: PASS
 - [ ] User completed in-game testing guide: PASS
-- [ ] All changes committed and pushed to feature branch in ALL repos
-- [ ] Server rebuilt (if C++ changed)
+- [x] All changes committed and pushed to feature branch in ALL repos
+- [x] Server rebuilt (if C++ changed)
 - [ ] All phases marked Complete in Workflow Status table
 
 ### Merge & Cleanup (USER-INITIATED ONLY)
