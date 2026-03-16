@@ -85,7 +85,24 @@ will be updated before implementation begins.
 
 _Expert-to-expert exchanges during Phase 4._
 
-_(Phase 4 not yet started)_
+### 2026-03-15 — c-expert: BUG-031 EventNPCGlobal visibility
+
+**From:** c-expert (self-finding during implementation)
+
+> EventNPCGlobal was declared private in quest_parser_collection.h (under the `private:`
+> label at line 203). The architect's plan noted this as a potential issue. Resolution:
+> moved EventNPCGlobal to public section before `private:` with a default nullptr for
+> extra_pointers. This is the cleanest approach — no new wrapper needed.
+
+**Outcome:** quest_parser_collection.h updated. BUG-031 fix compiled and tested successfully.
+
+### 2026-03-15 — c-expert completion notification → team-lead
+
+**From:** c-expert → **To:** team-lead
+
+> All three bugs implemented. BUG-029 fixed (SetAllowBeneficial + group targeting).
+> BUG-031 fixed (EventNPCGlobal for companion trades). BUG-030 diagnostic logging added.
+> 12 new tests all pass. Zero regressions. Committed and pushed to bugfix/companion-bug-batch-2.
 
 ---
 
