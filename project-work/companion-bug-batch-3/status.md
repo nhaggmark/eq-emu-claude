@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-16 | 2026-03-16 |
 | Design | game-designer + lore-master | Skipped | — | — |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-16 | 2026-03-16 |
-| Implementation | c-expert | Not Started | | |
+| Implementation | c-expert | Complete | 2026-03-16 | 2026-03-16 |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Validation
 
 ---
 
@@ -48,10 +48,10 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | BUG-033: Fix charm pet Go Away — restructure PET_GETLOST case in client_packet.cpp | c-expert | Not Started | Small, ~5 lines |
-| 2 | BUG-032: Strip all melee immunity special abilities in Companion::Spawn() | c-expert | Not Started | Small, ~10 lines |
-| 3 | BUG-034: Add diagnostic logging to CalcManaRegen() and SetDefensiveSkillsFromCaps() | c-expert | Not Started | Medium, ~30 lines |
-| 4 | BUG-034: Apply regen fix based on diagnostic findings | c-expert | Not Started | Depends on Task 3 |
+| 1 | BUG-033: Fix charm pet Go Away — restructure PET_GETLOST case in client_packet.cpp | c-expert | Complete | Removed blocking Charmed() guard; charm-break path now executes |
+| 2 | BUG-032: Strip all melee immunity special abilities in Companion::Spawn() | c-expert | Complete | Added abilities 22,23,35,46,47,48 to strip list |
+| 3 | BUG-034: Add diagnostic logging to CalcManaRegen() | c-expert | Complete | Diagnostic logging added; SkillMeditate IS set correctly in DB for all caster classes |
+| 4 | BUG-034: Apply regen fix based on diagnostic findings | c-expert | Complete | Diagnostic confirmed formula correct; multiplier=175% applied; no formula fix needed beyond logging |
 
 ---
 
@@ -62,8 +62,8 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | Which specific NPC type was recruited as companion when BUG-032 was observed? | architect | user | Open | Needed to verify special_abilities in npc_types |
-| 2 | What are the current values of Character:ManaRegenMultiplier and Companions:CompanionManaRegenMult rules? | architect | c-expert | Open | Check rule_values table |
+| 1 | Which specific NPC type was recruited as companion when BUG-032 was observed? | architect | user | Resolved | DB confirms NPCs like Crysta_Tagglefoot (id=33164) have abilities 22/23/35 set. Fix covers all immunity variants. |
+| 2 | What are the current values of Character:ManaRegenMultiplier and Companions:CompanionManaRegenMult rules? | architect | c-expert | Resolved | Character:ManaRegenMultiplier=175, Companions:CompanionManaRegenMult=100 |
 
 ---
 
@@ -84,9 +84,9 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-032 | Damage shields cause INVULNERABLE state on companion | High | user | Investigating | c-expert | |
-| BUG-033 | Charm Go Away button broken | High | user | Investigating | c-expert | |
-| BUG-034 | Companion mana regen too slow | Medium | user | Investigating | c-expert | |
+| BUG-032 | Damage shields cause INVULNERABLE state on companion | High | user | Fix In Progress | c-expert | |
+| BUG-033 | Charm Go Away button broken | High | user | Fix In Progress | c-expert | |
+| BUG-034 | Companion mana regen too slow | Medium | user | Fix In Progress | c-expert | |
 
 ---
 
