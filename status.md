@@ -53,6 +53,9 @@
 | BUG-026 | Caster companions lose LOS when positioning at fixed distance | High | companion-behavior-improvements | Resolved |
 | BUG-027 | Companions should always regenerate mana at meditation rates | High | companion-behavior-improvements | Resolved |
 | BUG-028 | Previously recruited NPC refuses re-recruitment after group wipe | Critical | companion-recruitment-overhaul | Resolved — data recovered, Death() hardened with direct SQL fallback |
-| BUG-029 | Buffs not taking hold on NPC companions (e.g., Alacrity) | High | companion-bug-batch-2 | Open |
-| BUG-030 | Enchanter charm pet controls UX broken on Titanium client | High | companion-bug-batch-2 | Open |
-| BUG-031 | Gear duplication when trading to companions | Critical | companion-bug-batch-2 | Open |
+| BUG-029 | Buffs not taking hold on NPC companions (e.g., Alacrity) | High | companion-bug-batch-2 | Resolved — SetAllowBeneficial + group member resolution |
+| BUG-030 | Enchanter charm pet controls UX broken on Titanium client | High | companion-bug-batch-2 | Diagnostic logging added — under investigation |
+| BUG-031 | Gear duplication when trading to companions | Critical | companion-bug-batch-2 | Resolved — skip local NPC scripts for companion trades |
+| BUG-032 | Damage shields produce INVULNERABLE message on companions | High | companion-bug-batch-3 | Open |
+| BUG-033 | Charm pet "Go Away" button does nothing | Medium | companion-bug-batch-3 | Open |
+| BUG-034 | Companion mana regen significantly slower than player's | High | companion-bug-batch-3 | Open |
