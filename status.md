@@ -59,4 +59,4 @@
 | BUG-032 | Damage shields produce INVULNERABLE message on companions | High | companion-bug-batch-3 | Open |
 | BUG-033 | Charm pet "Go Away" button does nothing | Medium | companion-bug-batch-3 | Open |
 | BUG-034 | Companion mana regen significantly slower than player's | High | companion-bug-batch-3 | Open |
-| BUG-035 | Companions attack friendly pets (charmed, summoned, companion pets) | Critical | companion-bug-batch-3 | Open |
+| BUG-035 | Companions attack friendly pets (charmed, summoned, companion pets) | Critical | companion-bug-batch-3 | Resolved — IsFriendlyTarget() + 3-layer defense, 32 tests |
