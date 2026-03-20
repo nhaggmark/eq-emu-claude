@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-03-16 | 2026-03-16 |
 | Design | game-designer + lore-master | Skipped | — | — |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-03-16 | 2026-03-16 |
-| Implementation | c-expert | Complete | 2026-03-16 | 2026-03-16 |
-| Validation | game-tester | Not Started | | |
+| Implementation | c-expert | Complete | 2026-03-16 | 2026-03-19 |
+| Validation | game-tester | In Progress | 2026-03-19 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Validation
+**Current phase:** Validation — server-side PASS, in-game testing required
 
 ---
 
@@ -30,6 +30,16 @@ _Record each handoff between agents with context and any notes._
 - **Notes:** Workspace created. Bug reports already exist in bugs/. Skipped full
   design phase — this is a bug batch. Architect should triage bugs directly from
   the bug reports in bugs/.
+
+### game-tester → user (in-game testing)
+- **Date:** 2026-03-19
+- **Notes:** Server-side validation PASS. 562 automated tests pass (0 failures, 0 skips)
+  including all 32 new BUG-035 Suite 34 tests. Build is clean. No log errors.
+  In-game testing guide at `game-tester/test-plan.md`. Detailed BUG-035 coverage
+  analysis at `bugs/BUG-035-companions-attack-friendly-pets/validation-report.md`.
+  Key gaps requiring in-game verification: charm break live behavior (I3), player-owned
+  pet protection (I4), group member pet protection, assist-scan integration (BALANCED
+  and AGGRESSIVE stances).
 
 ### architect → implementation team (c-expert)
 - **Date:** 2026-03-16
@@ -84,9 +94,10 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-032 | Damage shields cause INVULNERABLE state on companion | High | user | Fix In Progress | c-expert | |
-| BUG-033 | Charm Go Away button broken | High | user | Fix In Progress | c-expert | |
-| BUG-034 | Companion mana regen too slow | Medium | user | Fix In Progress | c-expert | |
+| BUG-032 | Damage shields cause INVULNERABLE state on companion | High | user | Implemented — awaiting in-game test | c-expert | |
+| BUG-033 | Charm Go Away button broken | High | user | Implemented — awaiting in-game test | c-expert | |
+| BUG-034 | Companion mana regen too slow | Medium | user | Implemented — awaiting in-game test | c-expert | |
+| BUG-035 | Companions attack friendly pets (charmed, summoned, companion pets) | Critical | user | Implemented — server-side PASS, awaiting in-game test | c-expert | |
 
 ---
 
