@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-20 | 2026-04-20 |
-| Design | game-designer + lore-master | Not Started | | |
-| Architecture | architect + protocol-agent + config-expert | Complete | 2026-04-20 | 2026-04-20 |
-| Implementation | _implementation team_ | Not Started | | |
-| Validation | game-tester | Not Started | | |
-| Completion | _user_ | Not Started | | |
+| Design | game-designer (solo — no lore surface) | Complete | 2026-04-20 | 2026-04-20 |
+| Architecture | architect (solo — advisors didn't respond in window, direct code inspection authoritative) | Complete | 2026-04-20 | 2026-04-20 |
+| Implementation | infra-expert (Path 1, zero code) | Complete | 2026-04-20 | 2026-04-20 |
+| Validation | game-tester | Skipped (user choice) | | |
+| Completion | _user_ | Pending user confirmation for merge | | |
 
-**Current phase:** Implementation
+**Current phase:** Resolved — awaiting user merge confirmation
 
 ---
 
@@ -53,12 +53,12 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Stop EQ processes, confirm `Items:DisableNoDrop=true` in ruleset 1, re-run `./bin/shared_memory`, restart loginserver + world + 8 zones | infra-expert | Not Started | Path 1 (primary, zero code). Must precede game-tester validation. |
-| 2 | In-game validation: 9 PRD scenarios + attuneable preservation check + rule-off regression | game-tester | Not Started | Runs after infra-expert completes task 1. |
-| 3 | (Conditional) `common/item_instance.cpp::IsDroppable()` — gate `NoDrop==0` check on `!RuleB(Items, DisableNoDrop)` | c-expert | Not Started | Path 2 fallback. ONLY if task 2 demonstrates Path 1 did not resolve the bug. |
-| 4 | (Conditional) `common/patches/titanium.cpp:3366` and `zone/client_packet.cpp:9321` — emit `255` when `RuleB(Items, DisableNoDrop)` is true | c-expert | Not Started | Path 2, paired with task 3. |
-| 5 | (Conditional) Rebuild inside container + full-stack restart per MEMORY.md | infra-expert | Not Started | Path 2 deploy. |
-| 6 | (Conditional) Re-run PRD validation scenarios after Path 2 deploy | game-tester | Not Started | Path 2 validation. |
+| 1 | Stop EQ processes, confirm `Items:DisableNoDrop=true` in ruleset 1, re-run `./bin/shared_memory`, restart loginserver + world + 8 zones | infra-expert | Complete | items.bin mtime 20:41 → 21:28, shared_memory exit 0, 1,048 rules loaded, all 8 zones online, player confirmed NO TRADE → companion trade succeeds after full server-select relog. |
+| 2 | In-game validation: 9 PRD scenarios + attuneable preservation check + rule-off regression | game-tester | Skipped | User opted to skip full validation (Option A); core fix manually verified in-game by user. |
+| 3 | (Conditional) `common/item_instance.cpp::IsDroppable()` — gate `NoDrop==0` check on `!RuleB(Items, DisableNoDrop)` | c-expert | Not Needed | Path 1 succeeded; Path 2 not engaged. |
+| 4 | (Conditional) `common/patches/titanium.cpp:3366` and `zone/client_packet.cpp:9321` — emit `255` when `RuleB(Items, DisableNoDrop)` is true | c-expert | Not Needed | Path 1 succeeded; Path 2 not engaged. |
+| 5 | (Conditional) Rebuild inside container + full-stack restart per MEMORY.md | infra-expert | Not Needed | Path 1 succeeded; Path 2 not engaged. |
+| 6 | (Conditional) Re-run PRD validation scenarios after Path 2 deploy | game-tester | Not Needed | Path 1 succeeded; Path 2 not engaged. |
 
 ---
 
@@ -69,8 +69,8 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | Was the `./bin/shared_memory` rebuild sequenced AFTER the `Items:DisableNoDrop=true` rule flip AND BEFORE the zone processes started? If yes and bug persists, Path 2 must be engaged. | architect | infra-expert → game-tester | Open | Awaiting Path 1 validation result. |
-| 2 | If Path 2 is taken, does the user accept the scope widening (merchants and quest NPCs also accept NO-TRADE items server-wide)? | architect | user | Open | PRD pre-approves this path per "solo server / universal rule" guidance, but flag explicitly before shipping. |
+| 1 | Was the `./bin/shared_memory` rebuild sequenced AFTER the `Items:DisableNoDrop=true` rule flip AND BEFORE the zone processes started? If yes and bug persists, Path 2 must be engaged. | architect | infra-expert → game-tester | Resolved | Yes — sequenced correctly per Path 1. Player confirmed trade works. |
+| 2 | If Path 2 is taken, does the user accept the scope widening (merchants and quest NPCs also accept NO-TRADE items server-wide)? | architect | user | Moot | Path 2 not engaged. Revisit only if a future regression requires it. |
 
 ---
 
@@ -91,7 +91,7 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-001 | NO TRADE items still cannot be traded to NPC companions after `Items:DisableNoDrop = true` | High | user | Open | architect (triage) | |
+| BUG-001 | NO TRADE items still cannot be traded to NPC companions after `Items:DisableNoDrop = true` | High | user | Resolved | infra-expert (Path 1) | 2026-04-20 |
 
 ---
 
@@ -104,6 +104,7 @@ _Key decisions made during this feature's development._
 | 1 | Primary fix path is operational (re-run shared_memory), not code | architect | 2026-04-20 | `Items:DisableNoDrop` is snapshot-time-only; the designed deploy path resolves the bug with zero code risk. |
 | 2 | Fallback code path (Path 2) is ready but NOT executed unless Path 1 fails | architect | 2026-04-20 | Path 2 widens scope to all trade paths server-wide. Per PRD guidance, this is acceptable on a solo server but not worth the wider blast radius unless Path 1 is proven insufficient. |
 | 3 | Only spawn `infra-expert` for the Implementation phase initially; hold `c-expert` until Path 1 result is in | architect | 2026-04-20 | Keeps the implementation team lean; avoids unnecessary context overhead. |
+| 4 | Skip game-tester validation phase; rely on user's in-game confirmation of core fix | user | 2026-04-20 | User prefers to return to play; accepts residual risk that unrelated rule-wide behavior (merchants, LORE, attuneable) was unaffected. Architect's triage already identified these as independent check sites. |
 
 ---
 
@@ -113,13 +114,13 @@ _Key decisions made during this feature's development._
 
 _Filled in after game-tester validation passes._
 
-- [ ] All implementation tasks marked Complete
-- [ ] No open Blockers
-- [ ] game-tester server-side validation: PASS
-- [ ] User completed in-game testing guide: PASS
-- [ ] All changes committed and pushed to feature branch in ALL repos
-- [ ] Server rebuilt (if C++ changed)
-- [ ] All phases marked Complete in Workflow Status table
+- [x] All implementation tasks marked Complete (or explicitly Not Needed / Skipped)
+- [x] No open Blockers
+- [ ] game-tester server-side validation: PASS (skipped by user — Option A)
+- [x] User completed in-game testing guide: PASS (user confirmed core fix manually)
+- [x] All changes committed and pushed to feature branch in ALL repos (only claude/ had artifacts)
+- [x] Server rebuilt (shared_memory rebuilt; no C++ changed)
+- [x] All phases marked Complete or explicitly Skipped in Workflow Status table
 
 ### Merge & Cleanup (USER-INITIATED ONLY)
 
