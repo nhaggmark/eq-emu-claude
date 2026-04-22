@@ -166,6 +166,42 @@ columns, era grouping.
 > raid quest chains section with 11 project-critical findings
 > superseding the game-designer fallback.
 
+### 2026-04-22 — Task #9 Velious chains delivery
+
+**From:** lore-master → **To:** game-designer
+
+> Task #9: Velious quest chain catalog complete. Key findings:
+> - Coldain Ring 1–10 chain cataloged; Ring 8 has a failure-reset-
+>   to-Ring-1 mechanic; Ring 10 requires a 21-wave sustained raid
+>   event before boss Narandi spawns — structurally not solvable
+>   by scaling Narandi alone.
+> - Kael Drakkel: no key required for entry; Avatar of War spawn
+>   chain (Statue → Idol → Avatar at 1.7M HP community estimate)
+>   is the top raid encounter.
+> - Temple of Veeshan: no key for entry (level 46+, Western Wastes
+>   entrance); Halls of Testing quest chain requires CoV faction +
+>   Dozekar the Cursed kills; all rewards are raid-era quality.
+> - Sleeper's Tomb key: one talisman from any First Brood dragon;
+>   ALL five talisman paths require a raid boss kill; no non-raid
+>   path exists.
+> - Velious-phase Epic 1.0: NONE — no class epic has steps in
+>   Velious zones.
+> - Sleeper awakening is a permanent server state change; lore flag
+>   for user decision before any Warder scaling work.
+
+**Response from** game-designer:
+
+> Filed content to `lore-master/velious-chains.md` (~242 lines).
+> Verified via db: Idol of Rallos Zek (id 113341, L66, 650k HP,
+> raid_target=1) — MISSING from boss catalog; added to addenda.
+> Avatar of War db value is 900k HP (NOT 1.7M as community sources
+> claim — PEQ db authoritative). Sontalak/Klandicar/Zlandicar db
+> values are 97.5-110k (NOT 200-300k community estimate). Ring
+> War script confirmed at `greatdivide/encounters/ring_war.lua`.
+> Jaled Dar's Shade confirmed as turn-in NPC (not kill target) —
+> removed from scaling scope. Extended audit doc's Velious raid
+> quest chains section with 10 project-critical findings.
+
 **Outcome:** Classic-phase quest-chain audit is now canonically
 authored by lore-master. Key new intel integrated:
 - Plane of Sky Islands 4-8 death-touch mechanics (not scalable by HP

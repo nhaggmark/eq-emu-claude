@@ -1788,7 +1788,153 @@ just in two zones.
 
 ### Velious raid quest chains
 
-> **Status:** Game-designer summary pending lore-master deep-review.
+> **Status:** Lore-master's canonical catalog delivered 2026-04-22. See
+> full walkthrough at
+> `/mnt/d/Dev/eq/claude/project-work/feature-raid-scaling/lore-master/velious-chains.md`.
+> This section summarizes lore-master's findings and highlights
+> project-critical additions for the architect. The game-designer's
+> original fallback (preserved below) is SUPERSEDED where it conflicts.
+
+#### Key project-critical findings from lore-master Velious review
+
+**1. Epic 1.0 has NO Velious-phase steps.** All 14 class Epic 1.0
+chains complete in Classic + Kunark. Velious quest progression is
+its own ecosystem (Coldain Rings, Kael/ToV/ST access, Halls of
+Testing) that does NOT cross over into epic dependency. Implication:
+Velious raid-scaling can proceed independently of epic-related
+tuning decisions.
+
+**2. The Coldain Ring 10 "Ring War" is the single most structurally
+difficult Velious quest event for small groups.**
+- Script file exists: `akk-stack/server/quests/greatdivide/encounters/ring_war.lua`
+- Event structure: 3 rounds × 7 waves = **21 waves** before final boss (Narandi) spawns
+- Wave composition includes Kromrif Generals (13k HP), Warriors,
+  Veterans (42.5k HP), Warlords (20k HP), and High Priests of Zek
+  (50k HP each). Cumulative wave HP exceeds 500k+ per round.
+- **Scaling Narandi alone does NOT solve this — the waves gate the
+  encounter.** A 1-player + 5-companion group at current small-group
+  DPS throughput cannot sustain enough damage to clear 21 waves in
+  the event's time window.
+- **Failure cascades** if dwarf NPC armies are killed by wave mobs.
+- **Architect must investigate the ring_war.lua script** to
+  determine: (a) are wave counts hardcoded? (b) can wave-mob HP be
+  reduced for small-group play without breaking event triggers?
+  (c) is the 30-minute timer hardcoded? This is a script-level
+  problem, not a boss-stat problem.
+
+**3. Ring 8 failure resets entire ring chain (Rings 1-7) to zero.**
+Chief Ry`Gorr 4-minute kill window during the fort-war event. Miss
+it and restart from Ring 1. **Critical UX concern for small group
+— this is punishing for a solo player.** Architect may want to
+flag the failure-reset behavior for user decision (accept-as-is
+vs. soften reset to "try again" without full chain restart).
+
+**4. Three-faction mutual-exclusivity constraint.** Coldain vs
+Kromzek (Kael) vs Claws of Veeshan (Skyshrine/ToV). Player can
+fully ally at most 2 of 3. Implications for small-group server:
+- Coldain Ring chain REQUIRES Coldain faction (hostile to Kael)
+- Thurgadin armor chain REQUIRES Coldain
+- Halls of Testing REQUIRES Claws of Veeshan (hostile to Coldain raiding)
+- Avatar of War / Kael progression neutral-to-hostile to CoV
+- **No small group can pursue ALL Velious quest chains on one
+  character** without faction-reset GM interventions. This is
+  lore-canonical (Velious was designed as faction-warfare content).
+  Flag for user: preserve as-is, or soften via faction items?
+
+**5. Sleeper's Tomb key — every path requires a raid boss kill.**
+Six distinct key paths (Sontalak, Lendiniara, Klandicar, Yelinak,
+Zlandicar, or Shard of Hsagra from Kael bosses) — ALL are raid
+tier. There is no non-raid path to the Sleeper's Tomb. Additionally,
+**awakening the Sleeper is a permanent server state change** —
+once the 4 Warders are killed, Kerafyrm rampages through Velious
+zones and cannot be undone without GM intervention. Lore flag for
+user (open question #10 already captures this).
+
+**6. Boss catalog addenda for Velious quest-critical encounters:**
+
+- **Idol of Rallos Zek (id 113341, L66, 650,000 HP, raid_target=1,
+  SERTMCNIDf)** — MISSING from Velious boss catalog. Central link
+  in Kael Avatar of War spawn chain: Statue (113071) → Idol (113341)
+  → Avatar of War (113457). Without Idol scaled, the Avatar chain
+  is broken. **Add to Velious boss catalog at ~25x gap, recommend
+  HP cut to 130k (-80%), damage cut to 200-700 (-37%), respawn 12h.**
+- **Statue of Rallos Zek (id 113071, L59, 400,750 HP)** — already
+  in catalog; re-flagged as Kael spawn-chain prerequisite.
+- **Avatar of War (id 113457, L70, 900,000 HP)** — already in
+  catalog. **Note:** community sources (Allakhazam, P99) state 1.7M
+  HP — this reflects live-server post-PoP values. PEQ db value of
+  900k is authoritative and already matches the boss catalog.
+- **Doldigun Steinwielder** exists as 2 IDs: 113440 (L55 2,500 HP
+  standard) and 113508 (L60 6,250 HP `#` variant, likely Ring 9
+  traitor target). Low HP, not boss-tier. No catalog update needed.
+- **Peffin Ambersnow** (id 116107, L50, 6,000 HP) — only 6k HP,
+  not raid-tier. Difficulty is the invisible + 5-perma-rooted-guards
+  mechanic, NOT boss stats. Scaling can't fix this; architect to
+  review the guard-spawn script if small-group accessibility is
+  desired.
+- **Sontalak / Klandicar (97.5k HP) / Zlandicar (110k HP)** — all
+  already in Velious boss catalog. HP values are significantly
+  LOWER than lore-master's community-source estimates (200-300k).
+  **PEQ has already pre-scaled these dragons** — they are closer
+  to mid-boss tier than endgame. Current audit recommendations
+  (cut 59-68% to ~35-45k) still apply.
+
+**7. Dragon Necropolis (DN) new intel:**
+- **Jaled Dar's shade (id 123011, L70, 3,002,000 HP, dmg 250-900)**
+  is the Sleeper's Tomb key turn-in NPC at Necropolis coords
+  +1590, -120. My boss catalog flagged this as "SPECIAL — probably
+  event-timer mob, investigate" — lore-master confirms he's the
+  **quest-turn-in NPC**, not a kill target. Don't scale him down;
+  leave the 3M HP as "uncombattable" design (turn-in only). Remove
+  his scaling-target tag from any implementation UPDATE.
+
+**8. Halls of Testing = the Dozekar/Lendiniara/Gozzrem/Telkorenar
+quest hub** — all ToV bosses already in boss catalog. The quest
+structure adds: these fights need to happen MULTIPLE times per
+player because gem drops are unpredictable. Architect: ensure
+respawn cut is aggressive enough (12h per boss catalog) to allow
+realistic multi-clear sessions.
+
+**9. ToV Key clarification — zone entry is UNKEYED.** Entry is
+at Western Wastes (+700, +700) behind Sontalak. Level 46+ check.
+Items called "Key of Veeshan" dropping from King Tormax / Yelinak /
+Dain Frostreaver IV are for internal ToV progression (mold access,
+Halls of Testing pre-reqs), not for zone entry. **Architect:
+verify in DB whether any quest script actually enforces an internal
+ToV key check, or if the "keys" are just armor-mold quest items.**
+
+**10. Kael Thurgadin armor molds conflict:** Coldain-aligned players
+need molds from the King Tormax area of Kael — but as Coldain
+allies, they are hostile to Kromzek. Mold farming becomes a sneak-
+in-kill-sneak-out operation. Expected but worth documenting.
+
+**Velious pain-score distribution (7 quest chains):**
+- **RED:** Coldain Ring 10 War Event, Halls of Testing, Sleeper's
+  Tomb Key, Avatar of War chain, all Warder-related content. **5 of 7.**
+- **YELLOW:** Ring 4-9 individual steps (progression reset risk),
+  Kael King Tormax + Derakor, Skyshrine armor chain. **2 of 7.**
+- **GREEN:** Rings 1-3, Sebilis-parallel simple turn-ins. None of
+  the raid-tier chains are GREEN.
+
+**Velious needs architect-level script review beyond boss-stats
+alone:**
+- `akk-stack/server/quests/greatdivide/encounters/ring_war.lua` (Ring 10 wave structure)
+- `akk-stack/server/quests/eastwastes/#Peffin_Ambersnow.pl` (guard spawn mechanic for Ring 9)
+- `akk-stack/server/quests/kael/` (Avatar of War spawn chain trigger logic)
+- Ring 8 fort-war trigger scripts (failure-reset behavior)
+
+---
+
+#### Full Velious catalog
+
+See `lore-master/velious-chains.md` for complete walkthrough of
+Coldain Rings 1-10, Kael raid progression, ToV access and Halls
+of Testing, Sleeper's Tomb key, faction system, and cross-reference
+matrix.
+
+---
+
+#### (Preserved: Game-designer's original Velious fallback summary, now superseded by lore-master catalog above)
 
 **Scope:** Velious is the single most faction-intensive expansion.
 Raid-quest progression covers: Coldain Ring War (10-ring quest +
@@ -2545,6 +2691,24 @@ are quest-load-bearing:
 - **NPC ID:** 91046 (Skyfire Mountains, roaming) / **Level:** 61 / **HP:** 14,000
 - **Role:** Element of Fire assembly for Magician Epic. Non-combat NPC. Sees invis, can path into geometry (tracker recommended in era). No scaling action needed.
 
+### Idol of Rallos Zek — Kael spawn-chain boss (added 2026-04-22 from Velious review)
+
+- **NPC ID:** 113341 / **Zone:** kael / **Level:** 66 / **HP:** 650,000
+- **Damage:** 245-1,100 / **npcspecialattks:** SERTMCNIDf / **raid_target:** 1
+- **Spawn chain role:** Statue of Rallos Zek (113071, 400.75k HP) → kill spawns Idol (113341, 650k HP) → kill spawns Avatar of War (113457, 900k HP).
+- **Originally omitted:** My Velious boss catalog covered Statue and Avatar but missed the middle tier (Idol). Kael Arena raid progression was incomplete.
+- **Quest dependency:** Kael progression for Warrior / Paladin / SK epic late steps + Coldain Ring 9 adjacency + Thurgadin armor chain. The Avatar chain is the most prestigious Kael kill sequence.
+- **Gap vs. L66 scaled-named (~24k HP):** ~27× HP
+- **Recommended action:** HP cut 80% (→130k). Damage cut 37% (→200-700 range). Respawn 12h. Preserve spawn-chain semantics (killing Statue must still spawn Idol, killing Idol must still spawn Avatar).
+- **Architect implementation note:** Spawn-chain script at `akk-stack/server/quests/kael/` must be preserved. Scaling changes must not break the trigger chain.
+
+### Jaled Dar's Shade — Sleeper's Tomb key turn-in NPC (not scaling target)
+
+- **NPC ID:** 123011 / **Zone:** necropolis / **Level:** 70 / **HP:** 3,002,000 / **dmg:** 250-900
+- **Role:** Sleeper's Tomb key quest turn-in (receives First Brood talisman, gives Key of Sleeper's Tomb). 3M HP is intentional "uncombattable quest NPC" design. The original Velious boss catalog flagged this as "SPECIAL — investigate before scaling".
+- **Lore-master confirmation:** This is a QUEST-NPC, not a kill target. Leave at 3M HP.
+- **Implementation:** Remove from any scaling UPDATE that might target `hp > 1,000,000 AND raid_target = 1` (if architect uses such a filter — better to use explicit ID lists).
+
 ### Implementation implications of the addenda
 
 - **Kunark boss catalog** needs The Tangrin added (78070).
@@ -2568,6 +2732,26 @@ are quest-load-bearing:
   4,600 max damage cut recommendation exists to make the City of
   Mist path to Lhranc survivable for small groups doing Paladin/SK
   epics. Implementation SQL comment should preserve this rationale.
+- **Velious script review required beyond stats:** Ring War wave
+  structure (`greatdivide/encounters/ring_war.lua`), Peffin Ambersnow
+  guard spawn mechanic, Kael Avatar spawn-chain triggers, and Ring 8
+  fort-war failure-reset logic. Pure SQL scaling is insufficient for
+  small-group Velious progression — quest-script tuning is required
+  for the Ring 10 event specifically.
+- **Add Idol of Rallos Zek (113341) to Velious boss catalog SQL set.**
+  Middle tier of the Kael Avatar spawn chain — omitted from initial
+  catalog; without it the chain is broken.
+- **Jaled Dar's Shade (123011) excluded from scaling UPDATE set** —
+  quest-NPC with intentional 3M HP; lore-master confirmed non-kill
+  role. The original boss catalog's "SPECIAL investigate before
+  scaling" flag is now resolved to "do not scale".
+- **Community-source HP values vs db values:** several Velious
+  bosses (Avatar of War, Sontalak, Klandicar, Zlandicar) have
+  community sources citing 1.7M / 300k / 200k+ HP. PEQ db values
+  are lower (900k / 97.5k / 110k). **Db values are authoritative**
+  for scaling math — community sources often reflect post-PoP
+  live-server tunings or different server eras. Architect should
+  NOT inflate scaling cuts to match community sources.
 
 ---
 
