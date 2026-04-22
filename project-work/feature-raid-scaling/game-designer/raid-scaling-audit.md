@@ -2292,6 +2292,122 @@ remaining blockers are:
 
 ---
 
+## Boss-catalog addenda from lore-master Classic epics review
+
+Added 2026-04-22 after lore-master Classic epics catalog delivery.
+The following NPCs are quest-critical for Epic 1.0 progression and
+were either missing from the boss catalog or needed additional
+flagging. All stats verified via `peq` db query.
+
+### The Tangrin — Field of Bone (Kunark zone, not Classic)
+
+- **NPC ID:** 78070
+- **Level:** 54 / **HP:** 16,350 / **dmg:** 62-220 / **AC:** 189 / **MR:** 435
+- **npcspecialattks:** S (summon)
+- **Originally omitted:** Field of Bone is a Kunark zone but the
+  Enchanter Epic 1.0 step that requires The Tangrin sits in the
+  Classic-phase walkthrough. The Kunark boss catalog missed this
+  entry because my initial query filtered by expansion + high-HP
+  thresholds.
+- **Quest dependency:** Sands of the Mystics for Enchanter Epic
+  4th Piece of Staff
+- **Respawn:** 12hr (per lore-master)
+- **Gap vs. L54 scaled-named (~7.5k HP):** ~2.2× HP — already close
+  to scaled-named tier; damage already in named range
+- **Recommended:** Minor HP cut (15-20%, target ~13k). Respawn to
+  6h. Preserve summon ability. Add to Kunark boss catalog scope.
+
+### Faydedar dual-variant handling (reaffirmed)
+
+- **Standard Faydedar (id 96089):** L55 32k HP — outdoor boss in
+  Timorous Deep, farmable through normal spawn cycle
+- **`#Faydedar` (id 96073):** L55 32k HP — script-spawned variant
+  via Dolgin Codslayer (Timorous Deep, 12hr respawn). Used for the
+  "weak Faydedar" step in Druid/Ranger epics.
+- **Both have `raid_target = 1`** and identical stats (32k/103-236/AC 234).
+- **Critical:** Scaling changes to Faydedar MUST apply to BOTH
+  NPC IDs or the Druid/Ranger epic's "weak Faydedar" step breaks.
+- **Recommendation:** SQL UPDATE targeting `name LIKE '%Faydedar%'`
+  OR explicit id list `(96089, 96073)` — architect to choose.
+
+### Venril Sathir multi-form scaling
+
+The boss catalog captured #Venril_Sathir (id 102112, raid_target=1,
+22k HP). Four additional VS-family entities exist, three of which
+are quest-load-bearing:
+
+- **102112 `#Venril_Sathir`** (raid_target=1, 22k HP, L55) —
+  triggered raid form; Druid/Ranger epic target after 20hr remains
+  wait + Firefly Globe + Rez scroll ritual. Already in Kunark
+  boss catalog.
+- **102126 `Venril_Sathir`** (raid_target=0, 11k HP, L55, SRUMCNIDf
+  abilities) — likely the Wizard Epic standard form (dropping the
+  Gnarled Staff). HP is half the triggered form but carries the
+  raid-boss immunity set. NOT in boss catalog because raid_target=0.
+  **Flag for architect:** verify this is the Wizard Epic VS. If yes,
+  scale identically to the raid-target form (HP cut 25%, target ~8k).
+- **102099 `Venril_Sathirs_remains`** (L50, 4,375 HP) — NPC spawned
+  after killing the Wizard/raid VS. Intermediate step for Druid/
+  Ranger epic. No scaling needed — low HP trivial.
+- **102123 `Spirit_of_Venril_Sathir`** (L55, 9,375 HP, flee-disabled
+  only) — intermediate spirit-form from giving Firefly Globe to
+  remains. Turns into triggered VS after rez-scroll. No scaling
+  needed — low HP.
+- **105182 `Venril_Sathir`** (Charasis, L55, 15,375 HP, SRUMCNIDf)
+  — separate VS encounter in Howling Stones (different zone).
+  Possibly a lore-variant (VS's undead form in Drusella's stronghold?).
+  **Architect to investigate role** before scaling.
+
+### Lhranc (citymist, id 90093) — dual-class epic gatekeeper role
+
+- Boss catalog entry stands — stats are fine (19k HP, 120-305 dmg),
+  minimal-change recommendation remains.
+- **Audit lore note to add:** Lhranc is the **final combat
+  encounter for BOTH Paladin (Fiery Defender) and Shadow Knight
+  (Innoruuk's Curse) Epic 1.0 quests.** Scaling him too aggressively
+  downward trivializes two endgame weapons; leaving him as-is (the
+  minimal-change recommendation) matches lore-master's pain-score
+  YELLOW for both epics.
+- **Spawn mechanic note:** Per lore-master, Lhranc is spawned by
+  giving the pre-assembled component set (Corrupted Ghoulbane +
+  Heart of the Innocent + Head of the Valiant + Will of Innoruuk)
+  at loc 0 +90 in City of Mist. After kill, Marl Kastane spawns
+  outside the room for the token turn-in. Respawn 13hr+ per
+  lore-master research.
+
+### a_dracoliche (fearplane, id 72090) role clarification
+
+- Boss catalog entry stands (175k HP recommended → 35-50k) but the
+  "Cleric Epic 1.0 step" annotation is WRONG.
+- **Cleric Epic actually requires "Slime Blood of Cazic-Thule"
+  from PoFear** — drops from Cazic-Thule, Dread, Fright, or Terror.
+  NOT from a_dracoliche.
+- **Shadow Knight Epic requires Soul Leech Dark Sword of Blood**
+  — drops from Dread/Fright/Terror/Cazic-Thule. NOT from dracoliche.
+- **Updated role:** a_dracoliche is a PURE scaling target (large
+  HP gap, aggressive Flurry+Unslowable), NOT a quest blocker.
+  This reduces its implementation-priority ranking from "quest-
+  critical" to "standard scaling". The four Fear gods (Dread/
+  Fright/Terror/Cazic-Thule) are the actual quest-critical PoFear
+  bosses for Cleric + SK epics.
+
+### Implementation implications of the addenda
+
+- **Kunark boss catalog** needs The Tangrin added (78070).
+- **Any SQL scaling UPDATE for Faydedar** must cover both 96089 AND
+  96073. Recommend matching by `loottable_id` or an explicit id list.
+- **Wizard Epic VS form (102126)** should be scaled even though
+  `raid_target = 0`. Architect: do not filter by raid_target on
+  implementation UPDATE; use the consolidated ID list.
+- **Lhranc scaling floor is "minimal change".** Don't over-cut him
+  — his role as dual-epic gatekeeper means he should remain a
+  recognizable challenge.
+- **Dracoliche priority drop:** from "quest critical" to "standard
+  scaling" in the implementation task breakdown. Not urgent for
+  Cleric/SK epic completion.
+
+---
+
 ## Headline Findings
 
 ### 1. The prior scaling pass left ALL raid-boss stats untouched

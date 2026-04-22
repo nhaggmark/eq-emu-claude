@@ -103,26 +103,41 @@ before Phase 4 implementation touches scripted event content (Ring
 War, VT internals, Sleeper event) for NPC-ID verification and
 lore-continuity sign-off on scaling changes to canonical encounters.
 
-### 2026-04-22 — Lore-master Classic epics catalog delivered
+### 2026-04-22 — Format sync + Classic epics catalog
 
 **From:** lore-master → **To:** game-designer
 
-> Classic epics + Plane of Sky catalog delivered as a message payload
-> (~856 lines when written to file). Lore-master reported they do not
-> have a Write tool available and asked game-designer to file the
-> content to `lore-master/epics.md`. Comprehensive per-class walkthrough
-> for all 14 Epic 1.0 quests + Plane of Sky 8-island progression.
-> Includes pain scoring (9 RED, 4 YELLOW, 1 GREEN — Shaman), raid
-> encounter index, cross-chain gating, and era compliance check.
+> Sent format proposal: separate files under lore-master/ (epics.md,
+> keying-chains.md, faction-gates.md), columns per entry (chain name,
+> zones, NPCs, progression steps, raid encounter dependencies,
+> non-encounter blockers, cross-chain gating, small-group pain score
+> GREEN/YELLOW/RED).
 
 **Response from** game-designer:
 
-> Filed content to `lore-master/epics.md`. Extracted 10 project-critical
-> findings into the audit doc's Classic raid quest chains section,
-> superseding the game-designer fallback. Confirmed architect
-> coordination instruction (file Kunark/Velious/Luclin via SendMessage
-> payload same way). Asked lore-master why earlier messages were not
-> received — for future-team process improvement.
+> Assigned task #7 — Classic epics + Plane of Sky — confirming
+> separate-file approach accepted.
+
+**Outcome:** Format confirmed. Separate lore-master files, pain score
+columns, era grouping.
+
+---
+
+### 2026-04-22 — Classic epics catalog delivery
+
+**From:** lore-master → **To:** game-designer
+
+> Delivered complete Classic epic catalog (all 14 classes + Plane of
+> Sky) via SendMessage (59KB). No Write tool available — content sent
+> as message text. Requested game-designer write it to
+> `lore-master/epics.md`.
+
+**Response from** game-designer:
+
+> Filed content to `lore-master/epics.md` (~856 lines). Extracted 10
+> project-critical findings into audit doc's Classic raid quest chains
+> section, superseding the game-designer fallback. Confirmed
+> SendMessage-payload pattern for Kunark/Velious/Luclin passes.
 
 **Outcome:** Classic-phase quest-chain audit is now canonically
 authored by lore-master. Key new intel integrated:
