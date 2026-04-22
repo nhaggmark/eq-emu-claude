@@ -732,7 +732,7 @@ raid-access chain.
 
 - **Class/scope:** General raid access; prerequisite for Rogue Epic
   (Ragebringer), Monk Epic (Celestial Fists), Enchanter Epic
-  (Staff of the Serpent), Warrior Epic (Swiftwind/Earthcaller) end
+  (Staff of the Serpent), Warrior Epic (Jagged Blade of War) end
   steps, and multiple class-specific ground-spawn/quest items.
 - **Era:** Classic
 - **Zones:** Plane of Sky (`airplane`) — accessed from Plane of Fear
@@ -828,12 +828,13 @@ alphabetically:
 - Also requires a ghoul hero drop and multiple specific items
 - Cross-references boss-catalog: a_dracoliche (fearplane, 72090)
 
-**Druid Epic 1.0 — Nature Walker's Scimitar**
-- Classic raid step (pre-Faydedar): **Phinigel Autropos** drop
-  required (Kedge Keep) for some versions of the chain —
-  lore-master confirm
-- Kunark raid step: Faydedar (primary raid target)
-- Cross-references: Phinigel Autropos (kedge, 64001)
+**Druid Epic 1.0 — Nature Walker's Scimitar** _(corrected 2026-04-22 per lore-master review)_
+- Classic raid step: **none** — Phinigel Autropos is NOT required
+  for Druid epic (earlier audit draft had this as "lore-master
+  confirm" — lore-master has now confirmed it's unnecessary)
+- Kunark raid step: **Faydedar** (Timorous Deep) — primary raid
+  dependency
+- Cross-references: Faydedar (timorous, 96089)
 
 **Enchanter Epic 1.0 — Staff of the Serpent**
 - Classic raid step: Plane of Sky island 8 (Noble Dojorn) drop
@@ -888,11 +889,11 @@ alphabetically:
 - Kunark raid step: Faydedar + outdoor dragons
 - Cross-references: Faydedar (timorous, 96089)
 
-**Warrior Epic 1.0 — Swiftwind / Earthcaller**
-- Classic raid step: no specific Classic raid required
-- Kunark raid step: Trakanon, outdoor dragons
-- Velious raid step: Avatar of War, Ring of Scale
-- Cross-references: Trakanon (sebilis, 89154), AoW (kael, 113457)
+**Warrior Epic 1.0 — Jagged Blade of War** _(corrected 2026-04-22 per lore-master review)_
+- Classic raid step: **Spiroc Lord** (Plane of Sky, Island 5) for Spiroc Wingblade drop + **Hand of the Maestro** (Plane of Hate) for component
+- Kunark raid step: **Queen Velazul Di\`Zok** (Chardok) for Ancient Blade; plus Green Dragon Scales (Severilous or Hoshkar) + Red Dragon Scales (Nagafen or Talendor or Echo of Nortlav)
+- Velious raid step: **NONE** — Warrior epic completes in Classic + Kunark
+- Cross-references: Spiroc Lord (airplane, 71012), Queen Velazul (chardok, 103055), Severilous (emeraldjungle, 94009), Talendor (skyfire, 91093)
 
 **Wizard Epic 1.0 — Staff of the Four**
 - Classic raid step: possibly a Dracoliche drop component
@@ -1456,7 +1457,7 @@ plus any Kunark-specific raid-access progression.
   - Chardok components
 - Small-group viability: excellent
 
-**Warrior Epic 1.0 — Swiftwind / Earthcaller (pair)**
+**Warrior Epic 1.0 — Jagged Blade of War** _(corrected 2026-04-22 per lore-master review)_
 - Kunark raid steps:
   - **Trakanon** component
   - Outdoor dragon component
@@ -2001,42 +2002,71 @@ that extend into this era (mainly Warrior, Paladin, SK).
     prior-pass's `Zone:GlobalLootMultiplier=2` helping faction
     hit rates (already live).
 
-#### Temple of Veeshan (ToV) key quest
+#### Claws of Veeshan faction access (ToV + Skyshrine)
 
-- **Class/scope:** ToV access; Warrior / Paladin / SK epic late
-  steps
+**CORRECTED 2026-04-22 per lore-master review.** There is NO "ToV key
+quest" — the game-designer's original entry was a factual error.
+Temple of Veeshan entry is **open to any L46+ character with Claws
+of Veeshan faction**; no key item, no turn-in NPC, no quest chain
+gates entry. The references to "keys dropping from Tormax/Yelinak/
+Dain" in community sources describe **Sleeper's Tomb key talismans**,
+not ToV entry keys — those dragons drop Shard of Hsagra's Talisman
+(alternate path to Sleeper's Tomb key), not a ToV key.
+
+- **Class/scope:** General access to ToV (for Halls of Testing quest
+  chain) and Skyshrine. Factional gate, not a key quest.
 - **Era:** Velious
-- **Zones:** Kael + ToV itself + "shard" collection across
-  Velious
-- **Turn-in NPCs:** (lore-master to confirm) — traditionally at
-  Claws of Veeshan dragons in Kael/Skyshrine
-- **Raid encounters required:**
-  - Key pieces drop from Kael bosses (Tormax, Derakor, AoW
-    component) + outdoor Velious dragons (Klandicar, Sontalak,
-    Yelinak context)
-  - Sleeper's Tomb key is SEPARATE — see below
-- **Non-encounter blockers:** Ring of Scale / Claws of Veeshan
-  positive faction required
-- **Small-group blockers:** Tormax and AoW at current stats are
-  walls; audit's 78-87% HP cut makes them tractable
-- **Recommended action:** Addressed by boss-catalog scaling + the
-  user decision on faction-grind time
+- **Zones:** Skyshrine, Temple of Veeshan, Western Wastes, Eastern
+  Wastes (for CoV faction grinding)
+- **Access mechanism:** Positive Claws of Veeshan faction required to
+  survive ToV West Wing and Skyshrine. CoV faction is earned by:
+  killing Kromrif giants (Eastern Wastes, Kael), killing Ring of Scale
+  dragons (Western Wastes, per Velious lore — note this is the
+  Velious "Ring of Scale" dragon faction, not the post-Luclin PoP
+  faction), and CoV-related quest turn-ins.
+- **Non-encounter blockers:** Faction grind time — may be tens of hours
+  for a small-group player to go from neutral to Ally CoV. Additionally,
+  CoV faction is mutually exclusive with full Coldain and Kromzek
+  alliances (3-way faction constraint).
+- **Small-group blockers:** No raid kill required for ToV entry. Main
+  blocker is faction-grind time. Halls of Testing quest chain inside
+  ToV East Wing requires killing Dozekar the Cursed and named drakes —
+  those are raid-tier and covered by boss-catalog scaling.
+- **Recommended action:** No change needed for ToV entry (no key to
+  modify). Architect to flag faction-grind time as a user decision
+  (accept as-is, or accelerate via turn-in item changes).
 
-#### Sleeper's Tomb key quest
+#### Sleeper's Tomb key quest _(verified 2026-04-22 per lore-master review)_
 
 - **Class/scope:** Sleeper's Tomb access; prereq for 4-Warder
   events and the Sleeper-awake event
 - **Era:** Velious
-- **Zones:** ToV (four Ancients trigger Warder summons)
-- **Raid encounters required:**
-  - Kill specific ToV dragons for key components (traditionally:
-    Aaryonar, Dozekar, Lendiniara as a core set — lore-master
-    verify)
-  - Some Sleeper's Tomb ancients drop key components themselves
-- **Progression path:** ToV → collect key components from
-  Aaryonar line → enter Sleeper's → face Warders
-- **Small-group blockers:**
-  - ToV bosses at current stats (audit covers)
+- **Turn-in NPC:** Jaled Dar's shade (Dragon Necropolis, id 123011 —
+  see boss-catalog addenda: intentional 3M HP uncombattable
+  quest-NPC, NOT a kill target)
+- **Raid encounters required:** ONE talisman from any of the First
+  Brood dragons, OR Shard of Hsagra's Talisman combined from multiple
+  Kael sources:
+  - **Klandicar** (Western Wastes, id 120084, 97.5k HP → 40k
+    post-audit) — lowest-HP-gap path, recommended for small group
+  - **Sontalak** (Western Wastes, id 120005, 97.5k HP → 40k
+    post-audit) — tied for lowest-gap path
+  - **Zlandicar** (Dragon Necropolis, id 123115, 110k HP → 35k
+    post-audit) — also low-gap
+  - **Lord Yelinak** (Skyshrine, id 114106, 500k HP → 110k
+    post-audit) — requires CoV faction for approach
+  - **Lendiniara the Keeper** (Temple of Veeshan, id 124020, 320k
+    HP → 80k post-audit) — requires CoV faction for ToV entry
+  - **Shard of Hsagra's Talisman** (alt path) — from Derakor the
+    Vindicator, King Tormax, Statue of Rallos Zek (all Kael), OR
+    Velketor the Sorcerer (velketor zone)
+- **Progression path:** Kill ONE eligible dragon → talisman → turn
+  in to Jaled Dar's shade → Key of Sleeper's Tomb. NO multi-kill
+  requirement.
+- **Small-group blockers:** None beyond standard raid-boss scaling
+  for whichever path is chosen. The recommended minimum-pain path
+  (Klandicar or Sontalak at ~40k HP post-audit) is tractable for
+  1 player + 5 companions.
   - Sleeper's Tomb inner-guard mechanic (if any)
 - **Recommended action:** Boss scaling + lore-master to verify
   which ToV bosses specifically drop key.
@@ -2052,15 +2082,20 @@ that extend into this era (mainly Warrior, Paladin, SK).
   gates that require 6-player check-sums (ancient cases where a
   "place item X, kill mob Y simultaneously" mechanic exists).
 
-#### Avatar of War quest (Warrior / Paladin / SK)
+#### Avatar of War / Kael Arena progression _(corrected 2026-04-22 per lore-master review)_
 
-- **Class/scope:** Warrior, Paladin, SK Epic 1.0 late step
-- **Zones:** Kael, ToV
-- **Raid encounters required:** Avatar of War kill + component from
-  ToV tier
+- **Class/scope:** General Velious raid access / endgame loot (NOT a
+  class-epic requirement — Warrior, Paladin, and SK epics all complete
+  in Classic + Kunark and do NOT require AoW).
+- **Zones:** Kael Drakkel arena
+- **Spawn chain:** Statue of Rallos Zek (113071) → kill spawns Idol
+  of Rallos Zek (113341) → kill spawns Avatar of War (113457). All
+  three are in the boss catalog.
 - **Small-group blockers:** AoW at 900k HP + rampage 6×6 = current
   wall. Audit recommends 87% HP cut + rampage 3×3.
-- **Recommended action:** Addressed by boss-catalog scaling.
+- **Recommended action:** Addressed by boss-catalog scaling. No
+  quest-chain obligation to kill — skip if the small group prefers
+  other Kael content (King Tormax, Derakor, Thurgadin armor molds).
 
 ---
 
@@ -2070,21 +2105,23 @@ Most Epic 1.0s COMPLETE in Kunark or have their Velious steps as
 quality-of-life rewards (not raid-tier). The Velious-required raid
 steps are specific:
 
-**Warrior Epic 1.0 — Swiftwind / Earthcaller**
-- Velious raid step: **Avatar of War** kill (for Swiftwind) +
-  **Vindicator** (for Earthcaller pair)
-- Small-group viability: post-scaling, AoW tractable; Vindicator
-  already moderate tier (180k HP → 60k post-audit)
+**Warrior Epic 1.0 — Jagged Blade of War** — **NO Velious step** _(corrected 2026-04-22 per lore-master review)_
+- Warrior epic completes fully in Classic + Kunark. No Avatar of War
+  dependency. No Ring of Scale dependency. Remove from AoW + Vindicator
+  dependent-chain lists in the dependency matrix.
 
-**Paladin Epic 1.0 — Fiery Avenger**
-- Velious raid step: **Avatar of War** component
-- Small-group viability: same as Warrior
+**Paladin Epic 1.0 — Fiery Defender** — **NO Velious step** _(corrected 2026-04-22 per lore-master review)_
+- Paladin epic completes fully in Classic (Lhranc in City of Mist +
+  Thought Destroyer in Plane of Hate + Keeper of the Tombs in The Hole
+  + Kirak Vil in Nektulos Forest). No Avatar of War dependency.
+  Remove from AoW dependent-chain lists.
 
-**Shadow Knight Epic 1.0 — Innoruuk's Curse / Velious step**
-- Velious raid step: varies by chain; traditional SK "blood of
-  the dragon" requires ToV dragon kill (usually Aaryonar or
-  Dozekar — lore-master verify)
-- Small-group viability: ToV bosses covered by audit
+**Shadow Knight Epic 1.0 — Innoruuk's Curse** — **NO Velious step** _(corrected 2026-04-22 per lore-master review)_
+- SK epic completes fully in Classic + Kunark (Cazic-Thule/Dread/
+  Fright/Terror in PoFear for Soul Leech + Lhranc in City of Mist for
+  Innoruuk's Curse final + Ashenbone Drake in PoHate for Decrepit Hide).
+  No ToV dragon dependency. No Aaryonar or Dozekar requirement.
+  Remove from AoW / Aaryonar / Dozekar dependent-chain lists.
 
 **Druid / Shaman / Cleric Velious enhancement paths**
 - Late-epic class-specific enhancement via Coldain Prayer Shawl
@@ -2352,7 +2389,7 @@ feature heavy add-phases that were designed against 72-player raids.
 **Strong recommendation for user decision:** Luclin alone justifies
 splitting Phase 5 into Phase 5a (Ssraeshza + Akheva + Seru/Katta +
 outdoor — ~18 bosses) and Phase 5b (Vex Thal — 9-11 top-tier + key-
-progression rework). Vex Thal's 13-shard key quest (lore-master
+progression rework). Vex Thal's 10-shard key quest (lore-master
 Task #10) is a progression-phase of its own.
 
 ### Luclin raid quest chains
@@ -2536,7 +2573,7 @@ synthesis summary for architect.
 
 #### (Preserved: Game-designer's original Luclin fallback summary, now superseded by lore-master catalog above)
 
-**Scope:** Vex Thal shard quest (13-part key quest — the densest
+**Scope:** Vex Thal shard quest (10-shard + 3-component key quest — the densest
 raid-progression in the game), Emperor Ssraeshza key quest, Sanctus
 Seru / Katta Castellum progression, Luclin-specific class AA-
 precursor quests, any Luclin-tier components of Epic 1.0s that
@@ -2544,7 +2581,7 @@ extend this late.
 
 ---
 
-#### Vex Thal key quest (13 shards)
+#### Vex Thal key quest (10 Lucid Shards + 3 components)
 
 - **Class/scope:** General raid access — VT contains some of the
   best in-era loot and the Aten Ha Ra cluster
@@ -2552,7 +2589,7 @@ extend this late.
 - **Zones:** ALL Luclin raid zones + some mid-level Luclin zones
 - **Turn-in NPCs:** Final key forge NPC (lore-master verify —
   traditionally in Shadow Haven or Umbral Plains)
-- **Raid encounters required for the 13 shards:**
+- **Raid encounters required for key components (NOT shards — shards are non-raid named):**
   - Shard drops come from a mix of mid- and high-tier Luclin
     bosses. Traditional spread:
     1. Ssraeshza Temple component (requires Emperor-tier access)
@@ -2659,7 +2696,7 @@ extend this late.
   Luclin-only raid dependency (Khati Sha).
 
 **Luclin quest-chain blockers BEYOND boss-stat scaling:**
-- **Vex Thal 13-shard count** — flag for reduction decision
+- **Vex Thal shard count** — RESOLVED 2026-04-22: actual count is 10, not 13; shard phase is non-raid already accessible
 - **Faction grinds for Sanctus Seru / Katta / Akheva access** —
   time-wall like Velious
 - **Vex Thal internal progression** — the zone has extensive add-
@@ -2720,10 +2757,11 @@ encounters where scaling failures have outsized impact:
 | **a_dracoliche** (72090) | fearplane | Classic | Cleric Epic (Soulfire), possibly Wizard Epic — **1-2 chains** |
 | **Innoruuk** (76007 / 186158) | hateplane / hateplaneb | Classic | Necromancer Epic, Shadow Knight Epic — **2 chains** |
 | **Outdoor Kunark dragons** (Gorenaire, Severilous, Talendor) | dreadlands / emeraldjungle / skyfire | Kunark | VP key quest (5 dragon components) + various epic side-components — **5+ chains** |
-| **Avatar of War** (113457) | kael | Velious | Warrior Epic, Paladin Epic, Shadow Knight Epic, ToV key quest — **4 chains** |
-| **King Tormax** (113215) | kael | Velious | ToV key quest, Coldain Ring War progression — **2 chains** |
-| **Dain Frostreaver IV** (129003) | thurgadinb | Velious | Coldain Ring War + Coldain Shawl 8 + Prayer Shawl + multiple class enhancement chains — **4+ chains** |
-| **ToV Aaryonar line** (124010, 124037, 124020) | templeveeshan | Velious | Sleeper's Tomb key quest, SK/Paladin Epic late steps — **2-3 chains** |
+| **Avatar of War** (113457) | kael | Velious | Kael Arena endgame loot target (NOT a class-epic dependency — lore-master corrected: Warrior/Paladin/SK epics have no Velious step) — **0 quest chains** |
+| **King Tormax** (113215) | kael | Velious | Sleeper's Tomb key (Shard of Hsagra's Talisman alt path), Thurgadin armor molds — **2 chains** |
+| **Dain Frostreaver IV** (129003) | thurgadinb | Velious | Coldain Ring War (Ring 9 + Ring 10 turn-in) + Coldain Prayer Shawl chain (pending lore-master addendum) + Sleeper's Tomb key (Shard of Hsagra alt source) — **3+ chains** |
+| **ToV Aaryonar line** (124010, 124037, 124020) | templeveeshan | Velious | Halls of Testing quest chain (Dozekar + named drakes for Skyshrine armor molds). NOT a Sleeper's Tomb key or SK/Paladin epic dependency (lore-master corrected) — **1 chain** |
+| **First Brood dragons** (Klandicar 120084 / Sontalak 120005 / Zlandicar 123115 / Yelinak 114106 / Lendiniara 124020) | westwastes / necropolis / skyshrine / templeveeshan | Velious | Sleeper's Tomb key (ONE talisman required from any of these). Klandicar/Sontalak/Zlandicar at ~40k HP post-audit are the recommended small-group path — **1 chain (but 5 path options)** |
 | **Vulak`Aerr** (124155) | templeveeshan | Velious | ToV endgame gate, multiple class-enhancement Velious quests — **3+ chains** |
 | **High Priest of Ssraeshza** (162076) | ssratemple | Luclin | Emperor Ssraeshza key quest, possibly 1 VT shard — **1-2 chains** |
 | **Vyzh`dra the Cursed** (162206) | akheva | Luclin | Multiple VT shards, Akheva progression — **2+ chains** |
@@ -2745,7 +2783,7 @@ encounters become beatable by 1 player + 5 companions. The
 remaining blockers are:
 - Faction grind time (Velious Ring of Scale / Claws of Veeshan /
   Coldain; Luclin Sanctus Seru / Katta)
-- Vex Thal 13-shard meta-quest scope
+- Vex Thal 10-shard meta-quest scope (shards are non-raid, no scope issue)
 - Any scripted events with hard-coded group-size checks
   (architect to investigate Ring War, VT internals, Sleeper event)
 
@@ -3013,7 +3051,7 @@ target.
 | 10 | Thought Horror Overfiend | thedeep | 807,000 | 776 | 27× HP |
 | 11 | Xerkizh the Creator | ssratemple | 806,516 | 674 | 27× HP |
 | 12 | Vyzh`dra the Cursed | akheva | 900,000 | 588 | 30× HP |
-| 13 | The Avatar of War | kael | 900,000 | 1,154 | 30× HP + damage |
+| 13 | The Avatar of War | kael | 900,000 | 1,154 | 30× HP + damage (general loot target, not class-epic dependency) |
 | 14 | Xygoz (VP revamp) | veeshan | 814,000 | **2,266** | 27× HP + worst dmg |
 | 15 | Nexona (VP revamp) | veeshan | 800,000 | **2,475** | 27× HP + worst dmg |
 | 16 | Cazic Thule | fearplane | 451,000 | 603 | 15× HP (but Classic-era outlier) |
@@ -3054,8 +3092,10 @@ classes simultaneously (lore-master Task #7-10 will complete):
 - **Trakanon (sebilis):** Cleric, Warrior, others
 - **Vulak`Aerr (templeveeshan):** ToV key tier — gates entire ToV
   access chain
-- **King Tormax / Avatar of War (kael):** Warrior, SK, Paladin Epic
-  steps and Kael faction
+- **King Tormax / Avatar of War (kael):** Kael endgame / Sleeper's
+  Tomb key alt-path (Shard of Hsagra). **NOT class-epic dependencies**
+  — lore-master corrected 2026-04-22: Warrior/Paladin/SK epics have
+  no Velious step.
 - **Dain Frostreaver IV (thurgadinb):** Coldain Ring War + multiple
   Velious faction chains
 - **Noble Dojorn / Plane of Sky island bosses:** Rogue, Monk Epic
