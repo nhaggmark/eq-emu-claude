@@ -22,17 +22,25 @@ rationale are never lost.
 
 _game-designer + lore-master exchanges during Phase 2._
 
-### [Date] — [Topic]
+### 2026-04-21 — Kick-off and task assignment
 
-**From:** [agent] → **To:** [agent]
+**From:** game-designer → **To:** lore-master
 
-> [Message content or summary]
+> Welcome message: framed the audit scope, assigned tasks #7-10
+> (Classic / Kunark / Velious / Luclin quest-chain catalogs), pointed at
+> feature brief, status.md, and the prior small-group-scaling PRD in
+> `claude/tmp/raid-scaling/prior-prd.md`. Shared the crucial finding:
+> prior scaling pass excluded `raid_target = 1` NPCs, so raid boss HP /
+> damage / AC are at default PEQ values — that's the gap this project
+> addresses. Asked lore-master to begin raw research on the 14 Epic 1.0
+> quests while I finish the skeleton document.
 
-**Response from** [agent]:
+**Response from** lore-master:
 
-> [Response content or summary]
+> _Pending — response will be logged here when received._
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** Lore-master dispatched to research quest-chain progression.
+Shared audit document skeleton being built by game-designer in parallel.
 
 ---
 
@@ -40,17 +48,7 @@ _game-designer + lore-master exchanges during Phase 2._
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+_(Empty — architecture phase has not started.)_
 
 ---
 
@@ -58,34 +56,21 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 _Expert-to-expert exchanges during Phase 4._
 
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+_(Empty — implementation phase has not started.)_
 
 ---
 
 ## Key Decisions from Conversations
 
-_Extract the most important decisions made through agent communication.
-This table is the quick-reference for anyone catching up._
-
 | # | Decision | Agents Involved | Date | Context |
 |---|----------|----------------|------|---------|
-| | | | | |
+| 1 | Audit structure: one consolidated document (`raid-scaling-audit.md`) with per-era sections, bosses before quest chains in each era, cross-reference matrix and headline findings at the end | game-designer | 2026-04-21 | Single document keeps context together for architect in Phase 3; per-era splits were considered but rejected as fragmenting — can split later if size becomes unwieldy |
+| 2 | Classification: `raid_target = 1` flag in PEQ is over-inclusive (includes raid-zone trash like Plane of Fear scarelings). Audit classifies each as BOSS / EVENT MOB / ELITE TRASH. Only BOSS + some EVENT MOB entries target for scaling | game-designer | 2026-04-21 | Flag count of 878 raid_targets across Classic-Luclin is dominated by trash-in-raid-zones; true boss count is a fraction of that |
+| 3 | Fabled (`#The_Fabled_*`) NPCs at level 70+ flagged as OUT OF ERA, no action | game-designer | 2026-04-21 | Post-Luclin anniversary content; expansion lock should prevent them from spawning |
 
 ---
 
 ## Unresolved Threads
-
-_Conversations that didn't reach resolution. Track here so they don't get lost._
 
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
