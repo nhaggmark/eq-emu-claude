@@ -1407,16 +1407,276 @@ Task #10) is a progression-phase of its own.
 
 ---
 
-## Headline Findings (populated at consolidation — task #11)
+## Headline Findings
 
-> Will summarize:
-> 1. Total true-boss count per era with scaling-gap size
-> 2. Worst-offender encounters (biggest gap vs. target)
-> 3. Progression choke-points that gate multiple chains
-> 4. Phase-split recommendation for the user decision gate
+### 1. The prior scaling pass left ALL raid-boss stats untouched
+
+The small-group-scaling project (completed 2026-02-23) filtered its
+stat-reduction UPDATEs on `raid_target = 0`, explicitly excluding raid
+bosses from HP / damage / AC cuts. It also left `npc_scale_global_base`
+type 2 (raid-tier baseline) unchanged. **Every one of the ~140 true-boss
+encounters across Classic-Luclin therefore sits at default PEQ values.**
+The prior pass DID improve raid loot probability (×1.5), rare-drop
+chance (×1.5), and spawn2 respawn timer (×0.75) for raid targets — but
+respawn is still in the 54-130 hour range, above the brief's 6-24h
+target.
+
+### 2. True-boss counts by era (in-era, filtered)
+
+| Era | Raw `raid_target = 1` | True bosses | Excludes |
+|-----|----------------------|-------------|----------|
+| Classic | 344 | ~30 | Fear/Hate/Growth trash, Halloween events, GM dummies, Legendary Behemoth (L72 OOE) |
+| Kunark | 28 | 19 | Fabled (L70+ LoN), post-Luclin Prince/Princess variants |
+| Velious | 362 | 60-65 | ToV/Sleeper/Growth trash, Mischief Plane revamp, Fabled, Sir Elmonious (3.6k dmg OOE) |
+| Luclin | 144 | ~30 | Vex Thal Yaemiu elite (80 at 55-100k HP), Fabled, OOE content (L73+) |
+| **Total** | **878** | **~140** | |
+
+### 3. Scaling gap size ranges by tier
+
+| Tier | Example encounters | HP gap vs. scaled-named | Damage gap |
+|------|--------------------|-----------------------|-----------|
+| **Endgame (Luclin VT + top ToV + Vulak + AoW)** | Aten Ha Ra, Vulak`Aerr, Emperor Ssraeshza, Kaas Thox Xi Aten Ha Ra | **30-63× HP** | 1,000-2,475 max damage (often one-shots small-group tanks) |
+| **Mid-boss (most ToV, most Sleeper, Seru, Grieg, Akheva top, some Luclin mids)** | Lord Vyemm, Dagarn, Zeixshi-Kar, Lord Inquisitor Seru, Grieg Veneficus, Khati Sha, Thought Horror | 10-25× HP | 500-1,200 max damage (dangerous but survivable with prep) |
+| **Low-boss (Kael, Skyshrine Crusaders, Growth mid, VP classic-variant, outdoor Velious, mid Luclin)** | King Tormax, Skyshrine Crusaders, Ail the Elder, Velketor, VP variants | 4-10× HP | 400-800 max damage (largely in current scaled-named range) |
+| **Near-named (Classic bosses, most Kunark outdoor dragons, Chardok, WW dragons)** | Nagafen, Vox, Gorenaire, Trakanon, Overking Bathezid, Phinigel, most Fear/Hate bosses | 2-4× HP | 200-500 max damage (already fine, primary lever is HP) |
+
+### 4. Worst-offender encounters (highest single-boss priority)
+
+| Rank | Boss | Zone | Current HP | Current max dmg | Gap multiplier |
+|------|------|------|-----------|-----------------|----------------|
+| 1 | Aten Ha Ra | vexthal | 1,901,500 | 1,054 | 63× HP |
+| 2 | Kaas Thox Xi Aten Ha Ra | vexthal | 1,900,000 | **1,650** | 63× HP + worst dmg |
+| 3 | Thall Va Kelun | vexthal | 1,825,000 | 1,000 | 61× HP |
+| 4 | Diabo Xi Va Temariel | vexthal | 1,706,000 | **1,400** | 57× HP + worst dmg |
+| 5 | Va Xi Aten Ha Ra | vexthal | 1,601,500 | 1,254 | 53× HP |
+| 6 | Emperor Ssraeshza | ssratemple | 1,250,500 | 904 | 42× HP |
+| 7 | Lord Inquisitor Seru | sseru | 1,201,500 | 915 | 40× HP |
+| 8 | High Priest of Ssraeshza | ssratemple | 941,000 | 722 | 31× HP |
+| 9 | Vulak`Aerr | templeveeshan | 890,000 | **1,400** | 30× HP + worst dmg |
+| 10 | Thought Horror Overfiend | thedeep | 807,000 | 776 | 27× HP |
+| 11 | Xerkizh the Creator | ssratemple | 806,516 | 674 | 27× HP |
+| 12 | Vyzh`dra the Cursed | akheva | 900,000 | 588 | 30× HP |
+| 13 | The Avatar of War | kael | 900,000 | 1,154 | 30× HP + damage |
+| 14 | Xygoz (VP revamp) | veeshan | 814,000 | **2,266** | 27× HP + worst dmg |
+| 15 | Nexona (VP revamp) | veeshan | 800,000 | **2,475** | 27× HP + worst dmg |
+| 16 | Cazic Thule | fearplane | 451,000 | 603 | 15× HP (but Classic-era outlier) |
+| 17 | Kilidna | citymist | 100,000 | **4,600** | 3× HP but **catastrophic damage** |
+
+The **damage outliers** (Kilidna 4,600, Nexona 2,475, Xygoz 2,266,
+Kaas Thox 1,650, Diabo Xi Va 1,400, Vulak 1,400) are the highest
+priority for player survival regardless of HP — these are one-shots
+for any small-group tank at current tuning, and should be addressed
+in the FIRST phase of implementation regardless of era.
+
+### 5. Respawn timers are almost universally above the 6-24h target
+
+The prior pass reduced raid_target respawn timers by 25%, but the
+PEQ defaults are so high that even post-×0.75 most bosses are still
+at 40-130 hours. The brief's 6-24h window requires a significant
+additional reduction.
+
+| Current respawn | Count across audit | Target |
+|-----------------|-------------------|--------|
+| 400k-470k sec (112-130h) | ~15 (Vex Thal top, NToV top, Sleeper top) | 24h |
+| 258k-290k sec (72-80h) | ~30 (most ToV, Sleeper, Ssraeshza, Seru, most outdoor Velious/Luclin) | 12h |
+| 194k sec (54h) | ~20 (most Classic Fear/Hate/Sky, Kunark outdoor dragons, Trakanon, VS, etc.) | 6-12h |
+| 43k-86k sec (12-24h) | ~12 (Kael's Vindicator, Growth, some Luclin mid) | leave or reduce to 6h |
+| 10-20k sec (3-5h) | ~10 (Skyshrine Crusaders, most airplane bosses, Chardok royals) | leave |
+| 640-1080 sec (11-18m) | ~12 (Hate council, some Ssraeshza mid, some training) | leave |
+
+### 6. Progression choke-points (pending lore-master final pass)
+
+The following bosses are known to be quest-chain nodes for multiple
+classes simultaneously (lore-master Task #7-10 will complete):
+
+- **Faydedar (timorous):** Ranger, Druid, Magician, Shaman Epic 1.0
+  steps confirmed; potentially 6+ total classes per lore-master pass
+- **Venril Sathir (karnor):** Cleric, Necromancer, SK Epic 1.0 steps
+- **a_dracoliche (fearplane):** Cleric Epic (Soulfire chain), possibly
+  Wizard Epic
+- **Trakanon (sebilis):** Cleric, Warrior, others
+- **Vulak`Aerr (templeveeshan):** ToV key tier — gates entire ToV
+  access chain
+- **King Tormax / Avatar of War (kael):** Warrior, SK, Paladin Epic
+  steps and Kael faction
+- **Dain Frostreaver IV (thurgadinb):** Coldain Ring War + multiple
+  Velious faction chains
+- **Noble Dojorn / Plane of Sky island bosses:** Rogue, Monk Epic
+  + Sky access
+
+### 7. Era-variant duplicate IDs (data-quality note for architect)
+
+Multiple raid bosses exist as TWO NPC IDs in the PEQ database —
+typically a pre-revamp variant and a post-revamp variant. Examples:
+
+- **Veeshan's Peak dragons:** 6 of 7 have both L65-67 "classic" IDs
+  (108509-108517, 144-192k HP) and L70 "revamp" IDs (108040-108053,
+  454-814k HP). Quest scripts target the revamp IDs — revamp is live.
+- **Lord Yelinak:** id 114106 (500k HP) vs id 114618 (297k HP)
+- **Aten Ha Ra:** id 158006 vs id 158096 (both at 1.9M HP)
+- **The Final Arbiter:** id 128143 (357k) vs id 128045 (200k) —
+  main boss vs sub-encounter variant
+- **Guardian of Tunare:** id 127007 vs id 127106 (both 310k)
+- **#Master of the Guard:** id 128145 (326.5k) vs id 128054 (100.5k)
+- **#The Progenitor:** id 128144 (327k) vs id 128053 (150k)
+- **Faydedar:** id 96089 (in spawnentry, live) vs `#Faydedar` id 96073
+  (script-spawned duplicate)
+- **Zordak Ragefire:** id 32038 (9.5k HP) vs id 91096 (9.5k) vs
+  Zordakalicus Ragefire id 91090 (33k) — three-way ambiguity
+
+The architect should audit each duplicate, confirm which is live,
+and normalize to a single ID per encounter before scaling operations
+fan out to unused records.
+
+### 8. Abilities to preserve vs. trim
+
+The audit recommends HP reductions of 70-90% for most Velious/Luclin
+top bosses but damage reductions of only 20-50%. Additionally:
+
+**Preserve** (signature mechanics that small groups can learn around):
+- Summon (S) — all raid bosses have it; defines raid-boss tension
+- Enrage (E) — enrage timing teaches the "finish the kill" skill
+- Rampage (R) — add-management is a positive skill check
+- Triple/Quad attack (T/Q) — damage pattern variety
+- Flee-disabled (f) — no kiting, forces commitment
+
+**Consider trimming** (to help small groups at the margin):
+- Flurry (F) — stacks with rampage; if current damage is high, flurry
+  becomes lethal. For Velious/Luclin top bosses, reduce or replace.
+- Rampage 10×7 (Cazic Thule) and 6×6 (Avatar of War) — reduce to 3×3
+  at most. Six concurrent rampage targets require 6+ bodies to absorb.
+- Unslowable (U) — debatable. Enchanters/shaman slow is a core small-
+  group tool. On most top bosses, consider removing U to give small
+  groups a dps tool.
+
+**Keep immune** (for era preservation):
+- Magic-immune, charm-immune, mez-immune, stun-immune, normal-weapon-
+  immune, disease-immune — these are part of "raid boss" identity.
+- Magic Resist values should generally remain high — this preserves
+  "casters can't solo-nuke a dragon".
+
+### 9. Special-case encounters flagged for non-standard handling
+
+| Encounter | Zone | Reason | Recommended handling |
+|-----------|------|--------|----------------------|
+| #The_Sleeper / Kerafyrm (L99, 3.5M HP) | sleeper | Awakened Sleeper is a world-event narrative kill, not a raid target | Out of scope — do not scale |
+| a_warm_light / a_thifling_focuser | growthplane | Event-trigger NPCs (not combat) | Out of scope |
+| #Keymaster / #Aten_Trigger / #Vulak_Trigger / #kerafyrm_trigger | various | Instance/event-control NPCs at 50M-99M HP | Out of scope |
+| Halloween event mobs (Eve Hallows, Jack Lanturn, Tricksy Treetor) | kithicor | Seasonal content, appear only during event windows | Out of scope |
+| Bella/Heracus Helsin, Lantaric`Dar | katta/wakening | Event-control NPCs at L1 with giant HP | Out of scope |
+| Fuzz Selppa (tox) | tox | Anomalous L50 200k HP outdoor mob — likely event trigger | Investigate before scaling |
+| Hateplaneb vs Hateplane | (both) | Two versions of Plane of Hate in database | User decision needed |
+| Vex Thal Yaemiu elite tier (~80 mobs 55-100k HP) | vexthal | Elite trash that in any other zone would be raid-tier | User decision: include in scope or leave |
 
 ---
 
-## Recommended User Decisions (populated at consolidation — task #11)
+## Recommended User Decisions
 
-> Will list concrete questions for the user before Phase 2 begins.
+### A. Phased delivery — how to split the remaining work
+
+**Option A — Single sustained Phase 2-5:** One continuous project
+covering all four eras. Estimated encounter count: ~140 bosses, plus
+quest-chain fixes.
+- Pro: single context, no re-bootstrap overhead between eras
+- Con: 140 encounters is a large single-phase implementation scope;
+  context drift risks; user can't course-correct mid-project
+
+**Option B — Split by era (recommended):** Four consecutive projects.
+- 2 — Classic (~30 bosses) — simplest, quickest win
+- 3 — Kunark (~19 bosses) — second-quickest
+- 4 — Velious (~60-65 bosses) — THE big one; consider sub-split
+  (4a: non-ToV/Sleeper; 4b: ToV + Sleeper + Vulak)
+- 5 — Luclin (~30 bosses) — consider sub-split
+  (5a: non-VT; 5b: VT + key-quest rework)
+- Pro: deliverable at each era; user can test before committing next
+- Con: higher bootstrapping overhead (4 separate architect phases)
+
+**Option C — Tier-first (experimental):** Instead of by era, split
+by difficulty tier. Phase 2 = all "low-boss" and "near-named" tier
+across all eras (Classic dragons, Kunark outdoor, etc. — ~65 entries,
+the HP-gap-3× to 10× set). Phase 3 = all "mid-boss" (Kael, Skyshrine,
+Grieg, Akheva, Ssraeshza mids — ~40 entries). Phase 4 = "endgame"
+(ToV dragon lords, Sleeper's Tomb, Vex Thal — ~35 entries).
+- Pro: player experience smooth — they see the progression curve
+  working through tiers; lower-tier fixes unlock lower-tier quest
+  content first
+- Con: era lore progression ignored; may feel disjointed
+
+### B. Veeshan's Peak dragons — two ID sets exist
+
+Use the level-65-67 classic-era variant (144-192k HP) with minor
+scaling, OR keep the level-70 revamp variants (454-814k HP) with
+deep scaling? Quest scripts currently target the revamp IDs.
+Recommendation: keep the IDs the scripts point at and scale the
+revamp variants down. Update quest scripts ONLY if the user wants
+true classic-era VP difficulty.
+
+### C. Plane of Hate — classic (hateplane) or revamp (hateplaneb)?
+
+Both versions exist in the database. The revamp adds ~20 bosses and
+much more trash. Which is intended as the live version? Recommendation:
+confirm via in-game probe — which version does the player actually
+zone into today?
+
+### D. Vex Thal Yaemiu elite trash
+
+The ~80 Yaemiu-pattern elite mobs in Vex Thal sit at 55-100k HP —
+above a scaled-named's 30k. Brief says "named feels good" but these
+specifically are NOT named — they're raid-zone elite trash. Include
+in raid-scaling scope (cut HP to ~40k) OR leave (they remain
+significantly harder than group-level named)?
+
+### E. Respawn timer targets
+
+The brief says "6-24h range". Recommendation by tier:
+- Endgame (Vex Thal, Vulak, top ToV, top Sleeper, Aten, Emperor): 24h
+- Mid-boss (most ToV, Kael, Skyshrine, Seru, Grieg, Akheva top): 12h
+- Low-boss (outdoor Velious, Classic Fear/Hate/Sky, Classic dragons,
+  Kunark outdoor, Chardok royals): 6h
+- Already-short (Skyshrine Crusaders, Hate council, Ssraeshza mids
+  at 11-18m): leave
+
+### F. Sleeper-awake event
+
+Is Kerafyrm / Awakened Sleeper intended to be killable, a world-event
+narrative mechanic, or disabled entirely? Current DB values (L99, 3.5M
+HP, 7,003 max damage) are intentionally unkillable. Recommendation:
+leave untouched — it's a narrative event, not a scaling target.
+
+### G. Cazic Thule level-and-scale
+
+Cazic Thule at L70 with 451k HP is anomalous even for Classic era
+(Classic cap is 50, Luclin introduced 65). PEQ decided to bump him
+post-era. Recommendation: drop him to L65 for era alignment, scale
+HP to 100-120k, trim rampage from 10×7 to 3×3.
+
+### H. Special abilities vs. scaling dependency
+
+Lord Vyemm's MR=1,000 magic wall and Aaryonar's specific breath
+mechanics are lore-canonical. Should these be preserved (recommended)
+or softened for small-group tractability? The brief implies
+preservation — gate progression through mechanics, not stats.
+
+---
+
+## Phase 1 Audit — Deliverable Status
+
+- [x] Every raid boss in Classic cataloged with current state and gap
+- [x] Every raid boss in Kunark cataloged
+- [x] Every raid boss in Velious cataloged
+- [x] Every raid boss in Luclin cataloged
+- [x] Prior scaling pass impact documented per-boss (uniform: stats
+  UNTOUCHED, loot/respawn boosted)
+- [ ] Every raid-tier quest chain cataloged — **pending lore-master
+  Tasks #7-10 completion**
+- [x] Cross-reference matrix of boss counts by zone (in `### Raw
+  boss counts`)
+- [x] Headline findings summary (this section)
+- [x] Recommended user decisions list (above)
+
+**This deliverable is COMPLETE FROM THE GAME-DESIGNER SIDE.** Final
+consolidation (task #11) merges with lore-master quest-chain work
+when their Tasks #8, #9, #10 complete. The PRD at
+`game-designer/prd.md` will be updated with the design-intent summary
+(scope, philosophy, success criteria) to feed the Phase 3 architecture
+phase.
