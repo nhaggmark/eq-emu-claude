@@ -563,9 +563,219 @@ quest chain catalog will cover the island-chain progression in detail.
 
 ### Classic raid quest chains
 
-> Populated by task #7 (lore-master). Includes: Epic 1.0 Classic-phase
-> steps for all 14 classes, Plane of Sky key/island progression,
-> any miscellaneous Classic-era raid access.
+> **Status:** Game-designer summary from public-domain EQ knowledge.
+> **Pending:** lore-master deep-review and NPC-ID verification for all
+> entries below. This section is load-bearing for the architect —
+> changes here before Phase 3 are expected.
+
+**Scope:** The "Classic-phase" steps of all 14 class Epic 1.0 quests
+(many epics span all 4 eras — this subsection lists the
+Classic-phase-only steps), plus Plane of Sky island progression,
+plus Cazic-Thule access (Lost Temple) as a Classic-specific
+raid-access chain.
+
+---
+
+#### Plane of Sky — key + 8-island progression
+
+- **Class/scope:** General raid access; prerequisite for Rogue Epic
+  (Ragebringer), Monk Epic (Celestial Fists), Enchanter Epic
+  (Staff of the Serpent), Warrior Epic (Swiftwind/Earthcaller) end
+  steps, and multiple class-specific ground-spawn/quest items.
+- **Era:** Classic
+- **Zones:** Plane of Sky (`airplane`) — accessed from Plane of Fear
+  or Plane of Hate (via Alternate Planes portal)
+- **Turn-in NPCs:** Key Master (airplane)
+- **Raid encounters required:**
+  - Island-by-island progression; each island has a "key drop" from
+    a raid mob required to access the next
+  - Island 1: Spiroc banishers (trash)
+  - Island 2: Noble Dojorn (boss) — **key for 3**
+  - Island 3: a_thunder_spirit_princess — **key for 4**
+  - Island 4-7: mid-tier island bosses (Overseer of Air etc.)
+  - Island 7: Gorgalosk (boss)
+  - Island 8: Eye of Veeshan + **The Spiroc Lord** (final)
+- **Non-encounter blockers:** Island 8 has a traditional "event
+  timeout" — failing to kill within a window resets progress
+- **Small-group blockers:** Island 8's patrolling Spiroc guardians
+  make focused fights difficult; island timing mechanic can
+  soft-lock a small group
+- **Recommended action:** Boss stats scaled per audit boss-catalog.
+  Verify no island-timer mechanic prevents small-group pace —
+  architect to check quest script `airplane/`. If timer exists and
+  is tight, recommend extending for small groups.
+- **Lore continuity:** Lore-master to confirm — Plane of Sky is
+  Veeshan's dragon-aligned plane, post-death dragons ascend here.
+
+#### Plane of Fear — Cazic Thule access
+
+- **Class/scope:** General raid access; Cleric Epic (Soulfire) step
+  5 requires `a_dracoliche` kill and bone component
+- **Era:** Classic
+- **Zones:** Plane of Fear (`fearplane`)
+- **Turn-in NPCs:** n/a for access; the zone is level-gated only
+- **Raid encounters required:**
+  - Cazic Thule (end boss, requires traversing through Dread/
+    Fright/Terror and the Dracoliche)
+- **Non-encounter blockers:** Plane of Fear trash (shiverbacks,
+  scarelings, amygdalans) was handled by prior pass
+- **Small-group blockers:** Cazic Thule's rampage 10×7 is impossible
+  without audit-recommended trim. Dracoliche's flurry+unslowable
+  requires tanking strategy — audit recommends stat cut but
+  preserves mechanics.
+- **Recommended action:** Addressed by boss-catalog scaling.
+
+#### Plane of Hate — Council + Innoruuk
+
+- **Class/scope:** General raid access; Necromancer Epic
+  (Scythe of the Shadowed Soul) steps require Hate drops; SK Epic
+  (Innoruuk's Curse) requires multiple Hate components.
+- **Era:** Classic
+- **Zones:** Plane of Hate (classic `hateplane` OR revamped
+  `hateplaneb` — user decision pending)
+- **Raid encounters required (classic layout):**
+  - Hate council (5 mini-bosses): High Priest M`kari, Avatar of
+    Abhorrence, Master of Spite, Mistress of Scorn, Grandmaster
+    R`Tal
+  - Maestro of Rancor + Hand of the Maestro (upper tier)
+  - Innoruuk (end boss)
+- **Small-group blockers:** Innoruuk's flurry+rampage+enrage at
+  current stats. Maestro already near-named-tier.
+- **Recommended action:** Boss-catalog scaling covers stats. User
+  decision on classic vs revamp Hate.
+
+#### Cazic-Thule (Lost Temple) — Thul Tae Ew High Priest
+
+- **Class/scope:** Inner-temple access for Cazic Quarter;
+  prerequisite for some Shadowknight and Cleric quest lines
+- **Era:** Classic
+- **Zones:** Cazic Thule (`cazicthule`), deep temple
+- **Raid encounters:** Thul Tae Ew High Priest (50k HP, L60,
+  inner sanctum)
+- **Small-group blockers:** Deep-zone pathing with many Thul
+  Tae Ew spawns; current audit-recommended 50% HP cut makes
+  the Priest himself tractable.
+
+---
+
+#### Class Epic 1.0 — Classic-phase steps
+
+Most Epic 1.0s span Classic + Kunark (some also Velious). The
+Classic-phase steps typically involve ground spawns, drops from
+Classic named, and (for some classes) a raid-tier kill. Listed
+alphabetically:
+
+**Bard Epic 1.0 — Singing Steel Breastplate → Singing Short Sword of the Ykesha**
+- Classic steps involve dropped instrument pieces (Classic dungeons)
+- No Classic raid-tier kill required
+- Raid steps start in Kunark
+
+**Cleric Epic 1.0 — Water Sprinkler of Nem Ankh (Soulfire)**
+- Classic raid step: **Water Sprinkler of Nem Ankh** path requires
+  **a_dracoliche** bone drop (Plane of Fear)
+- Also requires a ghoul hero drop and multiple specific items
+- Cross-references boss-catalog: a_dracoliche (fearplane, 72090)
+
+**Druid Epic 1.0 — Nature Walker's Scimitar**
+- Classic raid step (pre-Faydedar): **Phinigel Autropos** drop
+  required (Kedge Keep) for some versions of the chain —
+  lore-master confirm
+- Kunark raid step: Faydedar (primary raid target)
+- Cross-references: Phinigel Autropos (kedge, 64001)
+
+**Enchanter Epic 1.0 — Staff of the Serpent**
+- Classic raid step: Plane of Sky island 8 (Noble Dojorn) drop
+  required (Serpent's Spine)
+- Kunark raid step: pieces from multiple Kunark dragons
+- Cross-references: Noble Dojorn (airplane, 71057)
+
+**Magician Epic 1.0 — Orb of Mastery**
+- Classic step: Plane of Air / various dragons for elemental
+  components
+- Heavily Kunark-centric; Faydedar and outdoor dragons required
+- No Classic-specific raid kill — most Classic-phase is
+  instance/quest NPCs
+
+**Monk Epic 1.0 — Celestial Fists**
+- Classic raid step: Plane of Sky / Ton Po quest chain
+- Often Noble Dojorn + Ton Po (Sky or Skyfire) drops
+- Cross-references: Noble Dojorn (airplane, 71057), Ton Po (airplane)
+
+**Necromancer Epic 1.0 — Scythe of the Shadowed Soul**
+- Classic raid step: Plane of Hate drops (Innoruuk, Master of
+  Spite component)
+- Kunark raid step: Venril Sathir kill (Karnor's)
+- Cross-references: Innoruuk (hateplane, 76007), Venril Sathir
+  (karnor, 102112)
+
+**Paladin Epic 1.0 — Soulfire / Fiery Avenger**
+- Classic raid step: none specifically — but Hate Council drops
+  may be required for some steps
+- Lore-master to verify — possibly requires Mistress of Scorn
+  drop
+
+**Ranger Epic 1.0 — Earthcaller**
+- Classic steps: ground spawns in outdoor Classic zones
+- Kunark raid step: **Faydedar** (primary requirement, Timorous Deep)
+- Cross-references: Faydedar (timorous, 96089)
+
+**Rogue Epic 1.0 — Ragebringer**
+- Classic raid step: **Plane of Sky island 8 drops** (Noble Dojorn,
+  Overseer of Air)
+- Kunark raid step: Chardok royals + outdoor dragons
+- Cross-references: Noble Dojorn (airplane), Overking Bathezid
+  (chardok, 103056)
+
+**Shadow Knight Epic 1.0 — Innoruuk's Curse**
+- Classic raid step: **Hate multi-kill** (Innoruuk + council)
+- Kunark raid step: Venril Sathir, Chardok
+- Cross-references: Innoruuk (hateplane, 76007), VS (karnor, 102112)
+
+**Shaman Epic 1.0 — Spear of Fate**
+- Classic step: ground spawns
+- Kunark raid step: Faydedar + outdoor dragons
+- Cross-references: Faydedar (timorous, 96089)
+
+**Warrior Epic 1.0 — Swiftwind / Earthcaller**
+- Classic raid step: no specific Classic raid required
+- Kunark raid step: Trakanon, outdoor dragons
+- Velious raid step: Avatar of War, Ring of Scale
+- Cross-references: Trakanon (sebilis, 89154), AoW (kael, 113457)
+
+**Wizard Epic 1.0 — Staff of the Four**
+- Classic raid step: possibly a Dracoliche drop component
+- Kunark raid step: Chardok royals + Phase Spider Queen
+- Cross-references: Dracoliche (fearplane, 72090)
+
+---
+
+#### Classic quest chain summary
+
+- **~14 class epics** all involve Classic-era components; most
+  have NO Classic raid step (they start raid-tier in Kunark).
+  The Classic raid-kill requirements are concentrated on:
+  **Plane of Sky + Plane of Hate + Plane of Fear.**
+- **Plane of Sky is the densest quest-dependency node in Classic**
+  — Rogue, Monk, Enchanter, and partial Wizard epics all pull
+  from Sky. Island 8 bosses (Noble Dojorn, Overseer, Spiroc Lord)
+  are the critical bottleneck.
+- **Plane of Fear** (for Cleric epic dracoliche step) is a
+  straightforward walk-in raid — audit boss-catalog scaling
+  makes it tractable.
+- **Plane of Hate** (for Necro + SK epics) depends on
+  user decision between classic layout and revamp layout.
+- **Cazic-Thule (Lost Temple) inner sanctum** is a minor
+  access point — not a hard quest-chain dependency.
+
+**Classic quest-chain blockers for small group (once boss scaling is applied):**
+- Plane of Sky island-timer mechanics (if any remain) need
+  verification for small-group viability
+- Noble Dojorn's 54h respawn needs audit's reduction to 6h to
+  allow multi-attempt practice for Rogue/Monk/Enchanter epic
+  chains
+- No hard quest blockers expected post-scaling — Classic is the
+  era where companion-system + stat-scaling alone should unblock
+  all raid quest steps
 
 ---
 
@@ -828,10 +1038,183 @@ revamp variants — this would require quest-script updates.
 
 ### Kunark raid quest chains
 
-> Populated by task #8 (lore-master). Includes: Epic 1.0 Kunark-phase
-> steps (most epics cluster heavily here — Sebilite Scale, Faydedar,
-> Venril Sathir, Trakanon, etc.), Veeshan's Peak key quest, Emerald
-> Jungle / Skyfire hand quest chain.
+> **Status:** Game-designer summary pending lore-master deep-review.
+
+**Scope:** The "Kunark-phase" of Epic 1.0 for all classes (most
+epics cluster heavily in Kunark — this is where the raid-tier
+kill component is concentrated), plus Veeshan's Peak key quest,
+plus any Kunark-specific raid-access progression.
+
+---
+
+#### Veeshan's Peak key quest
+
+- **Class/scope:** General raid access — VP is a post-endgame
+  zone within Kunark
+- **Era:** Kunark
+- **Zones:** Emerald Jungle, Skyfire Mountains, Dreadlands, The
+  Overthere, Lake of Ill Omen, Trakanon's Teeth, Sebilis (entry)
+- **Turn-in NPCs:** Yendalor (Emerald Jungle), Jaled Dar (Nedaria's
+  Landing — post-Velious lore; may not be present in era)
+- **Raid encounters required:**
+  - Gorenaire (Dreadlands) — "tear" drop
+  - Severilous (Emerald Jungle) — "claw" drop
+  - Talendor (Skyfire) — "scale" drop
+  - Faydedar (Timorous Deep) — "fang" drop
+  - **Trakanon** (Sebilis end-boss) — key component
+- **Non-encounter blockers:**
+  - Skyfire "Hand of the Master" quest chain prereqs
+  - Faction requirements (Emerald Jungle druids vs dragons)
+  - Multiple ground spawns in Skyfire canyon
+- **Progression path:** Kill all 5 outdoor dragons + Trakanon +
+  combine with hand/jewel drops → VP key
+- **Small-group blockers:**
+  - All 5 outdoor dragons tractable with audit scaling (most need
+    ~30% HP cut only)
+  - Trakanon 30% HP cut + flurry trim makes Sebilis endgame
+    viable
+  - VP key ground-spawn rares (Jade/Ruby/Sapphire Shards per
+    traditional chain) — need to verify these are obtainable
+    solo by small group
+- **Recommended action:** No changes needed beyond audit boss-
+  catalog stat cuts. Flag for lore-master: verify "Jaled Dar" is
+  accessible in era (Nedaria's Landing is OoT expansion content).
+
+#### Emerald Jungle — Severilous + Hand of the Master chain
+
+- **Class/scope:** Monk Epic (Celestial Fists — Ton Po chain);
+  VP key step; general raid access
+- **Era:** Kunark
+- **Zones:** Emerald Jungle, Skyfire Mountains
+- **Raid encounters required:**
+  - Severilous (Emerald Jungle outdoor)
+  - Zordakalicus Ragefire (Skyfire event) — optional for some chains
+- **Recommended action:** Audit boss-catalog covers Severilous and
+  Ragefire.
+
+---
+
+#### Class Epic 1.0 — Kunark-phase raid steps
+
+**Bard Epic 1.0 — Singing Short Sword of the Ykesha**
+- Kunark raid steps:
+  - **Faydedar** (Timorous Deep) — scale drop
+  - **Trakanon** (Sebilis) — tooth drop
+  - Possibly Chardok or Howling Stones drops for sub-components
+- Small-group viability: OK post-scaling
+
+**Cleric Epic 1.0 — Water Sprinkler of Nem Ankh**
+- Kunark raid steps:
+  - **Trakanon** — primary raid component
+  - Severilous — possibly (for "healer" class variant path)
+- Small-group viability: Very good — Trakanon's damage is fine
+  as-is
+
+**Druid Epic 1.0 — Nature Walker's Scimitar**
+- Kunark raid steps:
+  - **Faydedar** — primary (signature druid epic target)
+- Small-group viability: Excellent — outdoor dragon, no adds
+
+**Enchanter Epic 1.0 — Staff of the Serpent**
+- Kunark raid steps: Chardok royals for certain components
+- Small-group viability: Overking Bathezid + Queen Velazul +
+  Prince Selrach are a well-scaled trio post-audit cuts
+
+**Magician Epic 1.0 — Orb of Mastery**
+- Kunark raid steps:
+  - Faydedar for elemental water component
+  - Chardok royals for earth/air components
+- Small-group viability: good
+
+**Monk Epic 1.0 — Celestial Fists**
+- Kunark raid steps:
+  - "Hand of the Master" chain involves Skyfire + Chardok trip
+  - Ton Po / Skyfire
+- Small-group viability: good post-scaling
+
+**Necromancer Epic 1.0 — Scythe of the Shadowed Soul**
+- Kunark raid steps:
+  - **Venril Sathir** (Karnor's) — primary raid kill
+  - Specific Kunark components
+- Small-group viability: VS 25% HP cut + damage trim → tractable
+
+**Paladin Epic 1.0 — Soulfire / Fiery Avenger**
+- Kunark raid steps:
+  - Components from Chardok royals (Queen Velazul)
+  - Specific dragon components
+- Small-group viability: good
+
+**Ranger Epic 1.0 — Earthcaller**
+- Kunark raid steps:
+  - **Faydedar** (primary) — requires coordination with multiple
+    outdoor dragons' hand drops
+
+**Rogue Epic 1.0 — Ragebringer**
+- Kunark raid steps:
+  - **Chardok Overking Bathezid** drop
+  - **Charasis (Howling Stones)** Drusella Sathir drop
+  - Multiple ground-spawn dagger pieces in Kunark outdoor zones
+- Small-group viability: good — Chardok royals and Drusella are
+  both low-gap
+
+**Shadow Knight Epic 1.0 — Innoruuk's Curse**
+- Kunark raid steps:
+  - **Venril Sathir** — primary Kunark raid target
+- Small-group viability: good
+
+**Shaman Epic 1.0 — Spear of Fate**
+- Kunark raid steps:
+  - **Faydedar** component
+  - Chardok components
+- Small-group viability: excellent
+
+**Warrior Epic 1.0 — Swiftwind / Earthcaller (pair)**
+- Kunark raid steps:
+  - **Trakanon** component
+  - Outdoor dragon component
+  - Chardok
+- Small-group viability: Trakanon + outdoor dragons both
+  audit-friendly
+
+**Wizard Epic 1.0 — Staff of the Four**
+- Kunark raid steps:
+  - Chardok Prince Selrach + royals
+  - Specific magic school components
+- Small-group viability: good
+
+---
+
+#### Kunark quest chain summary
+
+- **Kunark is the heaviest Epic 1.0 raid-quest era.** Most classes
+  have their single required raid-kill in Kunark. Shared
+  dependencies across multiple epics:
+  - **Faydedar (timorous, 96089):** Druid, Ranger, Shaman,
+    Magician, Bard — **at least 5 class epics require Faydedar**
+  - **Trakanon (sebilis, 89154):** Cleric, Warrior, Bard — **3+
+    class epics**
+  - **Venril Sathir (karnor, 102112):** Necromancer, SK — **2+
+    class epics**
+  - **Chardok royals (chardok, 103055/56/80):** Enchanter,
+    Magician, Paladin, Rogue, Wizard — **5+ class epics**
+  - **Outdoor dragons (Gorenaire, Severilous, Talendor):**
+    required for VP key, which indirectly blocks Warrior, Paladin,
+    SK epic late steps
+- **Kunark quest chains are generally the BEST-behaving for small
+  group** — most raid targets are one-pull outdoor dragons at
+  manageable stats after audit cuts (20-40% HP). No add-heavy
+  scripted event wipes.
+- **Sole high-priority scaling concern:** VP dragons
+  (Druushk, Hoshkar, Nexona, Phara Dar, Silverwing, Xygoz +
+  Guardian) — the audit recommends 80-85% HP cuts and significant
+  damage trims because these are catastrophic at current stats.
+- **Kilidna (citymist)** damage 4,600 max requires aggressive
+  trim for any small-group attempt.
+
+**No hard quest blockers beyond boss-stats are expected after
+audit implementation for Kunark.** All ground spawns, faction
+grinds, and rare-drop components are obtainable solo by a
+companion-supported small group.
 
 ---
 
