@@ -318,11 +318,80 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 **Response from** architect:
 
-> _(Awaiting response.)_
+> _(Awaiting response — see follow-up exchange below.)_
 
-**Outcome:** Config-expert consultation delivered. Architect confirmed:
-Phase 2 implementation is pure data-expert SQL work. Config-expert's
-task in Phase 2 implementation will be post-SQL verification + restart.
+**Outcome:** Config-expert consultation delivered. Architect followed up
+with five targeted questions (see exchange below).
+
+---
+
+### 2026-04-22 — Architect follow-up: 5 specific config questions
+
+**From:** architect → **To:** config-expert
+
+> Sent five targeted questions after reviewing initial findings:
+> 1. Is there any rule-based HP scalar for raid_target=1 NPCs, or does it
+>    require per-NPC npc_types UPDATEs?
+> 2. Confirm prior-pass combat rules still active and apply to raid bosses;
+>    any rule lever for per-NPC damage trimming?
+> 3. Rule-based respawn multiplier for raid bosses, or spawn2 only?
+> 4. Is special_abilities the sole lever for death-touch removal and rampage
+>    trim, or is there a server-level rule for SPA 202?
+> 5. Does backup/rollback strategy match prior-pass pattern?
+>
+> Architect's leaning: per-NPC npc_types UPDATEs + per-boss spawn2 UPDATEs
+> + backup tables. Invited challenge.
+
+**Response from** config-expert → architect (2026-04-22):
+
+> All five questions answered from live DB research:
+>
+> **Q1 — HP rules:** No. No `NPC:RaidBossHPMultiplier` or equivalent exists.
+> npc_scale_global_base type 2 is never applied (all raid bosses have hp > 0,
+> so auto-scaling conditional never fires). Per-NPC npc_types UPDATEs are the
+> only lever. Architect's leaning confirmed.
+>
+> **Q2 — Damage rules:** All four prior-pass rules confirmed active:
+> NPCFlurryChance=12, MaxRampageTargets=2, NPCAssistCap=3, StartEnrageValue=5.
+> These apply globally including raid bosses. No per-NPC damage rule exists.
+> Cazic Thule rampage trim requires editing ability-7 parameter inside the
+> special_abilities string — NOT a rule. Note: Combat:MaxRampageTargets=2
+> (global cap) and the per-NPC ability-7 swing count are independent levers;
+> both are active simultaneously. Worst-case maxdmg outliers require direct
+> npc_types.maxdmg UPDATEs.
+>
+> **Q3 — Respawn rules:** No global multiplier rule for respawn timers.
+> spawn2.respawntime is the only lever. Current confirmed value for Nagafen/
+> Vox/Innoruuk: 194,400s (54h). Target for 6h tier: 21,600s.
+>
+> **Q4 — Special abilities:** npc_types.special_abilities is the sole
+> per-NPC lever. No server-level rule disables death touch (ability 35).
+> Only ability-adjacent rules found: CharmDisablesSpecialAbilities=false
+> (irrelevant) and AllowRaidTargetBlind=false (irrelevant).
+> For the three PoSky bosses (71075, 71012, 71072): strip ^35,1 or 35,1^
+> from their special_abilities strings. These are raid_target=0, so prior
+> pass already cut their HP/damage — only the string edit is new.
+> For CT rampage: data-expert edits ability-7 parameter in CT's
+> special_abilities string. CT live ID must be confirmed via spawn2 JOIN
+> to fearplane before editing (multiple CT variants in npc_types, same
+> pattern as Innoruuk multi-variant).
+>
+> **Q5 — Backup/rollback:** Architect's proposed approach matches prior-pass
+> pattern exactly. Use _raid_scaling suffix. Also back up rule_values even
+> though no rules change — prior pass did this as insurance. Rollback is
+> JOIN-based UPDATE from backup table.
+>
+> **Challenge to leaning:** Rejected. Rules cannot do more work cleanly.
+> Only alternative would be new C++ rules requiring recompile — not this
+> project's pattern.
+>
+> **Action item added:** Confirm CT live NPC ID via fearplane spawn JOIN
+> before data-expert runs. Suggested query provided.
+
+**Outcome:** All five questions answered. Architect's leaning validated on
+all counts. Architecture plan can proceed with full confidence: Phase 2
+is pure SQL (data-expert), config-expert role is post-SQL verification +
+`#reloadrules` + restart confirmation.
 
 ---
 
