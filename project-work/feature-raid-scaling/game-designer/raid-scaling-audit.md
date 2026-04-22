@@ -573,7 +573,258 @@ quest chain catalog will cover the island-chain progression in detail.
 
 ### Kunark raid boss catalog
 
-> Populated by task #4 (game-designer).
+**Summary:** Kunark adds 14 true-boss encounters in in-era content:
+four outdoor dragons (Gorenaire, Severilous, Talendor, Faydedar), three
+end-dungeon bosses (Trakanon, Venril Sathir, Drusella Sathir), three
+Chardok royals (Overking Bathezid, Queen Velazul, Prince Selrach), two
+City of Mist encounters (Kilidna, Lhranc), and **seven Veeshan's Peak
+dragons** (Druushk, Hoshkar, Nexona, Phara Dar, Silverwing, Xygoz,
+Guardian of Veeshan).
+
+**Two tiers of stats co-exist in Veeshan's Peak.** For each of the six
+VP dragons (not GoV) there are two NPC IDs: a "classic-era" variant at
+level 65-67 with 144-192k HP, and a "revamp" variant at level 70 with
+454-814k HP. **Quest scripts reference the level-70 revamp variants**
+(`akk-stack/server/quests/veeshan/108040.pl` through `108053.pl`) —
+confirming the revamp IDs are the active content on this server.
+**User decision needed:** swap VP encounters to the classic-era variants
+(lower HP, era-appropriate) OR scale the revamp variants down? The
+classic variants are still 4-6× a scaled named so they need scaling
+too, but starting from 150k is more tractable than 600k.
+
+**Damage outliers:** Kilidna (citymist) has max damage 4,600 — a one-shot
+for any small-group tank at current tuning. VP revamp dragons hit
+1,295-2,475 max — also one-shots. These are the highest priority
+damage trims even more than HP.
+
+**Scaling gap overview:** The outdoor dragons (Gorenaire, Severilous,
+Talendor, Faydedar) and Chardok royals are at 22-34k HP (similar to
+Classic dragons) — close to target, need ~30-40% HP cut. VP dragons
+(revamp variant) and Kilidna are massively over-tuned for small group
+at current stats — need 80%+ HP cut plus aggressive damage trimming.
+
+**Quest-chain cross-references:** Kunark is the heaviest epic-content
+era. Faydedar, Trakanon, Venril Sathir, the Chardok royals, and
+multiple VP dragons are required for Epic 1.0 chains across 8+
+classes. See lore-master's Kunark quest-chain catalog.
+
+---
+
+### Gorenaire — dreadlands
+
+- **NPC ID:** 86014
+- **Level:** 60
+- **Stats:** HP 32,000 / dmg 139-500 / AC 254 / MR 350
+- **npcspecialattks:** SETMCNIDf (summon, enrage, triple, mez/charm/normal/stun/dispel-immune, flee-disabled)
+- **Respawn:** 194,400s (54h)
+- **Prior-pass:** UNTOUCHED (stats); loot and respawn boosted
+- **Gap vs. L60 scaled-named (HP 16.2k):** ~2× HP; damage max 500 is 15% above scaled-named
+- **Recommended action:** HP cut 30% (→22k). Damage max trim 20% (→400). Respawn to 6h.
+- **Notes:** Outdoor cold dragon — shared epic node (Druid, Shaman, Magician). Low-add environment already, mostly a solo-dragon encounter at current mechanics.
+
+### Severilous — emeraldjungle
+
+- **NPC ID:** 94009
+- **Level:** 60 / **HP:** 32,000 / **dmg:** 139-500 / **AC:** 254 / **MR:** 325
+- **npcspecialattks:** SEMCNDf
+- **Respawn:** 194,400s (54h)
+- **Gap:** identical to Gorenaire
+- **Recommended:** Same as Gorenaire — HP -30%, damage trim, respawn to 6h.
+- **Notes:** Outdoor disease dragon — shared epic node.
+
+### Talendor — skyfire
+
+- **NPC ID:** 91093
+- **Level:** 60 / **HP:** 32,000 / **dmg:** 139-500 / **AC:** 254 / **MR:** 455
+- **npcspecialattks:** SETMCNIDf
+- **Respawn:** 194,400s (54h)
+- **Gap:** identical to Gorenaire/Severilous
+- **Recommended:** Same as Gorenaire.
+- **Notes:** Outdoor fire dragon. High MR (455) is specifically a wall against magic-dps small groups — lore-master to confirm if lowering MR to ~300 violates era flavor.
+
+### Faydedar — timorous
+
+- **NPC ID:** 96089
+- **Level:** 55 / **HP:** 32,000 / **dmg:** 103-236 / **AC:** 234 / **MR:** 425
+- **npcspecialattks:** SERMCNIDf
+- **Respawn:** 194,400s (54h)
+- **Prior-pass:** UNTOUCHED (stats)
+- **Gap:** ~4× HP scaled-named at L55 (8.1k); damage in named range
+- **Recommended:** HP cut 40% (→19k). Damage unchanged. MR trim to ~300. Respawn to 6h.
+- **Notes:** **CRITICAL quest node** — Ranger Epic 1.0 + multiple other class epics require Faydedar kill. Lore-master to list all dependent chains. Also 2nd variant `#Faydedar` id=96073 exists (32k HP L55 — likely a script-spawned quest-step copy).
+
+### Trakanon — sebilis
+
+- **NPC ID:** 89154
+- **Level:** 65
+- **Stats:** HP 32,000 / dmg 144-630 / AC 315 / MR 340
+- **npcspecialattks:** SERFMCNDf (summon, enrage, rampage, flurry, mez/charm/normal/disease-immune, flee-disabled)
+- **Respawn:** 194,400s (54h)
+- **Prior-pass:** UNTOUCHED
+- **Gap at L65 (scaled-named ~22k):** ~1.5× HP; damage max 630 above named (711 scaled) — damage is fine
+- **Recommended action:** HP cut 30% (→22k). Rampage+flurry both active = risky for small group — consider reducing flurry chance via special_abilities. Respawn to 6h.
+- **Notes:** Sebilis deep-zone boss. Disease debuff mechanic ("Trakanon's Touch") should be preserved — makes him a prep fight. Quest node for Cleric Epic (Soulfire), Warrior Epic, and others.
+
+### Venril Sathir — karnor
+
+- **NPC ID:** 102112 (`#Venril_Sathir` — script-spawned)
+- **Level:** 55 / **HP:** 22,000 / **dmg:** 180-404 / **AC:** 234 / **MR:** 360
+- **npcspecialattks:** SRMCNIDf (summon, rampage, mez/charm/normal/stun/dispel, flee-disabled)
+- **Respawn:** 194,400s (where spawnentry exists — but VS is triggered)
+- **Gap at L55:** ~2.7× HP over scaled-named; damage max 404 above named (305) — mild over
+- **Recommended:** HP cut 25% (→16.5k). Damage max trim 10%. Keep rampage — signature.
+- **Notes:** **CRITICAL quest node** — Karnor's Castle end boss, required for Cleric, SK, Necromancer, and multiple other epics. Lich-form transition is a scripted mechanic in `akk-stack/server/quests/karnor/`. Preserve the two-form transition; scale HP of each form.
+
+### Drusella Sathir — charasis (Howling Stones)
+
+- **NPC ID:** 105153 / **Level:** 55 / **HP:** 15,750 / **dmg:** 51-310 / **AC:** 234
+- **npcspecialattks:** f (flee-disabled only)
+- **Respawn:** 194,400s
+- **Gap:** ~2× HP — already close to named tier
+- **Recommended:** No HP change or 10% cut. Already group-tier difficulty. Respawn to 6h.
+- **Notes:** Venril's daughter — thematic pair with VS. Named-adjacent difficulty in practice.
+
+### Overking Bathezid — chardok
+
+- **NPC ID:** 103056 / **Level:** 65 / **HP:** 34,500 / **dmg:** 92-320 / **AC:** 344 / **MR:** 185
+- **npcspecialattks:** SEQMCNIDf
+- **Respawn:** 5,400s (1.5h) — already short
+- **Gap at L65:** ~1.6× HP; damage in named range
+- **Recommended:** HP cut 25% (→26k). Damage unchanged. Respawn already fits.
+- **Notes:** Throne-room boss of Chardok. Part of "royal court" Chardok raid. Low MR (185) = vulnerable to casters. Lore-master confirm: is he the final Chardok boss in our era? (Chardok-B revamp is post-Luclin.)
+
+### Queen Velazul Di`zok — chardok
+
+- **NPC ID:** 103055 / **Level:** 62 / **HP:** 30,000 / **dmg:** 68-220
+- **npcspecialattks:** SETUMCNIDf (summon, enrage, triple, unslowable, mez/charm/normal/stun/dispel-immune, flee-disabled)
+- **Respawn:** 5,400s
+- **Gap:** ~1.5× HP, damage already low
+- **Recommended:** HP cut 20% (→24k). Damage unchanged. Respawn fits.
+
+### Prince Selrach Di`zok — chardok
+
+- **NPC ID:** 103080 / **Level:** 61 / **HP:** 25,000 / **dmg:** 79-250
+- **npcspecialattks:** SETMCNIDf
+- **Gap:** ~1.3× HP
+- **Recommended:** No HP change, or 10% cut. Nearly named-tier already.
+- **Notes:** Chardok royals are three-boss sequential fight. Tuning should preserve Overking > Queen > Prince difficulty curve.
+
+### Kilidna — citymist
+
+- **NPC ID:** 90186 / **Level:** 60 / **HP:** 100,000 / **dmg:** 700-4,600 / **AC:** 437 / **MR:** 100
+- **npcspecialattks:** STNIDf
+- **Respawn:** 5,400s
+- **Gap:** ~6× HP and **damage is catastrophic** — 4,600 max is a one-shot on any small-group tank
+- **Recommended action:** HP cut 70% (→30k). **Damage cut 75%** (max 1,000). This is the clearest "needs rework" entry — damage ranges should sit well below 1k for any encounter small-group should attempt. Respawn to 6h.
+- **Notes:** Rare-spawn Yolinn boss in City of Mist. Lore-master: is this the matriarch of the iksar lich cult? Mechanics should preserve tough fight but not one-shot gimmick.
+
+### Lhranc — citymist
+
+- **NPC ID:** 90093 / **Level:** 60 / **HP:** 19,000 / **dmg:** 120-305
+- **Respawn:** 49,215s (~14h)
+- **Gap:** ~1.2× HP
+- **Recommended:** Minimal change — already near named tier. Respawn already in brief's 6-24h target.
+
+---
+
+### Veeshan's Peak — seven dragons (revamp variants)
+
+All VP entries are the **level 70 revamp variants** (quest scripts target
+these IDs). Listed in order of current HP. All have respawn ~270-290k
+seconds (~75-80h).
+
+### Xygoz — veeshan
+
+- **NPC ID:** 108053 / **Level:** 70 / **HP:** 814,000 / **dmg:** 480-2,266 / **AC:** 508
+- **npcspecialattks:** SEFQUMCNIDf (summon, enrage, flurry, quad, unslowable, mez/charm/normal/stun/dispel-immune, flee-disabled)
+- **Respawn:** 271,232s (~75h)
+- **Prior-pass:** UNTOUCHED
+- **Gap:** at L70 scaled-named ~30k HP; Xygoz is **27× scaled-named HP** and damage 2,266 = one-shot tank
+- **Recommended:** HP cut 85% (→120k). Damage max cut 60% (→900). Respawn to 12h. Consider dropping to level 67 to align with Kunark era.
+
+### Nexona — veeshan
+
+- **NPC ID:** 108047 / **Level:** 70 / **HP:** 800,000 / **dmg:** 385-2,475 / **AC:** 508
+- **npcspecialattks:** SEFQMCNIDf
+- **Respawn:** 269,232s
+- **Recommended:** HP cut 85% (→120k). Damage max cut 60% (→1000). Respawn 12h.
+- **Notes:** Ranger and Druid epic dragon — important quest node. Poison/disease theme.
+
+### Phara Dar — veeshan
+
+- **NPC ID:** 108048 / **Level:** 70 / **HP:** 681,000 / **dmg:** 1,032-1,621 / **AC:** 508
+- **npcspecialattks:** SEFTQMCNIDf
+- **Respawn:** 291,232s
+- **Recommended:** HP cut 82% (→120k). Damage min-max cut 55% (→450-750). Respawn 12h.
+- **Notes:** Final dragon in VP rotation (traditional order). Consort of Hoshkar.
+
+### Guardian of Veeshan — veeshan
+
+- **NPC ID:** 108042 / **Level:** 70 / **HP:** 600,000 / **dmg:** 380-1,273 / **AC:** 508
+- **npcspecialattks:** SERFTUMCNIDfm — m = M? (triple unique — AE rampage weapon immune?)
+- **Respawn:** 164,895s (~46h)
+- **Recommended:** HP cut 80% (→120k). Damage trim 40% (→230-750). Respawn 12h.
+- **Notes:** Mini-boss in VP. Sometimes called "the Warden" in lore.
+
+### Hoshkar — veeshan
+
+- **NPC ID:** 108043 / **Level:** 70 / **HP:** 536,000 / **dmg:** 406-1,603 / **AC:** 508
+- **Respawn:** 290,001s
+- **Recommended:** HP cut 80% (→110k). Damage max cut 50% (→800). Respawn 12h.
+
+### Druushk — veeshan
+
+- **NPC ID:** 108040 / **Level:** 70 / **HP:** 470,000 / **dmg:** 370-1,567 / **AC:** 508
+- **npcspecialattks:** SEFTQMCNIDf
+- **Respawn:** 291,232s
+- **Recommended:** HP cut 80% (→95k). Damage max cut 50% (→780). Respawn 12h.
+
+### Silverwing — veeshan
+
+- **NPC ID:** 108050 / **Level:** 70 / **HP:** 454,000 / **dmg:** 554-1,295 / **AC:** 508
+- **Recommended:** HP cut 80% (→90k). Damage min-max cut 40-50%. Respawn 12h.
+
+**VP summary:** All seven VP dragons have the same `AC 508` / level 70
+/ SEFQM-family immunities. They form a flat difficulty tier — the
+current stat spread (454k-814k HP) gives the impression of
+progression but on small-group time-to-kill the differences vanish.
+**Recommended unified target:** 100-120k HP across all seven, damage
+caps in the 700-1,000 range. Gate progression via quest requirements
+instead of stat walls. **User flag:** alternatively, keep the level
+65-67 "classic-era" variants (already 144-192k HP) and scrap the
+revamp variants — this would require quest-script updates.
+
+---
+
+### Kunark boss catalog — summary table
+
+| Boss | Zone | ID | L | HP | dmg | Prior-pass | Recommended HP cut | Respawn target |
+|------|------|----|----|-----|-----|------------|-------------------|----------------|
+| Gorenaire | dreadlands | 86014 | 60 | 32k | 139-500 | UNTOUCHED | 30% (→22k) + dmg trim | 6h |
+| Severilous | emeraldjungle | 94009 | 60 | 32k | 139-500 | UNTOUCHED | 30% | 6h |
+| Talendor | skyfire | 91093 | 60 | 32k | 139-500 | UNTOUCHED | 30% | 6h |
+| Faydedar | timorous | 96089 | 55 | 32k | 103-236 | UNTOUCHED | 40% (→19k) | 6h |
+| Trakanon | sebilis | 89154 | 65 | 32k | 144-630 | UNTOUCHED | 30% + flurry trim | 6h |
+| Venril Sathir | karnor | 102112 | 55 | 22k | 180-404 | UNTOUCHED | 25% (→16.5k) | 6h |
+| Drusella Sathir | charasis | 105153 | 55 | 15.75k | 51-310 | UNTOUCHED | 10% or none | 6h |
+| Overking Bathezid | chardok | 103056 | 65 | 34.5k | 92-320 | UNTOUCHED | 25% | already 1.5h |
+| Queen Velazul | chardok | 103055 | 62 | 30k | 68-220 | UNTOUCHED | 20% | already 1.5h |
+| Prince Selrach | chardok | 103080 | 61 | 25k | 79-250 | UNTOUCHED | 10% or none | already 1.5h |
+| Kilidna | citymist | 90186 | 60 | 100k | 700-4,600 | UNTOUCHED | **70% HP + 75% dmg** | 6h |
+| Lhranc | citymist | 90093 | 60 | 19k | 120-305 | UNTOUCHED | none | already ~14h |
+| Xygoz | veeshan | 108053 | 70 | 814k | 480-2,266 | UNTOUCHED | 85% (→120k) + 60% dmg | 12h |
+| Nexona | veeshan | 108047 | 70 | 800k | 385-2,475 | UNTOUCHED | 85% + 60% dmg | 12h |
+| Phara Dar | veeshan | 108048 | 70 | 681k | 1,032-1,621 | UNTOUCHED | 82% + 55% dmg | 12h |
+| Guardian of Veeshan | veeshan | 108042 | 70 | 600k | 380-1,273 | UNTOUCHED | 80% + 40% dmg | 12h |
+| Hoshkar | veeshan | 108043 | 70 | 536k | 406-1,603 | UNTOUCHED | 80% + 50% dmg | 12h |
+| Druushk | veeshan | 108040 | 70 | 470k | 370-1,567 | UNTOUCHED | 80% + 50% dmg | 12h |
+| Silverwing | veeshan | 108050 | 70 | 454k | 554-1,295 | UNTOUCHED | 80% + 40-50% dmg | 12h |
+
+**Kunark true-boss count (in-era, excluding Fabled and post-Luclin content):** 19 encounters (13 dungeon/outdoor + 6-7 VP dragons + Guardian of Veeshan).
+
+**Kunark scaling-gap summary:** Two distinct gap profiles:
+- **Outdoor dragons + Chardok royals + Trak/VS/Drusella:** gap is moderate (1.5-4× HP). 20-40% HP cuts bring them in line. Damage mostly fine.
+- **VP dragons (revamp variants) + Kilidna:** gap is extreme (6-27× HP, damage often one-shots). 75-85% HP cuts plus 40-75% damage cuts required. **These are the highest-priority Kunark fixes and alone might justify a dedicated Kunark sub-phase.**
 
 ### Kunark raid quest chains
 
