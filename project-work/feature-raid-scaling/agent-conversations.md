@@ -278,7 +278,92 @@ integrated the same way.
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-_(Empty — architecture phase has not started.)_
+### 2026-04-22 — Config consultation: Phase 2 Classic raids
+
+**From:** config-expert → **To:** architect
+
+> Initial findings delivered after querying live `rule_values`, examining
+> `npc_scale_global_base`, sampling Classic raid boss `npc_types` stats,
+> checking `spawn2` timers, and reviewing the 2026-02-23 small-group-scaling
+> commit history.
+>
+> Key findings:
+>
+> **No rule changes needed for Phase 2.** The prior pass already set every
+> relevant global rule (NPCFlurryChance=12, MaxRampageTargets=2,
+> NPCAssistCap=3, GlobalLootMultiplier=2, expansion=Luclin). These apply to
+> raid bosses as-is. No `NPC:RaidHPMultiplier` or equivalent rule exists.
+>
+> **All scaling is SQL-only (npc_types + spawn2).** HP/damage cuts require
+> per-boss UPDATEs on npc_types. Respawn changes require per-spawn UPDATEs
+> on spawn2. No global multiplier rule exists for either.
+>
+> **Current respawn timers:** Nagafen, Vox, Innoruuk all at 194,400s (54h).
+> Need to cut to 21,600s (6h) per Q5 decision.
+>
+> **Death touch = special ability 35 in npc_types.special_abilities string.**
+> No rule controls it. Strip `^35,1` / `35,1^` from affected PoSky NPC rows.
+>
+> **Rampage trim (Lever 4):** stored in special_abilities, per-NPC. Global
+> `Combat:MaxRampageTargets = 2` is separate and already set. Cazic Thule /
+> AoW trims are data-expert string edits.
+>
+> **Live PoH zone: hateplaneb** (491 spawns vs hateplane's 213).
+>
+> **npc_scale_global_base type 2: do not touch.** All raid bosses have
+> manually set stats; auto-scaling path never fires.
+>
+> **Config-expert Phase 2 role:** verification and restart only. Full details
+> in `config-expert/dev-notes.md`.
+
+**Response from** architect:
+
+> _(Awaiting response.)_
+
+**Outcome:** Config-expert consultation delivered. Architect confirmed:
+Phase 2 implementation is pure data-expert SQL work. Config-expert's
+task in Phase 2 implementation will be post-SQL verification + restart.
+
+---
+
+### 2026-04-21 — Protocol consultation: Phase 2 Classic raids
+
+**From:** protocol-agent → **To:** architect
+
+> Delivered protocol consultation for Phase 2 after reading feature-brief,
+> status.md, raid-scaling-audit.md, and PROTOCOL-CODE.md topography doc.
+>
+> Key findings:
+>
+> **PoSky death-touch removal:** Pure server-side special_abilities change.
+> The Titanium client has no dedicated death-touch opcode. Kill arrives as
+> standard Death_Struct (~32B). Conversion to survivable hit arrives as
+> CombatDamage_Struct (eq_packet_structs.h:1335). Zero wire format impact.
+>
+> **HP/damage scaling:** Client never receives absolute NPC HP values.
+> MobHealth packet (eq_packet_structs.h:1487, ~3B) sends percentage only.
+> Max-hit values are never sent to client at all. SQL UPDATE to npc_types
+> takes effect on next NPC spawn — no client state to invalidate.
+>
+> **Respawn timer changes:** Client has no visibility into respawn duration.
+> It only sees DeleteSpawn_Struct (on death) and NewSpawn_Struct (on repop).
+> Pure database change.
+>
+> **Bottom line:** All Phase 2 changes are 100% server-side. No new opcodes,
+> no struct changes, no translation layer modifications required.
+>
+> **Flag:** If PoSky quest scripts reference death-touch application behavior,
+> that needs lua-expert/perl-expert review — not a protocol concern but
+> worth checking when PoSky scripts are touched.
+
+**Response from** architect:
+
+> _(Awaiting response.)_
+
+**Outcome:** Protocol-agent consultation delivered. Architect can proceed
+planning Phase 2 architecture with confidence that all planned changes
+(HP cuts, death-touch removal, respawn reductions) require zero client
+protocol changes.
 
 ---
 
