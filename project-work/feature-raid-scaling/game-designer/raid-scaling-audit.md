@@ -839,10 +839,281 @@ revamp variants — this would require quest-script updates.
 
 ### Velious raid boss catalog
 
-> Populated by task #5 (game-designer). **Flag for user:** Temple of
-> Veeshan has 110 `raid_target = 1` NPCs and Plane of Growth has 99
-> — most are elite trash, but true boss counts are still large. May
-> recommend splitting Velious into its own sub-phase.
+**Summary:** Velious is the largest single-era raid cluster in the game.
+True-boss count (in-era, excluding Fabled and pre-raid-tier elite trash)
+is approximately **60-65 encounters** across:
+
+- **Temple of Veeshan (ToV):** 16 dragon lords (Vulak`Aerr at top, plus
+  Lords/Ladies/named dragons below) + ~12 mid-tier named dragons (Midayor
+  cluster) + ~20 elite-tier defenders (out of scope — trash)
+- **Sleeper's Tomb:** 13 encounter bosses (5 Ancients, 4 Warders, plus
+  gatekeepers) — **excluding The Sleeper event itself**
+- **Kael Drakkel:** 4 primary bosses (King Tormax, Avatar of War, Statue
+  of Rallos Zek, Derakor the Vindicator)
+- **Skyshrine:** Lord Yelinak + 4 Crusaders (Charayan, Susarrak, Grendish,
+  Jortreva)
+- **Plane of Growth:** 7-8 encounters (Tunare, Guardian of Tunare, Ail
+  the Elder, Treah Greenroot, Rumbleroot, Fayl Everstrong, Guardian of
+  Takish)
+- **Western Wastes:** ~20 outdoor dragons — a mix of 30k-100k HP
+  encounters. True boss tier is Klandicar, Sontalak, Melalafen, Harla
+  Dar, Mraaka (65-100k); remainder are "named+ tier".
+- **Other zones:** Velketor the Sorcerer, Kelorek`Dar (Cobaltscar),
+  Narandi the Wretched (Great Divide), Zlandicar (Dragon Necropolis),
+  Dain Frostreaver IV (Icewell Keep / thurgadinb), Wuoshi (Wakening
+  Lands), Mischief Plane trio (Bristlebane, All-Seeing Eye, Mischievous
+  Jester), Siren's Grotto (Faleniel, Wygrish)
+
+**Flag for user (major decision):** Velious scope alone may justify a
+dedicated sub-phase. Recommended split options:
+- **Option A — single Phase 4:** tackle all ~65 encounters together
+- **Option B — Phase 4a/4b:** 4a = Kael + Skyshrine + Growth + outdoor
+  (~35 encounters), 4b = ToV + Sleeper + Necropolis (~30 encounters
+  at higher HP)
+- **Option C — Phase 4-only-tier:** skip ToV/Sleeper entirely and
+  accept they're end-game "wait until fully geared" content
+
+**Scaling gap overview:** Velious is the era where most content uses
+the auto-scale baseline (type 2, level 60 = 450k HP). Average ToV
+boss = 380k HP, average Sleeper ancient = 350k HP. A scaled-named at
+L65-66 is 22-24k HP. Gaps are therefore 15-20× for ToV and 15× for
+Sleeper. Post-scaling target: ~80-120k HP for endgame-tier (ToV,
+Sleeper, Vulak, Avatar of War), ~40-60k for mid-tier (Kael,
+Skyshrine, Growth, Western Wastes bosses), ~25-35k for outdoor mini-
+raids.
+
+**Damage outliers:** Lord Vyemm (max 1,200), Vulak`Aerr (max 1,400),
+Avatar of War (max 1,154), Dagarn (max 755 with 900 AC so he's
+tankable), Gozzrem/Telkorenar (max 480 low!). Sir_Elmonious_Falmont
+(max 3,667 — OUT OF ERA, probably event).
+
+---
+
+### Kael Drakkel — kael
+
+| Boss | ID | L | HP | dmg | Abilities | Respawn | Gap | Recommended |
+|------|----|----|-----|-----|-----------|---------|-----|-------------|
+| The Avatar of War | 113457 | 70 | 900,000 | 299-1,154 | SERQUMCNIDf + rampage 6×6 | — | ~30× | HP → 120k (-87%), dmg → 200-700 (-40%), respawn 12h |
+| King Tormax | 113215 | 70 | 452,000 | 195-575 | SERQUMCNDf | 259,200s (72h) | ~15× | HP → 100k (-78%), dmg unchanged, respawn 12h |
+| Statue of Rallos Zek | 113071 | 59 | 400,750 | 245-1,100 | SERQMCNIDf | 194,400s | ~20× | HP → 50k (-87%), dmg → 150-500 (-55%), respawn 12h |
+| Derakor the Vindicator | 113118 | 70 | 180,000 | 225-700 | SERQUMCNDf | 43,200s (12h) | ~6× | HP → 60k (-67%), dmg trim 20%, respawn already fits |
+
+**Kael notes:** Avatar of War is the deepest raid-quest node — required
+for at least 3 class epics (Warrior, SK, Paladin) and Kael dragon
+faction. Respawn of 72h on Tormax is the longest of any Velious raid
+— suggest 12h. Statue of Rallos Zek is the Kael "trigger" event —
+usually a scripted fight with adds.
+
+---
+
+### Skyshrine — skyshrine
+
+| Boss | ID | L | HP | dmg | Abilities | Respawn | Recommended |
+|------|----|----|-----|-----|-----------|---------|-------------|
+| Lord Yelinak (main) | 114106 | 70 | 500,000 | 204-804 | SEFQUMCNIDf | 259,200s | HP → 110k (-78%), respawn 12h |
+| Lord Yelinak (variant) | 114618 | 70 | 297,000 | 204-804 | SEFQUMCNIDf | 259,200s | Duplicate ID — one likely deprecated. Flag for user. |
+| Charayan the Crusader | 114242 | 70 | 233,000 | 125-410 | SERQMCNIDf | 640s (11m) | HP → 50k (-78%), respawn ok or boost to 1h |
+| Susarrak the Crusader | 114243 | 70 | 233,000 | 125-410 | SERQMCNIDf | 640s | Same as Charayan |
+| Grendish the Crusader | 114245 | 70 | 233,000 | 125-410 | SERQMCNIDf | 640s | Same |
+| Jortreva the Crusader | 114246 | 70 | 233,000 | 125-410 | (no specials) | 640s | Same. Note: missing immunity flags — odd, may be bug |
+
+**Skyshrine notes:** The four Crusaders are a group fight (ring +
+chamber). 11-minute respawn on Crusaders is already fast enough. Yelinak
+is the dragon-throne boss — Ring of Scale faction's living high-priest
+(in PEQ — lore-master confirm: historically Yelinak is Ring's leader,
+killable only via faction hostility path). Two Yelinak IDs exist
+(114106 main vs 114618 variant) — one likely a quest-spawned copy.
+
+---
+
+### Plane of Growth — growthplane
+
+| Boss | ID | L | HP | dmg | Abilities | Respawn | Recommended |
+|------|----|----|-----|-----|-----------|---------|-------------|
+| #_Tunare | 127001 | 66 | 530,000 | 166-926 | f | 259,200s | HP → 150k (-72%), respawn 12h — final boss |
+| Guardian of Tunare | 127007 | 60 | 310,000 | 92-187 | m (AE rampage weapon) | 64,800s | HP → 80k (-74%), already ~18h respawn |
+| Guardian of Tunare (dup) | 127106 | 60 | 310,000 | 92-187 | — | 64,800s | Duplicate — same recommendations |
+| Ail the Elder | 127020 | 60 | 215,000 | 130-700 | SREMCNUTD | 64,800s | HP → 60k (-72%), damage trim 20% |
+| Rumbleroot | 127019 | 60 | 193,000 | 130-700 | FSREMCNUID | 64,800s | HP → 55k (-72%), damage trim 20% |
+| Treah Greenroot | 127021 | 60 | 191,000 | 130-700 | FSREMCNUID | 64,800s | HP → 55k, damage trim 20% |
+| Guardian of Takish | 127035 | 70 | 200,000 | 96-210 | FSREMCNUIQDm | 86,400s | HP → 60k (-70%), damage fine |
+| Fayl Everstrong | 127018 | 60 | 150,000 | 130-700 | SREMCNUID | 64,800s | HP → 45k (-70%) |
+| Prince Thirneg | 127096 | 65 | 69,719 | 82-196 | (none) | — | Already mid-tier — HP trim 15% |
+| 2x a_thifling_focuser | 127005/6 | 65 | 1,000,000 | 100-233 | SEMCNID | 64,800s | **SPECIAL** — these are "focus the energy of the plane" event triggers, likely not normal kills. Investigate before scaling. |
+| a_warm_light | 127004 | 1 | 1,000,000 | 2-9 | W (weapon ranged) | 64,800s | **EVENT TRIGGER** — level 1 but 1M HP. Interactive mob, not a kill. Skip. |
+
+**Growth notes:** "a_warm_light" and "a_thifling_focuser" are likely
+event-control NPCs (trigger Tunare spawn). Lore-master to confirm the
+Plane of Growth progression ritual. Tunare is the "goddess of Growth"
+— her fight is traditionally scripted with adds spawning from
+focusers.
+
+---
+
+### Temple of Veeshan — templeveeshan
+
+**16 dragon lords (true bosses):**
+
+| Boss | ID | L | HP | dmg | Abilities | Recommended HP | Recommended dmg |
+|------|----|----|-----|-----|-----------|----------------|-----------------|
+| Lord Koi`Doken | 124103 | 66 | 580,000 | 215-690 | SREMCNITDf | 130k (-78%) | 180-500 (-28%) |
+| Lady Nevederia | 124076 | 66 | 525,000 | 189-892 | SERTMCNIDf | 120k (-77%) | 160-600 (-33%) |
+| Lord Kreizenn | 124074 | 66 | 465,000 | 209-950 | SETMCNIDUf | 110k (-76%) | 180-600 (-37%) |
+| Lord Feshlak | 124008 | 66 | 455,000 | 238-960 | SERTMCNIDf | 110k (-76%) | 200-600 (-37%) |
+| Cekenar | 124071 | 66 | 425,000 | 225-700 | SRETMCNDf | 100k (-76%) | 200-500 (-28%) |
+| Aaryonar | 124010 | 66 | 390,000 | 235-900 | SEQMCNIDf | 95k (-76%) | 200-550 (-38%) |
+| Dozekar the Cursed | 124037 | 66 | 386,500 | 235-900 | SEQMCNIDf | 95k (-76%) | 200-550 (-38%) |
+| Lady Mirenilla | 124077 | 66 | 380,000 | 285-950 | SERTMCNIDf | 95k (-75%) | 220-600 (-36%) |
+| Lord Vyemm | 124017 | 66 | 350,000 | 250-1,200 | SERTMCNIDf | 90k (-74%) | 200-700 (-41%) |
+| Lendiniara the Keeper | 124020 | 66 | 320,000 | 215-652 | SERQUMCNIDf | 80k (-75%) | 180-500 (-23%) |
+| Dagarn the Destroyer | 124011 | 70 | 300,000 | 280-755 | SERQMCNIDf | 80k (-73%) | damage fine |
+| Telkorenar | 124104 | 66 | 280,000 | 195-480 | SERTUMCNIDf | 75k (-73%) | damage fine |
+| Gozzrem | 124105 | 66 | 280,000 | 195-480 | SERTMCNIDUf | 75k (-73%) | damage fine |
+| Ikatiar the Venom | 124001 | 66 | 250,000 | 275-750 | SERTUMCNIDf | 65k (-74%) | 220-550 (-27%) |
+| Jorlleag | 124072 | 66 | 250,000 | 213-916 | SETMCNIDf | 65k (-74%) | 200-600 (-35%) |
+| Eashen of the Sky | 124004 | 66 | 240,000 | 275-750 | SEFTUMCNIDf | 65k (-73%) | 220-550 (-27%) |
+
+**Plus: Vulak`Aerr (script-spawned, not in spawnentry):** id=124155,
+L70, HP 890,000, dmg 355-1,400, AC 950, MR 80 — **the ToV pinnacle
+boss.** Recommend HP → 150k (-83%), damage → 250-800 (-43%). Respawn
+not shown (event-gated). **Vulak requires a specific summoning event
+from the six altars** (traditional: kill specific dragon lords to
+activate altars, then trigger Vulak). Scaling must preserve that
+progression chain.
+
+**ToV tier notes:**
+- All have respawn 259,200s (72h) — brief wants 6-24h, suggest 12h.
+- AC 484-570 on all — consistent.
+- MR mostly 180-225 (1 exception: Lord Vyemm MR=1,000 — magic wall).
+- Lord Vyemm's MR=1,000 and special_abilities list 42 (whatever that
+  flag is) marks him as the "no-magic-dps" ToV boss. This is lore-
+  canonical (Vyemm is guardian against magic) — preserve the gimmick.
+
+**12 mid-tier ToV named (level 60-65, 101-140k HP):** Midayor,
+Grozzmel, Ymmeln, Krigara, Lepethida, Essedera, Tavekalem, Casalen,
+Cyndor Lightningfang, Yrrindor Emerald Claw, Zlexak, Sevalak,
+Malteor Flamecaller, Zyerek Onyxblood, Kalkar of the Maelstrom,
+Vyldin Flamereaver. Plus defender-class mobs (Emerald/Sky/Onyx/Lava
+Defenders) at 120k. **Recommended:** HP cut 60-70% → 40-50k each,
+damage already mostly in named range — minor trim. Respawn 259k →
+12h for named, 16k-65k (already short) ok for defenders.
+
+**ELITE TRASH in ToV (out of scope):** ~20 drakes, wyverns, racnar,
+dancers at 50-75k HP. Already handled — these sit between named and
+boss tier and the brief explicitly said "current named difficulty
+feels good". No action needed unless the Lord Kreizenn-tier scaling
+makes them feel wrong.
+
+---
+
+### Sleeper's Tomb — sleeper
+
+| Boss | ID | L | HP | dmg | Recommended HP | Notes |
+|------|----|----|-----|-----|----------------|-------|
+| Zeixshi-Kar the Ancient | 128044 | 70 | 377,000 | 372-929 | 90k (-76%) | One of 5 Ancients; scripted Warder-trigger |
+| The Final Arbiter (main) | 128143 | 70 | 357,000 | 292-629 | 85k (-76%) | Sleeper-event-adjacent scripted boss |
+| Kildrukaun the Ancient | 128041 | 70 | 352,000 | 284-705 | 85k (-76%) | Ancient |
+| Vyskudra the Ancient | 128042 | 70 | 352,000 | 284-789 | 85k (-76%) | Ancient |
+| Tjudawos the Ancient | 128043 | 70 | 352,000 | 292-767 | 85k (-76%) | Ancient |
+| The Progenitor (main) | 128144 | 70 | 327,000 | 204-619 | 80k (-75%) | Sleeper event boss |
+| Master of the Guard (main) | 128145 | 69 | 326,500 | 157-432 | 80k (-75%) | Gatekeeper |
+| Milas An`Rev | 128040 | 67 | 210,000 | 162-447 | 60k (-71%) | Mid-tier boss |
+| Hraashna the Warder | 128093 | 70 | 200,000 | 137-509 | 60k (-70%) | Warder (1 of 4) |
+| Nanzata the Warder | 128090 | 70 | 200,000 | 115-442 | 60k | Warder |
+| Tukaarak the Warder | 128092 | 70 | 200,000 | 126-405 | 60k | Warder |
+| Ventani the Warder | 128091 | 70 | 200,000 | 136-415 | 60k | Warder |
+| The Final Arbiter (alt) | 128045 | 70 | 200,000 | 166-460 | 60k (-70%) | Variant |
+
+**Sleeper's Tomb special cases:**
+- **#Kerafyrm / #The_Sleeper (id 128089, 128094, 128095):** level 99,
+  3,500,000 HP, dmg 2,000-7,003 — this is the **AWAKENED SLEEPER**
+  post-event. Not intended as a kill target. **Out of scope.** If
+  scaling raid content is the goal, the Sleeper-wake event itself
+  (the traditional "unkillable world event") should remain untouched
+  or be handled as a narrative event rather than a scaling target.
+- **Respawns:** all Warders/Ancients at 259,200s (72h) — suggest 24h
+  for Ancients (the 4 Warders + 4 Ancients + Final Arbiter is the
+  full-rotation raid; long respawn preserves "weekly raid" feel).
+- **Event trash** (Drakonine Caretakers/Defenders at 100-150k, plus
+  40+ smaller Drakonine variants at 31-70k): out of scope — these
+  are raid-zone trash, not true bosses. Note that their HP is in
+  "elite named" range already.
+
+**Kerafyrm/Sleeper trigger summary:** The Sleeper event is a LORE-
+cataclysmic event (traditional servers: once triggered, The Awakened
+Sleeper roams Norrath killing everything until world restart). Not a
+scaling target. Lore-master to document event status for the project.
+
+---
+
+### Outdoor / misc Velious encounters
+
+| Boss | Zone | ID | L | HP | dmg | Recommended |
+|------|------|----|----|-----|-----|-------------|
+| Velketor the Sorcerer | velketor | 112025 | 66 | 201,500 | 185-850 | HP → 60k (-70%), dmg trim 20% |
+| Lord Doljonijiarnimorinar | velketor | 112049 | 65 | 147,000 | 195-480 | HP → 45k (-69%), respawn 12h |
+| Kelorek`Dar | cobaltscar | 117073 | 65 | 100,000 | 63-219 | HP → 35k (-65%), damage already low |
+| Narandi the Wretched | greatdivide | 118145 | 65 | 150,000 | 195-480 | HP → 45k (-70%), respawn 208h (!!) — reduce to 24h |
+| Taskmaster Abyott | greatdivide | 118088 | 62 | 72,000 | 88-278 | HP → 30k, damage fine |
+| Dain Frostreaver IV | thurgadinb | 129003 | 70 | 352,000 | 160-350 | HP → 80k (-77%), damage fine. **Faction-gated** — see Coldain Ring War |
+| Chamberlain Krystorf | thurgadinb | 129028 | 60 | 80,000 | 125-315 | HP → 30k (-63%) |
+| Zlandicar | necropolis | 123115 | 70 | 110,000 | 157-366 | HP → 35k (-68%), damage already low. Respawn 12h |
+| Jaled Dar's Shade | necropolis | 123011 | 70 | 3,002,000 | 250-900 | **SPECIAL — 3M HP is probably an event timer-check mob.** Investigate before scaling. |
+| Wuoshi | wakening | 119112 | 64 | 46,000 | 204-584 | Named-tier already — 10-20% HP trim |
+| Scout Leader Plavo | wakening | 57156 | 70 | 300,000 | 193-496 | OUT-OF-ERA check — ID 57156 is a Lesser Faydark range, likely revamp content. Flag for user |
+| Lantaric`Dar | wakening | 119165 | 70 | 800,000 | 0-4 | **EVENT MOB** — 0-4 damage = passive event trigger. Skip scaling. |
+| Lodizal | iceclad | 110099 | 60 | 40,561 | 110-300 | Named-tier — HP trim 20%. Quest giver (Velious Shawl) |
+| Corudoth | iceclad | 110037 | 5 | 60,000 | 10-64 | ODDITY — level 5 with 60k HP. Investigate. |
+| Melalafen | westwastes | 120126 | 65 | 70,000 | 192-504 | HP trim 20% |
+| Sontalak | westwastes | 120005 | 70 | 97,500 | 140-425 | HP → 40k (-59%). Ring-of-Scale-hostile dragon |
+| Klandicar | westwastes | 120084 | 70 | 97,500 | 198-540 | HP → 40k (-59%). Ring-of-Scale-friendly dragon (faction implication — see lore) |
+| Harla Dar | westwastes | 120057 | 66 | 65,000 | 96-305 | HP → 28k (-57%), already near named tier |
+| #Mraaka | westwastes | 120064 | 66 | 60,000 | 149-320 | HP trim 30% |
+| (~15 other WW dragons) | westwastes | — | 51-62 | 24-50k | — | Most in named-tier range; no action or minor trim. See Classic west-wastes dragon cluster. |
+| Velious Siren bosses | sirens | 125070/72 | 68-70 | 200-300k | 380-1,900 | Faleniel (300k dmg 380-1900) and Wygrish (200k dmg 587-1575) — HP trim 70%, dmg trim 50% |
+| Sir Elmonious Falmont | westwastes | 120133 | 70 | 400,000 | 500-3,667 | **OUT-OF-ERA check** — damage 3,667 = PoP tier. Likely event or revamp content. |
+| a_warm_light / a_thifling_focuser | growthplane | — | 1/65 | 1M | varies | **EVENT TRIGGERS — not scaling targets** |
+| The Seventh Hammer | varies | 201500 | 73 | 1.2M | 360-1196 | **OUT-OF-ERA** — level 73 is post-Luclin |
+| Legendary Velious Dragon | eastwastes | 116607 | 72 | 312,500 | 225-1,504 | **OUT-OF-ERA** — LoN anniversary |
+| #An Egg Hunter | eastwastes | 116605 | 75 | 981,589 | — | **OUT-OF-ERA** |
+
+---
+
+### Mischief Plane — mischiefplane
+
+| Boss | ID | L | HP | dmg | Notes |
+|------|----|----|-----|-----|-------|
+| #Bristlebane | 126160 | 75 | 1,000,000 | 680-1,904 | **Level 75 = post-era / LoN tier. Out of scope.** |
+| All-Seeing Eye | 126374 | 75 | 709,000 | 350-1,300 | Out of era |
+| #the Mischievous Jester | 126012 | 70 | 200,000 | 235-1,431 | Era-boundary — if active, HP → 60k, dmg trim 50% |
+
+Mischief Plane in PEQ is post-Luclin Plane of Mischief revamp. Likely
+all three entries are out-of-era. **Flag for user: is Mischief Plane
+intended to be in-scope?**
+
+---
+
+### Velious boss catalog — headline metrics
+
+- **In-era true-boss count:** 60-65 (of which ~30 in ToV+Sleeper)
+- **Average HP gap for endgame tier (ToV, Sleeper, Vulak, AoW):** 15-25× scaled-named
+- **Average HP gap for mid-tier (Kael, Skyshrine, Growth, Velketor, outdoor):** 6-15×
+- **Average HP gap for outdoor named-adjacent (West Wastes dragons):** 2-4×
+- **Number of special-case entries** (events, triggers, out-of-era, duplicates): ~15
+- **Respawn issues:** most are at 72h (259k seconds) — every bracketed boss needs reduction to 12h (43.2k) per brief. A few already at 12h or shorter; 3 are at 208h+ (!).
+
+**Velious scaling-gap summary:** Velious is the era where the gap is
+widest AND where post-Velious content-creep (Fabled, LoN, revamps) most
+pollutes the raid_target pool. Careful filtering is mandatory — the
+raw count of 362 raid_target NPCs in Velious zones reduces to 60-65
+true in-era bosses, which is still the largest era block.
+
+**Strong recommendation:** Velious warrants its own dedicated sub-
+phase (Option B split). Temple of Veeshan alone has 16 dragon lords
+that need individual tuning verification because scripted lore abilities
+(Lord Vyemm's magic wall, Aaryonar's specific breath) need to be
+preserved. Sleeper's Tomb has 13 more. That's ~30 endgame encounters
+just in two zones.
 
 ### Velious raid quest chains
 
