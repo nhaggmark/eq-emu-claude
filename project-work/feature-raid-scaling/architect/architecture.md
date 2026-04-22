@@ -430,3 +430,55 @@ The following are noted for future phases:
 > - **infra-expert** (Task 9, conditional)
 >
 > Do NOT spawn c-expert, lua-expert, perl-expert, or protocol-agent — they have no Phase 2 work.
+
+---
+
+## Addendum 2026-04-22 — Cazic Thule rampage-target parameter index
+
+Protocol-agent source-traced `Mob::Rampage()` in `eqemu/zone/mob_ai.cpp:2114-2121`:
+
+```cpp
+int rampage_targets = GetSpecialAbilityParam(SpecialAbility::Rampage, 1);
+if (rampage_targets == 0) {
+    rampage_targets = RuleI(Combat, DefaultRampageTargets);
+}
+if (rampage_targets > RuleI(Combat, MaxRampageTargets)) {
+    rampage_targets = RuleI(Combat, MaxRampageTargets);
+}
+```
+
+The AI reads rampage target count from **`GetSpecialAbilityParam(Rampage, 1)`** — param
+index **1** (the second param field after `ability_id,value`).
+
+Cazic Thule's current string contains the rampage entry `3,1,10` — which parses to
+ability=Rampage, value=1, param0=10, **param1 unset (defaults to 0)**. Per the source
+above, when param1 is 0 the code falls through to the global `Combat:DefaultRampageTargets`
+rule. So the "10" in `3,1,10` is currently NOT actually controlling CT's rampage target
+count — it is setting param0, which the rampage AI path does not consume.
+
+**Data-expert verification required BEFORE executing the rampage trim:**
+
+1. Inspect `zone/mob.cpp` `ProcessSpecialAbilities` (line 7572) and `GetSpecialAbilityParam`
+   to confirm param indexing: does param0 = the first value after `ability_id,value`, or
+   is it the first value after `ability_id` only?
+2. Read `rule_values` for `Combat:DefaultRampageTargets` to see what CT's effective
+   rampage target count is today (prior to any trim).
+3. Re-derive the correct SQL to trim the rampage target count:
+   - If CT currently uses `DefaultRampageTargets` (7 is common) and the goal is to set
+     CT to 3 explicitly, the SQL may need to INSERT a param1 value, e.g. change
+     `3,1,10` → `3,1,10,3` (ability=3, value=1, param0=10, param1=3) to pin the
+     target count at 3.
+   - Alternatively, if param0 is what Rampage() actually reads on other boss versions,
+     verify by querying 3-4 known-to-rampage bosses' strings and comparing AI behavior.
+4. Because `Combat:MaxRampageTargets=2` is already set server-wide (prior pass), CT's
+   effective rampage is capped at 2 anyway — the per-NPC trim is belt-and-suspenders.
+   The cleanest action may be to leave CT's string as-is for Phase 2 and rely on
+   the global cap, logging this as a future cleanup.
+
+**Recommended Phase 2 action:** data-expert confirms the param semantics and either:
+(a) emits the correct SQL to pin CT's rampage target to 3 (or lower), OR
+(b) documents that the global `MaxRampageTargets=2` cap is sufficient and no CT
+special_abilities edit is needed for Phase 2.
+
+All other architecture plan items (HP cuts, damage cuts, respawn reductions, death-touch
+removal via `npc_spells_entries`) remain unchanged and unblocked.
