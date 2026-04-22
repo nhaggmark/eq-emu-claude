@@ -2173,7 +2173,7 @@ one-shot danger values for small-group tanks at current tuning.
 
 **Progression context (to be fleshed by lore-master in Task #10):**
 Vex Thal is the single most progression-locked zone in the game.
-Entry requires **the 13-part Vex Thal key quest**, with shards
+Entry requires **the 10-shard-plus-Emperor Vex Thal key quest (see lore-master correction)**, with shards
 dropping from almost every other Luclin raid boss. Scaling Luclin
 without addressing the VT key blockers will not unblock VT for a
 small group. Emperor Ssraeshza key is similarly multi-raid gated.
@@ -2357,7 +2357,184 @@ Task #10) is a progression-phase of its own.
 
 ### Luclin raid quest chains
 
-> **Status:** Game-designer summary pending lore-master deep-review.
+> **Status:** Lore-master's canonical catalog delivered 2026-04-22. See
+> full walkthrough at
+> `/mnt/d/Dev/eq/claude/project-work/feature-raid-scaling/lore-master/luclin-chains.md`.
+> This section summarizes lore-master's findings and highlights
+> project-critical additions for the architect. The game-designer's
+> original fallback (preserved below) is SUPERSEDED where it conflicts.
+> **This completes all four era quest-chain catalogs (tasks #7-10).**
+
+#### Key project-critical findings from lore-master Luclin review
+
+**1. The Vex Thal key is NOT a 10-shard + 3-component quest — it's a 10-shard
+quest PLUS Emperor Ssraeshza + a Luclin raid kill.** My boss-catalog
+summary (and the prior pass's reference) described VT key as "13
+shards from various Luclin raid targets." Lore-master's canonical
+research corrects this:
+- **Phase 1: 10 Lucid Shards** from non-raid mobs across 10 Luclin
+  zones (Acrylia, Akheva, Dawnshroud, Fungus Grove, Maiden's Eye,
+  Katta/Seru, Scarlet Desert, Ssraeshza Temple outer, The Grey, The
+  Deep) — GREEN/YELLOW tier, all accessible to a small group.
+- **Phase 2: Shadowed Scepter Frame** from an Akheva Ruins Sacrificed
+  Remains → shimmering presence → Spirit of Akelha`Ra chain — YELLOW
+  tier, requires Magician (Wisp Stone) + Necromancer (Essence Emerald)
+  or purchased equivalents.
+- **Phase 3: Planes Rift** from Emperor Ssraeshza kill — RED.
+- **Phase 4: Glowing Orb of Luclinite** from any Luclin raid boss
+  kill — RED.
+**Good news for Open Question #7** (VT shard-count reduction): the
+actual shard-collection phase is already accessible without raid.
+The RED blockers are Emperor Ssraeshza + any Luclin raid boss —
+which are covered by the boss-catalog scaling. The VT key "shard
+reduction" question may be moot; the architect should not need to
+touch the shard count.
+
+**2. CRITICAL: Cross-era gate — Vulak`Aerr blocks ALL advanced
+Luclin content.** The Key to Luclin (for entering Ssraeshza Temple,
+The Grey, Akheva, Vex Thal, Fungus Grove, Grimling Forest, The Deep,
+Grieg's End, Umbral Plains) requires killing Vulak`Aerr in Temple of
+Veeshan (Velious). This is a **hard-wired cross-era progression
+gate**:
+
+```
+Velious ToV completion (Vulak`Aerr kill at 890k HP)
+  → Key to Luclin
+  → Advanced Luclin zones become accessible
+  → Emperor Ssraeshza + Aten Ha Ra + VT key completion
+  → Vex Thal endgame
+```
+
+**Phased-delivery implication (affects Open Question #A — phased
+strategy):** Luclin cannot be a standalone phase. If the user splits
+into per-era phases, Velious ToV work MUST precede any meaningful
+Luclin work — even the outer shard-collection chain. This argues for:
+- **Phase 4b must include Vulak`Aerr** scaling, not just ToV trash-tier
+- **Phase 5 Luclin is downstream of Phase 4b**, not independent
+- Alternatively: architect investigates whether the Key to Luclin
+  requirement can be lifted or alternate-sourced on small-group
+  server (e.g. purchased from a Shadow Haven vendor as some classic-
+  era PEQ versions allow).
+
+**3. Luclin has NO Epic 1.0 dependencies.** Consistent with Velious
+finding — all 14 class Epic 1.0 chains complete in Classic + Kunark.
+Luclin scaling can proceed without Epic tuning coordination.
+
+**4. Ssraeshza Temple Ring of the Shissar quest is small-group
+accessible (NEW intel — reduces Luclin scope).** My original boss-
+catalog flagged Emperor Ssraeshza and his pre-Emperor area as raid
+tier. Lore-master confirms:
+- **Commanders Zazuzh (id 162150, L56, 9k HP) + Zherozsh (162217,
+  L58, 9k HP)** are script-spawned boss-style NPCs but at 9k HP each
+  — already scaled-named tier. **No scaling action needed.** Both
+  drop guaranteed door-keys (internal progression).
+- **Warden Mekuzh (162023, L60, 33k HP)** is the Taskmaster's Pouch
+  source — elite-named tier.
+- **Pre-Emperor named (Advisor Zekuzh 162067, Arbiter Korazhk
+  162191, General Kizuhx 162066)** are in my boss catalog already
+  at 150-250k HP with 1,080s (18m) respawn — 2-group tier.
+- Ring of the Shissar itself does NOT require Emperor Ssraeshza kill
+  — only the door-key Commanders + pre-Emperor tier. **Small group
+  can complete Ring quest without hitting the Emperor raid wall.**
+  They must hit Emperor only for VT key progression.
+
+**5. Grimling War event (Acrylia Caverns) is a wave-based gate
+similar to Coldain Ring 10.**
+- Triggered by Spiritist Kama Resan (id 154052, L60, 5.6k HP) after
+  clearing the cage room
+- Three progressively harder quest events with grimling waves
+- Reward: Hollow Acrylia Obelisk → Inner Acrylia Caverns access
+- **Architect flag:** lore-master notes "a later patch removed the
+  key requirement on some servers." Architect must verify PEQ state:
+  is the Obelisk still required, or is Inner Acrylia freely
+  accessible? If still required, this is a second wave-event
+  script-level problem (like Ring War) beyond boss-stat scaling.
+- **Silver lining:** 3 inner Acrylia raids (Ring of Fire, Vah Shir
+  Captive, Burrower) are key-free regardless. Small group can hit
+  those directly.
+
+**6. Grieg's End is the "easiest Luclin raid zone."**
+- Grieg's Key drops from random named (5 of them identified by
+  lore-master) — no quest chain, just camping rotation
+- **Servitor of Luclin (id 163013, L65, 120k HP)** described as
+  "easiest Luclin raid boss, no special abilities" — my boss catalog
+  already covers this at HP cut ~67% → 40k.
+- **Grieg Veneficus (id 163075, 475k HP)** is the zone-end target.
+- **Phase 5 implementation priority:** start with Grieg's End as the
+  "warm-up Luclin raid" before Ssraeshza/Akheva/VT. It has the
+  simplest mechanics.
+
+**7. Umbral Plains has no key gate but hosts Doomshade and other
+raid-tier mobs.** Doomshade was NOT in my Luclin boss catalog —
+let me check the db to confirm. My catalog listed Zelnithak (176089,
+251k HP) and Rumblecrush (176002, 150k HP) as Umbral bosses. If
+Doomshade exists as a separate entity, architect addendum needed.
+
+**8. Luclin pain-score distribution (5 quest chains):**
+- **RED:** VT key (Emperor + raid boss requirement), Umbral Plains
+  Doomshade+ content, cross-era Vulak`Aerr gate. **3 of 5 quest chains.**
+- **YELLOW:** Ring of the Shissar, Grimling War, Grieg's End key.
+  **3 of 5.** (overlap because Ring of Shissar leads to VT key's
+  Emperor step)
+- **GREEN:** VT key Phase 1 (shard collection, taken standalone).
+
+**9. Boss catalog amendments for Luclin quest-critical encounters:**
+- **Commander Zazuzh (162150, L56, 9k HP)** — already scaled-named
+  tier; audit addition for completeness.
+- **Commander Zherozsh (162217, L58, 9k HP)** — same.
+- **Spiritist Kama Resan (154052, L60, 5.6k HP)** — non-combat quest
+  trigger NPC; NOT a scaling target.
+- **Warden Mekuzh (162023, L60, 33k HP)** — elite named; minor HP
+  trim (10-20%) appropriate.
+- **Sacrificed Remains / a shimmering presence / Spirit of Akelha`Ra**
+  (Akheva) — script-spawned quest-chain NPCs; architect to verify
+  IDs and whether they need scaling tweaks. Likely low HP.
+
+**10. The three tiers of small-group accessibility (lore-master's
+final synthesis):**
+
+**Tier 1 — Small group accessible (GREEN/YELLOW), no scaling needed:**
+- Sebilis key (Kunark) / VP key shards (Kunark, non-Trakanon)
+- Coldain Rings 1-7 (Velious)
+- VT key Phase 1 shards + Phase 2 Scepter Frame (Luclin)
+- Ring of the Shissar quest (Luclin)
+- Grieg's End key farming (Luclin)
+
+**Tier 2 — Needs boss scaling to be accessible (RED → scaled):**
+- All 14 Epic 1.0 weapons (Classic/Kunark bosses)
+- VP key final: Trakanon (Kunark)
+- Sleeper's Tomb key: First Brood dragon (Velious)
+- VT key Phase 3-4: Emperor Ssraeshza + Luclin raid boss
+- Cross-era gate: Vulak`Aerr (Velious ToV)
+
+**Tier 3 — Structurally broken regardless of boss scaling:**
+- Coldain Ring 10 Ring War (21-wave DPS gate)
+- Grimling War event (wave gate, if Obelisk still required)
+- Truespirit faction (Druid/Ranger/Shaman — linear non-repeatable)
+- Keepers of the Art (3k Batwing turn-ins)
+- Ring 8 failure-reset-to-Ring-1 mechanic
+
+**Architect action items from the 4-era lore-master synthesis:**
+1. Cross-era gate policy for Vulak`Aerr → Key to Luclin
+2. Ring War script tunability (`ring_war.lua`)
+3. Grimling War script tunability + Obelisk-requirement patch status
+4. Ring 8 failure-reset UX decision
+5. Truespirit + Keepers-of-the-Art faction-grind mitigation
+6. VT key Phase 1 shard count verified as 10 (not 13) — my audit
+   doc updates to reflect this.
+
+---
+
+#### Full Luclin catalog
+
+See `lore-master/luclin-chains.md` for complete walkthrough of VT
+key, Ssraeshza Temple Ring of the Shissar, Grimling War, Grieg's
+End, Umbral Plains, cross-era gate analysis, and the 3-tier
+synthesis summary for architect.
+
+---
+
+#### (Preserved: Game-designer's original Luclin fallback summary, now superseded by lore-master catalog above)
 
 **Scope:** Vex Thal shard quest (13-part key quest — the densest
 raid-progression in the game), Emperor Ssraeshza key quest, Sanctus
@@ -2709,6 +2886,30 @@ are quest-load-bearing:
 - **Lore-master confirmation:** This is a QUEST-NPC, not a kill target. Leave at 3M HP.
 - **Implementation:** Remove from any scaling UPDATE that might target `hp > 1,000,000 AND raid_target = 1` (if architect uses such a filter — better to use explicit ID lists).
 
+### Doomshade — Umbral Plains raid boss (added 2026-04-22 from Luclin review)
+
+- **NPC ID:** 176088 / **Zone:** umbral / **Level:** 66 / **HP:** 350,000
+- **Damage:** 127-412 / **raid_target:** 1
+- **Originally omitted:** Luclin boss catalog missed this — my initial Umbral query captured Zelnithak (176089) and Rumblecrush (176002) but not Doomshade (176088).
+- **Role:** Signature Umbral Plains raid boss. Not quest-required but high-value loot target.
+- **Gap vs. L66 scaled-named (~24k HP):** ~15× HP; damage already in manageable range
+- **Recommended action:** HP cut 75% (→90k). Damage no change. Respawn 12h.
+
+### Ssraeshza Temple Ring of the Shissar NPCs (added 2026-04-22)
+
+- **Commander Zazuzh (id 162150):** L56, 9,000 HP — `#`-prefix script-spawned. Floor 1 door-key source (guaranteed drop). Already scaled-named tier. **No scaling action needed.**
+- **Commander Zherozsh (id 162217):** L58, 9,000 HP — script-spawned. Floor 2 door-key source. **No scaling action needed.**
+- **Warden Mekuzh (id 162023):** L60, 33,000 HP — elite-named Taskmaster's Pouch source. Recommend minor HP trim (10-20% → ~27k).
+- **Spiritist Kama Resan (id 154052):** L60, 5,600 HP (Acrylia zone). Grimling War trigger NPC — non-combat. **No scaling action.**
+- Pre-Emperor named (Advisor Zekuzh 162067, Arbiter Korazhk 162191, General Kizuhx 162066) are already in the Ssraeshza Temple boss catalog; confirmed as Ring of the Shissar Insignia sources.
+
+### VT Key correction (added 2026-04-22)
+
+- VT key is **10 Lucid Shards** (not 13 as originally described) + Shadowed Scepter Frame (Akheva chain) + Planes Rift (Emperor Ssraeshza) + Glowing Orb of Luclinite (any Luclin raid boss).
+- Shard collection phase is fully non-raid, accessible to small group today.
+- Only two RED blockers: Emperor Ssraeshza + any Luclin raid boss kill. Both covered by boss-catalog scaling.
+- Open Question #7 (shard-count reduction) now **resolved** as largely moot — no quest-script change needed.
+
 ### Implementation implications of the addenda
 
 - **Kunark boss catalog** needs The Tangrin added (78070).
@@ -2752,6 +2953,14 @@ are quest-load-bearing:
   for scaling math — community sources often reflect post-PoP
   live-server tunings or different server eras. Architect should
   NOT inflate scaling cuts to match community sources.
+- **Add Doomshade (id 176088) to Luclin boss catalog SQL set.** L66
+  350k HP Umbral Plains raid target — omitted from initial catalog.
+- **Cross-era gate Vulak`Aerr → Key to Luclin** must be considered
+  in phase sequencing. Phase 4b (Velious ToV) contains Vulak`Aerr
+  and gates all of Phase 5 (Luclin). Cannot split these into
+  independent projects without architect investigating whether Key
+  to Luclin can be alternate-sourced (Shadow Haven vendor per some
+  PEQ versions, or GM-granted) to decouple.
 
 ---
 
@@ -2903,7 +3112,23 @@ top bosses but damage reductions of only 20-50%. Additionally:
 - Magic Resist values should generally remain high — this preserves
   "casters can't solo-nuke a dragon".
 
-### 9. Special-case encounters flagged for non-standard handling
+### 9. Cross-era gate: Vulak`Aerr blocks ALL advanced Luclin (lore-master Task #10 finding)
+
+The Key to Luclin (zone access for Ssraeshza, Akheva, Vex Thal,
+Grieg's End, Umbral Plains, Fungus Grove, The Deep, The Grey,
+Grimling Forest, Acrylia inner) requires killing **Vulak`Aerr**
+(ToV final boss, id 124155, 890k HP). This is a Velious endgame
+kill gating the entire Luclin raid progression.
+
+**Phased-delivery implication:** If the user splits Phase 2-5 by
+era, Luclin is DOWNSTREAM of Velious-ToV completion. Phase 4b
+must include Vulak`Aerr scaling, not just ToV mid-tier. Alternatively,
+architect should investigate whether the Key to Luclin requirement
+can be lifted for small-group server (purchased from a Shadow Haven
+NPC as some PEQ versions allow, or GM-granted). This is a new **Open
+Question** for the user.
+
+### 10. Special-case encounters flagged for non-standard handling
 
 | Encounter | Zone | Reason | Recommended handling |
 |-----------|------|--------|----------------------|

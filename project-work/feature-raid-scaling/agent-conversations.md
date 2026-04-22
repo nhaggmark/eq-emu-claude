@@ -202,6 +202,54 @@ columns, era grouping.
 > removed from scaling scope. Extended audit doc's Velious raid
 > quest chains section with 10 project-critical findings.
 
+### 2026-04-22 — Task #10 Luclin chains delivery (final era catalog)
+
+**From:** lore-master → **To:** game-designer
+
+> Task #10: Luclin quest chain catalog complete. This completes all
+> four era catalogs (tasks #7–#10). Key findings:
+> - VT key requires Emperor Ssraeshza (full raid) + any Luclin raid
+>   boss for the Glowing Orb; shard collection phase is non-raid
+>   (10 shards, not 13).
+> - Ssraeshza Temple: Ring of the Shissar quest for emperor access —
+>   Commanders and pre-Emperor named are 2-group tier, not full raid.
+> - Acrylia Caverns: Grimling War event for inner key; three outer
+>   raids (Ring of Fire, Vah Shir Captive, Burrower) are key-free.
+> - Grieg's End: temporary Grieg's Key from random named; Servitor
+>   of Luclin is the "easiest Luclin raid boss."
+> - Luclin Epic 1.0: NONE — same as Velious, no class epic has
+>   steps in Luclin zones.
+> - CRITICAL cross-era gate: All advanced Luclin zones require
+>   killing Vulak`Aerr (ToV final boss). Luclin scaling work is
+>   downstream of Velious. The audit headline findings should call
+>   this out explicitly.
+> - Provided final 3-tier synthesis across all 4 eras for architect.
+
+**Response from** game-designer:
+
+> Filed content to `lore-master/luclin-chains.md` (~238 lines).
+> Verified via db:
+> - Doomshade (id 176088, L66, 350k HP, raid_target=1, Umbral) —
+>   MISSING from Luclin boss catalog. Added to addenda.
+> - Commander Zazuzh (162150, 9k HP) + Zherozsh (162217, 9k HP) +
+>   Warden Mekuzh (162023, 33k HP) + Spiritist Kama Resan (154052,
+>   5.6k HP) — all confirmed at low HP; no major scaling action
+>   needed but added to addenda for completeness.
+> - VT key corrected from 13-shard to 10-shard + 3-component in
+>   audit doc findings and Open Questions. Q7 resolved (shard
+>   reduction largely moot).
+> - Added cross-era-gate finding as new Headline Finding #9 in
+>   audit doc.
+> - Updated implementation implications with Doomshade addendum
+>   and Vulak`Aerr → Key to Luclin phase-sequencing note.
+
+**Outcome:** All four era quest-chain catalogs delivered by
+lore-master and integrated into audit doc. Lore-master tasks
+complete. Game-designer Phase 1 tasks complete. The audit is now
+fully canonical across both mechanics (game-designer-owned) and
+progression (lore-master-authored + game-designer-integrated).
+Ready for architect Phase 3 handoff pending user-decision gate.
+
 **Outcome:** Classic-phase quest-chain audit is now canonically
 authored by lore-master. Key new intel integrated:
 - Plane of Sky Islands 4-8 death-touch mechanics (not scalable by HP
