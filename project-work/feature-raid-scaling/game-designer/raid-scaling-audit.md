@@ -1500,10 +1500,195 @@ just in two zones.
 
 ### Velious raid quest chains
 
-> Populated by task #9 (lore-master). Includes: Coldain Ring War,
-> Coldain Shawl 8 + Prayer Shawl, Thurgadin/Kael/Skyshrine faction
-> access, ToV key quest, Sleeper's Tomb key, Ring of Scale faction,
-> Avatar of War trigger, Ancient dragons quests.
+> **Status:** Game-designer summary pending lore-master deep-review.
+
+**Scope:** Velious is the single most faction-intensive expansion.
+Raid-quest progression covers: Coldain Ring War (10-ring quest +
+Prayer Shawl + Shawl 8), Ring of Scale / Claws of Veeshan faction
+progression (for Kael/ToV/Skyshrine access), ToV key quest, Sleeper's
+Tomb key quest (multi-raid), plus Velious-phase steps of Epic 1.0s
+that extend into this era (mainly Warrior, Paladin, SK).
+
+---
+
+#### Coldain Ring War (+ Shawl 8 + Prayer Shawl)
+
+- **Class/scope:** General faction access to Coldain-friendly paths;
+  Thurgadin access; prereq for ToV key for many players; Shaman
+  Epic 1.0 late steps; class-neutral rewards
+- **Era:** Velious
+- **Zones:** The Great Divide, Icewell Keep (`thurgadinb`), Eastern
+  Wastes
+- **Turn-in NPCs:** Dain Frostreaver IV (thurgadinb, 129003)
+- **Raid encounters required:**
+  - Coldain Shawl 8 requires the **Coldain Prayer Shawl event** —
+    a triggered multi-wave event defending Coldain against a
+    Kromrif giant invasion
+  - Ring War itself is a 10-ring quest chain ending in a full raid
+    event — typically 20-40 player
+- **Non-encounter blockers:**
+  - Requires Ring 5 reward (for Ring War participation eligibility)
+  - Progressive Coldain faction — hours of giant kills
+- **Small-group blockers:**
+  - The Prayer Shawl event has mechanic-scripted add waves that
+    may be tuned for raid-size groups. Needs verification.
+  - Ring War's final event scripts spawn 30+ giants; small group
+    with companions may or may not handle this — event script
+    review required
+- **Recommended action:**
+  - Audit covers Dain Frostreaver IV stats (HP → 80k).
+  - **Critical:** architect should review
+    `akk-stack/server/quests/thurgadina/` and
+    `akk-stack/server/quests/thurgadinb/` for Ring War + Prayer
+    Shawl event scripts. If wave-count is hard-coded, may need
+    reduction or adaptive scaling for small group.
+  - Flag to user: Coldain Ring War is traditionally a guild-
+    defining event — may warrant keeping at high difficulty even
+    for 1-3 players (wishful-rewarding challenge).
+
+#### Thurgadin / Kael / Skyshrine faction access
+
+- **Class/scope:** General raid access; required for Kael (AoW,
+  Tormax), ToV (all 16+ dragon lords), Skyshrine (Yelinak,
+  Crusaders)
+- **Era:** Velious
+- **Zones:** Great Divide, Eastern Wastes, Kael, Skyshrine, Western
+  Wastes
+- **Non-encounter blockers:**
+  - Coldain / Claws of Veeshan / Ring of Scale faction grinds
+  - Class-race restrictions (some classes can't get positive faction
+    with both Kael and Skyshrine simultaneously)
+- **Recommended action:**
+  - Audit boss-catalog covers stats.
+  - **Critical:** user decision needed on faction-grind time for
+    small group. Current Velious faction grinds are weeks of
+    outdoor-giant killing — considerably longer for solo than
+    6-player group because kill rate is much lower. Consider
+    prior-pass's `Zone:GlobalLootMultiplier=2` helping faction
+    hit rates (already live).
+
+#### Temple of Veeshan (ToV) key quest
+
+- **Class/scope:** ToV access; Warrior / Paladin / SK epic late
+  steps
+- **Era:** Velious
+- **Zones:** Kael + ToV itself + "shard" collection across
+  Velious
+- **Turn-in NPCs:** (lore-master to confirm) — traditionally at
+  Claws of Veeshan dragons in Kael/Skyshrine
+- **Raid encounters required:**
+  - Key pieces drop from Kael bosses (Tormax, Derakor, AoW
+    component) + outdoor Velious dragons (Klandicar, Sontalak,
+    Yelinak context)
+  - Sleeper's Tomb key is SEPARATE — see below
+- **Non-encounter blockers:** Ring of Scale / Claws of Veeshan
+  positive faction required
+- **Small-group blockers:** Tormax and AoW at current stats are
+  walls; audit's 78-87% HP cut makes them tractable
+- **Recommended action:** Addressed by boss-catalog scaling + the
+  user decision on faction-grind time
+
+#### Sleeper's Tomb key quest
+
+- **Class/scope:** Sleeper's Tomb access; prereq for 4-Warder
+  events and the Sleeper-awake event
+- **Era:** Velious
+- **Zones:** ToV (four Ancients trigger Warder summons)
+- **Raid encounters required:**
+  - Kill specific ToV dragons for key components (traditionally:
+    Aaryonar, Dozekar, Lendiniara as a core set — lore-master
+    verify)
+  - Some Sleeper's Tomb ancients drop key components themselves
+- **Progression path:** ToV → collect key components from
+  Aaryonar line → enter Sleeper's → face Warders
+- **Small-group blockers:**
+  - ToV bosses at current stats (audit covers)
+  - Sleeper's Tomb inner-guard mechanic (if any)
+- **Recommended action:** Boss scaling + lore-master to verify
+  which ToV bosses specifically drop key.
+
+#### Coldain Prayer Shawl + Tranquil Staff (class-specific Velious raid quests)
+
+- **Class/scope:** Cleric/Druid/Shaman have late-epic enhancement
+  quests using Coldain Shawl chain for items like Tranquil Staff;
+  Bard has Velious-specific quest items
+- Velious-specific epic-enhancement paths exist for
+  Druid/Shaman/Ranger — typically involve Coldain faction turn-ins
+- **Recommended action:** Check quest scripts for hard turn-in
+  gates that require 6-player check-sums (ancient cases where a
+  "place item X, kill mob Y simultaneously" mechanic exists).
+
+#### Avatar of War quest (Warrior / Paladin / SK)
+
+- **Class/scope:** Warrior, Paladin, SK Epic 1.0 late step
+- **Zones:** Kael, ToV
+- **Raid encounters required:** Avatar of War kill + component from
+  ToV tier
+- **Small-group blockers:** AoW at 900k HP + rampage 6×6 = current
+  wall. Audit recommends 87% HP cut + rampage 3×3.
+- **Recommended action:** Addressed by boss-catalog scaling.
+
+---
+
+#### Velious-phase of Epic 1.0
+
+Most Epic 1.0s COMPLETE in Kunark or have their Velious steps as
+quality-of-life rewards (not raid-tier). The Velious-required raid
+steps are specific:
+
+**Warrior Epic 1.0 — Swiftwind / Earthcaller**
+- Velious raid step: **Avatar of War** kill (for Swiftwind) +
+  **Vindicator** (for Earthcaller pair)
+- Small-group viability: post-scaling, AoW tractable; Vindicator
+  already moderate tier (180k HP → 60k post-audit)
+
+**Paladin Epic 1.0 — Fiery Avenger**
+- Velious raid step: **Avatar of War** component
+- Small-group viability: same as Warrior
+
+**Shadow Knight Epic 1.0 — Innoruuk's Curse / Velious step**
+- Velious raid step: varies by chain; traditional SK "blood of
+  the dragon" requires ToV dragon kill (usually Aaryonar or
+  Dozekar — lore-master verify)
+- Small-group viability: ToV bosses covered by audit
+
+**Druid / Shaman / Cleric Velious enhancement paths**
+- Late-epic class-specific enhancement via Coldain Prayer Shawl
+  chain — generally no raid-tier kill, faction-only
+
+---
+
+#### Velious quest chain summary
+
+- **Velious is the most progression-complex era.** Three distinct
+  access chains (Thurgadin/Kael/Skyshrine faction), three distinct
+  key quests (ToV, Sleeper's, Veeshan's Peak if counted as
+  Kunark-Velious hybrid), and an iconic Ring War event.
+- **Faction grinds are the biggest small-group friction point** —
+  not boss stats. A solo player grinding Coldain faction from
+  neutral takes many hours of frost-giant-kill cycles in Great
+  Divide. The prior-pass's `GlobalLootMultiplier=2` helps
+  moderately but doesn't fundamentally change the time-wall.
+- **Ring War event is the single most scripted raid event** in
+  in-era content. Architect MUST audit the Ring War script
+  (`akk-stack/server/quests/thurgadina/` or `eastwastes/`) for
+  hard-coded wave counts and small-group viability. May require
+  companion-count adaptive scaling.
+- **Shared-dependency bosses across multiple Velious chains:**
+  - **Avatar of War (kael, 113457):** Warrior + Paladin + SK Epic +
+    ToV key component (for some chains)
+  - **King Tormax (kael, 113215):** ToV key + Coldain faction
+    progression nemesis
+  - **Dain Frostreaver IV (thurgadinb, 129003):** Coldain Ring War
+    quest giver + Shawl 8 + Prayer Shawl
+  - **Aaryonar + Dozekar (ToV):** Sleeper's Tomb key + SK/Paladin
+    epic components (for some chains)
+
+**Velious quest-chain blockers BEYOND boss-stat scaling:**
+- Faction grind time — needs user decision
+- Ring War + Prayer Shawl event scripts — architect script review required
+- Possible hard-coded "kill count" checks in Velious scripts that
+  assume raid group size
 
 ---
 
@@ -1738,10 +1923,137 @@ Task #10) is a progression-phase of its own.
 
 ### Luclin raid quest chains
 
-> Populated by task #10 (lore-master). Includes: Vex Thal shard quest
-> (13 shards from Luclin raid targets), Emperor Ssraeshza key, Seru /
-> Sanctus Seru access, Fungus Grove progression, any Luclin-era Epic
-> 1.0 steps.
+> **Status:** Game-designer summary pending lore-master deep-review.
+
+**Scope:** Vex Thal shard quest (13-part key quest — the densest
+raid-progression in the game), Emperor Ssraeshza key quest, Sanctus
+Seru / Katta Castellum progression, Luclin-specific class AA-
+precursor quests, any Luclin-tier components of Epic 1.0s that
+extend this late.
+
+---
+
+#### Vex Thal key quest (13 shards)
+
+- **Class/scope:** General raid access — VT contains some of the
+  best in-era loot and the Aten Ha Ra cluster
+- **Era:** Luclin
+- **Zones:** ALL Luclin raid zones + some mid-level Luclin zones
+- **Turn-in NPCs:** Final key forge NPC (lore-master verify —
+  traditionally in Shadow Haven or Umbral Plains)
+- **Raid encounters required for the 13 shards:**
+  - Shard drops come from a mix of mid- and high-tier Luclin
+    bosses. Traditional spread:
+    1. Ssraeshza Temple component (requires Emperor-tier access)
+    2. Akheva Ruins components (3-4 shards from Vyzh`dra, Itraer
+       Vius, Shar Vinitras, Insanity Crawler)
+    3. Grieg's End components (Grieg Veneficus shard)
+    4. Sanctus Seru / Katta component (Lord Inquisitor Seru)
+    5. Umbral Plains / Acrylia / The Deep components (Thought
+       Horror, Rumblecrush, evolved burrower)
+    6. Grimling Forest / other mid-Luclin shard sources
+    7. Plus some mid-boss drops (Nathyn Illuminious,
+       Praesertum, Zelnithak)
+- **Non-encounter blockers:**
+  - Emperor Ssraeshza key itself is a prereq for 1+ shard
+  - Seru key is prereq for 1 shard
+  - Faction requirements in Akheva / Sanctus Seru
+- **Progression path:** VT key effectively requires completing
+  most of Luclin's raid progression — it's the pinnacle gate
+- **Small-group blockers:**
+  - Every shard-dropping boss needs audit scaling applied
+  - Multiple raid zones' faction access required
+  - Travel / key-chain traversal time
+- **Recommended action:**
+  - Audit boss-catalog covers stats
+  - **Critical:** architect to verify shard drop rates and quest
+    script logic for small-group viability
+  - Flag for user: VT key is the single biggest quest-chain
+    blocker in the game — even post-scaling, 13 raid-tier boss
+    kills across 8+ zones is a multi-session project. Consider
+    whether to reduce the shard requirement (e.g. 6 of 13) for
+    small-group server, or keep as "worthy endgame mountain".
+
+#### Emperor Ssraeshza key quest
+
+- **Class/scope:** Emperor Ssraeshza access
+- **Era:** Luclin
+- **Zones:** Ssraeshza Temple
+- **Raid encounters required:**
+  - **High Priest of Ssraeshza** kill (primary key trigger)
+  - Possibly General Kizuhx + Xerkizh the Creator tier encounters
+- **Progression path:** Clear Ssraeshza Temple outer tiers →
+  High Priest → Emperor throne
+- **Small-group blockers:** High Priest 941k HP + Xerkizh 807k HP
+  at current stats are walls; audit 90% HP cuts make tractable
+- **Recommended action:** Addressed by boss-catalog.
+
+#### Sanctus Seru access (Lord Inquisitor Seru key)
+
+- **Class/scope:** Sanctus Seru inner zone access
+- **Era:** Luclin
+- **Zones:** Katta Castellum, Sanctus Seru
+- **Raid encounters required:**
+  - Praesertum quartet (Vantorus, Rhugol, Bikun, Matpa) for
+    traditional pre-Seru chain
+  - Lord Inquisitor Seru (end boss)
+- **Non-encounter blockers:** Faction requirements — players
+  must side with Katta OR Seru (mutually exclusive)
+- **Small-group blockers:** Seru at 1.2M HP is top-tier; audit
+  90% cut makes tractable
+- **Recommended action:** Boss-catalog + user decision on faction-
+  lock mechanic (it's lore-central — probably preserve)
+
+#### Luclin-phase Epic 1.0 and class AA-precursors
+
+- Most Epic 1.0s complete in Kunark or Velious. Luclin-era
+  Epic 1.0 extensions are rare but exist for a few classes:
+  - **Beastlord** has a Classic-through-Luclin epic chain
+    (Scion's Staff) that traverses multiple Luclin zones +
+    raid targets including Khati Sha
+  - Some "enhancement" quests for Bard/Druid use Luclin drops
+- **Khati Sha the Twisted (154145)** in Grimling Forest is
+  the specifically-named "Beastlord Epic" target
+- **Recommended action:** Boss-catalog scaling covers Khati Sha;
+  lore-master to verify Beastlord epic progression (we only
+  verified raid target NPC stats, not quest script).
+
+---
+
+#### Luclin quest chain summary
+
+- **Vex Thal shard quest is the project's single largest
+  progression wall.** 13 required shards from multiple raid-tier
+  bosses across 8+ zones. Even if every individual boss is
+  scaled tractable (audit addresses this), the CUMULATIVE quest
+  time is large for a small group.
+- **Flag for user:** Should the Vex Thal key requirement be
+  reduced (e.g. to 6-8 shards) for small-group play? This is a
+  quest-script / data change (not boss-stat), and it's the
+  single highest-impact small-group quality-of-life decision
+  in the project. Lore-master to weigh in on lore-appropriateness
+  of reducing shard count.
+- **Emperor Ssraeshza key** is straightforward post-scaling.
+- **Seru / Katta faction lock** is lore-canonical (pick a side) —
+  should be preserved. Small group can complete either side.
+- **Shared-dependency bosses across multiple Luclin chains:**
+  - **High Priest of Ssraeshza (ssratemple, 162076):** Emperor
+    key + possibly 1 VT shard
+  - **Vyzh`dra the Cursed (akheva, 162206):** multiple VT shards
+  - **Shar Vinitras / Shei Vinitras (akheva):** multiple VT shards
+  - **Lord Inquisitor Seru (sseru, 159691):** Sanctus access + 1
+    VT shard
+  - **Grieg Veneficus (griegsend, 163075):** 1+ VT shard
+- **Beastlord epic** is the only in-era Epic 1.0 with substantive
+  Luclin-only raid dependency (Khati Sha).
+
+**Luclin quest-chain blockers BEYOND boss-stat scaling:**
+- **Vex Thal 13-shard count** — flag for reduction decision
+- **Faction grinds for Sanctus Seru / Katta / Akheva access** —
+  time-wall like Velious
+- **Vex Thal internal progression** — the zone has extensive add-
+  phase scripts and patrol paths that may or may not be small-
+  group tractable even with boss-stat cuts
 
 ---
 
