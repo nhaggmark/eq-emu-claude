@@ -87,16 +87,20 @@ Implementation: direct `spawn2.respawntime` UPDATE, scoped by NPC ID join. Same 
 
 Special abilities are stored in `npc_types.special_abilities` as a `^`-delimited string (e.g., `1,1^2,1^35,1`).
 
-**No rule controls special ability behavior globally.** The only relevant rule is:
+**No rule controls special ability behavior globally.** The only relevant rules:
 - `Spells:CharmDisablesSpecialAbilities` = false (toggles charm-stripping special abilities — not relevant)
 - `Combat:AllowRaidTargetBlind` = false (live-like blindness immunity for raid targets)
 
-**Death touch = special ability 35**, stored directly in `npc_types.special_abilities`.
+**CORRECTION (2026-04-22, from architect):** special_abilities ability 35 is NOT death touch. Per `eqemu/common/emu_constants.h:562`, ability 35 = `HarmFromClientImmunity` — an immunity flag. The three PoSky death-touch NPCs (Spiroc Lord 71012, Bazzt Zzzt 71072, Keeper of Souls 71075) do NOT have ability 35 in their special_abilities strings at all. The config-expert's original finding was wrong.
 
-PoSky (zone short_name = `airplane`, id = 3) — confirmed death-touch NPCs:
-- All PoSky NPCs with IDs in the 3xxx range have `special_abilities` containing `35,1` (death touch)
-- User decision Q11 (status.md): remove death touch from PoSky Islands 4-8 mobs entirely
-- Implementation: targeted `UPDATE npc_types SET special_abilities = [stripped_value] WHERE id IN (...)` — data-expert work
+**Actual death-touch mechanism:** spell 982 "Cazic Touch" (base_value1=-100,000, cast_time=0, recast_time=0) delivered via `npc_spells_entries`:
+- Spiroc Lord (71012): npc_spells_id=118
+- Bazzt Zzzt (71072): npc_spells_id=449
+- Keeper of Souls (71075): npc_spells_id=969
+
+**Correct removal:** `DELETE FROM npc_spells_entries WHERE npc_spells_id IN (118, 449, 969) AND spellid = 982;` — data-expert `npc_spells_entries` change, not a `special_abilities` string edit.
+
+The NPCs in the 3xxx ID range (PoSky zone) that showed `35,1` in a broader query are a different population — those ability-35 flags represent the HarmFromClientImmunity mechanic, not death touch.
 
 The `npc_scale_global_base` table also has a `special_abilities` column (confirmed schema). Type 2 (raid) rows all have the same value: `1,1^2,1^8,1^13,1^14,1^15,1^16,1^17,1^21,1^31,1`. This is the auto-scaling fallback, but as the prior-pass architect established, 99.2% of NPCs have manually set stats and never hit this path.
 
