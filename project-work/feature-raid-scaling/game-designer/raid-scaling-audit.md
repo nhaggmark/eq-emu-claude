@@ -189,7 +189,377 @@ OUT OF ERA`.
 
 ### Classic raid boss catalog
 
-> Populated by task #3 (game-designer).
+**Summary:** Classic raid content is small by count but includes four
+distinct content groups: the two 55-cap dragons (Nagafen, Vox), the
+elemental Planes (Fear, Hate, Sky), the dungeon mini-raids (Phinigel,
+Zordak Ragefire, Hole), and a short tail of zone-specific raid rares.
+HP values for the classic dragons and Sky/Hate gods cluster around
+29k-35k — roughly 4x a scaled level-55 named (~8k HP post-prior-pass).
+Cazic Thule is a dramatic outlier at 451k HP and the `a_dracoliche`
+in Fear is 175k. The prior scaling pass did NOT touch boss HP, damage,
+or AC, but DID increase loot probability / drop rates / spawn rate for
+every boss listed below.
+
+Elite-trash in raid zones (Plane of Fear ~91 NPCs, Plane of Hate ~28,
+hateplaneb ~160+) is out of scope per the brief ("current named
+difficulty feels good"). The PEQ `raid_target = 1` flag over-marks
+them — they are listed here only when they are true encounter targets.
+
+**Quest-chain cross-references:** Cleric epic requires `a_dracoliche`
+in Fear. Ranger epic requires `Faydedar`. Rogue/Monk/Enchanter epics
+require Plane of Sky progression and Noble Dojorn. See lore-master's
+Classic quest-chain catalog below for full dependencies.
+
+**Abbreviation key** (npcspecialattks letters):
+S=Summon, E=Enrage, R=Rampage, F=Flurry, T=Triple-attack, Q=Quad,
+U=UnSlowable, M=mez immune, C=charm immune, N=normal-weapon immune,
+I=stun immune, D=dispel immune, f=flee-disabled.
+
+---
+
+### Lord Nagafen — soldungb (Nagafen's Lair)
+
+- **NPC ID:** 32040
+- **Level:** 55
+- **Stats (current):** HP 32,000 / dmg 85-218 / AC 230 / MR 340 / CR 70 / FR 425
+- **Special abilities:** SEQMCND (summon, enrage, quad, mez/charm/normal-weapon/disease immune); special_abilities flags include rampage (1), AE rampage (10), slow immune (13), etc.
+- **Scripted behavior:** `akk-stack/server/quests/soldungb/Lord_Nagafen.pl` (Perl — legacy)
+- **Adds / event mobs:** no scripted adds, but linked dragon followers in Nagafen's Lair
+- **Respawn timer:** 194,400s (54h / ~2.25 days)
+- **Prior-pass status:** Stats UNTOUCHED; loot probability boosted (×1.5), rare drops boosted (×1.5), respawn reduced by 25% (from 259,200 default → 194,400)
+- **Gap vs. scaled-named baseline at L55:** ~3.9× HP (32k vs 8.1k), ~0.9× damage (85-218 vs 73-305 scaled named). Damage is already lower than a scaled named — only HP is the gap.
+- **Recommended action:** Scale HP down 50-65% (target ~12-15k). Damage is fine. Reduce respawn further to 21,600s (6h) per brief's 6-24h target. Keep SEQMCND, consider lifting mez-immunity (M) to give enchanters a tool in small-group encounters — flag for user.
+- **Notes:** Flame-themed, located deep in Nagafen's Lair past the fire-giant camps. Traditional "first raid" target for classic servers.
+
+### Lady Vox — permafrost (Permafrost Caverns)
+
+- **NPC ID:** 73057
+- **Level:** 55
+- **Stats (current):** HP 32,000 / dmg 85-218 / AC 230 / MR 340 / CR 1000 / FR 70
+- **Special abilities:** SEQMCND (same flags as Nagafen)
+- **Scripted behavior:** `akk-stack/server/quests/permafrost/Lady_Vox.pl` (Perl)
+- **Respawn timer:** 194,400s (54h)
+- **Prior-pass status:** Stats UNTOUCHED; loot/respawn same treatment as Nagafen
+- **Gap vs. baseline at L55:** identical to Nagafen — ~3.9× HP, damage already low
+- **Recommended action:** Same treatment as Nagafen — scale HP 50-65%, reduce respawn to 6h.
+- **Notes:** Mirror of Nagafen — frost-themed. Same Classic-tier difficulty.
+
+### Phinigel Autropos — kedge (Kedge Keep)
+
+- **NPC ID:** 64001
+- **Level:** 53
+- **Stats (current):** HP 18,000 / dmg 61-156 / AC 222 / MR 100
+- **Special abilities:** STMCD (summon, triple-attack, mez/charm/normal-weapon/disease immune)
+- **Scripted behavior:** quest scripts in `akk-stack/server/quests/kedge/` (not yet verified)
+- **Respawn timer:** unknown (requires follow-up — not in dumped data)
+- **Prior-pass status:** Stats UNTOUCHED; loot/respawn boosted like other bosses
+- **Gap vs. baseline at L53:** ~2.4× HP (18k vs ~7.5k scaled named at 53), damage already within named range
+- **Recommended action:** Already close to target — minimal HP reduction needed (~25%). The bigger challenge is underwater combat mechanics, which is a player-side issue not a scaling one.
+- **Notes:** Unique encounter (underwater, reached via Sirens Grotto drainage). Named tier rather than boss tier in effective difficulty — arguably should become a named mob.
+
+### Cazic Thule — fearplane (Plane of Fear)
+
+- **NPC ID:** 72003
+- **Level:** 70
+- **Stats (current):** HP 451,000 / dmg 223-603 / AC 504 / MR 155 / CR 100 / FR 380
+- **Special abilities:** SERQUMCNIDfW (summon, enrage, rampage, quad, unslowable, mez/charm/normal/stun/dispel/flee-disabled, AE-rampage-weapon). special_abilities includes `1,10^7` = rampage 10 hits × 7 targets
+- **Scripted behavior:** extensive Lua in `akk-stack/server/quests/fearplane/Cazic_Thule.lua` (likely includes Mortal Coil / summon mechanics)
+- **Respawn timer:** 259,200s (72h / 3 days)
+- **Prior-pass status:** Stats UNTOUCHED; loot/respawn boosted
+- **Gap vs. baseline at L70:** At level 70 in Classic era this is already anomalous — Classic was capped at 50, Kunark at 60, and Luclin introduced 65. Level 70 Classic is a PEQ-era decision. Scaled-named L70 baseline is ~30k HP; Cazic is 15× that.
+- **Recommended action:** Major scale-down — target 80-120k HP (3-5× scaled named at L60-65). Lift rampage 10×7 to something tractable for small groups (rampage 3×2). Preserve summon + enrage as signature mechanics. Consider dropping to level 65 since Classic era cap is not 70.
+- **Notes:** End-boss of Plane of Fear. Hard walled for any small group at current stats. Requires coordinated review with lore-master (CT is lore-central).
+
+### a_dracoliche — fearplane (Plane of Fear)
+
+- **NPC ID:** 72090
+- **Level:** 58
+- **Stats (current):** HP 175,000 / dmg 177-595 / AC 516 / MR 220 / FR 175
+- **Special abilities:** SFUMCND (summon, flurry, unslowable, mez/charm/normal/disease immune)
+- **Scripted behavior:** `akk-stack/server/quests/fearplane/a_dracoliche.lua`
+- **Respawn timer:** 194,400s (54h)
+- **Prior-pass status:** Stats UNTOUCHED
+- **Gap vs. baseline at L58:** ~22× HP (175k vs ~8k scaled named)
+- **Recommended action:** Scale HP down to 35-50k (4-6× scaled named), keep abilities. Flurry + unslowable makes this a legitimate tank-check encounter even at reduced HP.
+- **Notes:** Critical quest dependency — **Cleric Epic 1.0 step 5** requires the Soulfire quest that involves a dragon bone from this mob. Also dropped items feed Wizard Epic.
+
+### Dread — fearplane (Plane of Fear)
+
+- **NPC ID:** 72000
+- **Level:** 55
+- **Stats:** HP 32,500 / dmg 168-453 / AC 397 / MR 185 / CR 435 / FR 435
+- **Special abilities:** ESMCNDTf (enrage, summon, mez/charm/normal/disease/triple immune, flee-disabled)
+- **Scripted behavior:** `akk-stack/server/quests/fearplane/Dread.lua`
+- **Respawn:** 194,400s (54h)
+- **Prior-pass:** UNTOUCHED
+- **Gap:** ~4× HP; damage is higher than scaled-named (168-453 vs 73-305 at 55)
+- **Recommended:** Scale HP 30-40% down (target ~20k). Damage is already at "slightly harder than named" level — leave or trim ~10%. Respawn to 6h.
+- **Notes:** One of three Plane of Fear Nightmare Knights (Dread / Terror / Fright).
+
+### Terror — fearplane
+
+- **NPC ID:** 72002 / **Level:** 55 / **HP:** 32,500 / **dmg:** 168-453 / **AC:** 397
+- **npcspecialattks:** FSEMCNUDT (flurry + rest of Dread's set)
+- **Scripted:** `akk-stack/server/quests/fearplane/Terror.lua`
+- **Gap/Action:** same as Dread; additional flurry makes this the most dangerous of the three — consider trimming flurry chance via per-NPC tuning or by scaling down damage spread.
+
+### Fright — fearplane
+
+- **NPC ID:** 72004 / **Level:** 55 / **HP:** 32,500 / **dmg:** 168-453 / **AC:** 397
+- **npcspecialattks:** SEMCNDTf
+- **Scripted:** `akk-stack/server/quests/fearplane/Fright.lua`
+- **Gap/Action:** same treatment as Dread/Terror.
+
+### The Tempest Reaver — fearplane
+
+- **NPC ID:** 72012 / **Level:** 55 / **HP:** 35,000 / **dmg:** 74-150 / **AC:** 397 / **MR:** 95
+- **npcspecialattks:** UMIf (unslowable, mez immune, stun immune, flee-disabled)
+- **Respawn:** 32,400s (9h) — lowest in Fear, fits brief's 6-24h already
+- **Prior-pass:** UNTOUCHED
+- **Gap:** ~4.4× HP but damage 74-150 is BELOW scaled named (73-305) at L55 — an outlier
+- **Recommended:** HP scale 30-40%. No damage change (already low). Respawn already fits.
+- **Notes:** Tagged "#" — script-spawned only. Event trigger for a Fear storm event.
+
+### Wraith of a Shissar — fearplane
+
+- **NPC ID:** 72001 / **Level:** 55 / **HP:** 25,000 / **dmg:** 71-295 / **AC:** 397
+- **npcspecialattks:** T (triple attack only — softer than other Fear bosses)
+- **Respawn:** 210,924s (~58.6h)
+- **Prior-pass:** UNTOUCHED
+- **Gap:** ~3× HP; damage in range of scaled-named
+- **Recommended:** HP scale 30%. Respawn to 6h.
+- **Notes:** Lore figure (Shissar race nod) — consult lore-master before mechanical changes.
+
+---
+
+### Innoruuk — hateplane (old Plane of Hate)
+
+- **NPC ID:** 76007
+- **Level:** 55
+- **Stats (current):** HP 33,349 / dmg 260-379 / AC 397 / MR/CR/FR all 22 (!)
+- **Special abilities:** FSREUMCND (flurry, summon, rampage, enrage, unslowable, mez/charm/normal/disease immune)
+- **Scripted behavior:** presumably script-spawned at end of Hate
+- **Respawn timer:** 194,400s (54h)
+- **Prior-pass status:** UNTOUCHED
+- **Gap vs. baseline at L55:** ~4× HP (33k vs 8k); damage 260-379 is ~3.5× scaled-named max (305) on the upper end. Very low resists (22 across MR/CR/FR) — already small-group-friendly vs. spell damage.
+- **Recommended action:** HP scale 40% (target ~20k). Damage scale to 150-300 range. Reduce respawn to 6h.
+- **Notes:** Titular Plane of Hate god. Two versions exist in database: id=76007 (classic Hate layout, L55 33k HP) and id=186158 in hateplaneb (revamp layout). **User decision needed: which Hate version is live on the server?** — flag for consolidation.
+
+### Maestro of Rancor — hateplane
+
+- **NPC ID:** 76011
+- **Level:** 53 / **HP:** 16,228 (unusually low for a named raid god)
+- **dmg:** 160-254 / **AC:** 383 / **MR:** 21
+- **npcspecialattks:** f (flee-disabled only)
+- **Prior-pass:** UNTOUCHED
+- **Gap:** ~2× HP — already very close to scaled-named tier
+- **Recommended:** Minimal change — consider no HP scale, or 10% cut. Arguably should be reclassified as a named rather than a boss.
+
+### Hand of the Maestro — hateplane
+
+- **NPC ID:** 76015 / **Level:** 51 / **HP:** 10,870 / **dmg:** 120-304 / **AC:** 369
+- **Recommended:** Event mob — leave. Already in scaled-named range.
+
+### Hate council — High Priest M`kari / Avatar of Abhorrence / Master of Spite / Mistress of Scorn / Grandmaster R`Tal
+
+- **NPC IDs:** 76042, 76043, 76044, 76045, 76017
+- **Level:** 58 / **HP:** 29,305 / **dmg:** 81-228 (except R`Tal 133-336) / **AC:** 242 or 419
+- **Respawn:** 1,440s (24 min) — very short, these are mini-encounter bosses
+- **Prior-pass:** UNTOUCHED
+- **Gap:** ~3.5× HP; damage already in named range
+- **Recommended:** HP scale 30%, respawn already acceptable. Treat as "mini-boss" tier — hardest of them (R`Tal) at slightly higher difficulty.
+- **Notes:** Five-member council — each drops a distinct piece of Ghoulbane / lore item. Epic-adjacent for Paladin/SK.
+
+### hateplaneb (Revamp Plane of Hate) — 23 boss-tier NPCs
+
+> **This is the post-Velious revamped Hate layout.** It contains 170
+> `raid_target` NPCs but only 23 are at true-boss HP (25k-35k). Counts
+> by level: L55=5, L56=2, L58=3, L60=2, L63=6, L64=3, L65=6. Most are
+> scripted via `akk-stack/server/quests/hateplaneb/encounters/`.
+>
+> **Flag for user decision:** is the server running Classic Plane of
+> Hate (hateplane) or the revamp (hateplaneb)? If both are active,
+> which is the intended 1-3 player target? The revamp has a richer
+> encounter list but much higher trash density.
+>
+> Individual entries for the 23 hateplaneb bosses will be appended
+> during consolidation once the Classic-vs-revamp decision is made.
+> See the raw data in `claude/tmp/raid-scaling/` if needed.
+
+---
+
+### Plane of Sky — airplane
+
+Plane of Sky is an 8-island progression (one boss per island, with
+"key" or "quest mob" required to advance). The `raid_target = 1`
+NPCs in airplane:
+
+### The Spiroc Lord — airplane (Island 8 / final)
+
+- **NPC ID:** 71012 / **Level:** 63 / **HP:** 32,000 / **dmg:** 135-363 / **AC:** 345 / **MR:** 435
+- **npcspecialattks:** SERFT (summon, enrage, rampage, flurry, triple-attack)
+- **Respawn:** 10,800s (3h) — already short
+- **Scripted:** `akk-stack/server/quests/airplane/The_Spiroc_Lord.lua`
+- **Gap:** ~3× HP over scaled-named at L60; damage in named range
+- **Recommended:** HP scale 30% (target ~22k). Respawn already acceptable.
+- **Notes:** Final Sky island boss. Rampage + flurry makes for real add-management challenge — keep abilities, trim HP only.
+
+### Noble Dojorn — airplane (quest mob, unique — Rogue / Monk epic)
+
+- **NPC ID:** 71057 / **Level:** 60 / **HP:** 32,000 / **dmg:** 98-326 / **AC:** 345 / **MR:** 430
+- **npcspecialattks:** S (summon only)
+- **Respawn:** 194,400s (54h) — very long, quest-gating
+- **Scripted:** `akk-stack/server/quests/airplane/Noble_Dojorn.lua`
+- **Prior-pass:** UNTOUCHED (stats); respawn reduced 25%
+- **Gap:** ~3× HP
+- **Recommended:** HP scale 30% (target ~22k). Respawn to 6h — currently the long timer gates any repeated attempts.
+- **Notes:** **Quest critical** — Rogue Epic 1.0 (Ragebringer) requires items from Sky Island 8. Monk Epic requires Ton Po / Noble Dojorn chain. Lore-master confirm scope.
+
+### Gorgalosk — airplane (island 7)
+
+- **NPC ID:** 71021 / **Level:** 60 / **HP:** 29,000 / **dmg:** 107-392 / **AC:** 345 / **MR:** 500
+- **npcspecialattks:** EF (enrage + flurry)
+- **Respawn:** 10,830s (3h)
+- **Gap:** ~3× HP; damage upper bound (392) above scaled named
+- **Recommended:** HP scale 30%, damage trim 15%.
+
+### Eye of Veeshan — airplane (island 8 sub-boss)
+
+- **NPC ID:** 71065 / **Level:** 70 / **HP:** 32,000 / **dmg:** 87-201 / **AC:** 345 / **MR:** 475
+- **npcspecialattks:** S (summon)
+- **Respawn:** 21,600s (6h)
+- **Gap:** damage below scaled-named, HP ~5× named at L60 but mob is L70
+- **Recommended:** Minimal change — already feels like a mini-boss. Consider HP cut 20%. Flag level 70 as over-era (Sky is Classic era; L70 here is PEQ content creep).
+
+### a thunder spirit princess — airplane (island 5)
+
+- **NPC ID:** 71032 / **Level:** 53 / **HP:** 20,000 / **dmg:** 86-276
+- **Respawn:** 10,800s (3h)
+- **Gap:** ~2.4× HP
+- **Recommended:** Already close to named tier — minimal change (10-15% HP cut).
+
+**Sky summary note:** The 8-island progression itself is a major small-
+group blocker — each island has a "key drop" from a group-level mob
+to access the next island, and there are island time-out mechanics
+where failing to kill within a window boots you back. These are
+PROGRESSION issues rather than boss-stat issues. Lore-master's Classic
+quest chain catalog will cover the island-chain progression in detail.
+
+---
+
+### Outdoor / miscellaneous Classic raid bosses
+
+### Zordak Ragefire — soldungb (old classic)
+
+- **NPC ID:** 32038 / **Level:** 60 / **HP:** 9,500 / **dmg:** 92-213
+- **Respawn:** unknown
+- **Gap:** HP is BELOW scaled-named at L60 (16,200) — this is either a bug/stub or an intentional "group-level raid mob"
+- **Recommended:** If active on server, this is trivial for small group already. Likely superseded by id=91090 (Zordakalicus_Ragefire) in skyfire/skyfire raid event. Flag for investigation — one of the two IDs may be the legacy classic entry and obsolete.
+- **Notes:** Originally the gnome-targeted event dragon. Lore-master to confirm era canonical form.
+
+### Zordakalicus Ragefire — skyfire / event
+
+- **NPC ID:** 91090 / **Level:** 60 / **HP:** 33,000 / **dmg:** 106-315 / **AC:** 254 / **MR:** 230
+- **npcspecialattks:** SRQMCNIDf
+- **Gap:** ~2× HP, damage in named range
+- **Recommended:** Minimal HP cut (15-25%). Technically a Kunark-zone encounter but lore-attached to Classic Soldunga event.
+
+### Phantasmal Overlord / #a_Thul_Tae_Ew_High_Priest — cazicthule (Lost Temple)
+
+- **NPC ID:** 48041 / **Level:** 60 / **HP:** 50,000 / **dmg:** 89-241 / **AC:** 250
+- **Respawn:** 194,400s (54h)
+- **Gap:** ~6× HP, damage in named range
+- **Recommended:** HP scale 50% (target ~25k). Respawn to 6-12h.
+- **Notes:** Guards inner Cazic-Thule temple. Quest target for Cazic Quarter access.
+
+### Guardian of the Seal — hole
+
+- **NPC ID:** 39115 / **Level:** 70 / **HP:** 124,000 / **dmg:** 300-900 / **AC:** 504
+- **npcspecialattks:** SERTQMCNDf
+- **Respawn:** 156,240s (~43.4h)
+- **Gap:** Level 70 in Classic zone (The Hole is Classic-era but post-cataclysm). ~4× scaled-named HP at L70
+- **Recommended:** HP scale 30%. Respawn to 12h.
+- **Notes:** "The Hole" is post-cataclysm Erudin ruins. Requires Warrens key to access. Quest target for some Erudin content.
+
+### Fuzz Selppa — tox
+
+- **NPC ID:** 38171 / **Level:** 50 / **HP:** 200,000 / **dmg:** 80-604
+- **Respawn:** 900s (15 min) — very short
+- **Gap:** ~30× HP over scaled-named at L50 (6k)
+- **Recommended:** Likely an event / anniversary mob. Investigate before scaling — possibly out-of-era. Flag for user review.
+
+### Haele Straedhon — sro
+
+- **NPC ID:** 35063 / **Level:** 65 / **HP:** 502,500 / **dmg:** 959-4,253
+- **Respawn:** 900s
+- **Gap:** Enormous — damage max 4,253 is a one-shot for any small group
+- **Recommended:** **OUT OF ERA / event content** — this is a Bloodmoon or Hate revamp event trigger. Do not scale without confirming era legitimacy.
+
+### Taskmaster Mirot — lfaydark
+
+- **NPC ID:** 57150 / **Level:** 65 / **HP:** 300,000 / **dmg:** 193-496
+- **Respawn:** 5,400s (1.5h)
+- **Gap:** Level 65 boss in classic Lesser Faydark — likely a post-Velious revamp add
+- **Recommended:** Investigate era legitimacy. If in-era, scale HP 70-80%.
+
+### Sasha the Seer — commons
+
+- **NPC ID:** 21162 / **Level:** 80 / **HP:** 500,000 / **dmg:** 960-1,204
+- **OUT OF ERA** — level 80 is post-Luclin. Expansion lock should prevent. No action.
+
+### Legendary Behemoth / Legendary Hill Giant — steamfont / commons
+
+- **NPC IDs:** 56182 (L72 400k HP), 21163 (L72 230k HP)
+- **OUT OF ERA** — post-Luclin Legends-of-Norrath anniversary content. No action.
+
+### Kithicor Halloween-event NPCs — kithicor
+
+- **NPC IDs:** 20259 (##Eve_Hallows), 20260 (##Jack_Lanturn), 20263 (##Tricksy_Treetor), 20279 (Old_Man_Draykey), 20285 (Crazy_Charlie), 19151 (Laryen_Lycanthrope rivervale)
+- **All level 70, HP 800k-10M** — Halloween / seasonal event content
+- **Recommended:** Out of scope for raid scaling — they appear only during event windows.
+
+### Kithicor "Night Crew" bosses — kithicor
+
+- **NPC IDs:** 20054 Coercer_Q`ioul, 20055 Advisor_C`zatl, 20061 Brigadier_G`tav, 20062 Ioltos_V`ghera, 20063 Tasi_V`ghera, 20064 War_Priestess_T`zan
+- **Levels:** 54-59 / **HP:** 12-27k / **dmg:** 58-181
+- **Gap:** 1.5-3× scaled-named tier; close to named difficulty
+- **Recommended:** These are the undead Heart of Kithicor encounter bosses. Close to named-tier already — minimal action needed (10-20% HP cut). Possibly reclassify as named rather than raid.
+
+### GM / testing dummies
+
+- `arena` training dummies (ids 77002, 77003), `cshome` hundred/thousand HP-labeled mobs (ids 26032-26043) — **ignore** (GM testing rigs, 900M+ HP).
+
+---
+
+### Classic boss catalog — summary table
+
+| Boss | Zone | ID | L | HP | dmg | Prior-pass | Recommended HP cut | Respawn target |
+|------|------|----|----|-----|-----|------------|-------------------|----------------|
+| Lord Nagafen | soldungb | 32040 | 55 | 32,000 | 85-218 | UNTOUCHED | 50-65% (→12-15k) | 6h |
+| Lady Vox | permafrost | 73057 | 55 | 32,000 | 85-218 | UNTOUCHED | 50-65% | 6h |
+| Phinigel Autropos | kedge | 64001 | 53 | 18,000 | 61-156 | UNTOUCHED | 25% | 6h |
+| Cazic Thule | fearplane | 72003 | 70 | 451,000 | 223-603 | UNTOUCHED | 75-80% (→80-120k) | 12h |
+| a_dracoliche | fearplane | 72090 | 58 | 175,000 | 177-595 | UNTOUCHED | 70-80% (→35-50k) | 6h |
+| Dread / Terror / Fright | fearplane | 72000/72002/72004 | 55 | 32,500 | 168-453 | UNTOUCHED | 30-40% (→20k) | 6h |
+| The Tempest Reaver | fearplane | 72012 | 55 | 35,000 | 74-150 | UNTOUCHED | 30-40% | already 9h |
+| Wraith of a Shissar | fearplane | 72001 | 55 | 25,000 | 71-295 | UNTOUCHED | 30% | 6h |
+| Innoruuk (hateplane) | hateplane | 76007 | 55 | 33,349 | 260-379 | UNTOUCHED | 40% (→20k) + dmg trim | 6h |
+| Maestro of Rancor | hateplane | 76011 | 53 | 16,228 | 160-254 | UNTOUCHED | 10% or none | 6h |
+| Hand of the Maestro | hateplane | 76015 | 51 | 10,870 | 120-304 | UNTOUCHED | none | 6h |
+| Hate Council (×5) | hateplane | 76017/42/43/44/45 | 58 | 29,305 | 81-228 | UNTOUCHED | 30% | already 24min (keep) |
+| hateplaneb revamp bosses | hateplaneb | 23 IDs | 55-65 | 25-35k | varies | UNTOUCHED | TBD pending user decision | TBD |
+| The Spiroc Lord | airplane | 71012 | 63 | 32,000 | 135-363 | UNTOUCHED | 30% | already 3h |
+| Noble Dojorn | airplane | 71057 | 60 | 32,000 | 98-326 | UNTOUCHED | 30% | 6h |
+| Gorgalosk | airplane | 71021 | 60 | 29,000 | 107-392 | UNTOUCHED | 30% + dmg trim 15% | already 3h |
+| Eye of Veeshan | airplane | 71065 | 70 | 32,000 | 87-201 | UNTOUCHED | 20% | already 6h |
+| a thunder spirit princess | airplane | 71032 | 53 | 20,000 | 86-276 | UNTOUCHED | 10-15% | 3h |
+| Zordakalicus Ragefire | skyfire | 91090 | 60 | 33,000 | 106-315 | UNTOUCHED | 15-25% | TBD |
+| a_Thul_Tae_Ew_High_Priest | cazicthule | 48041 | 60 | 50,000 | 89-241 | UNTOUCHED | 50% | 6-12h |
+| Guardian of the Seal | hole | 39115 | 70 | 124,000 | 300-900 | UNTOUCHED | 30% | 12h |
+
+**Classic true-boss count (in-era, excluding Halloween/event/GM/legendary):** ~30 encounters. hateplaneb adds 23 more IF the revamp is the active version.
+
+**Classic scaling-gap summary:** The core Classic raid (Nagafen, Vox, Sky, Fear, Hate) was designed around 32k HP / ~200-400 damage — only ~4x a scaled named. The gap is manageable: most entries need a 30-50% HP cut and a respawn reduction. Two outliers (Cazic Thule at 451k, Dracoliche at 175k) need deeper cuts. Damage values are broadly already in line with named-tier — the primary lever is HP, not damage.
 
 ### Classic raid quest chains
 
