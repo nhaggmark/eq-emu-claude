@@ -1190,7 +1190,143 @@ revamp variants — this would require quest-script updates.
 
 ### Kunark raid quest chains
 
-> **Status:** Game-designer summary pending lore-master deep-review.
+> **Status:** Lore-master's canonical catalog delivered 2026-04-22. See
+> full walkthrough at
+> `/mnt/d/Dev/eq/claude/project-work/feature-raid-scaling/lore-master/kunark-chains.md`.
+> This section summarizes lore-master's findings and highlights
+> project-critical additions for the architect. The game-designer's
+> original fallback (preserved below) is SUPERSEDED where it conflicts.
+
+#### Key project-critical findings from lore-master Kunark review
+
+**Two additional duplicate-ID pairs confirmed via db query:**
+
+1. **Trakanon has TWO NPC IDs — both need scaling.**
+   - **id 89154 `Trakanon`** (raid_target=1, L65, 32,000 HP, SERFMCNDf) —
+     standard Old Sebilis boss. Drops Trakanon's Tooth (VP key). Already
+     in boss catalog.
+   - **id 89181 `#Trakanon`** (raid_target=0, L65, **16,000 HP**, SMCNIDf) —
+     script-spawned via An Undead Bard (id 89168) handoff. Drops Undead
+     Dragongut Strings for Bard Epic. NOT in boss catalog because
+     raid_target=0. **HP is already half the standard Trakanon** — close
+     to scaled-named tier — architect: minimal or no HP cut, but apply
+     damage trims consistent with standard Trakanon to keep the two
+     variants comparable.
+
+2. **Venril Sathir has TWO RAID-TIER NPC IDs + 3 support NPCs** (already
+   surfaced in Classic addenda but re-confirmed here as quest-dependency).
+   - **id 102112 `#Venril_Sathir`** (raid_target=1, 22k HP) — triggered
+     raid form for Druid/Ranger epic (Paw of Opolla + Spiroc Feather).
+   - **id 102126 `Venril_Sathir`** (raid_target=0, 11k HP, SRUMCNIDf) —
+     the Wizard-epic standard form (Gnarled Staff). Lore-master
+     originally described this as ~18k HP but db query shows 11k.
+     **Db value is authoritative.**
+   - Support: 102099 remains, 102123 spirit, 105182 Charasis variant.
+
+**Kunark pain-score distribution (14 epics):**
+- **RED (blocker):** Bard (triggered Trak), Cleric (Overking Bathezid
+  L63), Druid (triggered VS + faction), Magician (Magi P`Tasa PoHate),
+  Ranger (triggered VS + faction), Shaman (Truespirit faction — linear/
+  non-repeatable), Warrior (Queen Velazul + Severilous/Talendor). **7 of 14.**
+- **YELLOW:** Enchanter (Tangrin + Iksar faction), Monk (Chardok rare +
+  PoSky-era blocker), Necromancer (Mak'ha + planar), Paladin (Lhranc +
+  CoM navigation), Rogue (KC rare), SK (Lhranc + PoHate). Wizard
+  (Y-R — VS lifetap risk, PoFear Enraged Golem). **7 of 14.**
+- **GREEN:** none (Kunark has zero pain-score-GREEN epic phases).
+
+**Newly surfaced or re-emphasized blockers:**
+
+3. **Truespirit faction is a STRUCTURAL hard gate for 3 classes**
+   (Druid, Ranger, Shaman — especially Shaman which is almost entirely
+   Truespirit-gated). Linear, non-repeatable. No amount of boss
+   scaling fixes this. Architect: script review required before
+   Phase 4 — any dialogue trigger bug permanently bricks these epics.
+
+4. **Keepers of the Art faction grind is ~3,000 Batwing turn-ins
+   (~6 hours solo)** — required for Druid/Ranger epics before the
+   Kunark raid steps even start. Boss scaling doesn't help.
+
+5. **Iksar faction gate for non-Iksar races** blocks VP key sub-quest
+   B (Medallion of Obulus), Enchanter epic, and Necromancer epic.
+   Faction grind ~6 hrs OR Iksar illusion item required.
+
+6. **Necromancer PoSky Island 1 destructive turn-in:** giving Tome
+   of Instruction to Thunder Spirit Princess DESPAWNS her, breaking
+   PoSky Island 1 for any other player in that instance. **Flag for
+   architect:** on a 1-3 player server this is not a multi-player
+   grief concern, but it permanently removes progression for the
+   Necro player's own PoSky key chain until respawn. Script-script
+   interaction to verify.
+
+7. **Kilidna is NOT a required epic kill** — she is a NAVIGATION
+   HAZARD on the path to Lhranc in City of Mist. Her 4,600 max damage
+   means small groups can't safely path past without careful route
+   planning. **Audit's Kilidna damage cut recommendation (75% dmg
+   cut to ~1,000) is actually about zone traversal safety, not about
+   direct kills.** Architect: preserve this rationale in implementation
+   notes.
+
+8. **Skyfire "hand quest" clarification:** NOT a standalone quest
+   chain. It refers to the Jennus Lyklobar step within Magician
+   Epic (assembles Element of Fire from 4 pre-collected items). The
+   Skyfire zone itself requires no raid kill for any epic other than
+   Warrior (Talendor for Red Dragon Scales) and Zordakalicus Ragefire
+   (optional Cleric epic path).
+
+9. **VP Key quest structural flow (new detail for audit):**
+   ```
+   VP Key = Medallion of Jarsath (3 ground/named pieces, Swamp/FV/LakIO)
+        + Medallion of Obulus (3 pieces, Iksar-faction-gated)
+        + Medallion of Kylong (3 pieces — Chardok gems + KC rare + Kaesora)
+        + Trakanon's Tooth (standard Trakanon raid kill)
+   → combined + given to Emperor Ganak (id 95034, L60 16k HP, TT zone)
+   → Key of Veeshan received
+   ```
+   Nine named/ground-spawn pieces across 6 zones plus one full raid
+   boss. Rare-spawn timers (~8h each) mean VP key takes multiple
+   days solo even with all pieces available.
+
+10. **Sebilis Key (Trakanon Idol) is the easiest Kunark key:** two
+    froglok named kills in Lake of Ill Omen (not raid), given to
+    Emperor Ganak. GREEN pain score. No faction gate, no raid.
+
+11. **Lhranc dual-epic duplication possibility:** if a small group
+    has both Paladin and SK characters, Lhranc must be killed twice
+    (different component items, different outcomes — Heart of the
+    Innocent vs Lhranc's Token). 13hr+ respawn means two-week
+    campaign for both epics on same character/group.
+
+**Cross-class shared dependencies (Kunark):**
+
+| Boss / NPC | Zone | Classes affected | Notes |
+|-----------|------|------------------|-------|
+| Trakanon (standard 89154) | Old Sebilis | ALL VP-requiring epics | Tooth drop = VP key prerequisite, effectively ~8 epics need him eventually |
+| Venril Sathir (triggered 102112) | Karnor's Castle | Druid + Ranger | Single-kill shareable between the two epics |
+| Venril Sathir (standard 102126) | Karnor's Castle | Wizard | Separate NPC, separate kill |
+| Queen Velazul Di`Zok | Chardok | Warrior + VP key Medallion of Kylong | Double-duty |
+| Overking Bathezid | Chardok | Cleric | L63 functional raid — Chardok royal area |
+| Chardok royals (Queen + Overking + Prince Selrach) | Chardok | 5 epics + VP key | Same picklock-access wing — plan multi-epic visit |
+| Lhranc | City of Mist | Paladin + SK | Same NPC, different items |
+| Faydedar (standard 96089 + weak #Faydedar 96073) | Timorous Deep | Druid + Ranger | Dolgin Codslayer trigger |
+
+**Boss catalog amendments needed:**
+- Add The Tangrin (id 78070, already covered in Classic-addenda block)
+- Add Venril Sathir 102126 + 105182 (already covered in Classic-addenda)
+- Add Faydedar 96073 alternate (already covered)
+- Add `#Trakanon` id 89181 (triggered Bard-epic variant)
+- An Undead Bard (id 89168) is the spawner NPC — not a scaling target
+
+---
+
+#### Full Kunark catalog
+
+See `lore-master/kunark-chains.md` for complete walkthrough of VP key,
+Sebilis key, Skyfire clarification, and per-class Kunark-phase steps
+with tables, raid encounter matrix, and non-combat blockers summary.
+
+---
+
+#### (Preserved: Game-designer's original Kunark fallback summary, now superseded by lore-master catalog above)
 
 **Scope:** The "Kunark-phase" of Epic 1.0 for all classes (most
 epics cluster heavily in Kunark — this is where the raid-tier
@@ -2391,6 +2527,24 @@ are quest-load-bearing:
   Fright/Terror/Cazic-Thule) are the actual quest-critical PoFear
   bosses for Cleric + SK epics.
 
+### Trakanon dual-variant handling (added 2026-04-22 from Kunark review)
+
+- **Standard Trakanon (id 89154):** L65, 32,000 HP, SERFMCNDf, raid_target=1 — drops Trakanon's Tooth (VP key component) and is the Old Sebilis zone boss. Already in boss catalog.
+- **`#Trakanon` (id 89181):** L65, **16,000 HP**, SMCNIDf, raid_target=0 — script-spawned via An Undead Bard (id 89168) for the Bard Epic. Drops Undead Dragongut Strings. Same-lore-identity NPC. Damage and immunity sets reduced (no Enrage/Rampage/Flurry on triggered variant per db).
+- **Other Trakanon entries in db (out of scope):** 89196 (`#The_Fabled_Trakanon`, L75 4M HP — Fabled OOE), 452079 (L90 9k HP — likely PoP proxy or script placeholder, OOE).
+- **Recommendation:** Scaling changes to Trakanon (audit catalog: HP cut 30% to ~22k, flurry trim) should apply to BOTH id 89154 and id 89181. Since 89181 already starts at 16k HP, architect may choose to leave it untouched OR apply proportional cut (e.g. to ~11k) to preserve the "weaker triggered variant" lore feel.
+
+### An Undead Bard — Bard Epic spawner NPC (not a scaling target)
+
+- **NPC ID:** 89168 (Old Sebilis) / **Level:** 57 / **HP:** 7,875
+- **Role:** Quest-handler for Bard Epic. Giving Mystical Lute Body spawns `#Trakanon` (id 89181). Not itself a combat-scaling concern.
+- **Architect note:** Quest-script at `akk-stack/server/quests/sebilis/` handles this spawn. Verify script doesn't break under scaling changes.
+
+### Jennus Lyklobar — Magician Epic turn-in NPC (not a combat encounter)
+
+- **NPC ID:** 91046 (Skyfire Mountains, roaming) / **Level:** 61 / **HP:** 14,000
+- **Role:** Element of Fire assembly for Magician Epic. Non-combat NPC. Sees invis, can path into geometry (tracker recommended in era). No scaling action needed.
+
 ### Implementation implications of the addenda
 
 - **Kunark boss catalog** needs The Tangrin added (78070).
@@ -2405,6 +2559,15 @@ are quest-load-bearing:
 - **Dracoliche priority drop:** from "quest critical" to "standard
   scaling" in the implementation task breakdown. Not urgent for
   Cleric/SK epic completion.
+- **Trakanon dual-variant:** scaling UPDATE must cover BOTH id 89154
+  (standard) and id 89181 (triggered #Trakanon). Architect can match
+  by `name LIKE '%Trakanon%' AND level = 65` OR explicit id list. The
+  triggered variant is already at 16k HP (half of standard 32k), so
+  it may need lesser or no cut depending on philosophy.
+- **Kilidna is not a kill target — she's a traversal hazard.** The
+  4,600 max damage cut recommendation exists to make the City of
+  Mist path to Lhranc survivable for small groups doing Paladin/SK
+  epics. Implementation SQL comment should preserve this rationale.
 
 ---
 

@@ -139,6 +139,33 @@ columns, era grouping.
 > section, superseding the game-designer fallback. Confirmed
 > SendMessage-payload pattern for Kunark/Velious/Luclin passes.
 
+### 2026-04-22 — Task #8 Kunark chains delivery
+
+**From:** lore-master → **To:** game-designer
+
+> Task #8 DELIVERED. Full Kunark quest chain catalog: VP key quest,
+> Sebilis key, Skyfire "hand quest" clarification (= Magician epic
+> Jennus Lyklobar step, not a standalone chain), and Kunark-phase
+> steps for all 14 Epic 1.0 quests with cross-chain matrix and non-
+> combat blockers. Key lore flags: triggered Trakanon vs. standard
+> (two NPC IDs); triggered VS vs. standard VS (two NPC IDs,
+> re-emphasized); The Tangrin (id 78070) confirmed as Kunark-zone
+> Enchanter-epic requirement; Truespirit faction hard-gate for
+> Druid/Ranger/Shaman; Necro PoSky Island 1 destructive turn-in
+> concern. Requested filing at `lore-master/kunark-chains.md`.
+> Proceeding to task #9 (Velious quest chains).
+
+**Response from** game-designer:
+
+> Filed content to `lore-master/kunark-chains.md` (~363 lines).
+> Verified triggered Trakanon via db: id 89181 `#Trakanon` L65 16k HP
+> raid_target=0 (half the HP of standard id 89154). Verified An
+> Undead Bard spawner (id 89168, L57 7,875 HP) and Jennus Lyklobar
+> quest NPC (id 91046, L61 14k HP). Extended boss-catalog addenda
+> block with Trakanon dual-variant entry. Updated audit doc's Kunark
+> raid quest chains section with 11 project-critical findings
+> superseding the game-designer fallback.
+
 **Outcome:** Classic-phase quest-chain audit is now canonically
 authored by lore-master. Key new intel integrated:
 - Plane of Sky Islands 4-8 death-touch mechanics (not scalable by HP
