@@ -1128,7 +1128,230 @@ just in two zones.
 
 ### Luclin raid boss catalog
 
-> Populated by task #6 (game-designer).
+**Summary:** Luclin is mechanically the "endgame wall" of the in-era
+scope. True-boss HP pools are the largest in the game — several bosses
+exceed 1 million HP, peaking at Aten Ha Ra at 1,901,500 HP. The
+Luclin raid landscape has four distinct clusters:
+
+- **Vex Thal (vexthal):** 9 top-tier bosses (Aten Ha Ra line, Diabo
+  trio, Thall Va tier), plus ~80 mid-elite Yaemiu mobs (55-100k HP —
+  "elite trash" in scale, out of boss-scope). **The densest raid cluster
+  in the game.**
+- **Ssraeshza Temple (ssratemple):** Emperor Ssraeshza + High Priest of
+  Ssraeshza + Xerkizh the Creator (trio of 806k-1.25M HP bosses), plus
+  multiple Rhag-named mid bosses (Arch Lich Rhag`Zadune, Rhag`Zhezum,
+  Rhag`Mozdezh), plus Taskmaster tier (6 at 50k HP — elite named).
+- **Akheva Ruins (akheva):** Vyzh`dra the Cursed (900k), The Itraer
+  Vius (601k), Shar Vinitras (460.9k), Shei Vinitras (400k), The
+  Insanity Crawler (401k), The Va`Dyn (250k), Xaui Tatrua (70k).
+- **Sanctus Seru (sseru) + Katta Castellum (katta):** Lord Inquisitor
+  Seru (1.2M) + 4 Praesertum (150-250k), Lcea Katta (401k), Nathyn
+  Illuminious (430k) — the Seru/Katta faction-war bosses.
+- **Other zones:** Grieg's End (Grieg Veneficus 475k + 2 others),
+  Acrylia Caverns (evolved burrower 300k), The Deep (Thought Horror
+  Overfiend 807k), Umbral Plains (Zelnithak 251k, Rumblecrush 150k,
+  Netherbian Swarmfiend 600k — but this is L73 OOE), Echo Caverns
+  (General Blaystich 60k — edge case).
+
+**In-era true-boss count:** ~25-30 encounters. Excluding OOE and
+event mobs, the target count is ~25 bosses + ~5 quest/event triggers.
+
+**Scaling gap overview:** Luclin is where the gap is extreme AND
+where the signature feature has the greatest user impact. Aten Ha Ra
+at 1.9M HP is **63× scaled-named at L66 (30k)** — the single largest
+gap in the game. Even mid-tier Vex Thal bosses at 1-1.5M HP are
+35-50×. On the optimistic end, Rumblecrush and Zelnithak (150-250k)
+are 5-8× — manageable.
+
+**Damage outliers:** Vex Thal top-tier damage max values: Aten Ha Ra
+1,054, Kaas Thox Xi Aten Ha Ra 1,650, Diabo Xi Va Temariel 1,400,
+Va Xi Aten Ha Ra 1,254, Thall Va Kelun 1,000, Diabo Xi Xin 1,200.
+Emperor Ssraeshza 904 max. Lord Inquisitor Seru 915 max. These are
+one-shot danger values for small-group tanks at current tuning.
+
+**Progression context (to be fleshed by lore-master in Task #10):**
+Vex Thal is the single most progression-locked zone in the game.
+Entry requires **the 13-part Vex Thal key quest**, with shards
+dropping from almost every other Luclin raid boss. Scaling Luclin
+without addressing the VT key blockers will not unblock VT for a
+small group. Emperor Ssraeshza key is similarly multi-raid gated.
+
+---
+
+### Vex Thal — vexthal (9 top-tier bosses)
+
+| Boss | ID | L | HP | dmg | Abilities | Respawn | Recommended HP |
+|------|----|----|-----|-----|-----------|---------|----------------|
+| Aten Ha Ra (main) | 158096 | 66 | 1,901,500 | 294-1,054 | SERTQMCNIDf | 468,720s (130h) | **180k (-91%)**, respawn 24h |
+| Aten Ha Ra (variant) | 158006 | 66 | 1,901,500 | 294-1,054 | (same) | — | Duplicate — flag for user |
+| Kaas Thox Xi Aten Ha Ra | 158007 | 66 | 1,900,000 | 320-1,650 | SERQMCNIDf | 468,720s | **160k (-92%)** + damage trim 50% (max 800) |
+| Thall Va Kelun | 158008 | 66 | 1,825,000 | 240-1,000 | SRQMCNIDf | 468,720s | **150k (-92%)** + damage trim 40% (max 600) |
+| Diabo Xi Va Temariel | 158010 | 66 | 1,706,000 | 165-1,400 | SRFMCNIDf | 468,720s | **140k (-92%)** + damage trim 45% (max 770) |
+| Va Xi Aten Ha Ra | 158009 | 66 | 1,601,500 | 304-1,254 | SERQMCNIDf | 468,720s | **130k (-92%)** + damage trim 40% (max 750) |
+| Diabo Xi Xin Thall | 158012 | 66 | 1,501,500 | 180-750 | SRTMCNIDfU | 468,720s | **125k (-92%)** damage ok |
+| Thall Xundraux Diabo | 158011 | 66 | 1,475,000 | 274-654 | SERFQUMCNIDf | 468,720s | **120k (-92%)** damage ok |
+| Kaas Thox Xi Ans Dyek | 158013 | 66 | 1,201,500 | 270-650 | SEFQUMCNIDf | 468,720s | **100k (-92%)** damage ok |
+| Diabo Xi Xin | 158015 | 66 | 1,106,500 | 250-1,200 | SERMCNIDf | 468,720s | **90k (-92%)** + damage trim 45% (max 650) |
+| Diabo Xi Va | 158014 | 66 | 1,050,000 | 274-654 | SRFUMCNIDf | 468,720s | **85k (-92%)** damage ok |
+| Thall Va Xakra (2 copies) | 158016/125 | 60 | 900,000 | 285-950 | SERMCNIDf | 140,616s (39h) | **80k (-91%)** + damage trim 25% (max 700) |
+| Va Dyn Khar | 158081 | 66 | 600,000 | 265-455 | SEMCNIf | 21,600s | **60k (-90%)**, respawn already short |
+
+**Vex Thal + Yaemiu elite trash:** ~80 Yaemiu-pattern mobs at
+55-100k HP (naming patterns: Eom / Pli / Zov / Qua / Zun / Kaas / Thall
+with suffixes like Liako, Senshali, Centien, Thall, Va, Zethon,
+Xakra). These are elite-trash (not boss-tier), but at 55-100k HP they
+represent the **toughest elite named tier in the game**. Out of
+scope per brief (brief says "named difficulty feels good"), but the
+user should be aware these will STILL be much harder than a scaled
+L66 named — on a scaled-named baseline at L66 of ~30k HP, these
+sit at 2-3x. **Flag for user:** does "trash/named already feels right"
+include these Vex Thal Yaemiu mobs, or do they need scaling too?
+
+**Vex Thal respawn:** All top-tier bosses at 468,720s (130h / 5.4
+days) — MUST be reduced to 24h per brief. This alone makes VT vastly
+more tractable for small group.
+
+---
+
+### Ssraeshza Temple — ssratemple
+
+| Boss | ID | L | HP | dmg | Abilities | Respawn | Recommended |
+|------|----|----|-----|-----|-----------|---------|-------------|
+| Emperor Ssraeshza | 162227 | 66 | 1,250,500 | 283-904 | SERQMCNIDfWO | — (event-gated) | HP → 120k (-90%), damage trim 30% (max 620) |
+| High Priest of Ssraeshza | 162076 | 66 | 941,000 | 277-722 | SERTUMCNIDf | 259,200s (72h) | HP → 90k (-90%), respawn 12h |
+| Xerkizh the Creator | 162190 | 66 | 806,516 | 275-674 | STMCNDf | 259,200s | HP → 80k (-90%), respawn 12h |
+| Arch Lich Rhag`Zadune | 162177 | 64 | 790,000 | 275-664 | SERUMCNIDf | — | HP → 75k (-90%), respawn 12h |
+| Rhag`Mozdezh | 162192 | 63 | 226,000 | 270-574 | — | — | HP → 60k (-73%) |
+| Rhag`Zhezum | 162178 | 63 | 201,000 | 168-310 | SERTUMCNIDf | 194,400s | HP → 55k (-73%), respawn 12h |
+| General Kizuhx | 162066 | 53 | 250,000 | 168-510 | SERFUMCD | 1,080s (18m) | HP → 60k (-76%), respawn ok |
+| Arbiter Korazhk | 162191 | 55 | 205,000 | 168-510 | UCDf | 1,080s | HP → 55k (-73%) |
+| Advisor Zekuzh | 162067 | 53 | 150,000 | 163-410 | MCNIDfU | 1,080s | HP → 45k (-70%) |
+| Rhozth Ssrakezh | 162258 | 60 | 119,000 | 142-523 | — | — | HP → 40k (-66%) |
+| Rhozth Ssravizh | 162089 | 60 | 105,200 | 142-284 | — | — | HP → 38k (-64%) |
+| 6× Taskmaster | 162011/13/21/24/59/60 | 60 | 50,200 | 142-454 | — | — | Already elite-named tier — minor trim or none |
+
+**Ssraeshza progression:** Emperor Ssraeshza is the zone endboss.
+Traditional access: kill High Priest to reveal key, then kill
+Emperor. The Rhag lich line (Zadune top, Zhezum/Mozdezh below) is a
+separate progression track — Rhag`Zadune is likely tied to Luclin
+shard quest for VT key.
+
+---
+
+### Akheva Ruins — akheva
+
+| Boss | ID | L | HP | dmg | Abilities | Respawn | Recommended |
+|------|----|----|-----|-----|-----------|---------|-------------|
+| Vyzh`dra the Cursed | 162206 | 66 | 900,000 | 271-588 | SFQMCNIDf | — | HP → 90k (-90%) |
+| The Itraer Vius | 179037 | 63 | 601,000 | 220-600 | SERUMCNIDf | 210,924s (58h) | HP → 80k (-87%), respawn 12h |
+| Shar Vinitras | 179134 | 63 | 460,900 | 250-1,010 | SETMCDf | 10,800s (3h) | HP → 70k (-85%), damage trim 40% (max 600), respawn fine |
+| Shei Vinitras | 179157 | 65 | 400,000 | 145-400 | f | 194,474s | HP → 60k (-85%), respawn 12h |
+| The Insanity Crawler | 179180 | 63 | 401,000 | 174-573 | SQCNDf | 210,924s | HP → 60k (-85%), respawn 12h |
+| The Va`Dyn | 179178 | 63 | 250,000 | 240-525 | SEFQMCNIDf | 194,400s | HP → 50k (-80%), respawn 12h |
+| Sheleric Vis | 179133 | 61 | 116,000 | 176-746 | — | — | HP → 40k (-66%), damage trim 20% |
+| Xaui Tatrua | 179044 | 60 | 70,000 | 110-376 | f | — | HP trim 25% (→50k) |
+
+**Akheva notes:** Vyzh`dra is likely split into "the Cursed" (main
+boss, id 162206) and "the Exiled" variant — user decision. The
+Itraer Vius is a major event boss. Note Vyzh`dra the Cursed is in
+`ssratemple` zone space by ID but lore is Akheva — investigate. The
+Insanity Crawler is likely the Nexus event (Shadowhaven connection).
+
+---
+
+### Sanctus Seru / Katta Castellum — sseru, katta
+
+| Boss | ID | L | HP | dmg | Abilities | Respawn | Recommended |
+|------|----|----|-----|-----|-----------|---------|-------------|
+| Lord Inquisitor Seru | 159691 | 66 | 1,201,500 | 339-915 | SEFQMCNIDfO | 259,200s | HP → 120k (-90%), damage trim 30%, respawn 12h |
+| Praesertum Vantorus | 159113 | 66 | 250,000 | 130-510 | SFQMCD | 259,200s | HP → 55k (-78%), respawn 12h |
+| Praesertum Rhugol | 159112 | 66 | 200,000 | 125-500 | SQMCD | 259,200s | HP → 50k (-75%) |
+| Praesertum Bikun | 159115 | 66 | 160,000 | 147-500 | SQMCD | 259,200s | HP → 45k (-72%) |
+| Praesertum Matpa | 159114 | 66 | 150,000 | 147-418 | STMCD | 259,200s | HP → 45k (-70%) |
+| Lcea Katta | 160375 | 60 | 401,200 | 238-827 | SQMCNDf | 258,750s | HP → 80k (-80%), damage trim 25% |
+| Nathyn Illuminious | 160135 | 64 | 430,000 | 195-575 | f | 194,400s | HP → 80k (-81%), respawn 12h |
+
+**Seru/Katta context:** Lord Inquisitor Seru is the final boss of
+Sanctus Seru. Lcea Katta is the final boss of Katta Castellum —
+these represent the two sides of a faction war (pro-Seru vs pro-
+Katta citizens). Faction-gated — flag for lore-master Task #10.
+
+**Note:** Bella Helsin (160177) and Heracus Helsin (160178) at L1
+1M HP are **event-control NPCs** (likely rebellion-event triggers).
+Skip scaling.
+
+---
+
+### Grieg's End — griegsend
+
+| Boss | ID | L | HP | dmg | Notes |
+|------|----|----|-----|-----|-------|
+| Grieg Veneficus | 163075 | 65 | 475,500 | 214-632 | SQMCNDWf. Main boss. HP → 80k (-83%), respawn — |
+| Servitor of Luclin | 163013 | 65 | 120,021 | 152-365 | HP → 40k (-67%) |
+| Praetorian Myral | 163078 | 60 | 95,051 | 47-241 | HP → 35k (-63%), damage already low |
+| a_shrouded_minion | 163051 | **75** | 200,875 | 529-2,049 | **OUT OF ERA (L75)** — LoN tier |
+| an_ancient_necromantic_shade | 163052 | **80** | 1,007,200 | 666-2,509 | **OUT OF ERA (L80)** |
+
+**Grieg's End warning:** Mixed era content — the shrouded minion /
+necromantic shade are LoN-era anniversary additions. Filter to in-
+era only.
+
+---
+
+### Other Luclin raids
+
+| Boss | Zone | ID | L | HP | dmg | Recommended |
+|------|------|----|----|-----|-----|-------------|
+| Khati Sha the Twisted | grimling? | 154145 | 68 | 475,000 | 400-1,004 | HP → 90k (-81%), damage trim 25% |
+| an evolved burrower | acrylia | 154142 | 63 | 300,750 | 200-693 | HP → 60k (-80%), respawn 27h (reduce) |
+| Thought Horror Overfiend | thedeep | 164078 | 63 | 807,000 | 282-776 | HP → 90k (-89%), respawn 12h |
+| Zelnithak | umbral | 176089 | 60 | 251,000 | 115-400 | HP → 60k (-76%), damage fine |
+| Rumblecrush | umbral | 176002 | 66 | 150,000 | 226-720 | HP → 45k (-70%), damage trim 20% |
+| #Netherbian Swarmfiend | umbral | 176111 | **73** | 600,000 | 370-1,700 | **OUT OF ERA (L73)** |
+| General Jared Blaystich | echo | 153095 | 55 | 60,000 | 78-254 | Already elite-named. Minor trim or none. |
+
+**Umbral Keymaster (176110)** at L1 / 99,999,999 HP / dmg 7,999-10,003
+is an **event-control NPC** (likely instance key gate). Skip scaling.
+
+**Arena training dummy / cshome "Five/Ten/…/One_Hundred_Fifty"
+style dummies / ssratemple `keycheck` (162269) at 999,999,999 HP**
+are all **GM test rigs or instance gates**. Skip.
+
+**Fabled-filtered:** 8 `#The_Fabled_*` NPCs across Luclin zones are
+OUT OF ERA and excluded from this audit.
+
+---
+
+### Luclin boss catalog — summary table (high-level only)
+
+| Cluster | True-boss count | HP range | Gap range | Priority |
+|---------|-----------------|----------|-----------|----------|
+| Vex Thal top-tier | 9-11 | 900k-1.9M | 30-63× | **Highest** |
+| Vex Thal Yaemiu elite | ~80 (trash) | 55-100k | 2-3× | Flag for user |
+| Ssraeshza Temple | 6 | 790k-1.25M | 25-42× | High |
+| Ssraeshza Temple mid | ~12 | 50-250k | 2-8× | Medium |
+| Akheva Ruins | 6-8 | 250-900k | 8-30× | High |
+| Sanctus Seru + Katta | 6-7 | 150k-1.2M | 5-40× | High |
+| Grieg's End (in-era) | 3 | 95-475k | 3-16× | Medium |
+| Umbral / Acrylia / Deep | 4 | 150-807k | 5-27× | Medium |
+
+**Luclin total in-era true bosses:** ~30 (excluding Yaemiu elite
+tier which is arguable). Aggregate HP reduction target: 80-92% for
+top bosses, 65-80% for mid-bosses.
+
+**Luclin scaling-gap summary:** Luclin is the end-of-era wall and
+has the widest top-end gap (Aten Ha Ra at 63× scaled-named). If
+Phase 2-5 proceed serially, Luclin (Phase 5) will carry the most
+tuning complexity. Companion-system-reliant: small-group Luclin
+raids absolutely depend on the companion system functioning cleanly
+since boss scripts (Aten adds, Emperor's guards, Seru's Inquisition)
+feature heavy add-phases that were designed against 72-player raids.
+
+**Strong recommendation for user decision:** Luclin alone justifies
+splitting Phase 5 into Phase 5a (Ssraeshza + Akheva + Seru/Katta +
+outdoor — ~18 bosses) and Phase 5b (Vex Thal — 9-11 top-tier + key-
+progression rework). Vex Thal's 13-shard key quest (lore-master
+Task #10) is a progression-phase of its own.
 
 ### Luclin raid quest chains
 
