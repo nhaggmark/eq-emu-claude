@@ -395,6 +395,60 @@ is pure SQL (data-expert), config-expert role is post-SQL verification +
 
 ---
 
+### 2026-04-22 — Architect correction: death-touch mechanism
+
+**From:** architect → **To:** config-expert
+
+> Correction on death-touch mechanism. config-expert stated "ability 35 =
+> death touch; strip ^35,1 from special_abilities." This is wrong.
+>
+> Verified via eqemu/common/emu_constants.h:562:
+> `SpecialAbility::HarmFromClientImmunity = 35` — an immunity flag, not an
+> attack. The three PoSky death-touch NPCs do NOT have ability 35 in their
+> special_abilities strings at all:
+> - Spiroc Lord 71012: `1,1^10,1^13,1^14,1^15,1^16,1^17,1^21,1^23,1^31,1`
+> - Bazzt Zzzt 71072: `1,1^2,1^10,1^13,1^14,1^15,1^17,1^21,1^23,1^31,1^44,1`
+> - Keeper of Souls 71075: `1,1^2,1^6,1^10,1^13,1^14,1^15,1^16,1^17,1^21,1^23,1^31,1`
+>
+> Actual mechanism: spell 982 "Cazic Touch" (base_value1=-100,000,
+> cast_time=0, recast_time=0) in npc_spells_entries.
+> - Spiroc Lord: npc_spells_id=118 (has spells 982 + 988)
+> - Bazzt Zzzt: npc_spells_id=449 (has spells 982 + 897)
+> - Keeper of Souls: npc_spells_id=969 (has spells 982 + 899)
+>
+> Correct removal: `DELETE FROM npc_spells_entries WHERE npc_spells_id IN
+> (118, 449, 969) AND spellid = 982;` — a data-expert npc_spells_entries
+> change, not a special_abilities string edit.
+>
+> All other findings (no rule scalar, spawn2 per-boss, rampage as CSV
+> ability-4 parameter, backup pattern, live PoH=hateplaneb) verified and
+> baked into architecture plan.
+
+**Response from** config-expert → architect (2026-04-22):
+
+> Correction acknowledged. No disagreement.
+>
+> The error originated from a broad query that found ability 35 present in
+> other PoSky zone NPCs (3xxx ID range), and incorrectly assumed that pattern
+> applied to the three named boss IDs without verifying their specific rows.
+> The architect's finding from emu_constants.h and the npc_spells_entries
+> rows is authoritative.
+>
+> Corrected understanding:
+> - special_abilities ability 35 = HarmFromClientImmunity (immunity, not attack)
+> - Death touch on Spiroc Lord / Bazzt Zzzt / Keeper of Souls = spell 982
+>   "Cazic Touch" cast via npc_spells_entries
+> - Removal = data-expert DELETE on npc_spells_entries (spellid=982 from
+>   npc_spells_ids 118, 449, 969)
+> - No config-expert or rule-layer action required for death-touch removal
+> - dev-notes.md updated with correction
+
+**Outcome:** Correction accepted and logged. Architecture plan proceeds
+with corrected death-touch removal mechanism. All other Phase 2 findings
+remain valid. config-expert dev-notes updated.
+
+---
+
 ### 2026-04-21 — Protocol consultation: Phase 2 Classic raids
 
 **From:** protocol-agent → **To:** architect
@@ -427,12 +481,45 @@ is pure SQL (data-expert), config-expert role is post-SQL verification +
 
 **Response from** architect:
 
-> _(Awaiting response.)_
+> Five targeted questions: (1) Which mechanism — spell, special_abilities,
+> or quest script — and which agent owns removal? (2) Titanium HP client
+> visibility and int16 concerns? (3) Confirm respawn server-side. (4) Confirm
+> rampage params server-side. (5) Any other Titanium constraints?
 
-**Outcome:** Protocol-agent consultation delivered. Architect can proceed
-planning Phase 2 architecture with confidence that all planned changes
-(HP cuts, death-touch removal, respawn reductions) require zero client
-protocol changes.
+**Response from** protocol-agent (detailed 5-question reply, 2026-04-21):
+
+> **Q1 — VERIFIED: Spell 982 in npc_spells_entries.** All three NPCs
+> (71075/71012/71072) have spellid=982 "Cazic Touch" in their spell lists.
+> Spell 982 = SPA 0 (SE_CurrentHP) base_value=-100,000. NOT SPA 202
+> (SE_InstantDeath). The SpecialAbility namespace in emu_constants.h has no
+> death-touch flag (max=58). npcspecialattks letter flags have no death-touch
+> character. Quest scripts are event_death_complete only.
+> Owning agent: data-expert. DELETE spellid=982 rows from npc_spells_entries
+> for npc_spells_id IN (118, 449, 969). Preserve spells 988/897/899.
+>
+> IMPORTANT CORRECTION to config-expert finding: Config-expert noted
+> "Death touch = special ability 35." Flag 35 = HarmFromClientImmunity
+> (emu_constants.h:562), NOT death-touch. There is no death-touch
+> special_ability flag in this codebase. The mechanism is exclusively via
+> spell 982 in npc_spells_entries. Data-expert should delete the
+> npc_spells_entries row, NOT edit special_abilities strings.
+>
+> **Q2 — HP percentage only, no int16 risk.** OP_MobHealth sends
+> (int)GetHPRatio() (mob.cpp:1500). NewSpawn curHp = uint8 percentage.
+> npc_types.hp is bigint(20). No overflow at any reduction target.
+>
+> **Q3 — Confirmed server-side only.** No respawn timer packet to client.
+>
+> **Q4 — Confirmed server-side only.** Mob::Rampage() reads param index 1
+> from special_abilities CSV for target count (mob_ai.cpp:2114). Client
+> sees only individual CombatDamage_Struct packets per hit.
+>
+> **Q5 — No new Titanium constraints.** Phase 2 is clean for DB-only approach.
+
+**Outcome:** All five questions answered with live DB and source verification.
+Critical correction logged: death-touch is spell 982 in npc_spells_entries,
+NOT special_ability flag 35. Config-expert's flag-35 strip instruction is
+a misdiagnosis — data-expert task is npc_spells_entries DELETE only.
 
 ---
 
@@ -463,3 +550,68 @@ _(Empty — implementation phase has not started.)_
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
 | | | | |
+
+### 2026-04-22 — Architect DB verification of death-touch mechanism
+
+**From:** architect (DB investigation)
+
+> After config-expert said "death touch = ability 35 in special_abilities", architect
+> queried live DB to verify. Findings contradict that claim:
+>
+> The three PoSky death-touch NPCs have NO ability 35 in their special_abilities strings:
+>  - 71012 Spiroc Lord:   `1,1^10,1^13,1^14,1^15,1^16,1^17,1^21,1^23,1^31,1`
+>  - 71072 Bazzt Zzzt:    `1,1^2,1^10,1^13,1^14,1^15,1^17,1^21,1^23,1^31,1^44,1`
+>  - 71075 Keeper of Souls:`1,1^2,1^6,1^10,1^13,1^14,1^15,1^16,1^17,1^21,1^23,1^31,1`
+>
+> Additionally, `SpecialAbility::HarmFromClientImmunity = 35` per
+> `eqemu/common/emu_constants.h:562` — that is an IMMUNITY flag, not an attack.
+>
+> The actual death-touch mechanism is **spell 982 "Cazic Touch"** cast via the NPC
+> spell list:
+>  - Spell 982: effectid1=0 (HP damage), effect_base_value1=-100000, mana=0, cast_time=0,
+>    recast_time=0, targettype=5 (single target). 100k damage on a 60-level player with
+>    ~4k HP is instant kill.
+>  - Spell list 118 (Spiroc Lord): spell 982 "Cazic Touch" + 988 "Greater Spiroc Thunder"
+>  - Spell list 449 (Bazzt Zzzt): spell 982 "Cazic Touch" + 897 "Rotting Flesh"
+>  - Spell list 969 (Keeper of Souls): spell 982 "Cazic Touch" + 899 "Whirl Until You Hurl"
+>
+> **Death-touch removal for Phase 2 should be:**
+> ```sql
+> DELETE FROM npc_spells_entries
+> WHERE npc_spells_id IN (118, 449, 969) AND spellid = 982;
+> ```
+> — NOT editing special_abilities strings.
+>
+> **Correction filed:** config-expert's ability-35 hypothesis is incorrect for PoSky.
+> The real lever is `npc_spells_entries`. Architecture plan updated accordingly.
+> Data-expert owns the DELETE.
+
+**Outcome:** Death-touch removal mechanism corrected in architecture plan. No further
+consultation needed on this point — the DB proves the mechanism. Config-expert's other
+findings (no rule exists, backup pattern, rampage as special_abilities CSV) remain correct.
+
+---
+
+### 2026-04-22 — Architect PoH layout verification via DB + quest scripts
+
+**From:** architect (DB + script investigation)
+
+> PoH layout verification for Decision #3 ("use whichever is live"):
+>
+>  - hateplane (zoneid 76): 213 spawn_points, 61 unique NPCs. Only accessible via
+>    `zone_points` from `potactics` (PoP zone — not Titanium-era).
+>  - hateplaneb (zoneid 186): 491 spawn_points, 189 unique NPCs. Accessible via:
+>      1. `oasis/player.lua:4` — clicking door 20 in Oasis triggers MovePCDynamicZone("hateplaneb")
+>      2. `oasis/a_wayward_kiraikuei.lua` — Rogue epic DZ expedition to hateplaneb
+>      3. `zone_points` from `potimeb` (PoP, not Titanium)
+>
+> **Conclusion:** Live Titanium-accessible Plane of Hate is `hateplaneb`. This
+> matches config-expert's finding (491 vs 213 spawns). Phase 2 PoH scaling targets
+> hateplaneb.
+>
+> The classic `hateplane` spawn list remains populated in DB but is unreachable from
+> Titanium classic-era travel paths. Architect recommendation: scale hateplaneb boss IDs
+> only; leave hateplane IDs untouched as "reserved" (user can re-enable classic layout
+> in future by adding a zone_points entry). Backup table should include both for safety.
+
+**Outcome:** hateplaneb is the live Classic PoH for Phase 2. Scope confirmed.
