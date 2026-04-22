@@ -89,13 +89,14 @@ _Record each handoff between agents with context and any notes._
     in `npc_spells_entries` for spell lists 118 (Spiroc Lord), 449 (Bazzt
     Zzzt), 969 (Keeper of Souls). Single DELETE statement handles it.
   - **100% SQL implementation.** No C++, no Lua, no Perl, no rules changes.
-    Three tables touched: `npc_types` (~55 UPDATEs), `spawn2` (~40 UPDATEs),
+    Three tables touched: `npc_types` (~49 UPDATEs after Night Crew exclusion), `spawn2` (~40 UPDATEs),
     `npc_spells_entries` (3 DELETEs).
   - **essence tamer (71071) is NOT a true death-touch boss** — spell 303
     "Whirl till you hurl" is effect 64 (throw), not instant kill. Scaling HP
     still applies; no spell-list edit needed.
-  - **Kithicor Night Crew (6 NPCs) included** in Phase 2 for consistency
-    (20% HP cut per audit recommendation).
+  - **Kithicor Night Crew (6 NPCs, IDs 20054-20064) EXCLUDED** per user
+    override 2026-04-22 (Decision #20, Option B). They sit at 12k-27k HP in the
+    scaled-named range already. Treat as named-tier — no Phase 2 action.
 - **Required agents for implementation:** data-expert (primary),
   config-expert (reload + verification), infra-expert (conditional
   full-stack restart).
@@ -145,7 +146,7 @@ _Populated by the architect after the architecture doc is approved._
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
 | 1 | Create backup tables for `npc_types`, `spawn2`, `npc_spells_entries` raid-target rows | data-expert | Not Started | Backs up ~750+1500+20 rows; architecture §Data Model |
-| 2 | Emit per-boss HP/damage/special_abilities UPDATE SQL (30 audit bosses + 13 Q13 + 23 hateplaneb = ~55 rows) | data-expert | Not Started | Depends on #1; authoritative values in architecture §Data Model sketch and audit summary table |
+| 2 | Emit per-boss HP/damage/special_abilities UPDATE SQL (30 audit bosses + 13 Q13 + 23 hateplaneb - 6 Night Crew excluded = ~49 rows) | data-expert | Not Started | Depends on #1; authoritative values in architecture §Data Model sketch and audit summary table. Night Crew IDs 20054-20064 EXCLUDED per Decision #20 (user override). |
 | 3 | Emit respawn-timer UPDATE SQL (6h low-tier / 12h Cazic+Guardian of Seal) | data-expert | Not Started | Depends on #1; leave hateplaneb 900s DZ timers untouched |
 | 4 | Emit `npc_spells_entries` DELETE for Cazic Touch (spell 982) from lists 118, 449, 969 | data-expert | Not Started | Depends on #1; exactly 3 rows deleted |
 | 5 | Emit rollback script (INSERT SELECT from backup tables) + verification queries | data-expert | Not Started | Depends on #2-4 |

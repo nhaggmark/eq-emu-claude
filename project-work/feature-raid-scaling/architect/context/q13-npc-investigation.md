@@ -91,6 +91,6 @@ the Phase 2 scaling SQL:
 - The hateplaneb "Evangelist_of_Hate" (186198, L65, 200k HP) is a DZ event boss,
   not standard PoHate. This is in scope as revamp PoHate content.
 - The Kithicor "Night Crew" (20054-20064) levels 54-59, HP 12-27k — already in
-  scaled-named range, per audit recommended "minimal change, 10-20% HP cut". Phase 2
-  will apply 20% HP cut as audit recommends. User may opt-out if preferred to treat
-  as named; decision is one-line change.
+  scaled-named range. **EXCLUDED per user override 2026-04-22 (Decision #20, Option B).**
+  Treat as named-tier; no Phase 2 scaling action. Backup tables still capture them as
+  part of the generic raid_target=1 superset (harmless over-capture).

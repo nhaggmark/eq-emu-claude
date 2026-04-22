@@ -13,7 +13,7 @@
 
 ## Executive Summary
 
-Phase 2 scales every in-era Classic raid boss (Plane of Fear, Plane of Hate (revamp layout `hateplaneb`), Plane of Sky, Lord Nagafen, Lady Vox, Phinigel Autropos, Cazic Thule, and miscellaneous Classic raid NPCs) to the "slightly harder than scaled named" difficulty target per Decision #1, while preserving signature mechanics per Decision #11. The plan is **100% SQL** — no C++ changes, no Lua/Perl script rewrites, no rule value changes. Three data layers are touched: `npc_types` (HP/damage/special_abilities per boss), `spawn2` (respawn times per raid-boss spawn), and `npc_spells_entries` (surgical removal of spell 982 "Cazic Touch" from three Plane of Sky spell lists to implement the death-touch removal decision). All changes are reversible via pre-change backup tables captured from `raid_target=1` rows. Zero client protocol impact (verified by protocol-agent). One data-expert task, one config-expert verification task, one infra-expert restart task.
+Phase 2 scales every in-era Classic raid boss (Plane of Fear, Plane of Hate (revamp layout `hateplaneb`), Plane of Sky, Lord Nagafen, Lady Vox, Phinigel Autropos, Cazic Thule, and miscellaneous Classic raid NPCs) to the "slightly harder than scaled named" difficulty target per Decision #1, while preserving signature mechanics per Decision #11. The plan is **100% SQL** — no C++ changes, no Lua/Perl script rewrites, no rule value changes. Three data layers are touched: `npc_types` (HP/damage/special_abilities per boss; ~49 UPDATEs after Night Crew exclusion per Decision #20), `spawn2` (respawn times per raid-boss spawn), and `npc_spells_entries` (surgical removal of spell 982 "Cazic Touch" from three Plane of Sky spell lists to implement the death-touch removal decision). All changes are reversible via pre-change backup tables captured from `raid_target=1` rows. Zero client protocol impact (verified by protocol-agent). One data-expert task, one config-expert verification task, one infra-expert restart task.
 
 ---
 
@@ -70,7 +70,7 @@ Phase 2 scales every in-era Classic raid boss (Plane of Fear, Plane of Hate (rev
 
 | Component | Change Type | Justification |
 |-----------|-------------|---------------|
-| `npc_types.hp` (30 Classic bosses + 13 Q13 additions) | UPDATE per-NPC | Per-boss HP targets vary (20% to 75% cut) per audit; global scalar inappropriate |
+| `npc_types.hp` (30 Classic bosses + 13 Q13 additions; Night Crew excluded per Decision #20) | UPDATE per-NPC | Per-boss HP targets vary (20% to 75% cut) per audit; global scalar inappropriate |
 | `npc_types.maxdmg` (2-3 Classic outliers — Cazic, dracoliche, Bazzt Zzzt max > 900) | UPDATE per-NPC | Audit lever 2; only apply where one-shot risk |
 | `npc_types.special_abilities` (Cazic Thule) | UPDATE per-NPC (string edit) | Trim ability 3 param0 from 10 to 3 for rampage target count |
 | `spawn2.respawntime` (all Classic raid-boss spawns) | UPDATE per-spawn | Target 6h low-tier (21,600s) for most; 12h (43,200s) for Cazic Thule per Decision #8 |
@@ -170,10 +170,8 @@ UPDATE npc_types SET hp = 26000 WHERE id = 91090;  -- Zordakalicus 33k -> 26k
 UPDATE npc_types SET hp = 25000 WHERE id = 48041;  -- Thul Tae Ew HP 50k -> 25k
 UPDATE npc_types SET hp = 87000 WHERE id = 39115;  -- Guardian of Seal 124k -> 87k (30% cut)
 
--- Kithicor Night Crew (20% cut)
-UPDATE npc_types SET hp = 14400 WHERE id = 20054;  -- 18k -> 14.4k
-UPDATE npc_types SET hp = 16000 WHERE id = 20055;  -- 20k -> 16k
--- ... (6 NPCs)
+-- Kithicor Night Crew (20054-20064) EXCLUDED per user override 2026-04-22 (Decision #20):
+-- already in scaled-named HP range (12k-27k, 1.5-3x tier). Treat as named; no changes.
 ```
 
 **Per-boss respawn (6h universal for Classic low-tier; 12h for Cazic Thule):**
@@ -232,7 +230,7 @@ No `rule_values` changes. No `eqemu_config.json` changes. No `.env` changes.
 | `npc_types_backup_raid_scaling` | CREATE TABLE | 750 rows snapshot |
 | `spawn2_backup_raid_scaling` | CREATE TABLE | 1500 rows snapshot |
 | `npc_spells_entries_backup_raid_scaling` | CREATE TABLE | ~20 rows snapshot |
-| `npc_types` | UPDATE | ~55 rows (30 audit-listed + 13 Q13 additions + 23 hateplaneb bosses, minus double-counts) |
+| `npc_types` | UPDATE | ~49 rows (30 audit-listed + 13 Q13 additions + 23 hateplaneb bosses, minus double-counts, minus 6 Night Crew excluded per Decision #20) |
 | `spawn2` | UPDATE | ~40 rows (non-triggered bosses only; DZ-spawned bosses have no spawn2 entry) |
 | `npc_spells_entries` | DELETE | 3 rows |
 
@@ -320,7 +318,7 @@ Every lever used is a well-established PEQ-standard mechanism:
 - Could we skip the backup tables? No — Decision #11 preserves signature mechanics; if a preservation goal is missed post-deploy, rollback is essential.
 - Could we batch all HP UPDATEs into a single statement with CASE? Possible, but per-row UPDATEs are the established prior-pass pattern — readability and selective rollback beats minor IO savings.
 - Could we skip hateplaneb scaling and use classic hateplane instead? No — confirmed via `oasis/player.lua:4` that Titanium players actually get hateplaneb. Leaving hateplane dormant but backed up costs nothing.
-- Could we skip the Kithicor Night Crew adjustment? Maybe. They're already at 12k-27k HP, 1.5-3× scaled-named tier. Audit recommended "minimal change, 10-20% HP cut". Phase 2 applies a 20% cut for consistency with the bulk. The alternative (leave as-is) is one decision line; architect choice is to include for uniformity.
+- Kithicor Night Crew (6 NPCs, IDs 20054-20064): **EXCLUDED** per user override 2026-04-22 (Decision #20, Option B). They sit at 12k-27k HP, 1.5-3× scaled-named tier — already in named range per the prior pass. Treating as named-tier means zero scaling action; Phase 2 does not touch these rows.
 - Could we defer death-touch removal? No — Decision #13 explicitly resolved this; four epics unblock with it (Necro, Ranger, Magician, Warrior).
 
 **Removed / deferred:**
