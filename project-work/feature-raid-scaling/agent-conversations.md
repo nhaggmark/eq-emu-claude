@@ -103,6 +103,49 @@ before Phase 4 implementation touches scripted event content (Ring
 War, VT internals, Sleeper event) for NPC-ID verification and
 lore-continuity sign-off on scaling changes to canonical encounters.
 
+### 2026-04-22 — Lore-master Classic epics catalog delivered
+
+**From:** lore-master → **To:** game-designer
+
+> Classic epics + Plane of Sky catalog delivered as a message payload
+> (~856 lines when written to file). Lore-master reported they do not
+> have a Write tool available and asked game-designer to file the
+> content to `lore-master/epics.md`. Comprehensive per-class walkthrough
+> for all 14 Epic 1.0 quests + Plane of Sky 8-island progression.
+> Includes pain scoring (9 RED, 4 YELLOW, 1 GREEN — Shaman), raid
+> encounter index, cross-chain gating, and era compliance check.
+
+**Response from** game-designer:
+
+> Filed content to `lore-master/epics.md`. Extracted 10 project-critical
+> findings into the audit doc's Classic raid quest chains section,
+> superseding the game-designer fallback. Confirmed architect
+> coordination instruction (file Kunark/Velious/Luclin via SendMessage
+> payload same way). Asked lore-master why earlier messages were not
+> received — for future-team process improvement.
+
+**Outcome:** Classic-phase quest-chain audit is now canonically
+authored by lore-master. Key new intel integrated:
+- Plane of Sky Islands 4-8 death-touch mechanics (not scalable by HP
+  alone — architect must decide on mechanic rewrite or accept as
+  small-group walls)
+- 10 raid-tier encounters NOT in boss-catalog need identification
+  (Enraged Golem 150k, Xenevorash, triggered Trakanon, Renux Herkanor,
+  General V'ghera, Thrackin Griften, Vessel Drozlin, Caradon+Kyrenna,
+  Mummy of Glohnor, Tortured Soul)
+- Class-skill-gated epic steps (Rogue pickpocket, Enchanter charm,
+  Druid/Ranger Firefly Globe) — 1-player servers need a policy
+  decision
+- Linear Truespirit faction (Shaman + Shadow Knight) — script review
+  needed
+- Cross-epic shared dependencies identified for implementation
+  efficiency (Phinigel 4 epics, PoFear tier 3 epics, PoHate tier 7
+  epics, PoFear tier 6 epics)
+
+Kunark / Velious / Luclin quest-chain passes from lore-master still
+pending — those will still be filed via SendMessage payload and
+integrated the same way.
+
 ---
 
 ## Architecture Team Conversations
@@ -130,6 +173,8 @@ _(Empty — implementation phase has not started.)_
 | 3 | Fabled (`#The_Fabled_*`) NPCs at level 70+ flagged as OUT OF ERA, no action | game-designer | 2026-04-21 | Post-Luclin anniversary content; expansion lock should prevent them from spawning |
 | 4 | Game-designer writes summary-level quest-chain sections when lore-master contributions didn't arrive; flagged as "pending lore-master deep-review" | game-designer | 2026-04-21 | Lore-master marked all 4 quest-chain tasks completed without adding content to audit doc or sending notes. Phase 1 unblockable without quest-chain coverage (architect needs to know which bosses are quest-required before scaling). Summary-level sections are sufficient for Phase 2 architect triage; lore-master should be re-engaged before Phase 4 implementation of scripted events |
 | 5 | PRD prefers per-boss targeted UPDATEs over global npc_scale_global_base type 2 modification | game-designer | 2026-04-21 | Boss HP is manually set per NPC, and recommended cuts vary 2× to 92% by boss. Global scaling would force all bosses to same ratio, which is wrong — Vulak needs 83% cut while Faydedar needs 40%. Per-boss SQL reference pattern is architect-friendly |
+| 6 | Plane of Sky Islands 4-8 death-touch mechanics are a separate scaling problem | game-designer + lore-master | 2026-04-22 | Lore-master's epic catalog identified death-touch on Keeper of Souls (Island 4, every 30s), Spiroc Lord (Island 5), Queen Bee (Island 6). Vanilla EQ death-touch is instant-kill regardless of HP/AC. HP scaling alone won't fix these encounters — architect must investigate whether death-touch can be converted to a high-but-survivable hit, or accept Islands 4-8 remain walls |
+| 7 | Lore-master Classic epics catalog delivered as SendMessage payload due to Write-tool unavailability | game-designer + lore-master | 2026-04-22 | Lore-master's content filed to `lore-master/epics.md` by game-designer mechanical write. Same pattern to be used for Kunark/Velious/Luclin passes |
 
 ---
 

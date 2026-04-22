@@ -563,10 +563,162 @@ quest chain catalog will cover the island-chain progression in detail.
 
 ### Classic raid quest chains
 
-> **Status:** Game-designer summary from public-domain EQ knowledge.
-> **Pending:** lore-master deep-review and NPC-ID verification for all
-> entries below. This section is load-bearing for the architect —
-> changes here before Phase 3 are expected.
+> **Status:** Lore-master's canonical catalog delivered 2026-04-22. See
+> full per-class walkthrough at
+> `/mnt/d/Dev/eq/claude/project-work/feature-raid-scaling/lore-master/epics.md`.
+> This section is a SUMMARY of lore-master's findings plus
+> project-critical blockers for the architect. The game-designer's
+> original fallback entries (beneath this summary) are preserved as
+> scaffolding but SUPERSEDED where they conflict with lore-master's
+> canonical sources.
+
+#### Key project-critical findings from lore-master review
+
+**Pain score distribution (14 epics + Plane of Sky):**
+- **RED (structural small-group blocker):** Bard, Cleric, Druid,
+  Magician, Ranger, Rogue, Shadow Knight, Warrior, Wizard (9 of 14)
+- **YELLOW (hard but doable):** Enchanter, Monk, Necromancer, Paladin
+  (4 of 14)
+- **GREEN (small-group friendly):** Shaman (1 of 14)
+- **Plane of Sky:** Islands 1-3 GREEN, Island 4 YELLOW/RED, Islands
+  5-8 RED (death touch mechanics throughout)
+
+**Newly identified blockers NOT captured in the game-designer fallback
+or in the boss catalog — these require architect attention:**
+
+1. **Plane of Sky Islands 4-8 use DEATH TOUCH mechanics** — Keeper of
+   Souls (Island 4) death touches every 30s. Spiroc Lord (Island 5)
+   and Queen Bee (Island 6) also death touch. **This is a mechanic
+   the boss catalog did not surface.** Death touch in vanilla EQ is
+   instant-kill regardless of HP/AC — scaling HP alone does not fix
+   these encounters. **Critical architect question:** can the server
+   modify death touch to be a very high but survivable hit (e.g.
+   convert to damage shield / percentage-based damage), or does the
+   project accept that PoSky Islands 4-8 remain unreachable for
+   small groups without a mechanic rewrite?
+
+2. **Enraged Golem in Plane of Fear (Wizard Epic): level 65, 150K+ HP**
+   — this was NOT in the boss-catalog because it is spawned from
+   an interaction with a "broken golem" (rare spawn, 8hr respawn)
+   and not in the spawnentry table. **Boss catalog should be
+   amended to include this.** Wizard epic is unreachable without it.
+
+3. **Triggered Trakanon in Old Sebilis (Bard Epic):** spawned by
+   giving items to "an Undead Bard". Scripted private spawn that
+   hits like Trakanon. Boss catalog covered Sebilis-Trakanon
+   (id 89154) but did NOT capture this triggered-spawn variant.
+
+4. **Vilnius the Small (W. Karana, Rogue Epic):** nighttime-only
+   ultra-rare spawn via specific PH chain (kill brigands → "a brigand"
+   PH spawns → leave alive → 11pm game-time Vilnius appears in its
+   place). Described as "game-stopping bottleneck." Not a raid boss
+   — a QUEST BLOCKER. Scaling changes can't fix rare-spawn mechanics;
+   architect may need to consider a spawn-rate tweak for small-group
+   accessibility.
+
+5. **Class-specific skill requirements that block 1-player servers:**
+   - **Rogue pickpocket** (Founy Jestands N.Kaladim, Tani N'Mar
+     Neriak): Rogue epic literally cannot start without a Rogue
+     character present. 1-player server with non-Rogue main is
+     blocked. Companions cannot pickpocket.
+   - **Enchanter charm** (3rd Piece of Staff, multiple gem turn-ins
+     via charmed NPCs): Enchanter epic 3rd piece is class-gated.
+   - **Druid/Ranger "Firefly Globe"** (Dance of Fireflies, night-only):
+     required for Venril Sathir remains-to-spirit transition. If
+     your party lacks a Druid or Ranger, the Druid/Ranger epic
+     stalls at step 10 for 20 hours + a night cycle.
+   **Flag for user:** Should 1-player servers have class-gated epic
+   steps unblocked (e.g. merchant-buyable items, companion-triggered
+   interactions), or is this accepted as "you can't do every class's
+   epic on one character"?
+
+6. **Shaman epic is unexpectedly GREEN** — only green epic. The
+   linear Truespirit faction is tedious but not blocking. Good
+   showcase quest for early Phase 2 testing.
+
+7. **Ranger/Druid epics share ~15 steps.** Cleansed Spirit of
+   Antonica/Faydwer/Kunark chain is identical. Scaling work for
+   one benefits the other. Architect implementation efficiency
+   opportunity.
+
+8. **Linear faction mechanics:** Shaman (Truespirit) AND Shadow
+   Knight (Truespirit from different starting point) both require
+   LINEAR faction progression with no shortcuts. Miss a step and
+   you may need troubleshooting. This is quest-script behavior,
+   not scaling — architect to note.
+
+9. **Plane of Hate is a shared requirement for 7 of 14 epics:**
+   Bard (Shattered Emerald), Enchanter (Forsaken Revenant),
+   Magician (Magi P'Tasa), Paladin (Thought Destroyer), Ranger
+   (Shattered Emerald / Master of Spite), Rogue (Book of Souls
+   ground spawn), Shadow Knight (ashenbone drake decrepit hide).
+   **PoHate layout decision (user decision C: classic hateplane vs
+   revamp hateplaneb) affects 7 epics simultaneously.** Whichever
+   layout is live needs verified drop sources for these items.
+
+10. **Plane of Fear is a shared requirement for 6 of 14 epics:**
+    Bard (Amygdalan Tendril), Cleric (dracoliche), Enchanter
+    (Wraith of Shissar), Necromancer (Slime Blood of Cazic-Thule),
+    Shadow Knight (Soul Leech from Cazic/Dread/Fright/Terror),
+    Shaman (Iksar broodling), Warrior (Ball of Everliving Golem —
+    2-3 DAY respawn, uncommon drop), Wizard (Enraged Golem 150k HP).
+
+**Cross-epic shared raid-boss dependencies (high-leverage scaling
+targets):**
+
+| Boss | Epic count | Scaling priority |
+|------|-----------|------------------|
+| Phinigel Autropos (Kedge) | 4 (Bard, Magician, Rogue, Wizard) | HIGH — 12hr respawn + uncommon drops = multi-session farming per epic |
+| Lhranc (City of Mist) | 2 (Paladin, Shadow Knight) | MEDIUM — shared final boss with 32k HP, 500 lifetap |
+| Plane of Fear god tier (Dread/Fright/Terror/Cazic-Thule) | 3 (Necromancer, Shadow Knight, Warrior) | HIGH — Ball of Everliving Golem is the worst drop rate + respawn combo |
+| Plane of Sky Island 4 (Keeper of Souls) | 2 (Necromancer Cape, Ranger essence tamer) | CRITICAL — death touch, blocks Islands 5-8 too |
+| Plane of Sky Island 5 (Spiroc Lord) | 1 (Warrior Spiroc Wingblade) | CRITICAL — death touch |
+| Venril Sathir | 3 (Druid + Ranger triggered form, Wizard standard form) | HIGH — 20hr wait mechanic + rare drop |
+| Overking Bathezid (Chardok) | 1 (Cleric) | HIGH — lvl 63 ~2-group, blocks entire Cleric epic |
+| Ixiblat Fer (Burning Woods) | 1 (Cleric) | HIGH — lvl 62 32k HP 575/hit, blocks entire Cleric epic |
+
+**Raid encounter ID additions for boss catalog:**
+The boss catalog covered most of these but several spawned/triggered
+encounters from lore-master's catalog are not in `raid_target = 1`
+and should be reviewed for scaling independently:
+- **Enraged Golem (Plane of Fear, Wizard epic):** lvl 65, 150k HP —
+  NOT in boss catalog, needs identification + scaling
+- **Triggered Trakanon (Old Sebilis, Bard epic):** private spawn,
+  separate from id 89154
+- **Xenevorash (Lake of Ill Omen, Monk epic):** 32k HP, 500/hit,
+  12s PBAE stun — NOT in boss catalog, needs identification
+- **Renux Herkanor (Steamfont, Rogue epic):** spawned encounter
+- **General V'ghera (Kithicor, Rogue epic):** cabin-assist 500+/hit
+- **Thrackin Griften (W. Karana, Enchanter epic):** spawned 20k HP
+- **Vessel Drozlin (East Cabilis sewers, Enchanter):** lvl 60 18k HP
+- **Caradon + Kyrenna (The Hole, Shadow Knight):** 8hr+ respawn
+- **Mummy of Glohnor (The Hole, Shadow Knight):** lvl 56
+- **Tortured Soul (Lake Rathetear, Necromancer):** triggered
+
+**Action for architect:** Query the database for these specific
+named NPCs and cross-reference against the boss catalog. Several
+have scaling gaps comparable to catalog-covered bosses and
+require the same treatment.
+
+---
+
+#### Full per-class walkthrough
+
+For complete per-step walkthroughs, raid-encounter lists, non-
+encounter blockers, cross-chain gating, and pain scoring, see the
+lore-master's canonical document at
+`lore-master/epics.md`.
+
+---
+
+#### (Preserved: Game-designer's original fallback summary, now superseded by lore-master catalog above)
+
+> The following entries were the game-designer's first-pass fallback
+> summaries from public-domain EQ knowledge before lore-master's
+> canonical catalog arrived. They are preserved for historical
+> continuity but **the lore-master document supersedes them** where
+> conflicts exist. The architect should primarily reference the
+> findings block above and the `lore-master/epics.md` file.
 
 **Scope:** The "Classic-phase" steps of all 14 class Epic 1.0 quests
 (many epics span all 4 eras — this subsection lists the

@@ -11,7 +11,7 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
-| Design | game-designer + lore-master | Complete (Phase 1 audit delivered; lore-master quest-chain sections flagged for re-review) | 2026-04-21 | 2026-04-21 |
+| Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert | Not Started | | |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
@@ -128,6 +128,9 @@ person responsible for answering._
 | 8 | Coldain Ring War + Prayer Shawl event scripts: accept small-group scripted events or simplify wave counts? | game-designer | architect | Pending — requires script review | TBD |
 | 9 | Signature mechanic preservation vs. small-group tractability (Vyemm MR wall, Aaryonar breath, Emperor add waves, etc.) | game-designer | user | Pending | TBD |
 | 10 | Sleeper-awake event (Kerafyrm L99 3.5M HP): leave untouched (recommended) or change? | game-designer | user | Pending — audit recommends leave untouched | TBD |
+| 11 | Plane of Sky Islands 4-8 death-touch mechanics: convert to survivable damage, or accept as small-group walls? | lore-master | architect+user | Pending — lore-master's Classic epic catalog surfaced this; affects Necro, Ranger, Magician, Warrior epic progressions | TBD |
+| 12 | Class-skill-gated epic steps (Rogue pickpocket, Enchanter charm, Druid/Ranger Firefly Globe): allow 1-player servers to bypass class-gate, or accept "not every epic is doable on 1 character"? | lore-master | user | Pending | TBD |
+| 13 | Enraged Golem (Plane of Fear, Wizard epic) lvl 65 150k HP — NOT in raid_target=1 spawnentry queries. Confirm ID and add to boss catalog scaling pass | lore-master | architect | Pending — 10 similar NPCs to investigate: Xenevorash, triggered Trakanon, Renux Herkanor, General V'ghera, Thrackin Griften, Vessel Drozlin, Caradon+Kyrenna, Mummy of Glohnor, Tortured Soul | TBD |
 
 ---
 
