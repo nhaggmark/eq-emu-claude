@@ -2096,9 +2096,47 @@ extend this late.
 
 ### Quest-chain dependency graph
 
-> Populated at consolidation. Shows which quest chains share boss
-> encounters (e.g. multiple epics rely on Faydedar; VT shards draw
-> from many zones).
+Bosses that gate more than one quest chain — the "choke-point"
+encounters where scaling failures have outsized impact:
+
+| Boss | Zone | Era | Dependent chains |
+|------|------|-----|------------------|
+| **Faydedar** (96089) | timorous | Kunark | Druid Epic, Ranger Epic, Shaman Epic, Magician Epic, Bard Epic, VP key quest — **6 chains** |
+| **Chardok royals** (103055/56/80) | chardok | Kunark | Enchanter Epic, Magician Epic, Paladin Epic, Rogue Epic, Wizard Epic — **5 chains** |
+| **Trakanon** (89154) | sebilis | Kunark | Cleric Epic, Warrior Epic, Bard Epic, VP key quest — **4 chains** |
+| **Venril Sathir** (102112) | karnor | Kunark | Necromancer Epic, Shadow Knight Epic — **2 chains** |
+| **Noble Dojorn** (71057) | airplane | Classic | Rogue Epic, Monk Epic, Enchanter Epic, Plane of Sky progression — **4 chains** |
+| **a_dracoliche** (72090) | fearplane | Classic | Cleric Epic (Soulfire), possibly Wizard Epic — **1-2 chains** |
+| **Innoruuk** (76007 / 186158) | hateplane / hateplaneb | Classic | Necromancer Epic, Shadow Knight Epic — **2 chains** |
+| **Outdoor Kunark dragons** (Gorenaire, Severilous, Talendor) | dreadlands / emeraldjungle / skyfire | Kunark | VP key quest (5 dragon components) + various epic side-components — **5+ chains** |
+| **Avatar of War** (113457) | kael | Velious | Warrior Epic, Paladin Epic, Shadow Knight Epic, ToV key quest — **4 chains** |
+| **King Tormax** (113215) | kael | Velious | ToV key quest, Coldain Ring War progression — **2 chains** |
+| **Dain Frostreaver IV** (129003) | thurgadinb | Velious | Coldain Ring War + Coldain Shawl 8 + Prayer Shawl + multiple class enhancement chains — **4+ chains** |
+| **ToV Aaryonar line** (124010, 124037, 124020) | templeveeshan | Velious | Sleeper's Tomb key quest, SK/Paladin Epic late steps — **2-3 chains** |
+| **Vulak`Aerr** (124155) | templeveeshan | Velious | ToV endgame gate, multiple class-enhancement Velious quests — **3+ chains** |
+| **High Priest of Ssraeshza** (162076) | ssratemple | Luclin | Emperor Ssraeshza key quest, possibly 1 VT shard — **1-2 chains** |
+| **Vyzh`dra the Cursed** (162206) | akheva | Luclin | Multiple VT shards, Akheva progression — **2+ chains** |
+| **Lord Inquisitor Seru** (159691) | sseru | Luclin | Sanctus Seru access, possibly 1 VT shard — **1-2 chains** |
+| **Grieg Veneficus** (163075) | griegsend | Luclin | VT shard, Grieg's End access — **1-2 chains** |
+| **Khati Sha the Twisted** (154145) | grimling | Luclin | Beastlord Epic (the most Luclin-heavy Epic) — **1 chain** |
+
+**Key takeaway:** The Kunark era has the densest quest-chain dependency
+concentration (6 bosses gate 4+ chains each). Scaling mistakes here
+have the biggest ripple across class progression. Velious shares this
+concentration around Kael (AoW + Tormax) + Dain + the Aaryonar ToV
+line. Luclin's concentration is distributed across VT shard sources
+(many bosses, 1-2 chains each) but the VT shard quest itself is a
+13-boss meta-dependency.
+
+**Scaling impact on progression:** if boss-stat scaling per the
+audit-catalog recommendations is applied correctly, ALL listed
+encounters become beatable by 1 player + 5 companions. The
+remaining blockers are:
+- Faction grind time (Velious Ring of Scale / Claws of Veeshan /
+  Coldain; Luclin Sanctus Seru / Katta)
+- Vex Thal 13-shard meta-quest scope
+- Any scripted events with hard-coded group-size checks
+  (architect to investigate Ring War, VT internals, Sleeper event)
 
 ---
 
@@ -2362,16 +2400,54 @@ preservation — gate progression through mechanics, not stats.
 - [x] Every raid boss in Luclin cataloged
 - [x] Prior scaling pass impact documented per-boss (uniform: stats
   UNTOUCHED, loot/respawn boosted)
-- [ ] Every raid-tier quest chain cataloged — **pending lore-master
-  Tasks #7-10 completion**
+- [x] Every raid-tier quest chain cataloged at summary level
+  (Classic / Kunark / Velious / Luclin sections). **Flagged as
+  game-designer placeholder pending lore-master deep-review** —
+  see Coordination Note below.
 - [x] Cross-reference matrix of boss counts by zone (in `### Raw
   boss counts`)
-- [x] Headline findings summary (this section)
-- [x] Recommended user decisions list (above)
+- [x] Quest-chain dependency graph (shared-bosses / choke-points)
+- [x] Headline findings summary (section above)
+- [x] Recommended user decisions list (8 decisions A-H)
+- [x] PRD updated with design-intent summary at `game-designer/prd.md`
 
-**This deliverable is COMPLETE FROM THE GAME-DESIGNER SIDE.** Final
-consolidation (task #11) merges with lore-master quest-chain work
-when their Tasks #8, #9, #10 complete. The PRD at
-`game-designer/prd.md` will be updated with the design-intent summary
-(scope, philosophy, success criteria) to feed the Phase 3 architecture
-phase.
+### Coordination Note (lore-master)
+
+Tasks #7 (Classic), #8 (Kunark), #9 (Velious) were marked completed
+by lore-master but no detailed content was contributed to the audit
+document or lore-notes. Task #10 (Luclin) was left in_progress at
+the time game-designer closed out Phase 1. To prevent the audit
+from stalling, **the game-designer wrote summary-level quest-chain
+sections from public-domain EQ knowledge** so the Phase 1
+deliverable is usable by the architect.
+
+**These quest-chain sections are FIRST-PASS.** The architect should
+expect, and lore-master should be re-engaged for:
+- NPC ID verification on each quest-step (traditional EQ epics have
+  many script-spawned components the audit may have missed)
+- Specific component drop rates and lore-accurate step ordering
+- Faction-grind time estimates (how many hours of outdoor farming
+  is a solo small-group realistic limit?)
+- Lore-continuity sign-off on any mechanical changes that affect
+  canonical encounter identity (Vyemm's magic wall, Ring War event
+  scale, Sleeper-awake narrative, VT shard count reduction if user
+  approves)
+
+The audit's boss-catalog portion is FULLY game-designer-owned and
+does not require lore-master revision — only the quest-chain
+portion (~400 lines) is flagged for lore-master re-review.
+
+### Architect Handoff Ready
+
+This audit + the PRD at `game-designer/prd.md` together form the
+complete Phase 1 deliverable. The architect can proceed with:
+1. Driving user resolution on the 8 open decisions (sections A-H
+   above in Recommended User Decisions)
+2. Duplicate-ID resolution (~15 pairs in boss catalog)
+3. Script review for Ring War, VT internals, Sleeper event
+4. Implementation task breakdown by era+cluster (suggested in PRD
+   Appendix: Technical Notes)
+
+**Lore-master re-engagement recommended in parallel** to deepen
+the quest-chain sections before Phase 4 implementation reaches
+scripted event content.

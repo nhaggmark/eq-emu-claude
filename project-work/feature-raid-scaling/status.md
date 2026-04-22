@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
-| Design | game-designer + lore-master | Not Started | | |
+| Design | game-designer + lore-master | Complete (Phase 1 audit delivered; lore-master quest-chain sections flagged for re-review) | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert | Not Started | | |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Design
+**Current phase:** Awaiting user decisions on Phase 2+ strategy (see audit Recommended User Decisions section)
 
 ---
 
@@ -47,7 +47,7 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| Phase 1 — Audit | All raid bosses + raid quest chains catalogued with scaling status | Not Started |
+| Phase 1 — Audit | All raid bosses + raid quest chains catalogued with scaling status | **Complete 2026-04-21** |
 | Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | Not Started |
 | Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | Not Started |
 | Phase 4 — Velious | NToV, ToV, Kael, Sleeper's Tomb, AoW, Velious dragons | Not Started |
@@ -64,6 +64,40 @@ _Record each handoff between agents with context and any notes._
 - **Notes:** Workspace created. Feature brief at `feature-brief.md`. PRD template
   ready at `game-designer/prd.md`. Phase 1 deliverable is an audit document, not
   code. Spawn both agents as teammates for the Design phase.
+
+### design team → user / architect (Phase 1 audit complete)
+- **Date:** 2026-04-21
+- **Deliverables:**
+  - `game-designer/raid-scaling-audit.md` (2,400+ lines, ~127KB)
+    — full per-era boss catalog + quest-chain summary + headline
+    findings + 8 user decisions + quest-chain dependency graph
+  - `game-designer/prd.md` — audit-driven design intent with 4
+    mechanical levers (HP cut, damage cut, respawn, narrow ability
+    trims) and appendix of architect technical notes
+- **Key findings:**
+  - Prior small-group-scaling pass (2026-02-23) explicitly excluded
+    `raid_target = 1` from stat cuts — all ~140 true-boss encounters
+    sit at PEQ defaults
+  - True-boss count: ~30 Classic / 19 Kunark / 60-65 Velious / ~30
+    Luclin (filtered from raw 878 raid_target NPCs)
+  - HP gap ranges from 2× (Classic dragons) to 63× (Aten Ha Ra);
+    damage one-shot outliers (Kilidna 4,600 max) require priority
+    trimming
+  - Prior pass DID touch loot and respawn for raid targets — respawn
+    still at 54-130h vs. brief's 6-24h
+- **User decisions requested before Phase 2:** 8 questions A-H
+  (phased delivery strategy, VP variant, Hate layout, VT Yaemiu
+  trash scope, respawn targets, Sleeper event, Cazic Thule era
+  alignment, signature-mechanic preservation)
+- **Lore-master participation note:** lore-master marked Tasks #7-10
+  completed but did not produce detailed content. Game-designer
+  wrote summary-level quest-chain sections from public-domain EQ
+  knowledge to keep Phase 1 deliverable usable. Lore-master
+  re-engagement recommended before Phase 4 implementation touches
+  scripted event content (Ring War, VT internals, Sleeper event).
+- **Ready for:** user decision gate → architect Phase 3 (triage
+  + implementation plan for Phase 2 Classic raids, based on user's
+  phased-delivery choice)
 
 ---
 
@@ -84,7 +118,16 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | After Phase 1 audit: continue as one project or split into per-era projects? | bootstrap-agent | user | Pending — review after Phase 1 deliverable | |
+| 1 | After Phase 1 audit: continue as one project or split into per-era projects? | bootstrap-agent | user | **Pending user review** — audit recommends Option B (per-era) with Velious sub-split (4a non-ToV, 4b ToV+Sleeper+Vulak) and Luclin sub-split (5a non-VT, 5b VT+shard-rework) | TBD |
+| 2 | Veeshan's Peak: keep revamp variants (108040-108053 at 454-814k HP) or switch to classic-era variants (108509-108517 at 144-192k HP)? | game-designer | user | Pending — audit recommends keeping revamp (scripts target them) with deep scaling | TBD |
+| 3 | Plane of Hate: classic layout (hateplane) or revamp (hateplaneb)? | game-designer | user | Pending — needs in-game verification of which is live | TBD |
+| 4 | Vex Thal Yaemiu elite trash (~80 mobs at 55-100k HP): include in scaling scope or leave? | game-designer | user | Pending | TBD |
+| 5 | Respawn targets by tier (endgame/mid/low) — specific values? | game-designer | user | Pending — audit recommends 24h/12h/6h | TBD |
+| 6 | Cazic Thule: leave at L70 with HP cut, or drop to L65 for Classic-era alignment? | game-designer | user | Pending | TBD |
+| 7 | Vex Thal 13-shard key quest: reduce shard count for small-group server? | game-designer | user | Pending — high-impact quality-of-life decision; lore-master to weigh in | TBD |
+| 8 | Coldain Ring War + Prayer Shawl event scripts: accept small-group scripted events or simplify wave counts? | game-designer | architect | Pending — requires script review | TBD |
+| 9 | Signature mechanic preservation vs. small-group tractability (Vyemm MR wall, Aaryonar breath, Emperor add waves, etc.) | game-designer | user | Pending | TBD |
+| 10 | Sleeper-awake event (Kerafyrm L99 3.5M HP): leave untouched (recommended) or change? | game-designer | user | Pending — audit recommends leave untouched | TBD |
 
 ---
 

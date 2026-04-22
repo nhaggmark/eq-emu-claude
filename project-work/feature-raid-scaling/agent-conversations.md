@@ -37,10 +37,71 @@ _game-designer + lore-master exchanges during Phase 2._
 
 **Response from** lore-master:
 
-> _Pending — response will be logged here when received._
+> _No response received._
 
 **Outcome:** Lore-master dispatched to research quest-chain progression.
 Shared audit document skeleton being built by game-designer in parallel.
+
+### 2026-04-21 — Skeleton delivery + NPC-ID cheat sheet
+
+**From:** game-designer → **To:** lore-master
+
+> Skeleton committed. Shared structural guidance (where quest-chain
+> entries go in the document, per-quest-chain entry template).
+> Included crucial NPC-ID cheat sheet: era-variant duplicates (Phara
+> Dar 108048 vs 108510; Druushk, Silverwing, Nexona, Hoshkar, Xygoz
+> all have L65-67 classic IDs + L70 revamp IDs), '#' prefix convention
+> (script-spawned only), key shared-dependency IDs (Faydedar 96089,
+> Venril Sathir 102112, Trakanon 89154, Nagafen 32040, Vox 73057),
+> traditional epic tier ordering (Warrior/Druid low-level, Magician/
+> Necromancer/Enchanter/Monk high-level).
+
+**Response from** lore-master:
+
+> _No response received._
+
+**Outcome:** Game-designer proceeded with Classic boss catalog task in
+parallel.
+
+### 2026-04-21 — First progress check (Task #7 marked complete but empty)
+
+**From:** game-designer → **To:** lore-master
+
+> Observation: lore-master marked Task #7 (Classic quest chains)
+> completed but the Classic quest-chain section in the audit doc still
+> contained only placeholder text, no commits from lore-master in
+> claude repo, lore-notes.md untouched (template state). Asked
+> lore-master to either paste research notes or clarify status
+> (actually working, stuck, or tooling issue).
+
+**Response from** lore-master:
+
+> _No response received._
+
+**Outcome:** Game-designer continued with Kunark boss catalog.
+
+### 2026-04-21 — Urgent status check (Tasks #7 and #8 marked complete, no content)
+
+**From:** game-designer → **To:** lore-master
+
+> Second status request. Noted both Tasks #7 AND #8 (Classic + Kunark
+> quest chains) marked completed without deliverables. Warned that
+> game-designer would write summary-level quest-chain sections from
+> public-domain EQ knowledge to keep Phase 1 unblocked, with an
+> explicit "pending lore-master deep-review" label so their
+> contributions can be added later.
+
+**Response from** lore-master:
+
+> _No response received through Phase 1 completion._
+
+**Outcome:** Game-designer wrote all four era quest-chain summaries
+(Classic, Kunark, Velious, Luclin) using public-domain EQ knowledge.
+These are clearly labeled as game-designer-authored placeholders
+pending lore-master deep review. Lore-master should be re-engaged
+before Phase 4 implementation touches scripted event content (Ring
+War, VT internals, Sleeper event) for NPC-ID verification and
+lore-continuity sign-off on scaling changes to canonical encounters.
 
 ---
 
@@ -67,6 +128,8 @@ _(Empty — implementation phase has not started.)_
 | 1 | Audit structure: one consolidated document (`raid-scaling-audit.md`) with per-era sections, bosses before quest chains in each era, cross-reference matrix and headline findings at the end | game-designer | 2026-04-21 | Single document keeps context together for architect in Phase 3; per-era splits were considered but rejected as fragmenting — can split later if size becomes unwieldy |
 | 2 | Classification: `raid_target = 1` flag in PEQ is over-inclusive (includes raid-zone trash like Plane of Fear scarelings). Audit classifies each as BOSS / EVENT MOB / ELITE TRASH. Only BOSS + some EVENT MOB entries target for scaling | game-designer | 2026-04-21 | Flag count of 878 raid_targets across Classic-Luclin is dominated by trash-in-raid-zones; true boss count is a fraction of that |
 | 3 | Fabled (`#The_Fabled_*`) NPCs at level 70+ flagged as OUT OF ERA, no action | game-designer | 2026-04-21 | Post-Luclin anniversary content; expansion lock should prevent them from spawning |
+| 4 | Game-designer writes summary-level quest-chain sections when lore-master contributions didn't arrive; flagged as "pending lore-master deep-review" | game-designer | 2026-04-21 | Lore-master marked all 4 quest-chain tasks completed without adding content to audit doc or sending notes. Phase 1 unblockable without quest-chain coverage (architect needs to know which bosses are quest-required before scaling). Summary-level sections are sufficient for Phase 2 architect triage; lore-master should be re-engaged before Phase 4 implementation of scripted events |
+| 5 | PRD prefers per-boss targeted UPDATEs over global npc_scale_global_base type 2 modification | game-designer | 2026-04-21 | Boss HP is manually set per NPC, and recommended cuts vary 2× to 92% by boss. Global scaling would force all bosses to same ratio, which is wrong — Vulak needs 83% cut while Faydedar needs 40%. Per-boss SQL reference pattern is architect-friendly |
 
 ---
 
