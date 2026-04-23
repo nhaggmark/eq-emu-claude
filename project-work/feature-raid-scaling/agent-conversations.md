@@ -805,3 +805,42 @@ as Phase 2. Three decision flags handed to architect: VP dual-population scoping
 (data-expert must use NPC ID list), Chardok Royals respawn direction, Fabled
 exclusion filter. Config-expert Phase 3 implementation role: post-SQL #reloadworld
 via world telnet port 9000, smoke verification — same as Phase 2 Tasks 7-8.
+
+---
+
+### 2026-04-22 — architect Phase 3 Kunark architecture complete
+
+**From:** architect (to orchestrator)  
+**Date:** 2026-04-22
+
+Phase 3 Kunark architecture complete. Summary of findings and deliverables:
+
+**Deliverables:**
+- `architect/kunark-architecture.md` (505 lines) — full architecture plan mirroring Phase 2 structure
+- `architect/context/kunark-db-investigation.md` (149 lines) — live DB confirmation of every Kunark raid_target NPC, VP condition-gated variant resolution, Q13 Kunark NPC disposition, and death-touch audit results
+
+**Key technical findings:**
+1. **VP variants definitively resolved via `spawn_condition_values`:** revamp (108040-108053) live under condition 2=1 (VeeshanNew enabled), classic (108509-108517) dormant under condition 1=0 (VeeshanOld disabled). Per Decision #5 we scale only revamp; classic backed up for safety only. VP respawn UPDATE must scope `s2._condition = 2` to avoid touching dormant rows.
+
+2. **Zero death-touch spells in Kunark raid bosses.** DB query for Cazic-Touch-profile spells (mana=0, cast_time=0, effect < -10000) returned empty. Highest damage DD: Nexona's Dragon Harm Touch at -4000 HP / 45s recast — signature mechanic per Decision #11. No `npc_spells_entries` DELETEs needed. **Phase 3 is 100% SQL UPDATEs against npc_types + spawn2 only.**
+
+3. **Q13 Kunark NPC resolution:** Xenevorash (85208), Vessel Drozlin (106008), Thrackin Griften (12172), Caradon (39069), Kyrenna (39155), Mummy of Glohnor (39165), both Tortured Soul variants (51144, 214078) — ALL at named-tier HP already. No Phase 3 action needed for any of them. The Tangrin (78070) also named-tier and raid_target=0, deferred.
+
+4. **Renux Herkanor multi-ID:** 2033 (Classic qeynos2 L61), 12032 (Classic qey2hh1 L51), 56172 (dormant dup), and 448200 (L72 500k HP, raid_target=1, script-spawned Monk epic terminus). Only 448200 is in-question for Kunark scope — flagged to user.
+
+5. **Triggered Trakanon (#Trakanon 89181):** 16k HP already (half the standard Trakanon). No HP change needed. Captured in backup for safety.
+
+**Implementation task count:** 9 (K1-K9), same structure as Phase 2's 10 tasks.
+
+**Required agents for implementation phase:**
+- data-expert (primary — Tasks K1-K5, K9)
+- config-expert (Tasks K6-K7 — #reloadworld + smoke verify)
+- infra-expert (Task K8, conditional — full-stack restart if #reloadworld fails, unlikely since no npc_spells_entries changes)
+
+**NOT needed:** c-expert, lua-expert, perl-expert, protocol-agent.
+
+**TWO USER DECISIONS REQUIRED BEFORE IMPLEMENTATION:**
+- **Decision #21:** Chardok Royals (103055/103056/103080) currently respawn at 1.5h. Decision #5 mid-tier says 12h. Options A/B/C — architect recommends A (leave at 1.5h; "short tier" treats royals as already appropriately tuned).
+- **Decision #22:** Renux Herkanor 448200 (L72 500k HP, Monk epic Kunark terminus). Options A/B — architect recommends A (include, apply HP cut; L72 is a PEQ scripting artifact and gating Monk epic on small-group server is intended unblock per Phase 2 precedent).
+
+**Outcome:** Architecture complete. Status.md updated with Phase 3 task table, two new Open Questions (#21, #22), two new Decision Log entries (pending user resolution), and Phase 3 handoff log. Ready to hand to orchestrator for user decision gate → then implementation team dispatch.

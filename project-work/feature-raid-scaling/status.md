@@ -12,12 +12,12 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
-| Architecture | architect + protocol-agent + config-expert | Complete (Phase 2 scope) | 2026-04-22 | 2026-04-22 |
+| Architecture | architect + protocol-agent + config-expert | Phase 2: Complete 2026-04-22. Phase 3 (Kunark): **Complete 2026-04-22** — architecture doc delivered, 2 user decisions required before implementation dispatch | 2026-04-22 | 2026-04-22 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) — Tasks 1-9 all applied; SQL committed; full-stack restart executed to flush zone caches | 2026-04-22 | 2026-04-23 |
 | Validation | game-tester + user | Complete (Phase 2 Classic) — Server-side PASS; user in-game spot-check: Lady Vox PASS; remaining tests deferred per user decision | 2026-04-22 | 2026-04-23 |
 | Completion | _user_ | Phase 2 Classic era Complete 2026-04-23 — proceeding to Phase 3 Kunark | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 2 (Classic) complete. Phase 3 (Kunark) Architecture starting — architect + protocol-agent + config-expert spawned. Scope: Trakanon, Veeshan's Peak revamp bosses, Kunark epic steps, Q13 Kunark triggered-spawn NPCs (Xenevorash, Renux Herkanor multi-ID, Vessel Drozlin, Thrackin Griften, Caradon+Kyrenna, Mummy of Glohnor, Tortured Soul, triggered Trakanon).
+**Current phase:** Phase 3 (Kunark) Architecture **complete 2026-04-22**. Awaiting user decisions #21 (Chardok Royals respawn) and #22 (Renux Herkanor 448200 inclusion) before implementation team dispatch. Deliverable: `architect/kunark-architecture.md`.
 
 ---
 
@@ -151,6 +151,49 @@ _Record each handoff between agents with context and any notes._
   + implementation plan for Phase 2 Classic raids, based on user's
   phased-delivery choice)
 
+### architect → user (Phase 3 Kunark architecture complete; 2 user decisions required)
+- **Date:** 2026-04-22
+- **Deliverables:**
+  - `architect/kunark-architecture.md` — full Phase 3 (Kunark) architecture doc:
+    executive summary, per-raid scope (4 outdoor dragons, Trakanon + triggered,
+    Venril Sathir + Drusella, Chardok royals, City of Mist pair, 7 VP revamp
+    dragons), mechanical levers, 9-task breakdown with dependencies, risk
+    assessment, 4 review passes, validation plan for game-tester
+  - `architect/context/kunark-db-investigation.md` — complete DB confirmation:
+    live raid_target=1 NPC list, VP condition-gated variant resolution
+    (revamp=condition 2=1=live; classic=condition 1=0=dormant), Q13 Kunark
+    NPC resolution (most are named-tier, no action), death-touch audit
+    (zero free-cast instakill spells found)
+- **Key decisions made during architecture:**
+  - **VP variant resolution definitive:** spawn_condition_values shows revamp
+    variants (108040-108053) are live via condition 2, classic variants
+    (108509-108517) are dormant via condition 1. Per Decision #5 we scale
+    only revamp variants. Classic variants backed up for safety over-capture.
+  - **No `npc_spells_entries` DELETE for Phase 3.** DB audit for Cazic-Touch-
+    profile spells (mana=0, cast_time=0, damage < -10000) across all Kunark
+    raid bosses returned zero rows. Highest-damage spell is Nexona's Dragon
+    Harm Touch at -4000 HP / 45s recast — signature mechanic per Decision #11.
+  - **Q13 Kunark NPC resolution complete:** Xenevorash, Vessel Drozlin,
+    Thrackin Griften, Caradon, Kyrenna, Mummy of Glohnor, two "Tortured Soul"
+    variants — all confirmed named-tier HP already. No Phase 3 action needed.
+    The Tangrin (78070) flagged for later if Enchanter epic blocks.
+  - **100% SQL implementation** (same pattern as Phase 2). No C++, Lua, Perl,
+    rules, or config changes. Three tables touched: `npc_types` (~20 UPDATEs),
+    `spawn2` (~14 UPDATEs), plus Kunark-scoped backup tables.
+  - **Protocol-agent confirmed zero client-visible changes.** Config-expert
+    confirmed no new rules since Phase 2 apply (2026-04-22); no zone-scoped
+    rules; 12h mid-tier respawn correct for Kunark per Decision #5.
+- **TWO USER DECISIONS REQUIRED BEFORE IMPLEMENTATION:**
+  - **Decision #21:** Chardok Royals respawn — leave at 1.5h (Option A, recommended)
+    or bump to 12h (Option B) or intermediate 6h (Option C)
+  - **Decision #22:** Renux Herkanor 448200 (L72 500k HP, script-spawned,
+    Monk epic terminus) — include in Phase 3 (Option A, recommended) or
+    defer past L70 in-era filter (Option B)
+- **Required agents for implementation:** data-expert (primary), config-expert
+  (reload + verification), infra-expert (conditional full-stack restart).
+- **NOT needed:** c-expert, lua-expert, perl-expert, protocol-agent.
+- **Ready for:** user decisions on #21 and #22 → then implementation team dispatch.
+
 ---
 
 ## Implementation Tasks
@@ -172,6 +215,23 @@ _Populated by the architect after the architecture doc is approved._
 
 ---
 
+
+### Phase 3 Kunark Implementation Tasks
+
+_Populated by the architect for Phase 3 (Kunark). Awaiting user decisions #21, #22 before dispatch._
+
+| # | Task | Agent | Status | Notes |
+|---|------|-------|--------|-------|
+| K1 | Create backup tables `npc_types_backup_raid_scaling_kunark` (26 rows) and `spawn2_backup_raid_scaling_kunark` (~20 rows) | data-expert | **Not Started** | Scoped to Kunark NPC IDs; captures VP dormant variants too for safety |
+| K2 | Emit per-boss HP/damage UPDATE SQL (~20 Kunark bosses: 4 outdoor dragons + Trakanon + triggered VS + Chardok royals + Kilidna + 7 VP revamp + Faydedar duplicate) | data-expert | **Not Started** | Audit targets + DB-confirmed IDs. Triggered Trakanon (89181) stays at 16k — no HP change. |
+| K3 | Emit respawn-timer UPDATE SQL (12h for Trakanon/VP/outdoor dragons; 6h for Kilidna; Chardok Royals per Decision #21; VP scoped to `_condition=2` only) | data-expert | **Not Started** | `_condition=2` filter on VP critical — don't touch dormant classic-era variants |
+| K4 | Emit rollback script (INSERT…SELECT from backup tables, transactional) + verification queries | data-expert | **Not Started** | Same pattern as Phase 2 `03-rollback.sql` |
+| K5 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase3-kunark-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | |
+| K6 | `#reloadworld` via Spire or world telnet port 9000 to refresh zone caches | config-expert | **Not Started** | Same as Phase 2 Task 7 |
+| K7 | Smoke verify: Trakanon HP, Nexona stats, Phara Dar stats, Gorenaire respawn, Kilidna damage cap, VP `_condition=2` only touched | config-expert | **Not Started** | Same pattern as Phase 2 Task 8 |
+| K8 | Full-stack restart (conditional) if `#reloadworld` doesn't propagate | infra-expert | **Conditional** | Unlikely needed — Phase 3 doesn't touch npc_spells_entries |
+| K9 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | data-expert | **Not Started** | |
+
 ## Open Questions
 
 _Questions that need answers before work can proceed. Tag the agent or
@@ -192,6 +252,9 @@ person responsible for answering._
 | 11 | Plane of Sky Islands 4-8 death-touch mechanics: convert to survivable damage, or accept as small-group walls? | lore-master | architect+user | **Resolved 2026-04-22** | Remove death-touch entirely on these mobs — the 4 affected epics (Necro, Ranger, Magician, Warrior) become doable |
 | 12 | Class-skill-gated epic steps (Rogue pickpocket, Enchanter charm, Druid/Ranger Firefly Globe): allow 1-player servers to bypass class-gate, or accept "not every epic is doable on 1 character"? | lore-master | user | **Resolved 2026-04-22** | Keep class-gates — accept "not every epic is doable on any character; roll alts for other epics" |
 | 13 | Enraged Golem (Plane of Fear, Wizard epic) lvl 65 150k HP — NOT in raid_target=1 spawnentry queries. Confirm ID and add to boss catalog scaling pass | lore-master | architect | **Resolved 2026-04-22 (Classic scope)** | Classic-scope: Enraged Golem 72106, Ireblind Imp 72069, Enraged Imp 72108, Overseer of Air 71034, Protector of Sky 71059, Hand of Veeshan 71060, Bazzt Zzzt 71072, Keeper of Souls 71075, Sister of Spire 71076, essence tamer 71071 (not true DT — spell 303 is throw), Innoruuk revamp 186158, hateplaneb event adds, cazicthule Avatars. Kunark subset (Xenevorash 85208, Renux Herkanor 448200/2033/12032/56172, Vessel Drozlin 106008, General V'ghera 20205, Thrackin Griften 12172) deferred to Phase 3. The Hole SK-epic NPCs (Caradon 39069, Kyrenna 39155, Mummy of Glohnor 39165) deferred to Phase 3 (SK epic is Kunark-era). Triggered Trakanon: deferred to Phase 3. Full details in `architect/context/q13-npc-investigation.md`. |
+
+| 21 | Chardok Royals (Queen Velazul 103055, Overking Bathezid 103056, Prince Selrach 103080) currently respawn at 1.5h. Decision #5 mid-tier is 12h, but 1.5h is shorter. Leave at 1.5h (Option A, architect-recommended), bump to 12h for tier consistency (Option B), or 6h intermediate (Option C)? | architect | user | **Open — blocks Phase 3 Task K3** | |
+| 22 | Renux Herkanor 448200 (L72 500k HP raid_target=1, script-spawned, Monk epic Kunark-era terminus): include in Phase 3 scaling (Option A, architect-recommended) or defer past L70 in-era filter (Option B)? | architect | user | **Open — blocks Phase 3 Task K2 if Option A** | |
 
 ---
 
@@ -242,6 +305,8 @@ _Key decisions made during this feature's development._
 | 17 | Phase 2 is 100% SQL — no C++, no Lua, no Perl, no rule changes | architect | 2026-04-22 | All levers (HP, damage, respawn, rampage trim, death-touch) are expressible as `npc_types`+`spawn2`+`npc_spells_entries` DB changes. Rule system offers no per-raid-boss lever and would require C++ recompile. |
 | 18 | essence tamer 71071 is NOT a death-touch boss despite lore-master classification | architect | 2026-04-22 | Its spell list (npc_spells_id=212) has only spell 303 "Whirl till you hurl" = effect 64 (throw/fling), not instant death. HP/damage scaling still applies but no spell-list edit needed. |
 | 19 | Q13 triggered NPCs identified for Classic scope; Kunark subset deferred to Phase 3 | architect | 2026-04-22 | 13 Classic triggered-spawn NPCs added to Phase 2 UPDATE scope. 5 Kunark-era triggered NPCs (Xenevorash, Vessel Drozlin, Renux Herkanor variants, Thrackin Griften, Kunark SK-epic NPCs in The Hole) deferred. |
+| 21 | Chardok Royals respawn direction | architect (pending user) | 2026-04-22 | Open — architect recommends Option A (leave 1.5h). See architect/kunark-architecture.md "Items flagged to user" section. |
+| 22 | Renux Herkanor 448200 inclusion in Phase 3 | architect (pending user) | 2026-04-22 | Open — architect recommends Option A (include, apply HP cut). See architect/kunark-architecture.md "Items flagged to user" section. |
 
 ---
 
