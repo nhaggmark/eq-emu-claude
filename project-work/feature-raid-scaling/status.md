@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert | Phase 2: Complete 2026-04-22. Phase 3 (Kunark): **Complete 2026-04-22** — architecture doc delivered, 2 user decisions required before implementation dispatch | 2026-04-22 | 2026-04-22 |
-| Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) — Tasks 1-9 all applied; SQL committed; full-stack restart executed to flush zone caches | 2026-04-22 | 2026-04-23 |
-| Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 (Kunark): Server-side PASS 2026-04-23 (86 checks, all PASS); user in-game testing pending | 2026-04-22 | — |
-| Completion | _user_ | Phase 2 Classic era Complete 2026-04-23 — proceeding to Phase 3 Kunark | 2026-04-23 | 2026-04-23 |
+| Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
+| Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 Kunark: Server-side PASS 2026-04-23 (86 checks); user in-game testing deferred per user decision to proceed | 2026-04-22 | 2026-04-23 |
+| Completion | _user_ | Phase 2 Classic Complete 2026-04-23. Phase 3 Kunark Complete 2026-04-23 — proceeding to Phase 4a Velious non-ToV | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 3 (Kunark) Validation — server-side PASS 2026-04-23. User in-game testing guide delivered. Awaiting user in-game testing completion.
+**Current phase:** Phase 4a (Velious non-ToV) Architecture starting 2026-04-23. Lore-master re-engagement noted as recommended for Velious scripted-event content (Coldain Ring War / Q8). Architecture team will include lore-master for progression-chain consultation.
 
 ---
 
