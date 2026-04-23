@@ -12,7 +12,7 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
-| Architecture | architect + protocol-agent + config-expert | Phase 2: Complete 2026-04-22. Phase 3 (Kunark): **Complete 2026-04-22** — architecture doc delivered, 2 user decisions required before implementation dispatch | 2026-04-22 | 2026-04-22 |
+| Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2: Complete 2026-04-22. Phase 3 Kunark: Complete 2026-04-22. Phase 4a Velious non-ToV: **Draft delivered 2026-04-23** — architect recommendation for Q8 Ring War pending lore-master final review; 4 user decisions raised (#23-26) | 2026-04-22 | 2026-04-23 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
 | Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 Kunark: Server-side PASS 2026-04-23 (86 checks); user in-game testing deferred per user decision to proceed | 2026-04-22 | 2026-04-23 |
 | Completion | _user_ | Phase 2 Classic Complete 2026-04-23. Phase 3 Kunark Complete 2026-04-23 — proceeding to Phase 4a Velious non-ToV | 2026-04-23 | 2026-04-23 |
@@ -219,6 +219,49 @@ _Record each handoff between agents with context and any notes._
 
 ---
 
+### architect → user (Phase 4a Velious non-ToV architecture complete; 4 user decisions required)
+- **Date:** 2026-04-23
+- **Deliverables:**
+  - `architect/velious-a-architecture.md` — full Phase 4a architecture doc:
+    executive summary, per-zone scope (Kael non-AoW + Skyshrine + Plane of Growth +
+    Plane of Mischief Jester + outdoor Velious dragons + Siren's Grotto + Velketor +
+    Dain's Icewell + Narandi), mechanical levers, 11-task breakdown with dependencies,
+    risk assessment, 4 review passes, validation plan for game-tester
+  - `architect/context/velious-a-db-investigation.md` — complete DB confirmation:
+    in-scope raid bosses list, out-of-scope / out-of-era NPCs explicitly excluded,
+    Coldain Ring War spawn_conditions mechanism, wave composition analysis,
+    death-touch sweep (zero results), Lord Yelinak duplicate resolution (both live)
+  - Appendix in main doc includes Phase 4b deferred list (AoW, ToV proper, Sleeper,
+    Vulak) and future user-decision flags (faction grind, Ring 8/9 UX)
+- **Key decisions made during architecture:**
+  - **Architect Q8 recommendation: Option B+ wave-skip** (pending lore-master final OK).
+    Modify `Master_Timer` in `ring_war.lua` to advance `current_spawn_condition` by 2
+    (with Narandi clamp at 16). Halves total wave giant count (~190 → ~95) while
+    preserving 5-min cadence and event identity. Two-line Lua edit.
+  - **100% SQL + 1 Lua file** implementation. Three tables touched: `npc_types`
+    (~35 UPDATEs), `spawn2` (~14-16 UPDATEs), backup tables. **No** `npc_spells_entries`
+    changes (death-touch sweep returned zero rows).
+  - **Lord Yelinak dual scaling** — both 114106 (500k→110k) and 114618 (297k→110k).
+  - **Event-trigger NPCs and Jaled Dar's Shade left untouched** — quest-NPC / event-control
+    design per lore-master and audit. Protocol-agent confirmed no client-visibility issue.
+  - **First phase with lua-expert in implementation team.** Phases 2-3 were
+    data-expert + config-expert + (conditional) infra-expert. Phase 4a adds lua-expert.
+- **FOUR USER DECISIONS RAISED (#23-26):**
+  - **#23 Coldain Ring War lever** — architect Option B+; awaiting lore-master final
+  - **#24 Yelinak duplicates** — architect recommends scale both to 110k
+  - **#25 Faction grind acceleration** — architect recommends out-of-Phase-4a
+  - **#26 Ring 8/9 UX softening** — architect recommends out-of-Phase-4a
+- **Protocol-agent Phase 4a consultation confirmed** zero client impact (logged 2026-04-22).
+- **Config-expert Phase 4a consultation confirmed** no rule changes needed, all prior-pass
+  globals unchanged, no zone-scoped rulesets (logged 2026-04-22).
+- **Lore-master Q8 consultation** in-flight as of 2026-04-23.
+- **Required agents for implementation:** data-expert (primary), lua-expert (new to Phase 4a),
+  config-expert (reload + smoke), infra-expert (conditional restart).
+- **NOT needed:** c-expert, perl-expert, protocol-agent (already advised).
+- **Ready for:** user decisions #23-#26 → then implementation team dispatch (includes
+  lua-expert for first time in raid-scaling project).
+
+
 ## Implementation Tasks
 
 _Populated by the architect after the architecture doc is approved._
@@ -255,6 +298,25 @@ _Populated by the architect for Phase 3 (Kunark). Awaiting user decisions #21, #
 | K8 | Full-stack restart (conditional) if `#reloadworld` doesn't propagate | infra-expert | **Not Needed** | Phase 3 doesn't touch npc_spells_entries; #reloadworld sufficient |
 | K9 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | game-tester | **Pending** | game-tester to commit kunark-server-validation.md, kunark-in-game-testing-guide.md, status.md updates |
 
+### Phase 4a Velious non-ToV Implementation Tasks
+
+_Populated by the architect for Phase 4a (Velious non-ToV). Awaiting user decisions #23, #24 (and optionally #25, #26) before dispatch. Also awaiting lore-master's Q8 final recommendation to finalize Decision #23._
+
+| # | Task | Agent | Status | Notes |
+|---|------|-------|--------|-------|
+| V1 | Build backup tables `npc_types_backup_raid_scaling_velious_a` (33 rows) and `spawn2_backup_raid_scaling_velious_a` (~35-40 rows); emit SQL reference doc structure | data-expert | **Not Started** | Mirrors Phase 3 pattern with `_velious_a` suffix |
+| V2 | Emit per-boss HP/damage UPDATE SQL (~35 Velious non-ToV bosses: Kael 4 + Skyshrine 6 + PoG 9 + Jester + WW dragons 3 + Velketor pair + Kelorek + WW trim 3 + Sirens 2 + Narandi + Dain + Chamberlain + Taskmaster + Wuoshi + Lodizal) | data-expert | **Not Started** | Commit to `data-expert/context/phase4a-velious-a-implementation.sql` |
+| V3 | Emit `spawn2.respawntime` UPDATE SQL (12h for ~15 mid-tier bosses; skip already-short; skip Narandi condition-gated) | data-expert | **Not Started** | Mirror Phase 3 pattern |
+| V4 | Emit rollback script (INSERT…SELECT from backup tables, transactional) + verification queries | data-expert | **Not Started** | Mirror `06-kunark-rollback.sql` pattern |
+| V5 | Backup `ring_war.lua` (cp with `_velious_a` suffix OR rely on git revertibility) | lua-expert | **Not Started** | First phase with a Lua script change |
+| V6 | Edit `akk-stack/server/quests/greatdivide/encounters/ring_war.lua` — modify `Master_Timer` per Decision #23 resolution (architect recommends wave-skip +2 advance with Narandi clamp at 16) | lua-expert | **Not Started** | Pending Decision #23 resolution |
+| V7 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase4a-velious-a-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | — |
+| V8 | `#reloadworld` + `#reloadquests` via Spire or world telnet port 9000 | config-expert | **Not Started** | Quest script reload needed for Ring War Lua change |
+| V9 | Smoke verify: Kael bosses HP, Skyshrine Yelinak duals at 110k, Tunare 150k, outdoor dragons 35-40k, Ring War script contains `current_spawn_condition + 2`, respawn 12h applied to correct IDs | config-expert | **Not Started** | — |
+| V10 | Full-stack restart (conditional) if `#reloadquests` doesn't propagate ring_war.lua changes | infra-expert | **Not Started** | Encounter scripts sometimes need zone restart for re-registration |
+| V11 | Commit + push `claude/` + `akk-stack/` repo changes (architecture doc, context files, status, SQL, modified ring_war.lua) to `feature/raid-scaling` branch | data-expert | **Not Started** | — |
+
+
 ## Open Questions
 
 _Questions that need answers before work can proceed. Tag the agent or
@@ -278,6 +340,11 @@ person responsible for answering._
 
 | 21 | Chardok Royals (Queen Velazul 103055, Overking Bathezid 103056, Prince Selrach 103080) currently respawn at 1.5h. Decision #5 mid-tier is 12h, but 1.5h is shorter. Leave at 1.5h (Option A, architect-recommended), bump to 12h for tier consistency (Option B), or 6h intermediate (Option C)? | architect | user | **Resolved 2026-04-23** | Option A — leave at 1.5h (preserve farming cadence) |
 | 22 | Renux Herkanor 448200 (L72 500k HP raid_target=1, script-spawned, Monk epic Kunark-era terminus): include in Phase 3 scaling (Option A, architect-recommended) or defer past L70 in-era filter (Option B)? | architect | user | **Resolved 2026-04-23** | Option A — include in Phase 3 scaling (apply HP cut) |
+
+| 23 | Coldain Ring War (Q8) — Option A (accept-as-is, rejected), Option B (wave-skip +2 via Lua; ~7 effective waves; cadence preserved — architect-recommended) or Option C (reduce wave-mob HP, violates Decision #2) | architect | user | **Raised 2026-04-23** | Architect-recommends Option B+ (wave-skip advance-by-2 with Narandi clamp at condition 16). Awaiting lore-master final recommendation + user approval. |
+| 24 | Lord Yelinak duplicates (114106 500k / 114618 297k) both live per DB sweep — scale both to 110k HP (Option A, architect-recommended) or scale only main 114106 (Option B) | architect | user | **Raised 2026-04-23** | Architect-recommends Option A (scale both for consistency) |
+| 25 | Faction grind acceleration (CoV/Coldain/Kromzek three-way — long grind time for solo player) — accept as-is (Option A, architect-recommended) or boost via rule/items (Option B) | architect | user | **Raised 2026-04-23 — flag only** | Architect-recommends **out of Phase 4a scope**; revisit after user tests content |
+| 26 | Ring 8 / Ring 9 failure-reset UX (4-min Ry'Gorr timer, 10-min Juliash timer, Ring 8 miss resets Rings 1-7) — accept as-is (Option A, architect-recommended) or soften | architect | user | **Raised 2026-04-23 — flag only** | Script-level UX concerns, not scaling levers. Architect-recommends **out of Phase 4a scope** |
 
 ---
 
@@ -330,6 +397,14 @@ _Key decisions made during this feature's development._
 | 19 | Q13 triggered NPCs identified for Classic scope; Kunark subset deferred to Phase 3 | architect | 2026-04-22 | 13 Classic triggered-spawn NPCs added to Phase 2 UPDATE scope. 5 Kunark-era triggered NPCs (Xenevorash, Vessel Drozlin, Renux Herkanor variants, Thrackin Griften, Kunark SK-epic NPCs in The Hole) deferred. |
 | 21 | Chardok Royals: respawn stays at 1.5h (Option A) | user | 2026-04-23 | Preserve farming cadence; 1.5h was intentional per audit |
 | 22 | Renux Herkanor 448200: include in Phase 3 scaling (Option A) | user | 2026-04-23 | Monk epic Kunark-era terminus must be doable by small group |
+
+| 23 | Coldain Ring War lever — Option B+ (wave-skip) recommended | architect | 2026-04-23 | Preserves event identity (13 wave structure with cadence) while halving DPS burden. Minimal blast radius (2-line Lua edit). Awaiting lore-master final recommendation. |
+| 24 | Lord Yelinak duplicates — scale both (Option A) recommended | architect | 2026-04-23 | DB sweep confirms both 114106 and 114618 are live with independent spawn2 rows. Consistency > partial scaling. |
+| 27 | Phase 4a scope excludes AoW (113457) and Vulak`Aerr (124155); scope limited to non-ToV, non-Sleeper Velious content | architect | 2026-04-23 | Per Decision #4 phased delivery; AoW and ToV proper go to Phase 4b. Idol of Rallos Zek (113341) in scope as part of Kael chain; Statue→Idol→AoW chain completes in 4b. |
+| 28 | Phase 4a introduces first Lua quest-script change in raid-scaling project | architect | 2026-04-23 | Coldain Ring War wave gate cannot be solved by SQL alone (it's a DPS-over-time gate, not a boss-HP gate). Lua change is required. lua-expert added to implementation team for first time. |
+| 29 | No `npc_spells_entries` DELETEs needed for Phase 4a | architect | 2026-04-23 | DB sweep of Phase 4a in-scope bosses' spell lists vs death-touch profile (mana=0, cast_time=0, damage<=-10000): zero rows. Highest 0-cast damage spell is Kelorek Entomb in Ice (-1000, 18s recast) — signature mechanic, not death-touch. Keep per Decision #11. |
+| 30 | Jaled Dar's Shade (3M HP uncombattable turn-in NPC) left untouched | architect | 2026-04-23 | Per lore-master Section 4 (velious-chains.md): intentional quest-NPC design. Client renders HP as percentage so 3M HP is visually indistinguishable from any other full-HP NPC to player. |
+| 31 | Plane of Growth event-trigger NPCs (a_warm_light, a_thifling_focuser, #Lantaric`Dar) left untouched | architect | 2026-04-23 | Per audit and lore-master Section 6 guidance. Event-control NPCs, not kill targets. Protocol-agent confirmed no Titanium client anomaly from L1/1M HP combination. |
 
 ---
 

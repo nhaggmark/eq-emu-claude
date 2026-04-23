@@ -1134,3 +1134,68 @@ catalogued.
 
 **Outcome:** All Phase 2/3 patterns confirmed for Phase 4a. SQL-only, zero rule changes,
 zero config file changes. Config-expert consultation for Phase 4a architecture is complete.
+
+---
+
+### 2026-04-23 — architect spawned for Phase 4a, verified prior consultations
+
+**From:** architect (team `raid-scaling-velious-a-architecture`)
+**Date:** 2026-04-23
+
+On spawn, architect reviewed:
+- agent-conversations.md to confirm prior (2026-04-22) Phase 4a consultations from
+  protocol-agent and config-expert. Both consultations delivered complete findings.
+  Architect incorporated findings directly into architecture doc Addenda section without
+  redundant re-consultation.
+- Architect sent fresh consultation to lore-master for Phase 4a scoped task:
+  - Q8 Coldain Ring War (architect-assigned) — A/B/C recommendation
+  - Coldain Prayer Shawl raid-tier assessment
+  - Faction-gate confirmations (Yelinak, Dain, Tormax)
+  - Ring 8/Ring 9 UX softening scope check
+  - Idol of Rallos Zek spawn chain confirmation
+  - Velious Epic 1.0 steps re-confirmation
+
+Also re-sent (for completeness/record) scoped consultations to protocol-agent and
+config-expert with Phase 4a-specific framing. Prior 2026-04-22 responses are authoritative
+per agent-conversations.md entries and have been folded into architect doc.
+
+**Outcome:** Architect proceeds with architecture doc drafting. Waiting on lore-master
+Q8 final recommendation before finalizing Decision #23. Draft recommendation (Option B+
+wave-skip) is in the doc pending lore-master review.
+
+---
+
+### 2026-04-23 — architect DB investigation of Velious non-ToV content
+
+**From:** architect
+**Date:** 2026-04-23
+
+Architect ran comprehensive DB investigation of Velious non-ToV raid NPCs. Key findings
+documented at `architect/context/velious-a-db-investigation.md`:
+
+- **~35 in-scope raid-tier bosses** confirmed live with active spawn2 (or script-spawn
+  in Idol/Narandi cases)
+- **Zero death-touch-profile spells** on Phase 4a bosses (DB sweep vs Phase 2 spell 982
+  pattern: mana=0, cast_time=0, damage <= -10,000) — zero rows returned. No
+  `npc_spells_entries` DELETEs needed.
+- **Lord Yelinak dual variants** (114106 500k HP, 114618 297k HP) BOTH live with
+  independent spawn2 rows, both `_condition=0`. Recommendation: scale both to 110k HP.
+- **Narandi's spawn2** uses `_condition=16, cond_value=1` (script-gated to Ring War wave
+  15 completion). Respawn 749999s is effectively dead time — the event drives it.
+- **Ring War wave composition** via `spawn_conditions`: 13 wave conditions (RingWarWave1
+  through Wave15) + condition 16 = Narandi. ~190 total Kromrif giants across waves.
+  Lua drives pacing via 5-min timer. `wave_cooldown_time = 5 * 60 * 1000` is a Lua local.
+- **Event-trigger NPCs** confirmed: a_warm_light (L1, 1M HP, 2-9 dmg, 8 spawn2 rows),
+  a_thifling_focuser (2 NPC IDs, 1M HP each, 4 total spawn2 rows). Leave untouched per
+  audit.
+- **Jaled Dar's Shade (3M HP uncombattable)** confirmed per lore-master. Leave untouched.
+- **High-damage signature spells** preserved (no DT): Velketor's Sunstrike (-1800) /
+  Superior Sundering (-2000) 7s cast time, Tunare/PoG boss Summer's Flame (-1600),
+  Winter's Frost (-1375), Kelorek Entomb in Ice (-1000) 0-cast 18s recast, Faleniel Ice
+  Rain (-1000) 0-cast 35s recast. All survive Decision #11 preservation filter.
+
+Full Phase 4a target value table and SQL sketch in architecture doc.
+
+**Outcome:** DB layer cleared for implementation dispatch (after Decision #23 resolution
+via lore-master response).
+
