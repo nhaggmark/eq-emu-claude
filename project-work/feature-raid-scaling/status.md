@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/raid-scaling`
 > **Created:** 2026-04-21
-> **Last updated:** 2026-04-23 (Phase 3 Kunark server-side validation complete)
+> **Last updated:** 2026-04-23 (Phase 4a Velious non-ToV server-side validation complete — FAIL: BUG-001 filed)
 
 ---
 
@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2: Complete 2026-04-22. Phase 3 Kunark: Complete 2026-04-22. Phase 4a Velious non-ToV: **Draft delivered 2026-04-23** — architect recommendation for Q8 Ring War pending lore-master final review; 4 user decisions raised (#23-26) | 2026-04-22 | 2026-04-23 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
-| Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 Kunark: Server-side PASS 2026-04-23 (86 checks); user in-game testing deferred per user decision to proceed | 2026-04-22 | 2026-04-23 |
+| Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 Kunark: Server-side PASS 2026-04-23 (86 checks); user in-game testing deferred per user decision to proceed. Phase 4a Velious non-ToV: Server-side FAIL 2026-04-23 (108 checks; 107 PASS, 1 FAIL — BUG-001 Tunare wrong NPC ID); BUG-001 must be fixed before PoG in-game testing | 2026-04-22 | In Progress |
 | Completion | _user_ | Phase 2 Classic Complete 2026-04-23. Phase 3 Kunark Complete 2026-04-23 — proceeding to Phase 4a Velious non-ToV | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 4a (Velious non-ToV) Architecture starting 2026-04-23. Lore-master re-engagement noted as recommended for Velious scripted-event content (Coldain Ring War / Q8). Architecture team will include lore-master for progression-chain consultation.
+**Current phase:** Phase 4a (Velious non-ToV) Validation — BUG-001 requires data-expert fix before Phase 4a can be marked complete. Ring War in-game testing is the highest priority session.
 
 ---
 
@@ -50,7 +50,7 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase 1 — Audit | All raid bosses + raid quest chains catalogued with scaling status | **Complete 2026-04-21** |
 | Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | **Complete 2026-04-23** |
 | Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | **Complete 2026-04-23** |
-| Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | In Progress — Architecture starting 2026-04-23 |
+| Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | In Progress — SQL applied, server validation FAIL (BUG-001 Tunare wrong NPC ID); fix required before completion |
 | Phase 4b — Velious ToV+Sleeper+Vulak | Temple of Veeshan proper, Sleeper's Tomb, Avatar of War, Vulak'Aerr | Not Started |
 | Phase 5a — Luclin non-VT | Ssraeshza, Grieg's End, Akheva, Luclin raid content ex-VT | Not Started |
 | Phase 5b — Luclin VT+shards | Vex Thal proper, VT key shard rework | Not Started |
@@ -302,6 +302,21 @@ _Populated by the architect for Phase 3 (Kunark). Awaiting user decisions #21, #
 | K8 | Full-stack restart (conditional) if `#reloadworld` doesn't propagate | infra-expert | **Not Needed** | Phase 3 doesn't touch npc_spells_entries; #reloadworld sufficient |
 | K9 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | game-tester | **Pending** | game-tester to commit kunark-server-validation.md, kunark-in-game-testing-guide.md, status.md updates |
 
+### game-tester → data-expert (Phase 4a Velious non-ToV server-side validation complete — BUG-001 filed)
+- **Date:** 2026-04-23
+- **Server-side result:** FAIL (1 bug — BUG-001)
+- **Deliverables:**
+  - `game-tester/velious-a-server-validation.md` — 108-check validation report; 107 PASS, 1 FAIL
+  - `game-tester/velious-a-in-game-testing-guide.md` — 8 sessions, Ring War is Session 1 (highest priority)
+  - `bugs/BUG-001-tunare-wrong-npc-id/report.md` — Tunare combat boss (127098) at 530k HP; fix is one SQL UPDATE
+- **Key notes:**
+  - BUG-001: `#Tunare` combat boss (NPC 127098) is at 530,000 HP. The implementation targeted 127001 (`#_Tunare`, passive trigger NPC that depops on engage and script-spawns 127098). Fix: `UPDATE npc_types SET hp = 150000 WHERE id = 127098;` — also add 127098 to backup table. No spawn2 change needed (127098 has no spawn2 row, always script-spawned).
+  - BUG-001 does NOT block Ring War, Kael, Skyshrine, outdoor dragons, Velketor, Sirens, or Mischief sessions — only PoG Tunare fight is affected.
+  - All Kromrif wave mob HP cuts (Lever 1) confirmed. Ring War Lever 2 NOT applied (wave_cooldown_time = 5 min, unchanged).
+  - spawn2 backup has 227 rows (vs estimate 55-65) — correctly captures all Ring War wave mob spawn2 rows in greatdivide (193 rows, all confirmed exclusive to Ring War NPC IDs).
+  - Phase 4b exclusions confirmed: AoW at 900k, Vulak at 890k — untouched.
+- **Handoff to:** data-expert (BUG-001 fix), then user for in-game testing
+
 ### Phase 4a Velious non-ToV Implementation Tasks
 
 _Populated by the architect for Phase 4a (Velious non-ToV). Awaiting user decisions #23, #24 (and optionally #25, #26) before dispatch. Also awaiting lore-master's Q8 final recommendation to finalize Decision #23._
@@ -316,7 +331,8 @@ _Populated by the architect for Phase 4a (Velious non-ToV). Awaiting user decisi
 | V6 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase4a-velious-a-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | — |
 | V7 | `#reloadworld` via Spire or world telnet port 9000 | config-expert | **Not Started** | No `ring_war.lua` edit by default — no `#reloadquests` needed. |
 | V8 | Smoke verify: Kael bosses HP, Skyshrine Yelinak duals at 110k, Tunare 150k, outdoor dragons 35-40k, respawn 12h applied to correct IDs, Kromrif wave-mob HP at Lever 1 targets, Seneschal at 30k | config-expert | **Not Started** | — |
-| V9 | Commit + push `claude/` repo changes (architecture doc, context files, status, SQL) to `feature/raid-scaling` branch. `akk-stack/` untouched unless Lever 2 triggered. | data-expert | **Not Started** | — |
+| V9 | Commit + push `claude/` repo changes (architecture doc, context files, status, SQL) to `feature/raid-scaling` branch. `akk-stack/` untouched unless Lever 2 triggered. | game-tester | **In Progress** | Validation deliverables committed this pass; BUG-001 fix commit pending |
+| V_BUG001 | Fix BUG-001: `UPDATE npc_types SET hp = 150000 WHERE id = 127098;` — add 127098 to backup table; then `#reloadworld` | data-expert | **Open** | Tunare combat boss 127098 at 530k (unscaled); was targeting passive trigger 127001 instead |
 | V10 | (**CONDITIONAL Lever 2**) IF game-tester validation shows ≥3 consecutive waves overlapping with Lever 1 alone, AND user approves: lua-expert edits `ring_war.lua:26` wave_cooldown_time from 5min to 8min | lua-expert | **Not Started (conditional)** | Fallback only. lua-expert invoked post-validation, not in default dispatch. |
 | V11 | (**CONDITIONAL**) `#reloadquests` via Spire, OR full-stack restart (infra-expert) if `#reloadquests` doesn't propagate Lua script change | config-expert OR infra-expert | **Not Started (conditional)** | Only needed after V10. |
 
@@ -369,7 +385,7 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| | | | | | | |
+| BUG-001 | Phase 4a: Tunare combat boss (127098) unscaled — implementation targeted passive trigger NPC (127001) instead of killable combat NPC | High | game-tester | Open | data-expert | — |
 
 ---
 
