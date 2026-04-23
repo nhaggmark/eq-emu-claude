@@ -286,3 +286,56 @@ All 3 backup tables intact post-verification:
 - `npc_types_backup_raid_scaling`: 2,548 rows
 - `spawn2_backup_raid_scaling`: 6,788 rows  
 - `npc_spells_entries_backup_raid_scaling`: 6 rows (the original Cazic Touch entries)
+
+---
+
+## Phase 3 (Kunark) — Config Consultation (2026-04-22)
+
+### Summary
+
+**Phase 2 config findings carry forward unchanged to Phase 3. No new rules, no config changes. SQL-only pattern confirmed.**
+
+### Verification
+
+**Rule query (Kunark/VP/Dragon/Raid keyword search):** No Kunark-specific rule entries exist in `rule_values`. The rules in the table matching "Raid" keywords are all general-purpose (XP modifiers, bot buff behavior, `Combat:AllowRaidTargetBlind=false`). None are per-zone, per-era, or per-NPC. All were already catalogued in Phase 2.
+
+**`eqemu_config.json` / `.env`:** No changes needed. Expansion lock is still at Luclin (`Expansion:CurrentExpansion=3`). Applies to Kunark content as intended.
+
+**`#reloadworld` cache caveat:** Same as Phase 2. `npc_types` and `spawn2` changes propagate via `#reloadworld` via world telnet port 9000. `npc_spells_entries` changes require a full zone restart to flush the per-zone spell-list cache. Applies identically to VP, Sebilis, Karnor, Chardok zones.
+
+### Kunark-Specific Zone Findings
+
+**Veeshan's Peak (`veeshan`):**
+- `zone.ruleset = 1` ("default") — same ruleset as 217 other standard zones. No custom rule overrides apply.
+- `zone.min_status = 0` — no GM-only restriction; player-accessible.
+- **Two populations exist in spawn2:**
+  - Revamp variants (IDs 108040-108053): HP 454k-814k, respawn 269,232-291,232s (~75-81h). These are the user-selected "keep revamp" variants (Decision #5).
+  - Classic variants (IDs 108509-108517): HP 144k-192k, respawn 64,800-86,400s (~18-24h). These have standing spawn2 entries alongside revamp rows.
+  - **Both populations have standing `spawn2` rows** — VP is NOT DZ-only. Respawn timer UPDATEs via the standard JOIN pattern will work on both sets. Data-expert should be aware both variant rows will exist in the backup and may need selective scoping (UPDATE by NPC ID list, not a zone-wide sweep).
+  - Guardian_of_Veeshan (108042): HP 600k, respawn 164,895s (~45h) — outlier respawn but standard HP-cut pattern.
+
+**Trakanon (`sebilis`):**
+- Standing spawn2 entry: `sebilis`, respawn 194,400s (54h). Same as Classic boss pattern.
+- HP 32,000 at L65 — already Phase 2 verified (appears in Phase 2 smoke checks). However, Trakanon is Phase 3 scope (Kunark era), not Phase 2. His `npc_types` row was captured in the backup (`npc_types_backup_raid_scaling` covers all `raid_target=1, level 45-70`).
+
+**Venril Sathir (`karnor`):**
+- ID 102112, L55, HP 22,000, respawn 194,400s (54h). Standing spawn2 in karnor.
+
+**Chardok Royals (`chardok`):**
+- Overking Bathezid (103056): L65, HP 34,500, respawn 5,400s (1.5h — already short).
+- Queen Velazul (103055): L62, HP 30,000, respawn 5,400s.
+- Prince Selrach Di'zok (103080): L61, HP 25,000, respawn 5,400s.
+- Note: `#The_Fabled_Prince_Selrach_Di'zok` (103218) has HP 1,500,000 and respawn 5,400s — this is a Fabled variant (seasonal content). Architect should confirm whether Fabled rows are in scope or should be excluded the same way Phase 2 excluded `#The_Fabled%`.
+
+**No DZ-only quirks for Phase 3:** Unlike `hateplaneb` where some bosses spawned inside DZ instances at 900s, all confirmed Kunark raid bosses (VP, Sebilis/Trakanon, Karnor, Chardok) have standard standing `spawn2` entries. The JOIN-based respawn UPDATE pattern works without modification.
+
+**No new `npc_spells_entries` death-touch issues identified:** No Kunark equivalent of the PoSky spell 982 "Cazic Touch" 0-cast-time instakill was found. Trakanon has a poison AE (survivable with resistance); VP dragons have breath weapons. Standard lever 2 (damage trim) handles outliers. No Phase-3-specific spell-list DELETEs anticipated at this stage — architect may identify specific cases on deeper review.
+
+### Config-Expert Role in Phase 3 Implementation
+
+Identical to Phase 2:
+1. No rule changes needed.
+2. No `eqemu_config.json` or `.env` changes.
+3. Post-SQL: issue `#reloadworld` via world telnet (port 9000) to propagate `npc_types`/`spawn2` changes.
+4. Smoke verification via DB read-back (same pattern as Task 8 Phase 2).
+5. If VP dragons retain old spell-list behavior in a running zone, coordinate with infra-expert for full zone restart.
