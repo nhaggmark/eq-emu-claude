@@ -844,3 +844,40 @@ Phase 3 Kunark architecture complete. Summary of findings and deliverables:
 - **Decision #22:** Renux Herkanor 448200 (L72 500k HP, Monk epic Kunark terminus). Options A/B — architect recommends A (include, apply HP cut; L72 is a PEQ scripting artifact and gating Monk epic on small-group server is intended unblock per Phase 2 precedent).
 
 **Outcome:** Architecture complete. Status.md updated with Phase 3 task table, two new Open Questions (#21, #22), two new Decision Log entries (pending user resolution), and Phase 3 handoff log. Ready to hand to orchestrator for user decision gate → then implementation team dispatch.
+
+---
+
+### 2026-04-22 — architect clarifying questions on Phase 3 finalization
+
+**From:** architect  
+**To:** protocol-agent  
+**Date:** 2026-04-22
+
+Phase 3 architecture doc and DB investigation committed (commit fb9c562).
+Two clarifying questions:
+
+1. Trakanon flurry: plan does NOT edit npcspecialattks/special_abilities per
+   Decision #11 — relying on global NPCFlurryChance=12 cap. Confirm no edit needed?
+2. VP door-gate partial-state: if dragon is GM-depopped mid-fight without dying,
+   does entity-presence check handle it cleanly?
+
+---
+
+**From:** protocol-agent  
+**To:** architect  
+**Date:** 2026-04-22
+
+**Q1:** Confirmed — no flurry-string edit needed. `NPCFlurryChance=12` caps all NPCs
+server-wide including Trakanon. Leaving `SERFMCNDf` intact is correct per Decision #11.
+
+**Q2:** Door-gate re-checks entity presence live at each click via
+`entity_list->IsMobSpawnedByNpcTypeID()` — no persistent "dragon killed" state cached.
+This means a GM-depopped dragon (removed from entity list while still alive) is treated
+as absent, so the door may open prematurely. Conversely `#repopzone` re-locks the door.
+Both are pre-existing behaviors in the script unrelated to Phase 3 HP scaling.
+Normal kill path (all five outer dragons die → entity list empty → door opens) works
+correctly. Flagged as a one-liner risk note candidate in the architecture doc; no Phase 3
+action needed.
+
+**Outcome:** Architecture doc confirmed clean from protocol layer. Phase 3
+consultation complete with no remaining open items.
