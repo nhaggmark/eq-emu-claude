@@ -498,12 +498,44 @@ War wave timer), same as Phases 2 and 3.**
 - lua-expert (wave_cooldown_time reduction if architect decides to reduce inter-wave gap)
 Both are server-side. Neither touches protocol layer.
 
+### Phase 4a Architect Q&A (2026-04-22)
+
+Architect followed up with four targeted feasibility questions. All answered:
+
+**Q1 — Kael Avatar chain staggered scaling (Statue/Idol in 4a, Avatar in 4b):**
+Clean — no client-cached chain state. Each spawn is an independent `NewSpawn_Struct`.
+Scaling two of the three in 4a creates zero client anomaly.
+
+**Q2 — Growth event-control NPCs (L1 1M HP `a_warm_light`, L65 1M HP `a_thifling_focuser`):**
+No client anomaly. HP renders as uint8 percentage regardless of absolute value. `/consider`
+shows green (L1) or level-appropriate con — cosmetically expected for event mobs. Leave as-is.
+
+**Q3 — Jaled Dar's Shade (3M HP, turn-in NPC):**
+No client concern. `MobHealth` = percentage only. 3M HP and 30k HP are identical on wire.
+`/consider` correctly shows red (L70). Leave at 3M HP.
+
+**Q4 — thurgadinb (Icewell Keep):**
+Standard static outdoor zone, confirmed no DZ. Dain Frostreaver IV (129003) is a normal
+static spawn. Scales identically to any outdoor boss via `npc_types` UPDATE.
+
+**Q5 — Ring War Lua wave-count changes:**
+Zero client impact. `eq.spawn_condition()` is server-internal. Client sees only
+NewSpawn/DeleteSpawn per wave mob.
+
+**Q6 — Respawn timer / Ring War interaction:**
+Zero interaction. Ring War uses spawn_condition (not spawn2.respawntime) for waves.
+Narandi's out-of-event respawntime is an independent system.
+
+**Q7 — Velious-specific opcodes:**
+None. All Phase 4a zones use standard ZoneChange_Struct → ZoneServerInfo_Struct flow.
+No Velious-era opcode in Titanium client.
+
 ---
 
 ## Context for Next Agent
 
-Protocol-agent has completed consultation for Phase 2 (Classic) and Phase 3
-(Kunark) raid scaling. Core finding in both phases: **all changes are purely
+Protocol-agent has completed consultation for Phases 2 (Classic), 3 (Kunark), and
+4a (Velious non-ToV). Core finding across all three phases: **all changes are purely
 server-side and have zero Titanium client protocol impact.**
 
 Key source refs:
@@ -512,6 +544,10 @@ Key source refs:
 - `Death_Struct` at eq_packet_structs.h:1367 — same packet used for all kills
 - `quest::setnexthpevent` — server-side trigger, percentage-based, unaffected by HP scale
 - VP door-gate: `OP_MoveDoor` (standard Titanium opcode, no new protocol needed)
+- `eq.spawn_condition()` — server-internal toggle, no client opcode
+- `eq.unique_spawn()` — standard NewSpawn_Struct to client
+- `thurgadinb` — standard static zone, not DZ/instance
 
-Phase 4 (Velious: Ring War, ToV, Sleeper) may have scripted event complexity worth
-re-checking. Phase 5 (Luclin: VT key event, Shards) likewise. Re-consult for those.
+Phase 4b (Velious ToV+Sleeper+Vulak) and Phase 5 (Luclin VT+Shards) warrant
+re-consultation — particularly Sleeper's Tomb (permanent server state change on Warder
+kills) and VT key shard event mechanics.
