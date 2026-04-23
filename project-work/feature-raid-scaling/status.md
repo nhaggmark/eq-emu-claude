@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/raid-scaling`
 > **Created:** 2026-04-21
-> **Last updated:** 2026-04-23
+> **Last updated:** 2026-04-23 (Phase 3 Kunark server-side validation complete)
 
 ---
 
@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert | Phase 2: Complete 2026-04-22. Phase 3 (Kunark): **Complete 2026-04-22** — architecture doc delivered, 2 user decisions required before implementation dispatch | 2026-04-22 | 2026-04-22 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) — Tasks 1-9 all applied; SQL committed; full-stack restart executed to flush zone caches | 2026-04-22 | 2026-04-23 |
-| Validation | game-tester + user | Complete (Phase 2 Classic) — Server-side PASS; user in-game spot-check: Lady Vox PASS; remaining tests deferred per user decision | 2026-04-22 | 2026-04-23 |
+| Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 (Kunark): Server-side PASS 2026-04-23 (86 checks, all PASS); user in-game testing pending | 2026-04-22 | — |
 | Completion | _user_ | Phase 2 Classic era Complete 2026-04-23 — proceeding to Phase 3 Kunark | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 3 (Kunark) Architecture complete; Q21 and Q22 resolved 2026-04-23 (both Option A — architect-recommended defaults accepted). Ready for implementation team dispatch.
+**Current phase:** Phase 3 (Kunark) Validation — server-side PASS 2026-04-23. User in-game testing guide delivered. Awaiting user in-game testing completion.
 
 ---
 
@@ -49,7 +49,7 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 |-------|-------|--------|
 | Phase 1 — Audit | All raid bosses + raid quest chains catalogued with scaling status | **Complete 2026-04-21** |
 | Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | **Complete 2026-04-23** |
-| Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | In Progress — Architecture starting 2026-04-23 |
+| Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | In Progress — Server-side validation PASS 2026-04-23; user in-game testing pending |
 | Phase 4 — Velious | NToV, ToV, Kael, Sleeper's Tomb, AoW, Velious dragons | Not Started |
 | Phase 5 — Luclin | Ssraeshza, Vex Thal, Luclin raid content | Not Started |
 
@@ -194,6 +194,27 @@ _Record each handoff between agents with context and any notes._
 - **NOT needed:** c-expert, lua-expert, perl-expert, protocol-agent.
 - **Ready for:** user decisions on #21 and #22 → then implementation team dispatch.
 
+### game-tester → user (Phase 3 Kunark server-side validation complete)
+- **Date:** 2026-04-23
+- **Server-side result:** PASS
+- **Deliverables:**
+  - `game-tester/kunark-server-validation.md` — 86-check validation report; all DB values confirmed
+  - `game-tester/kunark-in-game-testing-guide.md` — 7 sessions, 12 test cases across Kunark zones
+- **Key notes:**
+  - All 21 npc_types UPDATEs and all spawn2 respawn UPDATEs confirmed in DB
+  - VP _condition=2 filter held correctly — only revamp dragons (condition=2) at 43200s; classic
+    variants (condition=1) untouched at 64800-86400s
+  - Intentionally unchanged NPCs confirmed: #Trakanon 89181 at 16k, Drusella 105153 at 15.75k,
+    Prince Selrach 103080 at 25k, Lhranc 90093 at 19k, Fabled variant 103218 at 1.5M
+  - Kilidna one-shot fix confirmed: maxdmg 4600→1000, HP 100k→30k; respawn 1.5h→6h
+  - Decision #21 honored: Chardok Royals respawn at 5400s (1.5h), unchanged
+  - Decision #22 honored: Renux Herkanor 448200 at 120k HP, maxdmg 900
+  - Backup tables: npc_types_backup 28 rows (27+1 from Q22), spawn2_backup 25 rows
+  - No crash logs in Kunark zones; world log clean of Phase 3 errors
+  - No npc_spells_entries changes (zero death-touch spells in Kunark) — no spell cache caveat
+    applies for Phase 3 (unlike Phase 2 Cazic Touch deletion)
+- **Handoff to:** user for in-game testing execution
+
 ---
 
 ## Implementation Tasks
@@ -222,15 +243,15 @@ _Populated by the architect for Phase 3 (Kunark). Awaiting user decisions #21, #
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| K1 | Create backup tables `npc_types_backup_raid_scaling_kunark` (26 rows) and `spawn2_backup_raid_scaling_kunark` (~20 rows) | data-expert | **Not Started** | Scoped to Kunark NPC IDs; captures VP dormant variants too for safety |
-| K2 | Emit per-boss HP/damage UPDATE SQL (~20 Kunark bosses: 4 outdoor dragons + Trakanon + triggered VS + Chardok royals + Kilidna + 7 VP revamp + Faydedar duplicate) | data-expert | **Not Started** | Audit targets + DB-confirmed IDs. Triggered Trakanon (89181) stays at 16k — no HP change. |
-| K3 | Emit respawn-timer UPDATE SQL (12h for Trakanon/VP/outdoor dragons; 6h for Kilidna; Chardok Royals per Decision #21; VP scoped to `_condition=2` only) | data-expert | **Not Started** | `_condition=2` filter on VP critical — don't touch dormant classic-era variants |
-| K4 | Emit rollback script (INSERT…SELECT from backup tables, transactional) + verification queries | data-expert | **Not Started** | Same pattern as Phase 2 `03-rollback.sql` |
-| K5 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase3-kunark-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | |
+| K1 | Create backup tables `npc_types_backup_raid_scaling_kunark` (26 rows) and `spawn2_backup_raid_scaling_kunark` (~20 rows) | data-expert | **Complete 2026-04-22** | 28 rows in npc_types backup (27+1 for Renux Herkanor Q22=Option A); 25 rows in spawn2 backup |
+| K2 | Emit per-boss HP/damage UPDATE SQL (~20 Kunark bosses: 4 outdoor dragons + Trakanon + triggered VS + Chardok royals + Kilidna + 7 VP revamp + Faydedar duplicate) | data-expert | **Complete 2026-04-22** | All 21 npc_types UPDATEs confirmed in DB by game-tester server-side validation |
+| K3 | Emit respawn-timer UPDATE SQL (12h for Trakanon/VP/outdoor dragons; 6h for Kilidna; Chardok Royals per Decision #21; VP scoped to `_condition=2` only) | data-expert | **Complete 2026-04-22** | All spawn2 respawn UPDATEs confirmed. VP condition=2 filter held (7 rows only). Decision #21 honored (Royals at 5400s). |
+| K4 | Emit rollback script (INSERT…SELECT from backup tables, transactional) + verification queries | data-expert | **Complete 2026-04-22** | `06-kunark-rollback.sql` confirmed present |
+| K5 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase3-kunark-implementation.sql`; capture before/after row counts | data-expert | **Complete 2026-04-22** | All changes applied and confirmed in DB |
 | K6 | `#reloadworld` via Spire or world telnet port 9000 to refresh zone caches | config-expert | **Complete 2026-04-22** | Issued via world telnet console (port 9000). Response: "Reloading World..." No full-stack restart needed (no npc_spells_entries changes in Phase 3). |
 | K7 | Smoke verify: Trakanon HP, Nexona stats, Phara Dar stats, Gorenaire respawn, Kilidna damage cap, VP `_condition=2` only touched | config-expert | **Complete 2026-04-22** | 27/27 checks PASS. All HP/damage targets confirmed. VP condition=2 only (7 rows). Chardok Royals at 5400s (Decision #21 honored). Classic VP variants untouched. Lhranc/Drusella unchanged. No Night Crew regressions. |
-| K8 | Full-stack restart (conditional) if `#reloadworld` doesn't propagate | infra-expert | **Conditional** | Unlikely needed — Phase 3 doesn't touch npc_spells_entries |
-| K9 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | data-expert | **Not Started** | |
+| K8 | Full-stack restart (conditional) if `#reloadworld` doesn't propagate | infra-expert | **Not Needed** | Phase 3 doesn't touch npc_spells_entries; #reloadworld sufficient |
+| K9 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | game-tester | **Pending** | game-tester to commit kunark-server-validation.md, kunark-in-game-testing-guide.md, status.md updates |
 
 ## Open Questions
 
