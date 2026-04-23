@@ -80,7 +80,7 @@ This is the **"peak mastery" tier** per Decision #1 — the hardest in-era fight
 
 **Avatar of War (kael, 113457):** 900k HP, max dmg 1,154, AC=850, MR=190, special_abilities include rampage 6×6 (capped by global MaxRampageTargets=2). No spawn2 row; script-spawned by Idol death (Phase 4a chain).
 
-**Vulak`Aerr (templeveeshan, 124155):** 890k HP, max dmg 1,400, AC=950, MR=80. No spawn2 row; spawned by `Thylex_of_Veeshan.pl` 60-second tick when all 6 altar dragons (Mirenilla, Nevederia, Feshlak, Aaryonar, Kreizenn, Vyemm) are dead (qglobal `vulak` cooldown 6 min).
+**Vulak`Aerr (templeveeshan, 124155):** 890k HP, max dmg 1,400, AC=950, MR=80. No spawn2 row; spawned by `Thylex_of_Veeshan.pl` 60-second tick when all 6 **North Wing Lord/Lady** dragons (Aaryonar 124010, Mirenilla 124077, Nevederia 124076, Feshlak 124008, Kreizenn 124074, Vyemm 124017) are dead + Thylex alive + qglobal `vulak` cooldown not set. **Lord Koi`Doken (124103) is NOT a Vulak trigger** — he's a Phase 4b boss in his own right (580k HP → 130k) but his kill does not contribute to Vulak summoning (lore-master Q2 2026-04-23).
 
 **Thylex_of_Veeshan (124000, the Vulak coordinator NPC):** L10, 100 HP, raid_target=0, special_abilities flags 19/20/24/25/35 (immunity cluster — untargetable/uncharmable/unstunnable). DB-verified non-combat coordinator. Protocol-agent flagged that accidentally killing Thylex would break Vulak spawns, but DB state shows the immunity flags already prevent this. **Phase 4b does NOT edit Thylex** (not in `npc_types_backup_raid_scaling_velious_b` or the UPDATE list). Smoke check §B10 adds a "Thylex untouched at 100 HP" verification line.
 
@@ -457,6 +457,8 @@ Same team composition as Phases 2 and 3 — simpler than Phase 4a (lua-expert wa
 | MotG 8-sentry wave encounter breaks | Nil | Medium | No script edit; timer intervals unchanged; signal targets unchanged. HP scaling affects only kill-pace, not behavior. |
 | Dagarn HP-regen ability trivialized at 80k HP | Low | Low | Regen rate is fixed via special_abilities flag 10; at 80k HP, player DPS still outpaces regen. If game-tester shows regen out-dps, adjust maxdmg or flag for user decision. |
 | Vyemm/Telkorenar/Gozzrem MR=1000 walls defeat small-group casters | **Expected** | **Intended** | Decision #11 preserves signature. Small-group caster DPS is blocked on these three; melee/hybrid DPS is the intended counter. Document for user. |
+| Aaryonar (124010) assist-link mechanic breaks if Phase 4b touches NPC behavior flags | Nil | Medium (encounter design) | Aaryonar is assist-linked to all other NToV dragons until killed — must be pulled first. This is a structural mechanic enforced by AI behavior flags, NOT by HP. Phase 4b HP/damage UPDATE does not touch `npc_aggro` / `assistradius` / `npc_faction_id` / `special_abilities` behavior columns. Assist-link preserved. Validation plan adds smoke test. |
+| East Wing quest-drop dependency (Dozekar Tears + Midayor-cluster Symbols for Halls of Testing) under-scaled | **Averted by design** | **Would break Skyshrine armor progression** | Lore-master Q6 flagged this as critical. Phase 4b's 40-50k HP cuts on all 16 mid-tier named (including Dozekar) are LORE-ENDORSED. Decision #3 preserves loot tables (Tears + Symbols drop rates unchanged). |
 | Warders scaled, but server-wide impact if event triggers | Medium | Medium (lore) | **Decision #36 flag.** Kerafyrm still 3.5M HP with Destroy intact — event wipes small group and proceeds. Awake consequence unchanged. |
 | Defender cluster (124050/51/52/79) left at 120k HP feels inconsistent with scaled 16 dragon lords | Low | Low | Per Decision #2 + audit guidance. Defenders are raid-tier trash with 3-5h respawn (farmable). Keep. |
 | Lendiniara the Keeper (124020, 80k HP post-scale) is the Sleeper's Tomb key talisman source for CoV-friendly players | Medium | Low | Path intended. 80k HP + 24h respawn = tractable key acquisition. Parallel paths (Klandicar/Sontalak 40k from Phase 4a) remain lower-gap alternatives. |
@@ -593,7 +595,7 @@ B1 (backups) ──┬──> B2 (ToV dragons SQL)
 
 ### Decision #36 — Warder scaling acknowledgment (ARCHITECT-ASSIGNED)
 
-**Architect recommendation: INCLUDE Warders in Phase 4b HP scaling (current default).**
+**Architect + lore-master recommendation: INCLUDE Warders in Phase 4b HP scaling (Option A — joint endorsement).** Lore-master Q1 (2026-04-23): Decision #12 means Kerafyrm himself and the trigger scripts are untouched; it does NOT mean the Warders are artificially unkillable. Scaling the Warders is the lore-correct way to make the Sleeper's Tomb climax reachable for a small group.
 
 Context: the 4 Warders (128090/91/92/93, L70, 200k HP each) are currently DORMANT on the server (spawn_conditions condition 1 = 0). No script flips the condition — only GM intervention or a custom activation script would spawn them. Scaling their HP to 60k (per audit line 1693-1696) makes them tractable for a small group IF a GM or script activates the condition.
 
@@ -733,7 +735,7 @@ _game-tester should verify each of the following after the implementation team c
 - [ ] **Kill Lord Vyemm in ToV:** completable with melee/hybrid comp. **MR=1000 blocks caster DPS — expected behavior.** Confirm melee comp succeeds.
 - [ ] **Kill Lord Telkorenar:** completable. MR=1000 wall preserved.
 - [ ] **Kill Lord Gozzrem:** completable. MR=1000 wall preserved.
-- [ ] **Kill Aaryonar:** signature breath mechanic active, damage at 550 max (was 900), HP 95k. Completable.
+- [ ] **Kill Aaryonar:** signature breath mechanic active (Disempowering Breath PBAE), damage at 550 max (was 900), HP 95k. **Confirm assist-link preserved:** engage Dozekar or another NToV lord while Aaryonar is alive — Aaryonar should assist. Phase 4b must NOT break this pull-order enforcement. Completable.
 - [ ] **Kill Dagarn the Destroyer:** HP-regen ability active; 1+5 DPS outpaces regen. Complete within 2-3 min.
 - [ ] **Kill all 6 altar dragons (Mirenilla/Nevederia/Feshlak/Aaryonar/Kreizenn/Vyemm) across 1-2 sessions → Vulak`Aerr spawns.** Confirm Thylex_of_Veeshan logic still works. Kill Vulak (150k HP, 800 max dmg). Completable with preparation. **ToV pinnacle achieved.**
 - [ ] **Kill Dozekar the Cursed in ToV East Wing:** Halls of Testing gem turn-in chain now accessible. Dropped gems turn in normally. Respawn 24h.
@@ -824,19 +826,63 @@ Config-expert confirmed **zero concerns across all six questions**. Summary:
 4. Smoke verification via DB read-back on `npc_types` HP/damage + `spawn2.respawntime` for ~32 rows — Task B10.
 5. No zone-restart caveat (no `npc_spells_entries` changes).
 
-### 2026-04-23 — Lore-master Phase 4b consultation (in flight)
+### 2026-04-23 — Lore-master Phase 4b consultation (CONFIRMED)
 
-Architect dispatched 10 questions to lore-master on 2026-04-23:
-1. Sleeper Awake boundary clarification (Option A/B/C for Warder scaling)
-2. Vulak altar-summon chain details
-3. ToV keying confirmation
-4. Sleeper's Tomb keying confirmation (Lendiniara talisman role)
-5. Vulak / ToV Epic 1.0 dependency check
-6. NToV mid-tier named quest-chain ties
-7. AoW quest chain / progression ties
-8. NToV Defenders (Emerald/Sky/Onyx/Lava) scope confirmation
-9. Signature mechanics list per boss
-10. Respawn tier confirmation (24h endgame)
+Lore-master delivered comprehensive Phase 4b sign-off. Full transcript logged in `agent-conversations.md`. Summary by question:
 
-**Expected response:** Decision #36 resolution (Option A/B/C), signature mechanics list per boss, any gap-flagging for NToV mid-tier named. Will be appended here and in agent-conversations.
+**1. Sleeper Awake boundary — Option A CONFIRMED.** Decision #12 ("leave Kerafyrm awakening untouched") means: don't modify Kerafyrm (128089), don't modify The Sleeper (128094), don't modify the trigger scripts. It does NOT mean "make Warders unkillable as an artificial gate." Scaling the Warders is the intended way to make the Sleeper's Tomb experience (including the awakening moment) reachable for a small group. Kerafyrm himself and the permanent-consequence rampage remain intact. **Architect Decision #36 recommendation (Option A) validated.**
+
+**2. Vulak altar-summon chain — "six altars" audit reference is INCORRECT.** Actual live-server mechanic (P99-confirmed): Thylex of Veeshan must be alive when the last qualifying North Wing dragon dies. Thylex spawns ~84 hours post-Vulak-death. Trigger mobs are Aaryonar + Lady Mirenilla + Lady Nevederia + Lord Feshlak + Lord Kreizenn + Lord Vyemm (6 dragons). **Lord Koi`Doken is NOT a Vulak trigger.** No altar activation sequence, no specific kill order. DB verification matches: `#Thylex_of_Veeshan.pl` checks presence of exactly those 6 NPC IDs (124077, 124076, 124008, 124010, 124074, 124017). Phase 4b HP scaling on those 6 dragons propagates Vulak accessibility without script edits.
+
+**3. ToV keying — CONFIRMED unkeyed entry (L46+ only).** Halls of Testing (East Wing) is NOT key-gated — aggression is faction-based (non-CoV = aggressive regardless). The "Key of Veeshan" dropping from Tormax/Yelinak/Dain is for **Veeshan's Peak** (Kunark dragon zone), NOT ToV. No keying NPCs in Phase 4b scope.
+
+**4. Sleeper's Tomb keying — CONFIRMED no new Phase 4b keying NPCs.** All talisman sources are Phase 4a content already scaled. Lendiniara (124020) talisman drop is standard loot-table, not scripted — no special handling needed beyond HP/damage scaling. Jaled Dar's Shade access is via rogue lockpick OR sub-quest OR levitation — pre-existing access puzzle, not a scaling concern. Architect note: Jaled Dar access flagged in validation plan for player awareness.
+
+**5. Vulak`Aerr epic / quest dependency — CONFIRMED NONE.** P99 wiki: "Related Quests: None." No class Epic 1.0 requires Vulak or any Phase 4b ToV dragon. Vulak is pure prestige loot.
+
+**6. NToV mid-tier named — CRITICAL quest-drop dependency flagged.** Halls of Testing / Skyshrine armor chain REQUIRES these kills:
+- **Dozekar the Cursed (124037)** drops **Tears** (quest items for Halls of Testing turn-ins)
+- **All East Wing named drakes (Midayor cluster 124030-040 + Cyndor/Yrrindor/Zlexak/Sevalak/Malteor/Zyerek/Kalkar/Vyldin)** drop **Symbols** (Halls of Testing turn-in components)
+- Turn-in NPCs: Gozzrem (124105), Lendiniara (124020), Telkorenar (124104)
+- Tears + Symbols are RNG — multiple kills required per armor slot
+- **If under-scaled, small-group players cannot complete Skyshrine armor.** Phase 4b's 40-50k HP cut on all 16 mid-tier named is CORRECT and LORE-ENDORSED — do not leave them at default.
+
+**7. Avatar of War — CONFIRMED loot-only, no non-loot progression dependency.** Gauntlets of Dragon Slaying quest uses Yelinak (Phase 4a), not AoW. No class Epic 1.0 requires AoW. Pure prestige kill.
+
+**8. NToV Defenders (124050/51/52/79) — CONFIRMED out of Phase 4b scope.** Decision #2 (named/trash untouched) applies. Do not scale. Architect Decision #37 recommendation (exclude) validated.
+
+**9. Signature mechanics list per boss (PRESERVE ALL):**
+- **Lord Vyemm (124017):** Scream of Chaos PBAE (12s), Call of the Zero (6s), immune to MR slows, summons at 100% HP. MR=1000 flag preserved in DB.
+- **Aaryonar (124010):** Disempowering Breath PBAE, **assist-linked to all other NToV dragons** — must be pulled first or he assists. **Structural pull-order mechanic — not a stat change; Phase 4b preserves by not touching behavior flags.**
+- **Lendiniara (124020):** BOTH talisman source AND Halls of Testing turn-in NPC. Unslowable (special_abilities flag 8 verified in DB). Silver Breath spell. Both preserved.
+- **Gozzrem (124105) + Telkorenar (124104):** West Wing quest turn-in NPCs (Halls of Testing). CoV-allied — non-hostile to CoV-faction players. No special combat behavior flags — scale HP normally.
+- **Warders (128090/91/92/93):** Each has distinct breath (DB-verified: Nanzata/Frost, Ventani/Mesmerizing+Freezing, Tukaarak/Mesmerizing, Hraashna/Acid). All preserved — no `npc_spells_entries` edits.
+- **Ancients (128041/42/43/44):** Each has distinct breath: Zeixshi-Kar/Fire+Sweltering Carcass, Kildrukaun/Typhoon Breath (50% slow), Vyskudra/Lightning Breath AE+Dispel, Tjudawos/unconfirmed. All preserved.
+- **Dagarn (124011):** HP-regen ability flag (1,10^8) preserved.
+- **Lord Feshlak/Nevederia/Kreizenn/Mirenilla (124008/076/074/077):** special_abilities flag 42 preserved (all four have it in DB).
+- **Gozzrem/Telkorenar/Vyemm/Lendiniara:** special_abilities flag 42 preserved.
+- **Vulak (124155):** flags 5/31/42 preserved. 4 items drop loot pool intact per Decision #3.
+- **AoW (113457):** rampage 6×6 preserved (capped by global `MaxRampageTargets=2`).
+- **Master of the Guard (128145):** 8-sentry wave encounter (motg.lua) preserved — no encounter script edits.
+
+**10. Respawn tier — 24h endgame CONFIRMED with ONE EXCEPTION:**
+- **Thylex of Veeshan (124000):** spawn2 respawn 258,000s (~71.67h). Lore-master flagged "Thylex 84-hour window is mechanically load-bearing for Vulak re-engagement — do not set to 24h." DB-verified Thylex NOT in Phase 4b respawn UPDATE list. Leave at native timer.
+- **AoW:** 24h via Statue respawn (chain-spawned).
+- **All ToV lords + NToV mid-tier + Sleeper's Tomb bosses:** 24h correct.
+
+**ERA COMPLIANCE:** Lore-master confirms all Phase 4b content is Scars of Velious (era-locked). Ancients are original Velious NPCs, not CoV-era recycled.
+
+**LORE SIGN-OFF:** Phase 4b scope approved. Decision #36 (Option A — scale Warders) is the lore-correct interpretation of Decision #12. User should be advised that killing the 4 Warders will trigger the permanent Kerafyrm awakening event on this server. This is not a lore violation; it is the intended storyline climax.
+
+### 2026-04-23 — Architect incorporations of lore-master Phase 4b findings
+
+Four adjustments made to the architecture plan based on lore-master's review:
+
+1. **Koi`Doken clarification added to §1.4 Vulak spawn mechanism** — Koi`Doken is a Phase 4b ToV dragon (scaled for his own value) but is NOT a Vulak trigger. The 6 trigger dragons are Aaryonar / Mirenilla / Nevederia / Feshlak / Kreizenn / Vyemm.
+
+2. **East Wing quest-drop dependency documented in Risk Assessment.** Under-scaling Dozekar or Midayor-cluster named would break Skyshrine armor progression. Phase 4b's 40-50k HP cuts on those 16 mid-tier named are LORE-ENDORSED. Smoke test expanded to verify Dozekar Tears + Midayor Symbols drop tables unchanged (Decision #3 loot-untouched).
+
+3. **Aaryonar assist-link preservation added to Validation Plan.** Smoke test must confirm Aaryonar still assists other NToV dragons when they are engaged while he's alive — structural pull-order mechanic that is not HP-based but must be verified post-scale.
+
+4. **Decision #36 formalized as Option A per lore-master endorsement.** Architecture doc now records Decision #36 = Option A (scale Warders) as architect + lore-master joint recommendation. User still needs to acknowledge the awake event reachability outcome, but the technical recommendation is now unambiguous.
 

@@ -1420,3 +1420,50 @@ as coordinator NPC to exclude from scaling SQL. Full findings in
 **Architect working assumption** (pending config-expert response): zero config changes; Phase 2/3/4a pattern holds. rule_values count 1,112 unchanged. sleeper + templeveeshan on ruleset=1 default. Kerafyrm state stored in qglobal `kerafyrm` (set 1/2/3 per Kerafyrm `.pl` scripts), not in data_buckets or config files.
 
 **Outcome:** Awaiting config-expert response. Draft architecture doc submitted with zero-change default; addenda section will incorporate config-expert answer when received.
+
+---
+
+### 2026-04-23 — lore-master → architect: Phase 4b full sign-off (10 questions answered)
+
+**From:** lore-master → **To:** architect
+
+**Summary:** Comprehensive 10-question Phase 4b lore review delivered. Key findings:
+
+1. **Decision #36 — Option A (scale Warders) is the lore-correct interpretation of Decision #12.** Scaling the Warders is the intended way to make the Sleeper's Tomb experience reachable for a small group. Kerafyrm himself and permanent-consequence scripts are what Decision #12 protects — NOT the Warder barrier.
+
+2. **Vulak altar-summon correction:** audit's "six altars" is INCORRECT. Real mechanic: Thylex alive + all North Wing Lords/Ladies (Aaryonar/Mirenilla/Nevederia/Feshlak/Kreizenn/Vyemm) dead → Vulak spawns. **Lord Koi`Doken is NOT a Vulak trigger** despite being a Phase 4b boss. No altar NPCs exist.
+
+3. **ToV keying — confirmed unkeyed** (L46+ only). "Key of Veeshan" from Tormax/Yelinak/Dain is for **Veeshan's Peak (Kunark)**, NOT ToV.
+
+4. **Sleeper's Tomb keying — confirmed no new Phase 4b keying.** Lendiniara talisman drop is standard loot-table. Jaled Dar access is pre-existing rogue/levitate puzzle.
+
+5. **No Epic 1.0 dependency** on any Phase 4b boss (Vulak, AoW, ToV lords).
+
+6. **CRITICAL: East Wing named are quest-drop sources.** Dozekar (Tears) + Midayor cluster (Symbols) gate Skyshrine armor via Halls of Testing turn-ins. Phase 4b's 40-50k HP cuts on all 16 mid-tier named are REQUIRED — under-scaling would break Skyshrine armor progression. Loot tables preserved per Decision #3.
+
+7. **AoW is loot-only** — no non-loot progression dependency.
+
+8. **NToV Defenders (124050/51/52/79) CONFIRMED out of scope** per Decision #2.
+
+9. **Signature mechanics list:**
+   - Vyemm: Scream of Chaos PBAE (12s), Call of the Zero (6s), MR=1000 preserved
+   - Aaryonar: Disempowering Breath + **assist-link to all NToV dragons (structural pull-order mechanic — must be pulled first)**
+   - Lendiniara: BOTH talisman source AND Halls of Testing turn-in NPC; unslowable flag + Silver Breath preserved
+   - Warders: each has distinct breath (DB-verified: Nanzata/Frost, Ventani/Mesmerizing+Freezing, Tukaarak/Mesmerizing, Hraashna/Acid)
+   - Ancients: each distinct breath (Zeixshi-Kar/Fire, Kildrukaun/Typhoon+Slow, Vyskudra/Lightning+Dispel, Tjudawos/unconfirmed)
+   - Dagarn HP-regen, Gozzrem/Telkorenar CoV-allied, MotG 8-sentry wave — all preserved
+   - Vulak: flags 5/31/42 preserved; 4 items drop per Decision #3
+
+10. **Respawn tier 24h CONFIRMED with one exception:** Thylex_of_Veeshan (124000) respawn 258,000s (~71.67h) is mechanically load-bearing for Vulak re-engagement. **DO NOT change Thylex respawn.** DB-verified Thylex is already out of Phase 4b respawn UPDATE list.
+
+**Era compliance:** Phase 4b content is all Scars of Velious (era-locked). Ancients are original Velious NPCs.
+
+**Lore sign-off: Phase 4b scope approved.** User should be advised the Warder kills trigger the permanent Kerafyrm event on this server — this is not a lore violation; it is the intended storyline climax.
+
+**Outcome:** Architect incorporated all findings into `architect/velious-b-architecture.md`:
+- Executive summary clarified (Koi`Doken not a Vulak trigger; Vulak trigger is 6 North Wing Lord/Lady, not altar system)
+- Risk Assessment expanded: Aaryonar assist-link preservation + East Wing quest-drop dependency
+- Validation Plan expanded: Aaryonar assist smoke test added
+- Decision #36 formalized as architect + lore-master joint recommendation (Option A)
+- Thylex respawn exception documented
+- Full lore-master addendum recorded in architecture doc
