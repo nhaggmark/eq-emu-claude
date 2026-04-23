@@ -197,8 +197,8 @@ The heavy lifting for Phase 2 is all **data-expert work** (SQL UPDATEs on `npc_t
 
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| 7 | `#reloadworld` via Spire or in-game GM command | data-expert Tasks 1-6 committed | WAITING |
-| 8 | Smoke verification of HP, respawn, spell list | Task 7 | WAITING |
+| 7 | `#reloadworld` via Spire or in-game GM command | data-expert Tasks 1-6 committed | **Complete 2026-04-22** |
+| 8 | Smoke verification of HP, respawn, spell list | Task 7 | **Complete 2026-04-22** |
 
 ### Execution Plan
 
@@ -234,3 +234,55 @@ Key assertions:
 **DO NOT execute Task 7 until data-expert confirms Tasks 1-6 are committed.**
 
 Checked in with data-expert (2026-04-22) to confirm SQL status. Awaiting response.
+
+---
+
+## Stage 4: Build Log (2026-04-22)
+
+### Pre-execution DB Verification
+
+Before issuing reloadworld, ran DB read-back to confirm SQL changes were actually applied (team-lead flagged uncertainty about whether infra-expert's SQL claim was real vs. uncommitted draft). Results:
+
+- Backup tables: all 3 exist (`npc_types_backup_raid_scaling`: 2548 rows, `spawn2_backup_raid_scaling`: 6788 rows, `npc_spells_entries_backup_raid_scaling`: 6 rows)
+- Lord Nagafen (32040): HP = 14,400 (was 32,000) — changes confirmed in DB
+- SQL was applied. Task 3 (commit) was already marked complete in task list.
+
+### Task 7: #reloadworld — Complete
+
+Mechanism: world telnet console on port 9000 (confirmed enabled in eqemu_config.json `world.telnet`).
+
+Command issued:
+```
+(echo 'reloadworld'; sleep 2) | telnet 127.0.0.1 9000
+```
+
+Response received: `Reloading World...`
+
+Note: `#reloadworld` is NOT a GM binary subcommand — it is issued via the world telnet console. The `./bin/world reloadworld` invocation returns "Invalid command". Correct path is telnet to port 9000.
+
+### Task 8: Smoke Verification — PASS (all checks)
+
+| Check | NPC ID | Value | Expected | Result |
+|-------|--------|-------|----------|--------|
+| Lord Nagafen HP | 32040 | 14,400 | ≤16,000 | PASS |
+| Nagafen respawn (spawn2 id 6461) | — | 21,600s (6h) | 21,600 | PASS |
+| Lady Vox HP | 73057 | 14,400 | ≤16,000 | PASS |
+| Cazic Thule HP | 72003 | 80,000 | <100,000 | PASS |
+| Innoruuk (revamp) HP | 186158 | 60,000 | <100,200 | PASS |
+| Keeper of Souls HP | 71075 | 22,000 | <100,000 | PASS |
+| Spiroc Lord HP | 71012 | 22,000 | <100,000 | PASS |
+| Enraged Golem HP | 72106 | 40,000 | <150,000 | PASS |
+| Spell 982 in list 118 | — | 0 rows | 0 | PASS |
+| Spell 982 in list 449 | — | 0 rows | 0 | PASS |
+| Spell 982 in list 969 | — | 0 rows | 0 | PASS |
+
+**Note on Cazic Thule's spawn2:** NPC 72003 only has a spawn entry in gfaydark (ambient outdoor, 640s). The fearplane raid boss entry appears to be event-triggered with no standing spawn2 row. HP cut is confirmed in npc_types; respawn verification via spawn2 is not applicable for CT in this context.
+
+**Note on npc_spells_entries cache:** `reloadworld` propagates npc_types and spawn2 to zone processes. Spell list cache (`npc_spells_entries`) is loaded at zone boot. The 3 DELETE rows are confirmed gone from the DB — a running zone that already cached those spell lists would need a restart to drop them from memory. If a player encounters a PoSky boss still casting Cazic Touch during this session, infra-expert Task 9 (full restart) will be needed. DB state is correct either way.
+
+### Backup Tables Integrity
+
+All 3 backup tables intact post-verification:
+- `npc_types_backup_raid_scaling`: 2,548 rows
+- `spawn2_backup_raid_scaling`: 6,788 rows  
+- `npc_spells_entries_backup_raid_scaling`: 6 rows (the original Cazic Touch entries)
