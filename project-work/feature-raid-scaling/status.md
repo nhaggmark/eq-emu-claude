@@ -49,9 +49,11 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 |-------|-------|--------|
 | Phase 1 — Audit | All raid bosses + raid quest chains catalogued with scaling status | **Complete 2026-04-21** |
 | Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | **Complete 2026-04-23** |
-| Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | In Progress — Server-side validation PASS 2026-04-23; user in-game testing pending |
-| Phase 4 — Velious | NToV, ToV, Kael, Sleeper's Tomb, AoW, Velious dragons | Not Started |
-| Phase 5 — Luclin | Ssraeshza, Vex Thal, Luclin raid content | Not Started |
+| Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | **Complete 2026-04-23** |
+| Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | In Progress — Architecture starting 2026-04-23 |
+| Phase 4b — Velious ToV+Sleeper+Vulak | Temple of Veeshan proper, Sleeper's Tomb, Avatar of War, Vulak'Aerr | Not Started |
+| Phase 5a — Luclin non-VT | Ssraeshza, Grieg's End, Akheva, Luclin raid content ex-VT | Not Started |
+| Phase 5b — Luclin VT+shards | Vex Thal proper, VT key shard rework | Not Started |
 
 ---
 
