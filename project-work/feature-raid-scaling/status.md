@@ -13,7 +13,7 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert | Complete (Phase 2 scope) | 2026-04-22 | 2026-04-22 |
-| Implementation | _implementation team_ | In Progress — data-expert tasks 1-6 complete; Tasks 7-8 (config-expert reload+verify) pending | 2026-04-22 | |
+| Implementation | _implementation team_ | In Progress — Tasks 1-8 complete; Task 9 conditional on in-game PoSky observation; ready for game-tester validation | 2026-04-22 | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -151,9 +151,9 @@ _Populated by the architect after the architecture doc is approved._
 | 4 | Emit `npc_spells_entries` DELETE for Cazic Touch (spell 982) from lists 118, 449, 969 | data-expert | **Complete 2026-04-22** | Exactly 3 rows deleted (confirmed). Remaining entries in each list preserved. |
 | 5 | Emit rollback script (INSERT SELECT from backup tables) + verification queries | data-expert | **Complete 2026-04-22** | `03-rollback.sql` written — transactional JOIN-UPDATE + INSERT IGNORE for spell 982 re-insert |
 | 6 | Apply SQL via `docker exec ... mysql` ; capture before/after row counts | data-expert | **Complete 2026-04-22** | All verification queries passed. See data-expert/dev-notes.md Stage 4 for full output. |
-| 7 | `#reloadworld` (via Spire or in-game GM command) to refresh zone caches | config-expert | Not Started | Depends on #6 ✓ — ready for config-expert |
-| 8 | Smoke verify: Nagafen HP, CT rampage string, Keeper spell list, hateplaneb Innoruuk HP, respawn timer for Nagafen | config-expert | Not Started | Depends on #7 |
-| 9 | Full-stack restart if `#reloadworld` doesn't propagate npc_spells_entries cache | infra-expert | Not Started | Conditional; depends on #8 result |
+| 7 | `#reloadworld` (via Spire or in-game GM command) to refresh zone caches | config-expert | **Complete 2026-04-22** | Issued via world telnet console (port 9000). Response: "Reloading World..." |
+| 8 | Smoke verify: Nagafen HP, CT rampage string, Keeper spell list, hateplaneb Innoruuk HP, respawn timer for Nagafen | config-expert | **Complete 2026-04-22** | All checks pass: Nagafen 14400/21600s, Vox 14400, CT 80000, Innoruuk 60000, Keeper 22000, Spiroc Lord 22000, Enraged Golem 40000, spell 982 = 0 rows. Commit 41ebfc4 pushed. |
+| 9 | Full-stack restart if `#reloadworld` doesn't propagate npc_spells_entries cache | infra-expert | **Conditional — pending in-game observation** | npc_spells_entries cache loads at zone boot, not on #reloadworld. DB DELETE confirmed. If player observes PoSky death-touch in-game, infra-expert must run full restart to clear spell list cache. |
 | 10 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | data-expert | **Complete 2026-04-22** | Committed on feature/raid-scaling |
 
 ---

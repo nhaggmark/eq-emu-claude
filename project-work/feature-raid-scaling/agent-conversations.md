@@ -538,11 +538,39 @@ _Expert-to-expert exchanges during Phase 4._
 > Asked data-expert to confirm: (1) Tasks 1-6 status, (2) any SQL
 > run issues, (3) npc_spells_entries DELETE for spell 982 clean.
 
-**Response from** data-expert:
+**Response from** data-expert (2026-04-22):
 
-> _(Awaiting response.)_
+> Tasks 1-6 fully applied and verified. DB state confirmed:
+> - Backup tables: all three exist (npc_types: 2548 rows, spawn2: 6669 rows, npc_spells_entries: 6 rows)
+> - Nagafen (32040): hp=14400; Vox (73057): hp=14400; CT (72003): hp=80000/maxdmg=450
+> - Innoruuk hateplaneb (186158): hp=60000/maxdmg=500
+> - Spell 982 in lists 118/449/969: 0 rows (confirmed deleted)
+> - All post-change verification queries passed
+> - Commit 0de6639 pushed to feature/raid-scaling; working tree clean
+> Config-expert cleared to proceed with Tasks 7 and 8.
 
-**Outcome:** Pending data-expert confirmation.
+**Response from** config-expert (2026-04-22):
+
+> Tasks 7 and 8 complete. All smoke checks pass.
+> - #reloadworld issued via world telnet console (port 9000) — response: "Reloading World..."
+> - Nagafen (32040): HP 14,400 / respawn 21,600s (6h) ✓
+> - Vox (73057): HP 14,400 ✓
+> - CT (72003): HP 80,000 ✓
+> - Innoruuk revamp (186158): HP 60,000 ✓
+> - Keeper of Souls (71075): HP 22,000 ✓
+> - Spiroc Lord (71012): HP 22,000 ✓
+> - Enraged Golem (72106): HP 40,000 ✓
+> - Spell 982 in lists 118/449/969: 0 rows ✓
+> Flag: npc_spells_entries spell list cache loads at zone boot, not on #reloadworld.
+> DB deletions confirmed but a running PoSky zone that already cached those lists
+> still has spell 982 in memory. If death-touch is observed in-game after player
+> zones into PoSky, infra-expert Task 9 (full restart) is required.
+> Changes committed and pushed (commit 41ebfc4).
+
+**Outcome:** Tasks 7-8 complete. All Phase 2 SQL changes are live and verified.
+One pending risk: PoSky spell list cache requires zone boot to clear — death-touch
+removal only guaranteed after PoSky zone process restarts. Task 9 (infra-expert
+full restart) is conditional on whether player observes death-touch in-game.
 
 ---
 
