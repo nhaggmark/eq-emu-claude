@@ -646,3 +646,62 @@ Note: Phase 4a has zero `npc_spells_entries` changes — reloadworld propagates 
 Both backup tables intact post-reload. No Phase 4b rows touched.
 
 **All-clear: V-reload and V-smoke COMPLETE. Ready for game-tester validation.**
+
+---
+
+## Phase 4b (Velious ToV + Sleeper + Vulak + AoW) — Config Consultation (2026-04-22)
+
+### Summary
+
+**Phase 2/3/4a config findings carry forward unchanged to Phase 4b. Zero concerns on all six questions. No new rules exist for ToV/Sleeper/Vulak/AoW. No eqemu_config.json or .env changes needed. 100% SQL pattern confirmed.**
+
+### Verified Findings (per architect's six questions)
+
+**1. rule_values drift check**
+Current count: **1,112** — identical to Phase 2 baseline. Zero drift across all phases to date.
+
+**2. Zone-scoped rulesets — templeveeshan and sleeper**
+Both Phase 4b zones confirmed:
+- `templeveeshan`: `ruleset=1`, `min_status=0`, `expansion=2`
+- `sleeper`: `ruleset=1`, `min_status=0`, `expansion=2`
+
+Neither has a custom ruleset override. Identical posture to all prior phases. No endgame-tier rule overrides apply to these zones.
+
+**3. Endgame-specific globals**
+All seven prior-pass globals still in effect. No dragon-breath modifier, no MR-cap rule, no endgame-tier HP/damage rule exists. The only dragon-adjacent rule found: `Combat:DragonPunchBaseDamage=12` — this is the monk skill Dragon Punch base damage, completely unrelated to dragon NPCs. Vyemm's MR=1000 and all NPC magic resistance values are stored in `npc_types.MR` as plain DB columns. No rule can override them. Architect's "preserve MR via npc_types.MR only" posture is correct.
+
+**4. Signature-mechanics rule interactions**
+No `RaidTargetFlurryMultiplier` or equivalent rule exists. Rules touching special abilities:
+- `Bots:DisableSpecialAbilitiesAtMaxMelee` = true — Bots only, not NPC special abilities
+- `Spells:CharmDisablesSpecialAbilities` = false — charm-stripping toggle, not relevant
+
+No rule amplifies or overrides `special_abilities` on `raid_target` NPCs. "Don't touch rules" posture is correct for Phase 4b.
+
+**5. Respawn timer rules**
+No min/max respawn clamp rules, no respawn randomization rules, no raid-tier respawn overrides in `rule_values`. Respawn is purely `spawn2.respawntime`.
+
+**CRITICAL Phase 4b finding:** All 10 Phase 4b bosses (AoW 113457, Vulak 124155, Warders 128090-128093, Kildrukaun siblings 128041-128044) have **zero standing spawn2 rows**. They are all event-triggered or condition-gated. There are no `spawn2.respawntime` rows to update. Decision #8 endgame=24h (86400s) has no applicable rows — no spawn2 timer changes for Phase 4b. Smoke verification will focus on `npc_types` HP/damage only.
+
+**6. Data buckets / spawn_conditions for Sleeper's Tomb**
+`spawn_condition_values` for sleeper zone: two conditions:
+- condition_id=1, value=0 (dormant state)
+- condition_id=2, value=1 (active state)
+
+`data_buckets` table: zero rows matching sleep/keraf/awake/warder patterns. `variables` table: same, zero rows. Kerafyrm awake event is controlled purely via `spawn_conditions` in-zone — not via `data_buckets` or any server config. No config-expert concern. Per Decision #12 (Kerafyrm untouched), this is out of Phase 4b scope entirely.
+
+**Death-touch sweep (bonus finding):**
+Full sweep of all 9 Phase 4b bosses with spell lists (AoW has npc_spells_id=0):
+- Criteria: mana=0, cast_time=0, effect_base_value1 < -5000
+- Result: **zero rows** — no death-touch profile spells on any Phase 4b boss
+
+No `npc_spells_entries` DELETEs needed for Phase 4b. Zone-restart caveat does not apply. `#reloadworld` will be sufficient post-SQL.
+
+### Config-Expert Role in Phase 4b Implementation
+
+Identical to Phase 2/3/4a:
+1. No rule changes needed.
+2. No `eqemu_config.json` or `.env` changes.
+3. Post-SQL: `#reloadworld` via world telnet (port 9000).
+4. Smoke verification via DB read-back on `npc_types` HP/damage values only.
+5. No `npc_spells_entries` changes — no zone-restart caveat.
+6. Respawn timer smoke checks NOT applicable (zero spawn2 rows for all Phase 4b bosses).

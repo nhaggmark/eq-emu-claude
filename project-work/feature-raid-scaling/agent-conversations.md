@@ -18,6 +18,29 @@ rationale are never lost.
 
 ---
 
+## Phase 4b Architecture Team Conversations
+
+### 2026-04-22 — architect → config-expert: Phase 4b config posture consult
+
+**From:** architect → **To:** config-expert
+
+Six questions: (1) rule_values drift check, (2) zone-scoped rulesets for templeveeshan/sleeper, (3) endgame-specific globals and MR-cap/dragon-breath rules, (4) signature-mechanics rule interactions, (5) respawn timer rules, (6) data_buckets/spawn_conditions posture for Sleeper's Tomb awake event.
+
+**Response from** config-expert:
+
+Zero concerns across all six questions. Confirmed:
+1. rule_values count = 1,112 — no drift since Phase 2 baseline.
+2. templeveeshan and sleeper both ruleset=1, min_status=0, expansion=2. No custom ruleset overrides.
+3. All seven prior-pass globals intact. No dragon-breath modifier, no MR-cap rule exists. `Combat:DragonPunchBaseDamage=12` is monk skill, unrelated to dragon NPCs. Vyemm MR=1000 is npc_types.MR only — no rule can override it.
+4. No `RaidTargetFlurryMultiplier` or equivalent rule. `Bots:DisableSpecialAbilitiesAtMaxMelee` applies to Bots only. `Spells:CharmDisablesSpecialAbilities=false`. No rule amplifies special_abilities on raid_target NPCs.
+5. No respawn clamp or randomization rules. BUT: all 10 Phase 4b bosses have zero standing spawn2 rows — event-triggered/condition-gated only. Decision #8 endgame=24h has no applicable rows to update. No spawn2 timer changes needed for Phase 4b.
+6. Kerafyrm awake state is spawn_conditions only (condition_id=1 value=0 dormant, condition_id=2 value=1 active). Zero data_buckets and zero variables entries. No config concern. Per Decision #12 Kerafyrm is out of Phase 4b scope.
+Bonus: death-touch sweep of all 9 Phase 4b bosses with spell lists = zero rows. No npc_spells_entries DELETEs needed. Zone-restart caveat does not apply.
+
+**Outcome:** Config posture confirmed. Phase 4b is 100% SQL, no rule changes, no config changes. #reloadworld sufficient post-SQL. Config-expert role identical to Phases 2/3/4a. Full findings in `config-expert/dev-notes.md` Phase 4b section.
+
+---
+
 ## Design Team Conversations
 
 _game-designer + lore-master exchanges during Phase 2._
