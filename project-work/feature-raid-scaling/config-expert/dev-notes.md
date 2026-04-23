@@ -470,3 +470,101 @@ Note: Phase 3 has zero `npc_spells_entries` changes, so the zone spell-list cach
 **Chardok Royals 1.5h respawn preserved per Decision #21 (Option A): CONFIRMED**
 
 **No accidental changes to Kithicor Night Crew or Classic-only rows:** No npc_types IDs in the 20054-20064 range appear in the Kunark backup table. Classic Phase 2 rows are unaffected (npc_types_backup_raid_scaling still 2548 rows — not queried but pre-existing Phase 2 state unchanged).
+
+---
+
+## Phase 4a (Velious Non-ToV) — Config Consultation (2026-04-22)
+
+### Summary
+
+**Phase 2/3 config findings carry forward unchanged to Phase 4a. No new rules exist for Velious content. No eqemu_config.json or .env changes needed. SQL is the mechanism. The #reloadworld/telnet pattern and npc_spells_entries zone-restart caveat are identical.**
+
+### Rule Query Results
+
+No Velious-specific, Coldain-specific, Ring War-specific, or zone-event-specific rules exist in `rule_values`. Queried for keywords: Ring, Wave, Growth, Mischief, Velious, Coldain, Event, Script, Spawn. Zero matches relevant to raid scaling or scripted event behavior. All combat-tuning rules from Phase 2 remain in effect unchanged.
+
+### Zone Table Findings — All Velious Non-ToV Zones
+
+All Velious non-ToV zones (`kael`, `skyshrine`, `growthplane`, `mischiefplane`, `westwastes`, `eastwastes`, `sleeper`, `templeveeshan`) have:
+- `ruleset = 1` (default ruleset, same as all standard zones)
+- `min_status = 0` (player-accessible, no GM restriction)
+- `expansion = 2` (Velious)
+
+**No Velious zone has a custom ruleset override.** Plane of Mischief and Plane of Growth are standard zones from a ruleset perspective — no special global rule governs their mob behavior.
+
+### Velious Non-ToV Raid Boss NPC Stats (Key Samples)
+
+| Zone | NPC | ID | Level | HP | maxdmg | mindmg | respawn |
+|------|-----|----|-------|----|---------|--------|---------|
+| kael | King Tormax | 113215 | 70 | 452,000 | 575 | 195 | 259,200s (72h) |
+| kael | Derakor the Vindicator | 113118 | 70 | 180,000 | 700 | 225 | 43,200s (12h) |
+| kael | Statue of Rallos Zek | 113071 | 59 | 400,750 | 1,100 | 245 | 194,400s (54h) |
+| skyshrine | Lord Yelinak | 114106 | 70 | 500,000 | 804 | 204 | 259,200s (72h) |
+| skyshrine | Lord Yelinak (alt) | 114618 | 70 | 297,000 | 804 | 204 | 259,200s (72h) |
+| westwastes | Sontalak | 120005 | 70 | 97,500 | 425 | 140 | 259,200s (72h) |
+| westwastes | Klandicar | 120084 | 70 | 97,500 | 540 | 198 | 259,200s (72h) |
+| westwastes | Sir Elmonious Falmont | 120133 | 70 | 400,000 | 3,667 | 500 | 7,200s (2h) |
+| growthplane | Tunare | 127001 | 66 | 530,000 | 926 | 166 | 259,200s (72h) |
+| growthplane | Guardian of Tunare | 127007 | 60 | 310,000 | 187 | 92 | 64,800s (18h) |
+| mischiefplane | Bristlebane | 126160 | 75 | 1,000,000 | 1,904 | 680 | 345,600s (96h) |
+| mischiefplane | All-Seeing Eye | 126374 | 75 | 709,000 | 1,300 | 350 | 1,200s (20min — likely event-triggered) |
+| mischiefplane | Mischievous Jester | 126012 | 70 | 200,000 | 1,431 | 235 | 281,232s (78h) |
+| sleeper | Warder bosses (x4) | 128090-128093 | 70 | 200,000 | 405-509 | 115-137 | 259,200s (72h) |
+| sleeper | Kildrukaun et al. (x4) | 128041-128044 | 70 | 352,000-377,000 | 705-929 | 284-372 | 259,200s (72h) |
+| eastwastes | An Egg Hunter | 116605 | 75 | 981,589 | 2,222 | 1,048 | 640s (ambient — event target) |
+| eastwastes | A Legendary Velious Dragon | 116607 | 72 | 312,500 | 1,504 | 225 | 10,800s (3h) |
+
+**Notable outlier:** Bristlebane has 1M HP and 96h respawn — extreme values. Sir Elmonious Falmont has 3,667 maxdmg at 70 — very high. Both are architect decisions.
+
+**Lord Yelinak dupe:** Two rows for Lord Yelinak in skyshrine (IDs 114106 and 114618, HP 500k vs 297k). Data-expert will need to scope correctly.
+
+**Plane of Growth population note:** PoG has 80+ raid_target=1 entries, most at 64,800s (18h) respawn and 16k-310k HP. The majority are trash-tier named mobs (feral amalgams, gale wolves, rolling plains steeds) at 16-30k HP — these are NOT boss-tier. Architect should tier these carefully: Tunare and Guardian of Tunare are true bosses; the rest are named trash.
+
+**Sleeper's Tomb note:** Many sleeper NPCs (IDs 128057-128088) have `name = Area8mob6dead`, `hp=11`, `raid_target=1` — these are scripted event placeholder/dead-body NPCs. They should be explicitly excluded from any HP/damage UPDATE. Any `raid_target=1` sweep on `sleeper` must exclude NPC IDs with hp <= 100 or names matching `Area%dead`, `StaticShout%`, `A_warning`, `Area%starter`.
+
+### Coldain Ring War — Scripted Event Analysis
+
+The 10th Ring War is implemented in `akk-stack/server/quests/greatdivide/encounters/ring_war.lua`.
+
+**Architecture:**
+- 13 waves of Kromrif mobs, each terminated by a WaveMaster (Captain 118130, General 118120, Warlord 118158)
+- Wave timer controlled by `ringtenmaster` NPC (ID 118173) which receives signals from WaveMaster deaths
+- The master NPC has special_abilities `19,1^20,1^24,1` (immune to flee, spell control, taunt) — a pure script controller, non-combat
+
+**Globally-tunable parameters:**
+- **Wave cooldown:** `local wave_cooldown_time = 5 * 60 * 1000` — 5 minutes hardcoded in Lua. This is the inter-wave delay. **Not a rule, not a DB column.** Changing it requires editing the Lua script (`ring_war.lua:26`).
+- **Wave count:** 13 combat waves + Narandi (wave 14). Controlled by `spawn_condition` values 3-16 in `greatdivide`. Not a rule.
+
+**Config/rule implication:** There are NO globally-tunable parameters (rules, eqemu_config.json entries, DB columns) controlling Ring War wave counts, timers, or Narandi's behavior. Any tuning requires lua-expert changes to `ring_war.lua`.
+
+**Key Ring War NPCs (all in greatdivide, raid_target varies):**
+| NPC | ID | Level | HP | raid_target | respawn |
+|-----|----|-------|----|-------------|---------|
+| Narandi the Wretched | 118145 | 65 | 150,000 | 1 | 749,999s (scripted — effectively event-only) |
+| Seneschal Aldikar | 118166 | 65 | 10,000 | 1 | 900s (event-spawned) |
+| Taskmaster Abyott | 118088 | 62 | 72,000 | 1 | 64,800s (18h) |
+| ringtenmaster | 118173 | 80 | 100,000 | 0 | 1s (immortal event controller) |
+
+Narandi's 749,999s respawn timer means he effectively only spawns via the event. His HP (150,000) is within normal boss range. **No death-touch or instakill mechanics identified in Ring War NPCs** — the PoSky spell 982 issue from Phase 2 has no Velious equivalent here.
+
+### Plane of Growth / Plane of Mischief Zone Quirk Assessment
+
+**Plane of Growth:**
+- Standard zone, ruleset=1, no special rules
+- The `a_warm_light` NPC (ID 127004, L1, HP 1,000,000, raid_target=1) is almost certainly a scripted trigger/event entity. Architect should exclude it from HP cuts (hp=1M at L1 is a red flag).
+- `a_thifling_focuser` (127005/127006, L65, HP 1,000,000, raid_target=1) — also suspicious at 1M HP for L65. Architect should verify these are intended combat targets.
+
+**Plane of Mischief:**
+- Standard zone, ruleset=1, no special rules
+- All-Seeing Eye (126374) has a 1,200s (20min) respawn — anomalously short for a raid boss. Likely event-triggered, not a standing spawn. Architect should verify before including in respawn timer changes.
+- No Maze or random-geometry rule entries exist — PoM's infamous maze is zone geometry, not a server rule.
+
+### Config-Expert Role in Phase 4a Implementation
+
+Identical to Phase 2 and Phase 3:
+1. No rule changes needed.
+2. No `eqemu_config.json` or `.env` changes.
+3. Post-SQL: issue `#reloadworld` via world telnet (port 9000) to propagate `npc_types`/`spawn2` changes.
+4. Smoke verification via DB read-back (same pattern as Tasks 8 and K7).
+5. If Ring War is tested and wave timing needs adjustment — that is lua-expert's domain (`ring_war.lua:26`), not config-expert.
+6. sleeper zone: any `npc_types` UPDATE must explicitly exclude the Area%dead / StaticShout% / placeholder NPCs (hp=11, raid_target=1 false-positives).

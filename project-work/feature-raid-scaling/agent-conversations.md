@@ -1035,3 +1035,59 @@ spawn/despawn/combat packets.
 
 **Outcome:** Architect cleared on all four questions. Phase 4a architecture can
 proceed without any protocol-layer constraints or workarounds.
+
+---
+
+### 2026-04-22 — Config-expert Phase 4a consultation to architect
+
+**From:** config-expert
+**To:** architect
+**Date:** 2026-04-22
+
+Delivered Phase 4a Velious non-ToV config consultation. Queried live DB: all
+Velious non-ToV zone ruleset/min_status, rule_values for any Velious/Ring/Coldain/
+event keywords, full deduped raid_target=1 NPC stats for kael/skyshrine/growthplane/
+mischiefplane/westwastes/eastwastes/sleeper, and read `ring_war.lua` in full.
+
+**Core finding: Phase 2/3 config conclusions carry forward unchanged. No new rules.
+SQL-only. #reloadworld via world telnet port 9000. No npc_spells_entries DELETEs
+anticipated for Phase 4a.**
+
+Key flags for architect:
+
+1. **All Velious non-ToV zones: ruleset=1, min_status=0.** No custom ruleset on any zone.
+   PoM and PoG are standard zones — the maze is geometry, not a server rule.
+
+2. **Lord Yelinak dupe:** Two rows in skyshrine — ID 114106 (500k HP) and ID 114618
+   (297k HP), both L70, both at 259,200s. Data-expert must scope by ID; architect
+   should determine which is live.
+
+3. **Sir Elmonious Falmont (120133):** 400k HP, **3,667 maxdmg** at L70. Extreme
+   maxdmg — architect decision needed on trim.
+
+4. **All-Seeing Eye (126374):** 1,200s (20min) respawn in PoM — anomalously short for
+   a raid boss. Likely event-triggered. Verify before including in respawn changes.
+
+5. **PoG population:** 80+ raid_target=1 entries, most are named trash (16-32k HP,
+   18h respawn). True bosses are Tunare (127001) and Guardian of Tunare (127007).
+   `a_warm_light` (127004, L1, 1M HP) and `a_thifling_focuser` (127005/127006, L65,
+   1M HP) are suspicious — architect should verify before cutting.
+
+6. **Sleeper placeholder NPCs:** Many `sleeper` raid_target=1 NPCs are scripted
+   dead-body/event entities (IDs 128057-128088, names `Area8mob6dead`, `StaticShoutOne`,
+   `A_warning`, etc.) at HP=11, level=1. Any data-expert UPDATE on sleeper MUST exclude
+   these — e.g. `AND n.hp > 1000 AND n.level > 10`.
+
+7. **Ring War: one Lua tunable.** `wave_cooldown_time = 5 * 60 * 1000` at
+   `ring_war.lua:26` — 5 minutes between waves. It is a Lua local, not a rule or DB
+   column. Reducing it requires lua-expert. No death-touch or spell 982 equivalent in
+   any Ring War NPC. Wave-mob HP cuts follow standard npc_types UPDATE pattern.
+   `ringtenmaster` (118173) is a pure script controller (raid_target=0, npc_spells_id=0).
+
+**Config-expert Phase 4a implementation role:** Identical to Phases 2 and 3 — no rule
+changes, no config file changes, post-SQL #reloadworld, smoke verification.
+
+Full findings in `config-expert/dev-notes.md` Phase 4a section.
+
+**Outcome:** Config consultation delivered to architect. Awaiting architect response /
+any follow-up questions before Phase 4a architecture doc is finalized.
