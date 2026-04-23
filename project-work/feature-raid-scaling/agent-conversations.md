@@ -745,3 +745,63 @@ and take effect on next script spawn. Same pattern as Phase 2 Q13 Enraged Golem.
 **Outcome:** All Phase 3 changes remain SQL-only. No opcode additions, struct changes,
 or Titanium translation layer changes needed. Architect cleared to proceed with
 `kunark-architecture.md`.
+
+---
+
+### 2026-04-22 — Config-expert Phase 3 architect Q&A (4 direct questions)
+
+**From:** architect → **To:** config-expert
+
+> 1. Confirm no new rule_values added since Phase 2 apply (2026-04-22) affecting Kunark tuning.
+> 2. Confirm SQL via npc_types/spawn2/npc_spells_entries remains the correct mechanism.
+> 3. Any rule_values with Kunark-era semantics? Zone-scoped rules on kaesora/karnor's/chardok/veeshan?
+> 4. Decision #5 says 12h for VP/Trakanon/outdoor Kunark dragons — confirm reading.
+
+**Response from** config-expert → architect (2026-04-22):
+
+> **Q1 — No new rules since Phase 2:** Confirmed via live DB query. All prior-pass
+> globals unchanged: NPCFlurryChance=12, MaxRampageTargets=2, NPCAssistCap=3,
+> StartEnrageValue=5, GlobalLootMultiplier=2, CurrentExpansion=3,
+> AllowRaidTargetBlind=false. Total rule_values count: 1,112. No Kunark-specific
+> entries added. Note: `Combat:DefaultRampageTargets` returns two rows (both value=1)
+> — pre-existing duplicate artifact, not a new change.
+>
+> **Q2 — SQL remains the correct mechanism:** Confirmed. No config-layer lever
+> emerged for Kunark. Keyword search for Kunark/VP/Dragon/Raid in rule_values
+> returns only general-purpose rules already catalogued in Phase 2. No zone-aware
+> or era-aware tuning rules exist in the rule system.
+>
+> **Q3 — No zone-scoped rules:** Confirmed none. EQEmu rule system has no per-zone
+> scoping. veeshan, sebilis, karnor, and chardok all use `zone.ruleset=1` ("default")
+> — same as 217 other standard zones. No custom ruleset applied to any Kunark raid zone.
+>
+> **Q4 — 12h for Kunark mid-tier confirmed:** Decision #5 text is explicit:
+> "12h mid (PoSky, Trak, VP, most Velious)." 43,200s is the correct target for
+> Trakanon, all VP revamp variants (108040-108053), and outdoor Kunark dragons.
+>
+> **Additional flags for architecture planning:**
+>
+> - **VP dual spawn2 populations:** Both revamp (108040-108053, ~75-81h) and classic
+>   (108509-108517, ~18-24h) variants have standing spawn2 rows. Data-expert must
+>   scope all UPDATEs by NPC ID list, not zone-sweep. Classic variants may not need
+>   the 12h treatment since they're already shorter.
+>
+> - **Chardok Royals already at 1.5h (5,400s):** Queen Velazul (103055), Overking
+>   Bathezid (103056), Prince Selrach Di'zok (103080). These are BELOW the 12h
+>   mid-tier target — architect should decide: leave at 1.5h, bump to 12h for
+>   consistency, or treat as a separate short-respawn tier.
+>
+> - **Fabled exclusion in Chardok:** `#The_Fabled_Prince_Selrach_Di'zok` (ID 103218,
+>   HP 1.5M) has a spawn2 in chardok. Same `name NOT LIKE '#The_Fabled%'` filter
+>   as Phase 2 recommended.
+>
+> - **No Kunark death-touch spell-list issues found:** No 0-cast-time instakill
+>   analogous to PoSky spell 982 identified in VP/Sebilis/Karnor/Chardok data.
+>   No npc_spells_entries DELETEs anticipated — but verify Trakanon/VP dragon
+>   spell lists if architect finds 0-cast-time outliers.
+
+**Outcome:** All four questions confirmed. Phase 3 uses identical SQL-only pattern
+as Phase 2. Three decision flags handed to architect: VP dual-population scoping
+(data-expert must use NPC ID list), Chardok Royals respawn direction, Fabled
+exclusion filter. Config-expert Phase 3 implementation role: post-SQL #reloadworld
+via world telnet port 9000, smoke verification — same as Phase 2 Tasks 7-8.
