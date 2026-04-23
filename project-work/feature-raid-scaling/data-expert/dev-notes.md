@@ -172,16 +172,149 @@ Since this is 100% SQL with no cross-system dependencies (no C++, no Lua, no Per
 
 ---
 
+## Phase 3 Kunark — Task Assignment
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| K1 | Create Kunark backup tables | — | Complete (applied 2026-04-22) |
+| K2 | Emit Kunark HP/damage UPDATE SQL | K1 | Complete (applied 2026-04-22) |
+| K3 | Emit Kunark respawn UPDATE SQL | K1 | Complete (applied 2026-04-22) |
+| K4 | Emit Kunark rollback script | K2,K3 | Complete (2026-04-22) |
+| K5 | Apply all SQL changes | K1-K4 | Complete (2026-04-22) |
+| K6 | Commit + push claude/ repo | K5 | In Progress |
+
+---
+
+## Phase 3 Kunark — Stage 1: Plan
+
+### DB State Confirmed (pre-apply SELECT queries)
+
+All Kunark bosses verified at PEQ default values before any changes:
+
+| NPC | ID | Pre-change HP | Pre-change maxdmg | Pre-change respawn |
+|-----|----|---------------|-------------------|-------------------|
+| Gorenaire | 86014 | 32000 | 500 | 194400s (54h) |
+| Severilous | 94009 | 32000 | 500 | 194400s |
+| Talendor | 91093 | 32000 | 500 | 194400s |
+| Faydedar | 96089 | 32000 | 236 | 194400s |
+| #Faydedar | 96073 | 32000 | 236 | no spawn2 |
+| Trakanon | 89154 | 32000 | 630 | 194400s |
+| #Trakanon | 89181 | 16000 | 473 | no spawn2 |
+| #Venril_Sathir | 102112 | 22000 | 404 | 194400s (spawn2 exists) |
+| Drusella_Sathir | 105153 | 15750 | 310 | 194400s |
+| Queen Velazul | 103055 | 30000 | 220 | 5400s (1.5h) |
+| Overking Bathezid | 103056 | 34500 | 320 | 5400s |
+| Prince Selrach | 103080 | 25000 | 250 | 5400s |
+| Kilidna | 90186 | 100000 | 4600 | 5400s |
+| Lhranc | 90093 | 19000 | 305 | 49215s (~13.67h) |
+| Druushk | 108040 | 470000 | 1567 | 291232s, cond=2 |
+| Guardian of Veeshan | 108042 | 600000 | 1273 | 164895s, cond=2 |
+| Hoshkar | 108043 | 536000 | 1603 | 290001s, cond=2 |
+| Nexona | 108047 | 800000 | 2475 | 269232s, cond=2 |
+| Phara Dar | 108048 | 681000 | 1621 | 291232s, cond=2 |
+| Silverwing | 108050 | 454000 | 1295 | 281232s, cond=2 |
+| Xygoz | 108053 | 814000 | 2266 | 271232s, cond=2 |
+| VP classic (108509-108517) | — | 144-191k | — | 64800-86400s, cond=1 |
+| #Renux_Herkanor | 448200 | 500000 | 1605 | no spawn2 |
+
+**VP condition state confirmed:** condition=2 (VeeshanNew) = live. Condition=1 (VeeshanOld) = dormant.
+**Backup tables did not exist** before this phase — confirmed via SHOW TABLES.
+
+### User decisions applied
+- Q21 = Option A: Chardok Royals respawn stays at 5400s (1.5h). No spawn2 UPDATE.
+- Q22 = Option A: Renux Herkanor 448200 in scope. Applied HP cut 500k → 120k.
+
+---
+
+## Phase 3 Kunark — Stage 4: Build
+
+### Implementation Log
+
+#### 2026-04-22 — Kunark backup tables created (Task K1)
+
+**What:** Created `npc_types_backup_raid_scaling_kunark` and `spawn2_backup_raid_scaling_kunark` via `04-kunark-backup-tables.sql`.
+**Row counts:**
+- `npc_types_backup_raid_scaling_kunark`: 28 rows (expected 27 — one extra row, harmless over-capture)
+- `spawn2_backup_raid_scaling_kunark`: 25 rows
+- VP condition split: condition=1 (6 rows), condition=2 (7 rows) — confirmed correct
+
+#### 2026-04-22 — Kunark HP/damage/respawn SQL applied (Tasks K2-K3)
+
+**What:** Applied all Phase 3 changes via `05-kunark-implementation.sql`.
+
+**npc_types UPDATEs applied:**
+
+| NPC | ID | HP old→new | Damage old→new |
+|-----|----|-----------|----------------|
+| Gorenaire | 86014 | 32000→22000 | maxdmg 500→400 |
+| Severilous | 94009 | 32000→22000 | maxdmg 500→400 |
+| Talendor | 91093 | 32000→22000 | maxdmg 500→400 |
+| Faydedar | 96089 | 32000→19000 | unchanged |
+| #Faydedar | 96073 | 32000→19000 | unchanged |
+| Trakanon | 89154 | 32000→22000 | unchanged |
+| #Trakanon | 89181 | 16000 (NO CHANGE) | — |
+| #Venril_Sathir | 102112 | 22000→16500 | maxdmg 404→365 |
+| Drusella_Sathir | 105153 | 15750 (NO CHANGE) | — |
+| Queen Velazul | 103055 | 30000→24000 | unchanged |
+| Overking Bathezid | 103056 | 34500→26000 | unchanged |
+| Prince Selrach | 103080 | 25000 (NO CHANGE) | — |
+| Kilidna | 90186 | 100000→30000 | mindmg 700→300, maxdmg 4600→1000 |
+| Lhranc | 90093 | 19000 (NO CHANGE) | — |
+| Xygoz | 108053 | 814000→120000 | maxdmg 2266→900 |
+| Nexona | 108047 | 800000→120000 | maxdmg 2475→1000 |
+| Phara Dar | 108048 | 681000→120000 | mindmg 1032→450, maxdmg 1621→750 |
+| Guardian of Veeshan | 108042 | 600000→120000 | mindmg 380→230, maxdmg 1273→750 |
+| Hoshkar | 108043 | 536000→110000 | maxdmg 1603→800 |
+| Druushk | 108040 | 470000→95000 | maxdmg 1567→780 |
+| Silverwing | 108050 | 454000→90000 | mindmg 554→332, maxdmg 1295→777 |
+| #Renux_Herkanor | 448200 | 500000→120000 | maxdmg 1605→900 |
+| VP classic 108509-108517 | — | NO CHANGE | — |
+
+**spawn2 UPDATEs applied:**
+
+| NPC | ID | Respawn old→new |
+|-----|----|-----------------|
+| Gorenaire | 86014 | 194400→43200 (12h) |
+| Severilous | 94009 | 194400→43200 |
+| Talendor | 91093 | 194400→43200 |
+| Faydedar | 96089 | 194400→43200 |
+| Trakanon | 89154 | 194400→43200 |
+| Drusella_Sathir | 105153 | 194400→43200 |
+| #Venril_Sathir spawn2 | 102112 | 194400→43200 |
+| VP revamp (7) | cond=2 | ~270k-291k→43200 |
+| Kilidna | 90186 | 5400→21600 (6h) |
+| Lhranc | 90093 | 49215 (NO CHANGE) |
+| Chardok Royals | 103055/056/080 | 5400 (NO CHANGE, Q21=A) |
+| VP classic (6) | cond=1 | 64800-86400 (NO CHANGE) |
+
+**All 43 verification checks passed.** Critical VP condition filter confirmed:
+- Only condition=2 VP rows have respawntime=43200 (7 rows)
+- Condition=1 VP rows untouched (min 56250s / max 86400s, unchanged)
+
+#### 2026-04-22 — Rollback script written (Task K4)
+
+**What:** `06-kunark-rollback.sql` written. Transactional UPDATE…JOIN from `_kunark` backup tables for npc_types and spawn2.
+
+### Files Created
+
+| File | Description |
+|------|-------------|
+| `data-expert/sql/04-kunark-backup-tables.sql` | Pre-change Kunark backup tables |
+| `data-expert/sql/05-kunark-implementation.sql` | All UPDATEs + verification queries |
+| `data-expert/sql/06-kunark-rollback.sql` | Emergency rollback using Kunark backup tables |
+
+---
+
 ## Context for Next Agent
 
-Phase 2 SQL is complete. Three backup tables exist in the `peq` DB. All ~49 npc_types UPDATEs, ~40 spawn2 UPDATEs, and 3 npc_spells_entries DELETEs have been applied.
+Phase 3 Kunark SQL is complete. Two new backup tables exist: `npc_types_backup_raid_scaling_kunark` (28 rows) and `spawn2_backup_raid_scaling_kunark` (25 rows).
 
-**config-expert** needs to run `#reloadworld` (Task 7) and smoke verification (Task 8) before game-tester can validate.
+**config-expert** needs to run `#reloadworld` and smoke-verify a representative sample of Kunark bosses (Trakanon, Nexona, Phara Dar, Severilous, Kilidna, Chardok royals).
 
-Key confirmed facts for verification queries:
-- Nagafen (32040): hp=14400
-- Cazic Thule (72003): hp=80000, maxdmg=450, special_abilities UNCHANGED (rampage string still `3,1,10`)
-- Innoruuk hateplaneb (186158): hp=60000, maxdmg=500
-- Keeper of Souls (71075): spell 982 deleted from list 969
-- Nagafen spawn2 respawntime: 21600
-- CT spawn2 respawntime: 43200
+Key confirmed post-apply values:
+- Trakanon (89154): hp=22000, respawn=43200
+- Nexona (108047): hp=120000, maxdmg=1000, respawn=43200 (cond=2 only)
+- Kilidna (90186): hp=30000, mindmg=300, maxdmg=1000, respawn=21600
+- Chardok Royals: HP trimmed, respawn stays at 5400s (Q21=Option A)
+- VP classic variants: hp/respawn UNCHANGED
+- #Renux_Herkanor (448200): hp=120000, maxdmg=900
