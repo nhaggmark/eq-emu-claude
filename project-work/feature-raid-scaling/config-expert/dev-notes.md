@@ -707,3 +707,94 @@ Identical to Phase 2/3/4a:
 4. Smoke verification via DB read-back on `npc_types` HP/damage for 47 NPCs + `spawn2.respawntime` for ~32 rows per architect's UPDATE list.
 5. No `npc_spells_entries` changes — no zone-restart caveat.
 6. Additional untouched-verification: Kerafyrm trio (128089/94/95), spell 1948 in list 489, spawn_conditions state (condition 1=0, condition 2=1), Defenders (124050/51/52/79 at 120k HP unchanged).
+
+---
+
+## Phase 4b (Velious ToV + Sleeper + Vulak + AoW) — Implementation Tasks B-reload / B-smoke
+
+> **Stage 4: Build — COMPLETE 2026-04-22**
+
+### Task Assignment
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| B-reload | `#reloadworld` via world telnet port 9000 | data-expert B1-B8 complete + DB backup tables confirmed | **Complete 2026-04-22** |
+| B-smoke | Smoke verification (representative Phase 4b NPCs per team-lead brief) | B-reload | **Complete 2026-04-22** |
+
+### Stage 4: Build Log — Phase 4b Velious-B (2026-04-22)
+
+#### Pre-reload DB Verification
+
+data-expert confirmed B1-B8 applied. DB gate confirmed before reload:
+- `npc_types_backup_raid_scaling_velious_b`: **51 rows** (expected 51)
+- `spawn2_backup_raid_scaling_velious_b`: **62 rows**
+
+#### Task B-reload: #reloadworld — COMPLETE
+
+Command issued:
+```
+docker exec akk-stack-eqemu-server-1 bash -c "(echo 'reloadworld'; sleep 3) | telnet 127.0.0.1 9000"
+```
+
+Response: `Reloading World...`
+
+No `npc_spells_entries` changes this phase — reloadworld propagates `npc_types` and `spawn2` cleanly. No full-stack restart required.
+
+#### Task B-smoke: Smoke Verification — PASS (all checks)
+
+**HP / Damage / MR Checks:**
+
+| Check | NPC | ID | DB Value | Expected | Result |
+|-------|-----|----|----------|----------|--------|
+| Lord Vyemm HP | #Lord_Vyemm | 124017 | 90,000 | 90,000 | PASS |
+| Lord Vyemm maxdmg | 124017 | 700 | 700 | PASS |
+| Lord Vyemm MR (preserved) | 124017 | MR=1000 | 1000 | PASS |
+| Aaryonar HP | #Aaryonar | 124010 | 95,000 | 95,000 | PASS |
+| Aaryonar maxdmg | 124010 | 550 | 550 | PASS |
+| Midayor HP (NToV mid-tier sample) | #Midayor | 124030 | 40,000 | 40,000 | PASS |
+| An Emerald Defender HP (Q37) | An_Emerald_Defender | 124050 | 45,000 | 45,000 | PASS |
+| An Emerald Defender maxdmg (Q37) | 124050 | 550 | 550 | PASS |
+| Nanzata the Warder HP (Q36) | #Nanzata_the_Warder | 128090 | 60,000 | 60,000 | PASS |
+| Kildrukaun the Ancient HP | #Kildrukaun_the_Ancient | 128041 | 85,000 | 85,000 | PASS |
+| Kildrukaun MR (preserved) | 128041 | MR=400 | 400 | PASS |
+| Lendiniara the Keeper HP | #Lendiniara_the_Keeper | 124020 | 80,000 | 80,000 | PASS |
+| Avatar of War HP | The_Avatar_of_War | 113457 | 120,000 | 120,000 | PASS |
+| Avatar of War mindmg | 113457 | 200 | 200 | PASS |
+| Avatar of War maxdmg | 113457 | 700 | 700 | PASS |
+| Vulak`Aerr HP | #Vulak`Aerr | 124155 | 150,000 | 150,000 | PASS |
+| Vulak`Aerr mindmg | 124155 | 250 | 250 | PASS |
+| Vulak`Aerr maxdmg | 124155 | 800 | 800 | PASS |
+| Thylex UNCHANGED | #Thylex_of_Veeshan | 124000 | HP=100 | 100 | PASS |
+| Kerafyrm combat UNCHANGED | #Kerafyrm | 128089 | HP=3,500,000 | 3,500,000 | PASS |
+| The Sleeper UNCHANGED | #The_Sleeper | 128094 | HP=3,500,000 | 3,500,000 | PASS |
+| Kerafyrm zone-clone UNCHANGED | #Kerafyrm_ | 128095 | HP=3,500,000 | 3,500,000 | PASS |
+
+**Respawn Timer Checks:**
+
+| NPC | ID | respawntime | Expected | Result |
+|-----|----|-------------|----------|--------|
+| Lord Vyemm | 124017 | 86,400 (24h) | 86,400 | PASS |
+| Lendiniara the Keeper (Q38) | 124020 | 86,400 (24h) | 86,400 | PASS |
+| Midayor | 124030 | 86,400 (24h) | 86,400 | PASS |
+| An Emerald Defender (UNCHANGED, Q37) | 124050 | 16,200 (~4.5h) | 16,200 | PASS |
+| Nanzata the Warder (UNCHANGED, cond=1) | 128090 | 259,200 (72h) | 259,200 | PASS |
+
+**Kerafyrm Trio Safety Check:**
+
+| Check | Result |
+|-------|--------|
+| IDs 128089/128094/128095 absent from `npc_types_backup_raid_scaling_velious_b` | PASS (0 rows returned) |
+| Kerafyrm (128089) HP in npc_types | 3,500,000 — UNCHANGED |
+| The Sleeper (128094) HP in npc_types | 3,500,000 — UNCHANGED |
+| Kerafyrm zone-clone (128095) HP in npc_types | 3,500,000 — UNCHANGED |
+
+**Backup Table Integrity:**
+
+| Table | Rows |
+|-------|------|
+| npc_types_backup_raid_scaling_velious_b | 51 |
+| spawn2_backup_raid_scaling_velious_b | 62 |
+
+Both backup tables intact post-reload.
+
+**All-clear: B-reload and B-smoke COMPLETE. Ready for game-tester validation.**
