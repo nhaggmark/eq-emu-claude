@@ -82,6 +82,8 @@ This is the **"peak mastery" tier** per Decision #1 — the hardest in-era fight
 
 **Vulak`Aerr (templeveeshan, 124155):** 890k HP, max dmg 1,400, AC=950, MR=80. No spawn2 row; spawned by `Thylex_of_Veeshan.pl` 60-second tick when all 6 altar dragons (Mirenilla, Nevederia, Feshlak, Aaryonar, Kreizenn, Vyemm) are dead (qglobal `vulak` cooldown 6 min).
 
+**Thylex_of_Veeshan (124000, the Vulak coordinator NPC):** L10, 100 HP, raid_target=0, special_abilities flags 19/20/24/25/35 (immunity cluster — untargetable/uncharmable/unstunnable). DB-verified non-combat coordinator. Protocol-agent flagged that accidentally killing Thylex would break Vulak spawns, but DB state shows the immunity flags already prevent this. **Phase 4b does NOT edit Thylex** (not in `npc_types_backup_raid_scaling_velious_b` or the UPDATE list). Smoke check §B10 adds a "Thylex untouched at 100 HP" verification line.
+
 **Relevant topography:**
 - `claude/docs/topography/SQL-CODE.md` — npc_types, spawn2, spawnentry, spawngroup chain
 - `claude/docs/topography/PERL-CODE.md` — `quest::signalwith`, `quest::spawn_condition` Perl API
@@ -715,7 +717,7 @@ _game-tester should verify each of the following after the implementation team c
   **Expected:** 128089 (3500000, 7003), 128094 (3500000, 4), 128095 (3500000, 7003) — all unchanged.
 - [ ] **Kerafyrm "Destroy" spell preserved:** `SELECT * FROM npc_spells_entries WHERE npc_spells_id=489 AND spellid=1948;` returns exactly 1 row.
 - [ ] **Kerafyrm's spell 1948 still exists:** `SELECT id, name, effect_base_value1 FROM spells_new WHERE id=1948;` returns (1948, "Destroy", -100000).
-- [ ] **Thylex of Veeshan untouched** (no id edit).
+- [ ] **Thylex_of_Veeshan (124000) untouched** — `SELECT hp, raid_target, special_abilities FROM npc_types WHERE id = 124000;` returns (100, 0, `19,1^20,1^24,1^25,1^35,1`). Vulak coordinator; already immune via special_abilities flags.
 - [ ] **MotG encounter script untouched:** `akk-stack/server/quests/sleeper/encounters/motg.lua` file mtime before Phase 4b apply timestamp.
 - [ ] **Warder scripts untouched:** `akk-stack/server/quests/sleeper/#Hraashna_the_Warder.pl` etc. unchanged.
 - [ ] **Sleeper + Kerafyrm scripts untouched:** `#The_Sleeper.pl`, `#Kerafyrm.pl`, `#Kerafyrm_.pl` unchanged.
