@@ -568,3 +568,81 @@ Identical to Phase 2 and Phase 3:
 4. Smoke verification via DB read-back (same pattern as Tasks 8 and K7).
 5. If Ring War is tested and wave timing needs adjustment — that is lua-expert's domain (`ring_war.lua:26`), not config-expert.
 6. sleeper zone: any `npc_types` UPDATE must explicitly exclude the Area%dead / StaticShout% / placeholder NPCs (hp=11, raid_target=1 false-positives).
+
+---
+
+## Phase 4a (Velious Non-ToV) — Implementation Tasks V-reload / V-smoke
+
+> **Stage 4: Build Log — 2026-04-22**
+> Dispatched by team-lead after data-expert confirmed V1-V6 complete.
+
+### Task V-reload: #reloadworld — COMPLETE
+
+Dependency gate: data-expert confirmed Tasks V1-V6 applied and all 63 verification checks passed. Backup tables present before reload issued.
+
+Command issued:
+```
+docker exec akk-stack-eqemu-server-1 bash -c "(echo 'reloadworld'; sleep 3) | telnet 127.0.0.1 9000"
+```
+
+Response: `Reloading World...`
+
+Note: Phase 4a has zero `npc_spells_entries` changes — reloadworld propagates `npc_types` and `spawn2` cleanly to all running zone processes. No full-stack restart needed.
+
+### Task V-smoke: Smoke Verification — PASS (all checks)
+
+#### HP Verification (14/14 PASS)
+
+| Check | NPC | ID | DB Value | Expected | Result |
+|-------|-----|-----|----------|----------|--------|
+| King Tormax HP | King_Tormax | 113215 | 100,000 | 100,000 | PASS |
+| Lord Yelinak main HP | Lord_Yelinak | 114106 | 110,000 | 110,000 | PASS |
+| Lord Yelinak variant HP (Q24) | Lord_Yelinak | 114618 | 110,000 | 110,000 | PASS |
+| Tunare HP | #_Tunare | 127001 | 150,000 | 150,000 | PASS |
+| Klandicar HP | Klandicar | 120084 | 40,000 | 40,000 | PASS |
+| Zlandicar HP | Zlandicar | 123115 | 35,000 | 35,000 | PASS |
+| Wuoshi HP | Wuoshi | 119112 | 37,000 | 37,000 | PASS |
+| Dain Frostreaver IV HP | #Dain_Frostreaver_IV | 129003 | 80,000 | 80,000 | PASS |
+| Mischievous Jester HP | #the_Mischievous_Jester | 126012 | 60,000 | 60,000 | PASS |
+| Kromrif Captain HP (Q23 Lever 1) | Kromrif_Captain | 118130 | 6,000 | 6,000 | PASS |
+| Kromrif High Priest HP (Q23 Lever 1) | Kromrif_High_Priest | 118210 | 15,000 | 15,000 | PASS |
+| Seneschal Aldikar HP (safety bump) | Seneschal_Aldikar | 118166 | 30,000 | 30,000 | PASS |
+| AoW UNCHANGED (Phase 4b safety) | The_Avatar_of_War | 113457 | 900,000 | 900,000 | PASS |
+| Vulak`Aerr UNCHANGED (Phase 4b safety) | #Vulak`Aerr | 124155 | 890,000 | 890,000 | PASS |
+
+#### Respawn Timer Verification (6/6 PASS — 12h = 43,200s)
+
+| NPC | ID | respawntime | Expected | Result |
+|-----|----|-------------|----------|--------|
+| Derakor the Vindicator (was already 12h) | 113118 | 43,200 | 43,200 | PASS |
+| Lord Yelinak main | 114106 | 43,200 | 43,200 | PASS |
+| Lord Yelinak variant | 114618 | 43,200 | 43,200 | PASS |
+| Klandicar | 120084 | 43,200 | 43,200 | PASS |
+| #_Tunare | 127001 | 43,200 | 43,200 | PASS |
+| Dain Frostreaver IV | 129003 | 43,200 | 43,200 | PASS |
+
+#### Phase 4b Exclusion Verification (10/10 PASS — all untouched)
+
+| NPC | ID | HP | Result |
+|-----|----|----|--------|
+| The_Avatar_of_War | 113457 | 900,000 | PASS |
+| #Vulak`Aerr | 124155 | 890,000 | PASS |
+| #Kildrukaun_the_Ancient | 128041 | 352,000 | PASS |
+| #Vyskudra_the_Ancient | 128042 | 352,000 | PASS |
+| #Tjudawos_the_Ancient | 128043 | 352,000 | PASS |
+| #Zeixshi-Kar_the_Ancient | 128044 | 377,000 | PASS |
+| #Nanzata_the_Warder | 128090 | 200,000 | PASS |
+| #Ventani_the_Warder | 128091 | 200,000 | PASS |
+| #Tukaarak_the_Warder | 128092 | 200,000 | PASS |
+| #Hraashna_the_Warder | 128093 | 200,000 | PASS |
+
+#### Backup Table Integrity
+
+| Table | Rows |
+|-------|------|
+| npc_types_backup_raid_scaling_velious_a | 46 |
+| spawn2_backup_raid_scaling_velious_a | 227 |
+
+Both backup tables intact post-reload. No Phase 4b rows touched.
+
+**All-clear: V-reload and V-smoke COMPLETE. Ready for game-tester validation.**
