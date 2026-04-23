@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/raid-scaling`
 > **Created:** 2026-04-21
-> **Last updated:** 2026-04-23 (Phase 4a Velious non-ToV server-side validation complete — FAIL: BUG-001 filed)
+> **Last updated:** 2026-04-23 (BUG-001 fix applied — #Tunare 127098 hp=150000; pending game-tester re-verification)
 
 ---
 
@@ -14,7 +14,7 @@
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2: Complete 2026-04-22. Phase 3 Kunark: Complete 2026-04-22. Phase 4a Velious non-ToV: **Draft delivered 2026-04-23** — architect recommendation for Q8 Ring War pending lore-master final review; 4 user decisions raised (#23-26) | 2026-04-22 | 2026-04-23 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
-| Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 Kunark: Server-side PASS 2026-04-23 (86 checks); user in-game testing deferred per user decision to proceed. Phase 4a Velious non-ToV: Server-side FAIL 2026-04-23 (108 checks; 107 PASS, 1 FAIL — BUG-001 Tunare wrong NPC ID); BUG-001 must be fixed before PoG in-game testing | 2026-04-22 | In Progress |
+| Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 Kunark: Server-side PASS 2026-04-23 (86 checks); user in-game testing deferred per user decision to proceed. Phase 4a Velious non-ToV: Server-side FAIL 2026-04-23 (108 checks; 107 PASS, 1 FAIL — BUG-001 Tunare wrong NPC ID); BUG-001 fix applied 2026-04-23 (127098 hp=150000); pending game-tester re-verification of PoG Tunare fight before Phase 4a can be marked complete | 2026-04-22 | In Progress |
 | Completion | _user_ | Phase 2 Classic Complete 2026-04-23. Phase 3 Kunark Complete 2026-04-23 — proceeding to Phase 4a Velious non-ToV | 2026-04-23 | 2026-04-23 |
 
 **Current phase:** Phase 4a (Velious non-ToV) Validation — BUG-001 requires data-expert fix before Phase 4a can be marked complete. Ring War in-game testing is the highest priority session.
@@ -332,7 +332,7 @@ _Populated by the architect for Phase 4a (Velious non-ToV). Awaiting user decisi
 | V7 | `#reloadworld` via Spire or world telnet port 9000 | config-expert | **Not Started** | No `ring_war.lua` edit by default — no `#reloadquests` needed. |
 | V8 | Smoke verify: Kael bosses HP, Skyshrine Yelinak duals at 110k, Tunare 150k, outdoor dragons 35-40k, respawn 12h applied to correct IDs, Kromrif wave-mob HP at Lever 1 targets, Seneschal at 30k | config-expert | **Not Started** | — |
 | V9 | Commit + push `claude/` repo changes (architecture doc, context files, status, SQL) to `feature/raid-scaling` branch. `akk-stack/` untouched unless Lever 2 triggered. | game-tester | **In Progress** | Validation deliverables committed this pass; BUG-001 fix commit pending |
-| V_BUG001 | Fix BUG-001: `UPDATE npc_types SET hp = 150000 WHERE id = 127098;` — add 127098 to backup table; then `#reloadworld` | data-expert | **Open** | Tunare combat boss 127098 at 530k (unscaled); was targeting passive trigger 127001 instead |
+| V_BUG001 | Fix BUG-001: `UPDATE npc_types SET hp = 150000 WHERE id = 127098;` — add 127098 to backup table; then `#reloadworld` | data-expert | **Complete 2026-04-23** | Backup row inserted (hp=530000), UPDATE applied (hp=150000), reloadworld issued. SQL: 09-bug-001-tunare-fix.sql. Pending game-tester re-verification. |
 | V10 | (**CONDITIONAL Lever 2**) IF game-tester validation shows ≥3 consecutive waves overlapping with Lever 1 alone, AND user approves: lua-expert edits `ring_war.lua:26` wave_cooldown_time from 5min to 8min | lua-expert | **Not Started (conditional)** | Fallback only. lua-expert invoked post-validation, not in default dispatch. |
 | V11 | (**CONDITIONAL**) `#reloadquests` via Spire, OR full-stack restart (infra-expert) if `#reloadquests` doesn't propagate Lua script change | config-expert OR infra-expert | **Not Started (conditional)** | Only needed after V10. |
 
@@ -385,7 +385,7 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-001 | Phase 4a: Tunare combat boss (127098) unscaled — implementation targeted passive trigger NPC (127001) instead of killable combat NPC | High | game-tester | Open | data-expert | — |
+| BUG-001 | Phase 4a: Tunare combat boss (127098) unscaled — implementation targeted passive trigger NPC (127001) instead of killable combat NPC | High | game-tester | Resolved (2026-04-23) | data-expert | 2026-04-23 |
 
 ---
 

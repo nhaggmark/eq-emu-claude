@@ -318,3 +318,24 @@ Key confirmed post-apply values:
 - Chardok Royals: HP trimmed, respawn stays at 5400s (Q21=Option A)
 - VP classic variants: hp/respawn UNCHANGED
 - #Renux_Herkanor (448200): hp=120000, maxdmg=900
+
+---
+
+## BUG-001 Fix — Phase 4a Tunare Combat Boss (2026-04-23)
+
+**Bug:** Phase 4a implementation targeted NPC 127001 (`#_Tunare`, passive trigger in tree) instead of NPC 127098 (`#Tunare`, actual killable combat boss spawned via `eq.spawn2(127098,...)`). NPC 127098 was left at 530,000 HP.
+
+**Fix applied:**
+
+1. Inserted pre-change row for 127098 into `npc_types_backup_raid_scaling_velious_a` (9-column slim backup, hp=530000 captured).
+2. `UPDATE npc_types SET hp = 150000 WHERE id = 127098;` — consistent with Phase 4a Velious mid-tier target (Yelinak 110k, Tormax 100k; 150k is upper-mid which matches Tunare's lore stature).
+3. `#reloadworld` issued via world telnet port 9000. Response: "Reloading World..."
+4. No spawn2 change needed — 127098 has no spawn2 row; always script-spawned by 127001's event_combat handler.
+
+**Verification:**
+- `npc_types_backup_raid_scaling_velious_a` WHERE id=127098: 1 row, hp=530000 (pre-change captured)
+- `npc_types` WHERE id=127098: hp=150000, maxdmg=926, raid_target=1 (fix confirmed)
+
+**SQL file:** `data-expert/sql/09-bug-001-tunare-fix.sql`
+
+**Architecture sanity check:** 150k is consistent with the architect's stated target for Tunare in `velious-a-architecture.md` (same value applied to 127001). Velious mid-tier context: King Tormax 100k, Lord Yelinak 110k, Tunare 150k. No flag needed.

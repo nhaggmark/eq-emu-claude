@@ -4,7 +4,7 @@
 > **Reported by:** game-tester
 > **Date:** 2026-04-23
 > **Feature:** raid-scaling / Phase 4a Velious non-ToV
-> **Status:** Open
+> **Status:** Fix Applied (2026-04-23) — pending game-tester re-verification of PoG Tunare fight
 
 ---
 
@@ -65,3 +65,23 @@ data-expert should:
    and has no spawn2 row.
 4. Optionally revert 127001 to 530k (it was harmlessly scaled but is not a
    kill target); recommend leaving at 150k since it causes no gameplay issue.
+
+---
+
+## Resolution
+
+**Fixed by:** data-expert
+**Date:** 2026-04-23
+**SQL file:** `data-expert/sql/09-bug-001-tunare-fix.sql`
+
+**Actions taken:**
+1. Inserted pre-change row for NPC 127098 into `npc_types_backup_raid_scaling_velious_a` (9-column slim backup; hp=530000 captured before any change).
+2. Applied `UPDATE npc_types SET hp = 150000 WHERE id = 127098;`
+3. Issued `#reloadworld` via world telnet port 9000. Response: "Reloading World..."
+
+**Verification:**
+- Backup: 1 row in `npc_types_backup_raid_scaling_velious_a` WHERE id=127098, hp=530000
+- Live: `npc_types` WHERE id=127098 now shows hp=150000, maxdmg=926, raid_target=1
+- NPC 127001 left at hp=150000 (harmless; depops on engage; no gameplay impact)
+
+**Pending:** game-tester re-verification of PoG Tunare fight (in-game test — engage trigger, confirm combat boss spawns at 150k HP).
