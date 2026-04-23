@@ -10,7 +10,7 @@
 > **DB investigation:** `architect/context/velious-b-db-investigation.md` (NPC ID confirms, Kerafyrm awake chain trace, death-touch sweep)
 > **Author:** architect
 > **Date:** 2026-04-23
-> **Status:** Draft — awaiting user sign-off on 3 clarifying decisions (see "Items flagged to user"). Protocol-agent Phase 4b cleared 2026-04-22. Config-expert + lore-master consultations in flight; architect proceeding with draft under Phase 4a pattern carryover.
+> **Status:** **READY FOR IMPLEMENTATION 2026-04-23.** All 3 user decisions resolved (#36 Option A; **#37 Option B USER OVERRIDE**; #38 Option A). All three advisors cleared: protocol-agent 2026-04-22, config-expert 2026-04-23, lore-master 2026-04-23. Awaiting orchestrator phase-transition to implementation team dispatch.
 > **Scope:** **Phase 4b ONLY.** Temple of Veeshan proper (16 dragon lords + 16 NToV mid-tier named), Sleeper's Tomb (4 Ancients + Progenitor + Final Arbiter main & alt + Master of the Guard + Milas + 4 Warders), Avatar of War (113457), Vulak`Aerr (124155). **Out of scope permanently (Decision #12):** Kerafyrm / The Sleeper / Sleeper Awake event.
 
 ---
@@ -29,10 +29,10 @@ This is the **"peak mastery" tier** per Decision #1 — the hardest in-era fight
 
 3. **Script-spawned endgame bosses (AoW 113457, Vulak 124155) have NO spawn2 rows.** AoW closes the Phase 4a Kael chain (Statue→Idol→AoW); Phase 4b scales AoW directly. Vulak is spawned by `Thylex_of_Veeshan.pl` on a 60-second tick when all 6 altar dragons (Mirenilla, Nevederia, Feshlak, Aaryonar, Kreizenn, Vyemm) are absent. Scaling the 6 altar dragons propagates Vulak accessibility without any script edit.
 
-4. **More NToV raid_target=1 NPCs than audit listed.** DB sweep revealed 16 mid-tier named (8 Midayor cluster L60 + 8 L65-66 named) within the 100-140k HP band. Audit recommended 60-70% HP cut to 40-50k. All 16 are in scope. **The 4 Defender types (124050/51/52/79, L65, 120k HP, 3-5h respawn)** are raid_target=1 but explicitly excluded per audit line 1673-1677 ("elite trash in ToV — out of scope") and Decision #2 (trash/named untouched).
+4. **More NToV raid_target=1 NPCs than audit listed.** DB sweep revealed 16 mid-tier named (8 Midayor cluster L60 + 8 L65-66 named) within the 100-140k HP band. Audit recommended 60-70% HP cut to 40-50k. All 16 are in scope. **The 4 Defender types (124050 Emerald / 124051 Sky / 124052 Onyx / 124079 Lava, L65, 120k HP, 3-5h respawn)** are raid_target=1; **INCLUDED per user Q37 override 2026-04-23** (architect originally recommended exclude per audit line 1673-1677 + Decision #2; user chose Option B to scale for consistency). Target: 45k HP, `maxdmg` 550, respawn unchanged (3-5h short-tier respawn preserved).
 
 **Change footprint:**
-- **~47 `npc_types` HP/damage UPDATEs** — 16 ToV dragon lords + 16 NToV mid-tier named + 13 Sleeper's Tomb bosses (including 4 dormant Warders) + AoW + Vulak
+- **~51 `npc_types` HP/damage UPDATEs** — 16 ToV dragon lords + 16 NToV mid-tier named + 4 NToV Defenders (**added per user Q37 override 2026-04-23**) + 13 Sleeper's Tomb bosses (including 4 dormant Warders) + AoW + Vulak
 - **~35-38 `spawn2.respawntime` UPDATEs** to 86,400s (24h endgame tier)
 - **0** `npc_spells_entries` changes — sweep returned only one signature mechanic (Vyskudra Lightning Breath) and Kerafyrm's untouched "Destroy"
 - **0** Lua or Perl script edits
@@ -42,7 +42,7 @@ This is the **"peak mastery" tier** per Decision #1 — the hardest in-era fight
 
 **User-decision items surfaced** (see "Items flagged to user"):
 - **Decision #36** — Warder scaling acknowledgment (scaling Warders makes the Sleeper Awake event reachable by small group; Kerafyrm himself is untouched; user must acknowledge this expansion of reachability despite Decision #12 preserving the event)
-- **Decision #37** — Defenders cluster exclusion (architect recommends exclude per audit + Decision #2; user confirms)
+- **Decision #37** — Defenders cluster inclusion/exclusion: **RESOLVED 2026-04-23 as Option B (include) per USER OVERRIDE** — architect originally recommended Option A (exclude per audit + Decision #2); user chose scale for scope consistency. Target: 45k HP, `maxdmg` 550, respawn unchanged
 - **Decision #38** — Lendiniara respawn impact (Lendiniara 124020 is a Sleeper's Tomb key talisman source; 24h respawn creates meaningful gate — user confirms endgame tier applies)
 
 ---
@@ -70,7 +70,7 @@ This is the **"peak mastery" tier** per Decision #1 — the hardest in-era fight
 - 8 Midayor-cluster (L60 120k HP, respawn 194,400s / 54h): Midayor, Grozzmel, Ymmeln, Krigara, Lepethida, Essedera, Tavekalem, Casalen.
 - 8 L65-66 named (respawn 64,800s / 18h except Zlexak & Sevalak at 72h): Cyndor, Zlexak, Yrrindor, Kalkar, Vyldin, Zyerek, Malteor, Sevalak.
 
-**NToV Defenders (EXCLUDED per audit):** 4 NPCs at 120k HP, 3-5h respawn — `An_Emerald_Defender`, `A_Sky_Defender`, `An_Onyx_Defender`, `A_Lava_Defender`.
+**NToV Defenders (INCLUDED per user Q37 override 2026-04-23):** 4 NPCs at L65 / 120k HP / 225-700 dmg / 3-5h respawn — `An_Emerald_Defender` (124050, 2 spawn2 rows), `A_Sky_Defender` (124051, 4 spawn2 rows), `An_Onyx_Defender` (124052, 2 spawn2 rows), `A_Lava_Defender` (124079, 3 spawn2 rows) = 11 total spawn2 rows. special_abilities flags 5 (summon) + 90 (assist) + 13/14/15/16/17/21 standard raid immunities. No spells.
 
 **Sleeper's Tomb (sleeper):**
 - **spawn_conditions state:** condition 1 "Warders" = 0 (DORMANT), condition 2 "Ancients" = 1 (LIVE).
@@ -96,7 +96,7 @@ This is the **"peak mastery" tier** per Decision #1 — the hardest in-era fight
 | 16 ToV dragon lords at 240k-580k HP (12-27× scaled-named L66-70 target ~22-30k) | `npc_types.hp` 72-78% cuts per audit (targets 65-130k) |
 | 3 ToV damage outliers (Vyemm 1,200 max, Feshlak 960, Nevederia 892) | `npc_types.maxdmg` 27-41% cut per audit |
 | 16 NToV mid-tier named at 100-140k HP (3-5× gap) | HP 58-70% cut to 40-50k per audit |
-| 4 Defenders at 120k HP (raid_target=1 but elite-trash tier) | **NO CHANGE** per Decision #2 + audit |
+| 4 Defenders at 120k HP (raid_target=1, included per user Q37 override) | `npc_types.hp` 120k → 45k (62% cut); `npc_types.maxdmg` 700 → 550 (20% trim); respawn 3-5h unchanged |
 | Sleeper's Tomb: 4 Ancients + Progenitor + Arbiter main + MotG at 326k-377k HP (11-17× gap) | HP 75-76% cut to 80-90k |
 | Sleeper's Tomb: Final Arbiter alt + 4 Warders at 200k HP (6× gap) | HP 70% cut to 60k |
 | Sleeper's Tomb: Milas An`Rev at 210k HP (mid-tier, 4h respawn) | HP 71% cut to 60k; respawn unchanged (mid-tier) |
@@ -116,7 +116,7 @@ This is the **"peak mastery" tier** per Decision #1 — the hardest in-era fight
 - **No Kerafyrm trio edits.** 128089 / 128094 / 128095 untouched by HP, damage, AC, MR, special_abilities, or npc_spells_entries (Destroy spell preserved).
 - **No Sleeper's Tomb script edits.** `#Hraashna_the_Warder.pl` (and 3 other Warder scripts) remain untouched — the `quest::signalwith(128094, 66)` chain is the Sleeper Awake trigger, preserved intact.
 - **No `spawn_conditions` edits.** sleeper condition 1 / condition 2 gating preserved; templeveeshan condition 1 (legacy Vulak flag, unused by Thylex) untouched.
-- **No defender cluster (124050/51/52/79) edits.** Per audit line 1673-1677 + Decision #2.
+- **Defender cluster (124050/51/52/79) is NOW in scope** per user Q37 override (2026-04-23). See gap-analysis row and new SQL block below.
 - **No `Thylex_of_Veeshan` or `#The_Sleeper` edits.** Both are quest coordinator NPCs; not kill targets.
 - **No AoW / Vulak spawn-chain script edits.** Phase 4a precedent held that `eq.unique_spawn()` / `quest::spawn2()` staggered-scaling is clean with zero client anomaly.
 
@@ -168,12 +168,14 @@ WHERE id IN (
     124030, 124031, 124034, 124035, 124036, 124038, 124039, 124040,
     -- Vulak + AoW
     124155, 113457,
+    -- NToV Defenders (4 — added per user Q37 override 2026-04-23)
+    124050, 124051, 124052, 124079,
     -- Sleeper's Tomb 13 (5 Ancients + Progenitor + Arbiter main & alt + MotG + Milas + 4 Warders)
     128040, 128041, 128042, 128043, 128044, 128045,
     128090, 128091, 128092, 128093,
     128143, 128144, 128145
 );
--- Expected rows: 47
+-- Expected rows: 51 (was 47; +4 Defenders per Q37 override)
 
 CREATE TABLE spawn2_backup_raid_scaling_velious_b AS
 SELECT s2.id, s2.zone, s2.spawngroupID, s2.respawntime, s2.variance,
@@ -184,11 +186,12 @@ WHERE se.npcID IN (
     124001, 124004, 124008, 124010, 124011, 124017, 124020, 124037,
     124071, 124072, 124074, 124076, 124077, 124103, 124104, 124105,
     124073, 124075, 124030, 124031, 124034, 124035, 124036, 124038, 124039, 124040,
+    124050, 124051, 124052, 124079,
     128040, 128041, 128042, 128043, 128044, 128045,
     128090, 128091, 128092, 128093,
     128143, 128144, 128145
 );
--- Expected rows: ~35-38
+-- Expected rows: ~46-49 (was ~35-38; +11 Defender spawn2 rows per Q37 override)
 -- Note: 113457 AoW + 124155 Vulak + 128089/94/95 Kerafyrm trio have NO spawn2 rows (script-spawned / untouched)
 -- Note: 128040 Milas has a spawn2 (id 25245, respawn 14400s); backed up but respawn NOT updated (4h mid-tier)
 ```
@@ -238,6 +241,19 @@ UPDATE npc_types SET hp = 45000 WHERE id = 124107;  -- Vyldin Flamereaver 120k�
 UPDATE npc_types SET hp = 42000 WHERE id = 124003;  -- Zyerek Onyxblood 110k→42k
 UPDATE npc_types SET hp = 42000 WHERE id = 124009;  -- Malteor Flamecaller 110k→42k
 UPDATE npc_types SET hp = 40000 WHERE id = 124075;  -- Sevalak 101.5k→40k
+```
+
+**NToV Defenders (4 NPCs, INCLUDED per user Q37 override 2026-04-23):**
+
+```sql
+-- Per user override 2026-04-23: scale to mid-tier named pattern for scope consistency
+-- HP target: 45k (between Midayor L60 40k and Cyndor L65 50k — L65 Defender sits at the lower end of that band)
+-- Damage cap: 550 (same as NToV L65-66 mid-tier named Cyndor/Yrrindor/Kalkar post-scale)
+-- Respawn: UNCHANGED (3-5h native short-tier respawn is already below Decision #8 endgame 24h target)
+UPDATE npc_types SET hp = 45000, maxdmg = 550 WHERE id = 124050;  -- An Emerald Defender 120k→45k, 700→550
+UPDATE npc_types SET hp = 45000, maxdmg = 550 WHERE id = 124051;  -- A Sky Defender 120k→45k, 700→550
+UPDATE npc_types SET hp = 45000, maxdmg = 550 WHERE id = 124052;  -- An Onyx Defender 120k→45k, 700→550
+UPDATE npc_types SET hp = 45000, maxdmg = 550 WHERE id = 124079;  -- A Lava Defender 120k→45k, 700→550
 ```
 
 **Sleeper's Tomb — 13 bosses:**
@@ -295,7 +311,7 @@ WHERE se.npcID IN (
 -- NOT updated (already acceptable):
 --   124018, 124007, 124106, 124107, 124003, 124009 — already 18h respawn (tier-appropriate for mid-tier named)
 --   128040 Milas An`Rev — already 14,400s (4h mid-tier accessibility, appropriate)
---   124050/51/52/79 — Defenders, EXCLUDED entirely
+--   124050/51/52/79 — Defenders (INCLUDED in HP/dmg scaling per Q37 override, BUT respawn UNCHANGED: 11,250-16,200s is already short-tier, well below Decision #8 endgame 24h)
 --   113457 AoW — no spawn2 (script-spawned by Phase 4a chain)
 --   124155 Vulak — no spawn2 (script-spawned by Thylex)
 --   128089/94/95 Kerafyrm trio — EXCLUDED per Decision #12
@@ -317,8 +333,8 @@ No `rule_values` changes. No `eqemu_config.json` changes. No `.env` changes. Con
 |------|------|------------------------|
 | `npc_types_backup_raid_scaling_velious_b` | CREATE TABLE AS SELECT | 47 rows snapshot |
 | `spawn2_backup_raid_scaling_velious_b` | CREATE TABLE AS SELECT | ~35-38 rows snapshot |
-| `npc_types` | UPDATE | 47 rows (16 ToV + 16 NToV + 13 Sleeper + Vulak + AoW) |
-| `spawn2` | UPDATE | 32 rows (16 ToV + 10 NToV: 8 Midayor + Zlexak + Sevalak + 11 Sleeper's Tomb) |
+| `npc_types` | UPDATE | 51 rows (16 ToV + 16 NToV mid-tier + 4 NToV Defenders + 13 Sleeper + Vulak + AoW) |
+| `spawn2` | UPDATE | 32 rows (16 ToV + 10 NToV mid-tier: 8 Midayor + Zlexak + Sevalak + 11 Sleeper's Tomb). Defender spawn2 rows (11 total across 124050/51/52/79) backed up but NOT updated — native 3-5h respawn preserved per architect respawn decision for user Q37 |
 | `npc_spells_entries` | NO CHANGE | 0 rows |
 
 Data-expert produces a single SQL reference at `data-expert/context/phase4b-velious-b-implementation.sql` with:
@@ -415,7 +431,7 @@ No Phase 4b NPC outside the sleeper zone touches any of these artifacts. ✅ Zer
 |---|------|-------|------------|-----------------|
 | B1 | Build backup tables `npc_types_backup_raid_scaling_velious_b` (47 rows) and `spawn2_backup_raid_scaling_velious_b` (~35-38 rows); verify row counts; emit SQL reference doc structure | data-expert | — | ~30m |
 | B2 | Emit per-boss HP/damage UPDATE SQL for 16 ToV dragon lords (Kael/Skyshrine pattern but with endgame targets); cross-check audit targets; commit to `data-expert/context/phase4b-velious-b-implementation.sql` | data-expert | B1 | ~1h |
-| B3 | Emit per-boss HP UPDATE SQL for 16 NToV mid-tier named (Midayor cluster + L65-66 cluster); 40-50k targets per audit | data-expert | B1 | ~30m |
+| B3 | Emit per-boss HP UPDATE SQL for 16 NToV mid-tier named (Midayor cluster + L65-66 cluster; 40-50k targets per audit) + 4 NToV Defenders (124050/51/52/79 → 45k HP, 550 maxdmg per user Q37 override); respawn on Defenders NOT updated (preserve 3-5h native) | data-expert | B1 | ~40m |
 | B4 | Emit per-boss HP/damage UPDATE SQL for 13 Sleeper's Tomb bosses (4 Ancients + Progenitor + Arbiter main/alt + MotG + Milas + 4 Warders) | data-expert | B1 | ~30m |
 | B5 | Emit Vulak`Aerr UPDATE (890k→150k HP, 355-1400 → 250-800 dmg) and AoW UPDATE (900k→120k HP, 299-1154 → 200-700 dmg) | data-expert | B1 | ~15m |
 | B6 | Emit `spawn2.respawntime` UPDATE SQL (86,400s for ~32 rows covering ToV + Midayor + Sleeper's Tomb; EXCLUDE Warder spawn2 rows from respawn change, INCLUDE from backup) | data-expert | B1 | ~30m |
@@ -460,7 +476,7 @@ Same team composition as Phases 2 and 3 — simpler than Phase 4a (lua-expert wa
 | Aaryonar (124010) assist-link mechanic breaks if Phase 4b touches NPC behavior flags | Nil | Medium (encounter design) | Aaryonar is assist-linked to all other NToV dragons until killed — must be pulled first. This is a structural mechanic enforced by AI behavior flags, NOT by HP. Phase 4b HP/damage UPDATE does not touch `npc_aggro` / `assistradius` / `npc_faction_id` / `special_abilities` behavior columns. Assist-link preserved. Validation plan adds smoke test. |
 | East Wing quest-drop dependency (Dozekar Tears + Midayor-cluster Symbols for Halls of Testing) under-scaled | **Averted by design** | **Would break Skyshrine armor progression** | Lore-master Q6 flagged this as critical. Phase 4b's 40-50k HP cuts on all 16 mid-tier named (including Dozekar) are LORE-ENDORSED. Decision #3 preserves loot tables (Tears + Symbols drop rates unchanged). |
 | Warders scaled, but server-wide impact if event triggers | Medium | Medium (lore) | **Decision #36 flag.** Kerafyrm still 3.5M HP with Destroy intact — event wipes small group and proceeds. Awake consequence unchanged. |
-| Defender cluster (124050/51/52/79) left at 120k HP feels inconsistent with scaled 16 dragon lords | Low | Low | Per Decision #2 + audit guidance. Defenders are raid-tier trash with 3-5h respawn (farmable). Keep. |
+| Defenders scaled to 45k HP but kept at short 3-5h respawn could create farm-treadmill perception | Low | Low | User chose Option B for scope consistency (2026-04-23 Q37 override). Short respawn preserved because native 3-5h is already below endgame 24h — bumping would over-extend. 45k HP + 550 max dmg aligns with NToV mid-tier named band; signature Defender feel (4 element flavors) preserved. |
 | Lendiniara the Keeper (124020, 80k HP post-scale) is the Sleeper's Tomb key talisman source for CoV-friendly players | Medium | Low | Path intended. 80k HP + 24h respawn = tractable key acquisition. Parallel paths (Klandicar/Sontalak 40k from Phase 4a) remain lower-gap alternatives. |
 | Phase 4a scaled the 6 altar-dragon gate for Vulak; Phase 4b completes Vulak accessibility | **HIGH for players** | **Intended** | Phase 4b closes the ToV pinnacle. Vulak becomes reachable by small group for first time. Expected per Decision #1 tier curve. |
 | NToV L60 Midayor cluster cut to 40k HP feels like raid-trash tier | Low | Nil | Audit line 1669: "HP cut 60-70% → 40-50k each, damage already mostly in named range — minor trim." Aligns with audit. These are lore-flavor bosses; 40k is appropriate for L60 named-adjacent. |
@@ -514,14 +530,14 @@ Every lever used is established Phase 2/3/4a practice:
 - **Could we skip the Warders?** Per Decision #36 flag — this is a genuine user choice. Default: include (audit recommends). Alternative: exclude (preserves Decision #12 "reachability floor").
 - **Could we skip Final Arbiter alt (128045)?** It's on condition 1 alongside the Warders. If Warders are in, this should be in. Including.
 - **Could we skip Milas An`Rev (128040, already at 4h respawn)?** Respawn is fine, but HP (210k) is still raid-tier. Include HP cut, skip respawn change. One UPDATE.
-- **Could we skip the Defenders?** Yes — per audit + Decision #2 (elite trash). Excluding. Decision #37 flag.
+- **Could we skip the Defenders?** Audit + Decision #2 argued yes (elite trash); user overrode to Option B for scope consistency (Q37 resolution 2026-04-23). 4 additional UPDATEs + 11 spawn2 rows in backup but NOT in respawn UPDATE. Scope now internally consistent.
 - **Could we defer AoW + Vulak to a Phase 4c?** No — per user's original phasing (Decision #4), Phase 4b is "ToV + Sleeper + Vulak + AoW." All four are in scope.
 - **Could we skip damage cuts (keep HP cuts only)?** For Vyemm (1,200 max dmg) + Vulak (1,400) + AoW (1,154) — these are one-shot risks. Include. Other bosses in 600-900 range are trimmed modestly per audit guidance.
 - **Could we defer `spawn2.respawntime` updates?** No — Decision #8 endgame tier is 24h; 72h respawn is the pain point for small-group cadence.
 - **Could we skip backup tables?** No — Phase 2/3/4a precedent. BUG-001 rollback relied on them.
 
 **Removed / deferred:**
-- **Defenders (124050/51/52/79)** — raid_target=1 elite trash per audit + Decision #2.
+- ~~Defenders (124050/51/52/79)~~ **NOW INCLUDED per user Q37 override 2026-04-23**: scale HP 120k → 45k, maxdmg 700 → 550, respawn unchanged.
 - **`Thylex_of_Veeshan` (unknown ID in npc_types)** — coordinator NPC, not kill target. Per protocol-agent 2026-04-22 flag.
 - **`a_foreboding_sentry1-8` (128000-128007)** — adds spawned by MotG wave encounter. raid_target status TBD; treated as trash per encounter design.
 - **Various templeveeshan low-HP event-trigger NPCs (124120 Feshlak_ChkOne, 124125 A_Glowing_Orb, 124142 Spawn_Master, 124154 Infusion, etc.)** — L50-55 scripted triggers at 8-14k HP. Not raid-tier.
@@ -593,7 +609,7 @@ B1 (backups) ──┬──> B2 (ToV dragons SQL)
 
 ## Items flagged to user (decisions required before implementation)
 
-### Decision #36 — Warder scaling acknowledgment (ARCHITECT-ASSIGNED)
+### Decision #36 — Warder scaling acknowledgment — **RESOLVED 2026-04-23 (Option A — architect + lore-master joint recommendation accepted)**
 
 **Architect + lore-master recommendation: INCLUDE Warders in Phase 4b HP scaling (Option A — joint endorsement).** Lore-master Q1 (2026-04-23): Decision #12 means Kerafyrm himself and the trigger scripts are untouched; it does NOT mean the Warders are artificially unkillable. Scaling the Warders is the lore-correct way to make the Sleeper's Tomb climax reachable for a small group.
 
@@ -609,19 +625,24 @@ Architect recommends A on the grounds that Decision #12 is specifically about "S
 
 **User approval required.** If Option B, remove NPC IDs 128090/91/92/93 and 128045 from the `npc_types` UPDATE list and backup table (but keep for historical reference).
 
-### Decision #37 — Defenders cluster inclusion/exclusion
+### Decision #37 — Defenders cluster inclusion/exclusion — **RESOLVED 2026-04-23 (USER OVERRIDE: Option B)**
 
-**Architect recommendation: EXCLUDE.**
+Four NPCs (124050 Emerald, 124051 Sky, 124052 Onyx, 124079 Lava) at L65, 120k HP, 3-5h respawn.
 
-Four NPCs (124050 Emerald, 124051 Sky, 124052 Onyx, 124079 Lava) at L65, 120k HP, 3-5h respawn. raid_target=1 but per audit line 1673-1677: "elite trash in ToV (out of scope) — ~20 drakes, wyverns, racnar, dancers at 50-75k HP. Already handled — these sit between named and boss tier and the brief explicitly said 'current named difficulty feels good'. No action needed." The 4 Defenders are the high-HP end of this cluster.
+**Architect's original recommendation:** Option A (exclude per audit line 1673-1677 + Decision #2 — "elite trash in ToV, out of scope").
 
-Options:
-- **Option A (recommended):** Exclude from Phase 4b. Keep at 120k HP / 3-5h respawn.
-- **Option B:** Include. Scale HP 120k → 45-50k per mid-tier named pattern.
+**User decision (2026-04-23):** Option B (INCLUDE) — scale for scope consistency with the 16 NToV mid-tier named.
 
-Architect defers to user. Audit + Decision #2 favor exclusion. If included, 4 additional `npc_types` UPDATEs and 6-8 additional `spawn2` rows (some Defender types span multiple spawn2 entries).
+**Architect implementation per Q37 Option B:**
+- HP: 120k → **45k** (62% cut; sits at lower end of Midayor L60 40k ↔ Cyndor L65 50k band)
+- `maxdmg`: 700 → **550** (20% trim; aligns with post-scale Cyndor/Yrrindor/Kalkar 550 max)
+- `mindmg`: 225 unchanged (no one-shot risk)
+- `respawn`: **UNCHANGED** (11,250-16,200s native 3-5h; already below Decision #8 endgame 24h; bumping would extend their natural farm-tier cadence)
+- `special_abilities`: UNCHANGED (flags 5 summon + 90 assist + 13/14/15/16/17/21 standard raid immunities preserved per Decision #11)
 
-### Decision #38 — Lendiniara the Keeper talisman-path gate
+Backup table scope: +4 `npc_types` rows + 11 `spawn2` rows (2 Emerald + 4 Sky + 2 Onyx + 3 Lava) captured for rollback safety. spawn2 rows backed up but not respawn-updated — preserved at native short-tier cadence.
+
+### Decision #38 — Lendiniara the Keeper talisman-path gate — **RESOLVED 2026-04-23 (Option A — architect recommendation accepted)**
 
 **Architect recommendation: ACCEPT endgame-tier respawn (24h).**
 
@@ -724,7 +745,7 @@ _game-tester should verify each of the following after the implementation team c
 - [ ] **Warder scripts untouched:** `akk-stack/server/quests/sleeper/#Hraashna_the_Warder.pl` etc. unchanged.
 - [ ] **Sleeper + Kerafyrm scripts untouched:** `#The_Sleeper.pl`, `#Kerafyrm.pl`, `#Kerafyrm_.pl` unchanged.
 - [ ] **spawn_conditions state preserved:** `SELECT * FROM spawn_conditions WHERE zone='sleeper';` returns the same 2 rows (Warders + Ancients with same onchange and values).
-- [ ] **Defenders excluded verification:** `SELECT id, hp FROM npc_types WHERE id IN (124050,124051,124052,124079);` all return 120000 unchanged.
+- [ ] **Defenders scaled per Q37 override:** `SELECT id, hp, maxdmg FROM npc_types WHERE id IN (124050,124051,124052,124079);` — all return 45000 HP and 550 maxdmg (was 120000/700). Short respawn preserved: `SELECT DISTINCT s2.respawntime FROM spawn2 s2 JOIN spawnentry se ON se.spawngroupID = s2.spawngroupID WHERE se.npcID IN (124050,124051,124052,124079);` returns values in 11,250-16,200 range (unchanged from pre-Phase 4b).
 
 ### No `npc_spells_entries` changes
 - [ ] `npc_spells_entries` row count matches pre-apply baseline (exclude Phase 2 Cazic Touch deletions from baseline).
@@ -759,7 +780,7 @@ _game-tester should verify each of the following after the implementation team c
 - [ ] **Rollback script syntax-verified** (DRY RUN: BEGIN; UPDATE...; SELECT COUNT; ROLLBACK).
 
 ### No regression on unchanged NPCs
-- [ ] Spot-check Defenders (124050/51/52/79) at 120k HP unchanged.
+- [ ] Spot-check NToV trash (non-Defender drakes/wyverns at 50-75k HP) unchanged.
 - [ ] Spot-check low-HP event NPCs (124120, 124125, 128057, 128058, etc.) unchanged.
 - [ ] Phase 4a scaled IDs (113215 Tormax = 100k, 114106 Yelinak = 110k, 127001 Tunare = 150k, 129003 Dain = 80k) unchanged.
 
@@ -770,7 +791,7 @@ _game-tester should verify each of the following after the implementation team c
 - **Phase 5a (Luclin non-VT):** Ssraeshza, Grieg's End, Akheva, Luclin raid content ex-VT.
 - **Phase 5b (Luclin VT+shards):** Vex Thal, 13-shard key rework.
 - **Sleeper-awake event (Kerafyrm L99)** — untouched per Decision #12 permanently.
-- **Defender cluster (124050/51/52/79)** — excluded per Decision #37 recommendation.
+- ~~Defender cluster (124050/51/52/79)~~ — NOW INCLUDED per user Q37 override 2026-04-23 (Option B). See §5 SQL block.
 - **Faction grind acceleration** — still deferred per Decision #25 (Phase 4a).
 - **Ring 8/Ring 9 UX softening** — still deferred per Decision #26 (Phase 4a).
 

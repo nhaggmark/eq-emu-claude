@@ -306,7 +306,7 @@ Query pattern mirrors Phase 2/3/4a sweeps: `mana=0 AND cast_time=0 AND effect_ba
 **Already within range, no update:**
 - 124018 Cyndor, 124007 Yrrindor, 124106 Kalkar, 124107 Vyldin, 124003 Zyerek, 124009 Malteor — all at 64,800s (18h). Under endgame tier but **these are mid-tier named sitting BELOW endgame**; 18h is appropriate. Leave.
 - 128040 Milas An`Rev at 14,400s (4h) — mid-tier boss, already accessible. Leave.
-- 124050/51/52/79 Defenders at 11,250-16,200s (3-5h) — **excluded entirely per §1.3**.
+- 124050/51/52/79 Defenders at 11,250-16,200s (3-5h) — **scaled HP/dmg per Q37 override but respawn UNCHANGED per architect Q37 resolution** (native 3-5h already below Decision #8 endgame 24h; bumping would over-extend farm-tier cadence).
 
 **No spawn2 rows (script-spawned, no update):**
 - 113457 AoW (spawned by Idol death, Phase 4a chain)
@@ -423,7 +423,7 @@ WHERE se.npcID IN (
 );
 
 -- Does NOT update: 124018/07/106/107/003/009 (already 64,800s - 18h mid-tier),
---   124050/51/52/79 (Defenders excluded),
+--   124050/51/52/79 (Defenders — HP/dmg scaled per Q37, respawn UNCHANGED at 11,250-16,200s native short-tier),
 --   124075 exception handled above,
 --   128040 Milas (14,400s — already accessible),
 --   113457 AoW / 124155 Vulak (no spawn2, script-spawned),
@@ -464,15 +464,17 @@ SELECT s2.id, s2.zone, s2.spawngroupID, s2.respawntime, s2.variance,
 FROM spawn2 s2
 JOIN spawnentry se ON se.spawngroupID = s2.spawngroupID
 WHERE se.npcID IN (
-    -- same ID list as the respawn UPDATE, plus defenders for over-capture safety
+    -- same ID list as the respawn UPDATE for backup safety
     124001, 124004, 124008, 124010, 124011, 124017, 124020, 124037,
     124071, 124072, 124074, 124076, 124077, 124103, 124104, 124105,
     124073, 124075, 124030, 124031, 124034, 124035, 124036, 124038, 124039, 124040,
+    -- Defender spawn2 rows (11 total; backed up but NOT respawn-updated per architect Q37 resolution 2026-04-23)
+    124050, 124051, 124052, 124079,
     128040, 128041, 128042, 128043, 128044, 128045,
     128090, 128091, 128092, 128093,
     128143, 128144, 128145
 );
--- Expected rows: ~35-38 (a few NPCs have multiple spawn2 variants like Cyndor 25282+25283)
+-- Expected rows: ~46-49 (was ~35-38 pre-Q37; +11 Defender spawn2 rows per user Q37 override 2026-04-23)
 ```
 
 ---
@@ -481,12 +483,12 @@ WHERE se.npcID IN (
 
 | Item | Finding |
 |---|---|
-| Phase 4b bosses (total) | **47 raid-tier NPCs**: 16 ToV dragon lords + 16 NToV mid-tier named + 2 (Vulak + AoW) + 13 Sleeper's Tomb bosses |
-| Defenders (124050/51/52/79) | **EXCLUDED** — elite trash per audit + Decision #2 |
+| Phase 4b bosses (total) | **51 raid-tier NPCs**: 16 ToV dragon lords + 16 NToV mid-tier named + **4 NToV Defenders (added per user Q37 override 2026-04-23)** + 2 (Vulak + AoW) + 13 Sleeper's Tomb bosses |
+| Defenders (124050/51/52/79) | **INCLUDED per user Q37 override 2026-04-23** — scale to 45k HP / 550 maxdmg; native 3-5h respawn preserved |
 | Kerafyrm trio (128089/94/95) | **UNTOUCHED** — Decision #12 permanent |
 | The Sleeper (128094) | **UNTOUCHED** — integral to awake-event script chain |
-| npc_types UPDATEs | **~47 rows** |
-| spawn2.respawntime UPDATEs | **~35-38 rows** (to 86400s endgame per Decision #8) |
+| npc_types UPDATEs | **~51 rows** (47 original + 4 Defenders per Q37 override) |
+| spawn2.respawntime UPDATEs | **~35-38 rows** (to 86400s endgame per Decision #8). Defender spawn2 rows (11) backed up but NOT updated — preserved at native 3-5h. |
 | npc_spells_entries DELETEs | **0 rows** — sweep returned only Vyskudra Lightning Breath (signature, preserve) and Kerafyrm Destroy (out-of-scope, untouched) |
 | Lua/Perl script edits | **0** — all Phase 4b levers are DB-column changes |
 | special_abilities CSV edits | **0** — Decision #11 preserves all signature mechanics (Vyemm MR-wall, Telkorenar MR-wall, Gozzrem MR-wall, Kildrukaun MR=400, Vyskudra Lightning Breath, Aaryonar breath, AoW rampage, Dagarn HP-regen, MotG 8-sentry wave, Ancient Kerafyrm-alive depop) |
@@ -502,5 +504,5 @@ No items that block implementation. Two "confirm" items for user awareness:
 
 1. **Phase 4b inadvertently unlocks Sleeper Awake for small group** — by making the Warders tractable (60k HP instead of 200k), we reduce the barrier to triggering Kerafyrm. However: (a) the Warders are currently dormant, so the event is not accidentally reachable; (b) Kerafyrm himself remains untouched at 3.5M HP with "Destroy" death-touch intact; (c) triggering the awake event is still a deliberate player choice, and the consequence (Kerafyrm wipes the server) is preserved. Flag for user acknowledgment; architect recommendation: proceed with Warder HP cuts.
 
-2. **Defender cluster (124050/51/52/79)** is raid_target=1 but excluded from Phase 4b scaling per audit + Decision #2. This is consistent with Phase 2 "Night Crew" handling. Flag for user: accept as elite-trash-tier, or include in Phase 4b scaling for consistency? Architect recommends: accept audit + Decision #2 (exclude).
+2. ~~Defender cluster (124050/51/52/79)~~ **RESOLVED 2026-04-23 via user Q37 override:** included. Scale HP 120k → 45k, maxdmg 700 → 550, respawn unchanged. Architect originally recommended exclude per audit + Decision #2; user chose Option B for scope consistency.
 
