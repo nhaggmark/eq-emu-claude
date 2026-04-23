@@ -1366,3 +1366,45 @@ struct changes, zero Titanium translation layer changes. Same conclusion as Phas
 as coordinator NPC to exclude from scaling SQL. Full findings in
 `protocol-agent/dev-notes.md` Phase 4b section.
 
+
+---
+
+### 2026-04-23 — architect → lore-master: Phase 4b Sleeper/ToV/Vulak keying + signature mechanics
+
+**From:** architect → **To:** lore-master
+
+**Summary:** Architect dispatched 10-question Phase 4b consult covering:
+1. Sleeper Awake boundary — is scaling 4 Warders acceptable under Decision #12? (Option A: scale; Option B: leave all 4 at 200k; Option C: scale 3 of 4)
+2. Vulak altar-summon chain specifics — which 6 dragons gate the altars?
+3. ToV keying confirmation (per velious-chains.md Section 3, expected no key)
+4. Sleeper's Tomb keying (Lendiniara 124020 talisman role)
+5. Vulak / ToV Epic 1.0 dependency check (per Section 5, expected none)
+6. NToV mid-tier named (Midayor cluster + L65-66 group) quest-chain ties
+7. AoW quest chain / non-loot progression ties
+8. NToV Defenders (124050/51/52/79) — confirm out-of-scope per audit + Decision #2
+9. Signature mechanics to preserve per Phase 4b boss (Vyemm MR-wall, Telkorenar/Gozzrem MR-walls, Kildrukaun MR=400, Dagarn HP-regen, Vyskudra Lightning Breath, MotG 8-sentry wave, Ancient Kerafyrm-alive depop, Aaryonar breath)
+10. Respawn tier confirmation (24h endgame per Decision #8) — any lore reason to preserve 72h for specific bosses?
+
+**Full DB investigation submitted:** `architect/context/velious-b-db-investigation.md` with complete Kerafyrm awake chain code trace (all 4 Warder `.pl` files + `#The_Sleeper.pl` + `#Kerafyrm.pl`). Verified trigger is `quest::signalwith(128094, 66)` on last-Warder death, driven by `GetMobByNpcTypeID` count checks NOT HP thresholds. HP scaling isolated from awake trigger at the code level.
+
+**Architect working assumption** (pending lore-master response): Option A for Decision #36 (scale Warders normally; Kerafyrm trio untouched per Decision #12; awake event becomes reachable for small group but event consequence preserved).
+
+**Outcome:** Awaiting lore-master response. Draft architecture doc submitted with Option A as default; addenda section will incorporate lore-master answer when received.
+
+---
+
+### 2026-04-23 — architect → config-expert: Phase 4b rule/config posture
+
+**From:** architect → **To:** config-expert
+
+**Summary:** Architect dispatched 6-question Phase 4b consult covering:
+1. rule_values drift check (expect 1,112, zero new rules since Phase 4a)
+2. Zone-scoped rulesets for sleeper + templeveeshan (endgame zones — re-verify)
+3. Endgame-specific globals (raid MR cap, dragon-breath damage modifier, etc.)
+4. Signature-mechanics rule interactions (could any rule amplify special_abilities?)
+5. Respawn timer rule clamps (86,400s valid for all spawn2 rows?)
+6. Data buckets / spawn_conditions posture for Kerafyrm awake state
+
+**Architect working assumption** (pending config-expert response): zero config changes; Phase 2/3/4a pattern holds. rule_values count 1,112 unchanged. sleeper + templeveeshan on ruleset=1 default. Kerafyrm state stored in qglobal `kerafyrm` (set 1/2/3 per Kerafyrm `.pl` scripts), not in data_buckets or config files.
+
+**Outcome:** Awaiting config-expert response. Draft architecture doc submitted with zero-change default; addenda section will incorporate config-expert answer when received.

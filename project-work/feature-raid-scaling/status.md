@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/raid-scaling`
 > **Created:** 2026-04-21
-> **Last updated:** 2026-04-23 (BUG-001 fix applied — #Tunare 127098 hp=150000; pending game-tester re-verification)
+> **Last updated:** 2026-04-23 (Phase 4b Velious ToV+Sleeper+Vulak+AoW architecture draft delivered; 3 user decisions raised #36-38)
 
 ---
 
@@ -12,12 +12,12 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
-| Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2: Complete 2026-04-22. Phase 3 Kunark: Complete 2026-04-22. Phase 4a Velious non-ToV: **Draft delivered 2026-04-23** — architect recommendation for Q8 Ring War pending lore-master final review; 4 user decisions raised (#23-26) | 2026-04-22 | 2026-04-23 |
+| Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2: Complete 2026-04-22. Phase 3 Kunark: Complete 2026-04-22. Phase 4a Velious non-ToV: Complete 2026-04-23. Phase 4b Velious ToV+Sleeper+Vulak+AoW: **Draft delivered 2026-04-23** — protocol-agent cleared 2026-04-22; config-expert + lore-master consultations in flight; 3 user decisions raised (#36-38). | 2026-04-22 | 2026-04-23 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
 | Validation | game-tester + user | Phase 2: Complete. Phase 3: Server-side PASS (86 checks). Phase 4a: Server-side PASS after BUG-001 fix (107/108 initial + 1 fix verified in DB; user accepted data-expert verification and proceeded) | 2026-04-22 | 2026-04-23 |
 | Completion | _user_ | Phase 2 Complete 2026-04-23. Phase 3 Complete 2026-04-23. Phase 4a Complete 2026-04-23 — proceeding to Phase 4b Velious ToV+Sleeper+Vulak | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 4b (Velious ToV + Sleeper + Vulak) Architecture starting 2026-04-23. Scope: NToV/ToV dragons, Sleeper's Tomb warders + Kildrukaun, Avatar of War, Vulak'Aerr. Sleeper's Awake event (Kerafyrm) remains out of scope per Decision #12. Respawn tier: endgame 24h per Decision #8.
+**Current phase:** Phase 4b (Velious ToV + Sleeper + Vulak + AoW) Architecture **Draft delivered 2026-04-23**. Scope: 16 ToV dragon lords + 16 NToV mid-tier named + 13 Sleeper's Tomb bosses + AoW (113457) + Vulak`Aerr (124155). 3 user decisions raised (#36 Warder scaling, #37 Defenders exclusion, #38 Lendiniara 24h respawn). Protocol-agent cleared 2026-04-22; config-expert + lore-master consultations in flight. Kerafyrm trio (128089/94/95) + Destroy spell + all Warder/Sleeper/Kerafyrm scripts UNTOUCHED per Decision #12. Respawn tier: endgame 24h per Decision #8.
 
 ---
 
@@ -51,7 +51,7 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | **Complete 2026-04-23** |
 | Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | **Complete 2026-04-23** |
 | Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | **Complete 2026-04-23** (BUG-001 Tunare fixed; user accepted DB-verified state) |
-| Phase 4b — Velious ToV+Sleeper+Vulak | Temple of Veeshan proper, Sleeper's Tomb, Avatar of War, Vulak'Aerr | In Progress — Architecture starting 2026-04-23 |
+| Phase 4b — Velious ToV+Sleeper+Vulak+AoW | Temple of Veeshan proper (16 lords + 16 NToV mid-tier named), Sleeper's Tomb (5 Ancients + 4 Warders + Progenitor + Final Arbiter + MotG + Milas), Avatar of War (113457), Vulak'Aerr (124155). Kerafyrm trio untouched per Decision #12. | **Architecture Draft Delivered 2026-04-23** — awaiting user decisions #36-38 |
 | Phase 5a — Luclin non-VT | Ssraeshza, Grieg's End, Akheva, Luclin raid content ex-VT | Not Started |
 | Phase 5b — Luclin VT+shards | Vex Thal proper, VT key shard rework | Not Started |
 
@@ -337,6 +337,114 @@ _Populated by the architect for Phase 4a (Velious non-ToV). Awaiting user decisi
 | V11 | (**CONDITIONAL**) `#reloadquests` via Spire, OR full-stack restart (infra-expert) if `#reloadquests` doesn't propagate Lua script change | config-expert OR infra-expert | **Not Started (conditional)** | Only needed after V10. |
 
 
+
+### architect → user (Phase 4b Velious ToV+Sleeper+Vulak+AoW architecture complete; 3 user decisions required)
+- **Date:** 2026-04-23
+- **Deliverables:**
+  - `architect/velious-b-architecture.md` — full Phase 4b architecture doc:
+    executive summary, per-zone scope (ToV 16 dragon lords + 16 NToV mid-tier named +
+    Sleeper's Tomb 13 bosses incl. 4 Warders + AoW 113457 + Vulak 124155), mechanical
+    levers (endgame HP cuts 70-87%, 24h respawn tier, no spell-list edits, no script
+    edits), 11-task breakdown (B1-B11), risk assessment, 4 review passes, Kerafyrm
+    Isolation Proof (§2), validation plan
+  - `architect/context/velious-b-db-investigation.md` — complete DB confirmation:
+    47-NPC in-scope catalog, defender cluster exclusion rationale, full
+    Kerafyrm awake chain code trace (4 Warder `.pl` files + `#The_Sleeper.pl` +
+    `#Kerafyrm.pl`) proving HP-independent behavioral gating, death-touch sweep
+    (only hits: Vyskudra Lightning Breath signature + Kerafyrm Destroy untouched),
+    spawn_conditions state verification (Warders dormant / Ancients live), Vulak
+    altar-summon mechanism via Thylex entity-presence check, AoW Phase 4a chain
+    closure clean
+- **Key decisions made during architecture:**
+  - **Phase 4b is 100% SQL** (same pattern as Phases 2/3/4a). Zero Lua/Perl/C++/
+    rule changes. Tables touched: `npc_types` (47 UPDATEs), `spawn2` (~32 UPDATEs),
+    backup tables.
+  - **Kerafyrm awake chain is script-driven, not HP-driven.** Full code trace in
+    `context/velious-b-db-investigation.md` §2 proves scaling Warder HP from 200k
+    → 60k has ZERO effect on awake trigger logic. Kerafyrm trio (128089/94/95),
+    "Destroy" death-touch spell (1948), The Sleeper (128094), and all
+    Warder/Sleeper/Kerafyrm `.pl` scripts UNTOUCHED per Decision #12.
+  - **Warders currently DORMANT** (spawn_conditions condition 1 = 0 in sleeper
+    zone). No script auto-flips condition 1; only GM intervention activates
+    Warders + The Sleeper.
+  - **Vulak altar-summon mechanism verified** via `#Thylex_of_Veeshan.pl`:
+    60-second tick checks all 6 altar dragons (Mirenilla/Nevederia/Feshlak/
+    Aaryonar/Kreizenn/Vyemm) absent, then `quest::spawn2(124155)` with
+    6-minute qglobal cooldown. Presence-check not HP-threshold. Phase 4b
+    scaling of the 6 altar dragons propagates Vulak accessibility; no script
+    edit needed.
+  - **AoW chain (Statue 113071 → Idol 113341 → AoW 113457)** now closes with
+    Phase 4b scaling AoW directly. Phase 4a handled Statue+Idol. Protocol-agent
+    confirmed `eq.unique_spawn()` staggered scaling is clean.
+  - **0 `npc_spells_entries` DELETEs.** Death-touch sweep: only hits were
+    Vyskudra Lightning Breath (-1500, 12s recast, signature per Decision #11)
+    and Kerafyrm "Destroy" (-100,000 instant, out-of-scope per Decision #12).
+  - **Defender cluster (124050/51/52/79) EXCLUDED** per audit line 1673-1677 +
+    Decision #2 ("elite trash — no action needed"). Decision #37 flag.
+- **Advisor consultations:**
+  - **protocol-agent 2026-04-22** — Phase 4b cleared with 7-question response;
+    zero client-visibility impact; static zones (no DZ); behavioral gates not
+    HP-based for Kerafyrm awake + Vulak altar event + AoW chain.
+  - **config-expert 2026-04-23** — Phase 4b 6-question consult dispatched;
+    architect working with zero-change default pending response.
+  - **lore-master 2026-04-23** — Phase 4b 10-question consult dispatched
+    covering Sleeper Awake boundary (Option A/B/C for Decision #36), ToV/ST
+    keying confirmations, Vulak altar lore, signature mechanics catalog,
+    respawn tier validation; architect working with Option A default (include
+    Warders) pending response.
+- **THREE USER DECISIONS REQUIRED:**
+  - **Decision #36** — Warder scaling: Option A (include, scale to 60k HP; event
+    becomes reachable for small group but Kerafyrm event preserved) — ARCHITECT
+    RECOMMENDS. Option B (exclude; Warders stay at 200k HP; event remains
+    unreachable for small group; stricter Decision #12 interpretation).
+  - **Decision #37** — Defenders cluster (124050/51/52/79) exclusion: Option A
+    (exclude per audit + Decision #2) — ARCHITECT RECOMMENDS. Option B (include,
+    scale as mid-tier named; +4 UPDATEs).
+  - **Decision #38** — Lendiniara (124020) respawn tier: Option A (accept endgame
+    24h per Decision #8; alternative Klandicar/Sontalak 12h paths preserved from
+    Phase 4a) — ARCHITECT RECOMMENDS. Option B (keep 12h mid-tier because of
+    Sleeper's Tomb key talisman role; breaks tier consistency).
+- **Required agents for implementation:** data-expert (primary, B1-B8 + B11),
+  config-expert (reload + smoke, B9-B10). Same team as Phases 2 and 3.
+- **NOT needed:** c-expert, lua-expert, perl-expert, infra-expert (no spell-cache
+  flush needed), protocol-agent (already advised).
+- **Sleeper Awake Event Boundary — architect verification summary (for orchestrator):**
+  - Kerafyrm trio (128089 combat, 128094 The Sleeper, 128095 Kerafyrm zone-clone) and
+    their spell lists (489) and all `#Kerafyrm.pl`/`#Kerafyrm_.pl`/`#The_Sleeper.pl`
+    scripts UNTOUCHED. Zero Phase 4b DB UPDATEs or file edits target these.
+  - Scaling the 4 Warders (if Option A) does NOT trigger the awake event — the
+    trigger is `quest::signalwith(128094, 66)` called in each Warder's
+    EVENT_DEATH_COMPLETE after confirming the other 3 are all dead (via
+    `GetMobByNpcTypeID` count, NOT HP). HP column is not referenced.
+  - Condition 1 (Warders) is currently 0 (dormant) on our server. No script
+    in `/akk-stack/server/quests/sleeper/` flips condition 1 from 0→1. Only
+    GM intervention activates Warders + The Sleeper spawns.
+  - Phase 4b is safe under Decision #12. User's choice on #36 determines
+    whether the event becomes *reachable* for small group (unchanged) vs stays
+    *mathematically unreachable* (Warder 200k HP barrier preserved).
+- **Ready for:** user decisions #36-#38 → then implementation team dispatch
+  (data-expert + config-expert; same team as Phase 3).
+
+
+### Phase 4b Velious ToV+Sleeper+Vulak+AoW Implementation Tasks
+
+_Populated by the architect for Phase 4b. Awaiting user decisions #36, #37, #38 before dispatch. See `architect/velious-b-architecture.md` for full plan._
+
+| # | Task | Agent | Status | Notes |
+|---|------|-------|--------|-------|
+| B1 | Build backup tables `npc_types_backup_raid_scaling_velious_b` (47 rows: 16 ToV lords + 16 NToV mid-tier + 13 Sleeper's Tomb + AoW + Vulak) and `spawn2_backup_raid_scaling_velious_b` (~35-38 rows); emit SQL reference doc | data-expert | **Not Started** | Mirrors Phase 3/4a pattern with `_velious_b` suffix |
+| B2 | Emit per-boss HP/damage UPDATE SQL for 16 ToV dragon lords (Koi`Doken/Nevederia/Kreizenn/Feshlak/Cekenar/Aaryonar/Dozekar/Mirenilla/Vyemm/Lendiniara/Dagarn/Telkorenar/Gozzrem/Ikatiar/Jorlleag/Eashen); preserve Vyemm/Telkorenar/Gozzrem MR=1000 walls, Dagarn HP-regen, Aaryonar breath | data-expert | **Not Started** | Commit to `data-expert/context/phase4b-velious-b-implementation.sql` |
+| B3 | Emit per-boss HP UPDATE SQL for 16 NToV mid-tier named (8 Midayor cluster L60 → 40k + 8 L65-66 named → 40-50k per audit) | data-expert | **Not Started** | — |
+| B4 | Emit per-boss HP/damage UPDATE SQL for 13 Sleeper's Tomb bosses (4 Ancients + Progenitor + Arbiter main/alt + MotG + Milas + 4 Warders); preserve Vyskudra Lightning Breath, Kildrukaun MR=400, MotG 8-sentry wave | data-expert | **Not Started** | Warders only applies if Decision #36 Option A; else skip 128090/91/92/93 + 128045 |
+| B5 | Emit Vulak`Aerr UPDATE (890k→150k HP, 355-1400 → 250-800 dmg) and AoW UPDATE (900k→120k HP, 299-1154 → 200-700 dmg); AoW rampage 6×6 preserved via global MaxRampageTargets=2 cap | data-expert | **Not Started** | Closes the Kael chain (Phase 4a scaled Statue+Idol) |
+| B6 | Emit `spawn2.respawntime` UPDATE SQL (86,400s = 24h for ~32 rows: 16 ToV + 8 Midayor + Zlexak + Sevalak + 11 Sleeper's Tomb); EXCLUDE mid-tier L65-66 named already at 18h; EXCLUDE Milas (4h); EXCLUDE Defenders; EXCLUDE Kerafyrm trio | data-expert | **Not Started** | Endgame tier per Decision #8 |
+| B7 | Emit rollback script (INSERT…SELECT from backup tables, transactional) + verification queries comparing row counts before/after; mirror Phase 3 `06-kunark-rollback.sql` pattern | data-expert | **Not Started** | — |
+| B8 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase4b-velious-b-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | — |
+| B9 | `#reloadworld` via Spire or world telnet port 9000 | config-expert | **Not Started** | No `npc_spells_entries` changes — no full-stack restart needed |
+| B10 | Smoke verify: Koi`Doken/Vyemm/Vulak/AoW/Kildrukaun HP targets; respawn 24h applied to correct IDs; Kerafyrm trio (128089/94/95) UNTOUCHED at 3.5M HP; Destroy spell (1948) still in list 489; Warder HPs per Decision #36 outcome | config-expert | **Not Started** | — |
+| B11 | Commit + push `claude/` repo changes (architecture doc, context files, status, implementation SQL) to `feature/raid-scaling` branch. `akk-stack/` and `eqemu/` untouched. | data-expert | **Not Started** | — |
+
+
 ## Open Questions
 
 _Questions that need answers before work can proceed. Tag the agent or
@@ -365,6 +473,10 @@ person responsible for answering._
 | 24 | Lord Yelinak duplicates (114106 500k / 114618 297k) both live per DB sweep — scale both to 110k HP (Option A, architect-recommended) or scale only main 114106 (Option B) | architect | user | **Resolved 2026-04-23** | Option A — scale both for consistency |
 | 25 | Faction grind acceleration (CoV/Coldain/Kromzek three-way) | architect | user | **Resolved 2026-04-23** | Deferred out of Phase 4a scope (accept architect recommendation); revisit after user tests content |
 | 26 | Ring 8 / Ring 9 failure-reset UX | architect | user | **Resolved 2026-04-23** | Deferred out of Phase 4a scope (accept architect recommendation); script-level UX, not scaling |
+
+| 36 | Phase 4b: Warder scaling (128090/91/92/93 + Final Arbiter alt 128045) — Option A (scale to 60k HP, awake event reachable for small group with Kerafyrm consequence preserved, architect-recommended) or Option B (leave at 200k HP, awake event mathematically unreachable for small group)? | architect | user | **Pending 2026-04-23** | Architect recommendation: Option A. See architect/velious-b-architecture.md §Kerafyrm Isolation Proof for full code trace. |
+| 37 | Phase 4b: Defender cluster (124050 Emerald / 124051 Sky / 124052 Onyx / 124079 Lava) — Option A (exclude per audit + Decision #2, architect-recommended) or Option B (include, scale 120k → 45-50k)? | architect | user | **Pending 2026-04-23** | Architect recommendation: Option A. |
+| 38 | Phase 4b: Lendiniara the Keeper (124020) — Option A (accept 24h endgame respawn per Decision #8, architect-recommended) or Option B (keep 12h mid-tier because of Sleeper's Tomb key talisman role)? | architect | user | **Pending 2026-04-23** | Architect recommendation: Option A. Klandicar 40k/12h and Sontalak 40k/12h from Phase 4a remain as lower-gap alternatives. |
 
 ---
 
@@ -429,6 +541,12 @@ _Key decisions made during this feature's development._
 | 33 | **lua-expert needed CONDITIONALLY only** — Phase 4a default is SQL-only | architect + lore-master | 2026-04-23 | Default Phase 4a implementation team is data-expert + config-expert (identical to Phases 2/3). lua-expert only invoked if Lever 2 (one-line `wave_cooldown_time` edit) is triggered by game-tester validation AND approved by user. This is simpler than my draft (which had lua-expert primary on V5-V6). |
 | 34 | **Kromrif wave-mob HP cuts acceptable under Decision #2** per lore-master Q8 | architect + lore-master | 2026-04-23 | Decision #2 (trash/named untouched) applies to standing-zone content, not scripted event waves. Kromrif wave mobs are event-trash within a raid event. 8 NPC IDs confirmed exclusive to greatdivide conditions 3-15 — zero impact on static zone content. Lore-master explicitly endorses this scoping. |
 | 35 | **Seneschal Aldikar HP bump 10k→30k** — fail prevention | architect + lore-master | 2026-04-23 | Seneschal death fails the Ring War event. At 10k HP, AOE overflow during wave cooldowns could nuke him. 30k HP provides belt-and-suspenders margin. Per lore-master flag (2026-04-23). |
+| 36 | **Phase 4b: Warder scaling** — Architect recommends Option A (scale 4 Warders + Final Arbiter alt to 60k HP). Kerafyrm trio untouched per Decision #12; awake event becomes reachable for small group if GM flips condition 1; event consequence (Kerafyrm 3.5M HP + Destroy death-touch) preserved. | architect | 2026-04-23 | Decision #12 scope is specifically "Sleeper-awake event (Kerafyrm L99): leave untouched" — the event's pinnacle. Option A preserves Kerafyrm but reduces Warder barrier. Currently Warders are dormant (condition 1 = 0) with no auto-flip path. **USER APPROVAL REQUIRED.** |
+| 37 | **Phase 4b: Defenders (124050/51/52/79) excluded.** Architect recommends Option A (exclude per audit line 1673-1677 + Decision #2 "trash/named untouched"). 4 NPCs at 120k HP / 3-5h respawn are raid_target=1 but elite-trash-tier. | architect | 2026-04-23 | Consistent with Phase 2 "Night Crew" exclusion pattern. **USER APPROVAL REQUIRED.** |
+| 38 | **Phase 4b: Lendiniara the Keeper (124020) endgame respawn tier (24h).** Architect recommends Option A (accept 24h per Decision #8 endgame tier). Lendiniara is CoV-faction Sleeper's Tomb key talisman source but Phase 4a alternatives (Klandicar 40k/12h, Sontalak 40k/12h) remain as lower-gap paths. | architect | 2026-04-23 | Tier consistency wins over key-path convenience. **USER APPROVAL REQUIRED.** |
+| 39 | **Phase 4b is 100% SQL — no C++, Lua, Perl, spell-list, rule, or config changes.** | architect | 2026-04-23 | Same pattern as Phases 2/3/4a default. Three tables touched: `npc_types` (47 UPDATEs), `spawn2` (~32 UPDATEs), backup tables. `special_abilities` CSV untouched — signature mechanics (Vyemm/Telkorenar/Gozzrem MR=1000 walls, Dagarn HP-regen, Vyskudra Lightning Breath, MotG 8-sentry wave, Ancient Kerafyrm-alive depop, Aaryonar breath, AoW rampage 6×6 capped globally) all preserved. |
+| 40 | **Kerafyrm awake chain verified HP-independent.** Full code trace of 4 Warder `.pl` files + `#The_Sleeper.pl` + `#Kerafyrm.pl` confirms trigger uses `GetMobByNpcTypeID()` presence checks + `quest::signalwith(128094, 66)`, NEVER HP thresholds. Scaling Warder HP cannot accidentally fire the event. | architect | 2026-04-23 | Evidence in `architect/context/velious-b-db-investigation.md` §2. Sleeper Awake Event Boundary formally validated for Phase 4b dispatch. |
+| 41 | **Vulak altar-summon verified entity-presence-based, not HP-threshold.** `#Thylex_of_Veeshan.pl` 60s tick checks all 6 altar dragons (Mirenilla/Nevederia/Feshlak/Aaryonar/Kreizenn/Vyemm) absent, then `quest::spawn2(124155)` with `vulak` qglobal 6-min cooldown. Presence check unaffected by HP scaling. | architect | 2026-04-23 | No script edit needed to propagate Vulak accessibility. |
 
 ---
 
