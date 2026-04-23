@@ -227,8 +227,8 @@ _Populated by the architect for Phase 3 (Kunark). Awaiting user decisions #21, #
 | K3 | Emit respawn-timer UPDATE SQL (12h for Trakanon/VP/outdoor dragons; 6h for Kilidna; Chardok Royals per Decision #21; VP scoped to `_condition=2` only) | data-expert | **Not Started** | `_condition=2` filter on VP critical — don't touch dormant classic-era variants |
 | K4 | Emit rollback script (INSERT…SELECT from backup tables, transactional) + verification queries | data-expert | **Not Started** | Same pattern as Phase 2 `03-rollback.sql` |
 | K5 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase3-kunark-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | |
-| K6 | `#reloadworld` via Spire or world telnet port 9000 to refresh zone caches | config-expert | **Not Started** | Same as Phase 2 Task 7 |
-| K7 | Smoke verify: Trakanon HP, Nexona stats, Phara Dar stats, Gorenaire respawn, Kilidna damage cap, VP `_condition=2` only touched | config-expert | **Not Started** | Same pattern as Phase 2 Task 8 |
+| K6 | `#reloadworld` via Spire or world telnet port 9000 to refresh zone caches | config-expert | **Complete 2026-04-22** | Issued via world telnet console (port 9000). Response: "Reloading World..." No full-stack restart needed (no npc_spells_entries changes in Phase 3). |
+| K7 | Smoke verify: Trakanon HP, Nexona stats, Phara Dar stats, Gorenaire respawn, Kilidna damage cap, VP `_condition=2` only touched | config-expert | **Complete 2026-04-22** | 27/27 checks PASS. All HP/damage targets confirmed. VP condition=2 only (7 rows). Chardok Royals at 5400s (Decision #21 honored). Classic VP variants untouched. Lhranc/Drusella unchanged. No Night Crew regressions. |
 | K8 | Full-stack restart (conditional) if `#reloadworld` doesn't propagate | infra-expert | **Conditional** | Unlikely needed — Phase 3 doesn't touch npc_spells_entries |
 | K9 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | data-expert | **Not Started** | |
 

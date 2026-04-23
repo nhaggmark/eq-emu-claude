@@ -339,3 +339,134 @@ Identical to Phase 2:
 3. Post-SQL: issue `#reloadworld` via world telnet (port 9000) to propagate `npc_types`/`spawn2` changes.
 4. Smoke verification via DB read-back (same pattern as Task 8 Phase 2).
 5. If VP dragons retain old spell-list behavior in a running zone, coordinate with infra-expert for full zone restart.
+
+---
+
+## Phase 3 (Kunark) — Implementation Tasks K6/K7
+
+> **Stage 1: Plan** — written 2026-04-22. Awaiting data-expert Task K5 (SQL apply) before executing.
+
+### Task Assignment
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| K6 | `#reloadworld` via world telnet port 9000 | data-expert Tasks K1-K5 complete + DB verified | **Complete 2026-04-22** |
+| K7 | Smoke verification: Trakanon, Nexona, Phara Dar, Severilous, one VP dragon, Chardok Royals respawn | Task K6 | **Complete 2026-04-22** |
+
+### Dependency Gate
+
+**DO NOT execute Task K6 until data-expert confirms Tasks K1-K5 are committed AND DB shows backup tables exist.**
+
+DB check confirmed 2026-04-22: `npc_types_backup_raid_scaling_kunark` (28 rows) and `spawn2_backup_raid_scaling_kunark` (25 rows) both present. K1-K5 confirmed applied.
+
+### K6 Plan — #reloadworld
+
+Same mechanism as Phase 2 Task 7. World telnet console on port 9000:
+
+```
+(echo 'reloadworld'; sleep 2) | telnet 127.0.0.1 9000
+```
+
+Expected response: `Reloading World...`
+
+Note: No `npc_spells_entries` changes in Phase 3, so zone spell-list cache caveat from Phase 2 does NOT apply. `#reloadworld` should propagate `npc_types` and `spawn2` changes cleanly to all running zone processes.
+
+### K7 Plan — Smoke Verification
+
+Per team-lead instructions: verify representative Kunark bosses.
+
+| NPC | ID | Zone | What to Check |
+|-----|----|------|---------------|
+| Trakanon | 89154 | sebilis | `npc_types.hp` = 22000 (was 32000) |
+| Nexona | 108047 | veeshan | `npc_types.hp` = 120000, `maxdmg` = 1000 (was 800k / 2475) |
+| Phara Dar | 108048 | veeshan | `npc_types.hp` = 120000, `mindmg` = 450, `maxdmg` = 750 |
+| Severilous | 94009 | frontiermtns | `npc_types.hp` = 22000, `maxdmg` = 400 |
+| Silverwing | 108050 | veeshan | `npc_types.hp` = 90000, `mindmg` = 332, `maxdmg` = 777 (VP dragon sample) |
+| Chardok Royals respawn | 103055/103056/103080 | chardok | `spawn2.respawntime` = 5400 (1.5h preserved, Decision #21) |
+
+Additional checks:
+- Renux Herkanor 448200: `npc_types.hp` = 120000 (Decision #22 include, was 500000)
+- VP classic variants UNTOUCHED: IDs 108509-108517 HP unchanged (dormant variants)
+- VP respawn condition scoped: `spawn2._condition = 2` rows for VP at 43200 (12h); condition=1 rows unchanged
+- Triggered Trakanon 89181: `npc_types.hp` = 16000 (unchanged — already named-tier, no Phase 3 action)
+- No regressions: Lhranc 90093 still 19000 HP; Drusella 105153 still 15750 HP
+
+---
+
+## Stage 4: Build Log — Phase 3 Kunark (2026-04-22)
+
+### Pre-reload DB Verification
+
+Backup tables confirmed present before issuing reload:
+- `npc_types_backup_raid_scaling_kunark`: 28 rows
+- `spawn2_backup_raid_scaling_kunark`: 25 rows
+
+Sample HP pre-verification: Trakanon (89154) HP=22000, Nexona (108047) HP=120000 — changes confirmed applied by data-expert.
+
+### Task K6: #reloadworld — Complete
+
+Mechanism: world telnet console on port 9000 inside the EQEmu container.
+
+Command issued:
+```
+docker exec akk-stack-eqemu-server-1 bash -c "(echo 'reloadworld'; sleep 3) | telnet 127.0.0.1 9000"
+```
+
+Response received: `Reloading World...`
+
+Note: Phase 3 has zero `npc_spells_entries` changes, so the zone spell-list cache caveat from Phase 2 does NOT apply. `#reloadworld` propagates `npc_types` and `spawn2` changes cleanly. Full-stack restart (infra-expert Task K8) is not required.
+
+### Task K7: Smoke Verification — PASS (27/27 checks)
+
+| Check | NPC ID | Value | Expected | Result |
+|-------|--------|-------|----------|--------|
+| Trakanon HP | 89154 | 22,000 | 22,000 | PASS |
+| Gorenaire HP | 86014 | 22,000 | 22,000 | PASS |
+| Gorenaire maxdmg | 86014 | 400 | 400 | PASS |
+| Severilous HP | 94009 | 22,000 | 22,000 | PASS |
+| Severilous maxdmg | 94009 | 400 | 400 | PASS |
+| Faydedar HP | 96089 | 19,000 | 19,000 | PASS |
+| Nexona HP | 108047 | 120,000 | 120,000 | PASS |
+| Nexona maxdmg | 108047 | 1,000 | 1,000 | PASS |
+| Phara Dar HP | 108048 | 120,000 | 120,000 | PASS |
+| Phara Dar mindmg | 108048 | 450 | 450 | PASS |
+| Phara Dar maxdmg | 108048 | 750 | 750 | PASS |
+| Silverwing HP | 108050 | 90,000 | 90,000 | PASS |
+| Silverwing mindmg | 108050 | 332 | 332 | PASS |
+| Silverwing maxdmg | 108050 | 777 | 777 | PASS |
+| Kilidna HP | 90186 | 30,000 | 30,000 | PASS |
+| Kilidna mindmg | 90186 | 300 | 300 | PASS |
+| Kilidna maxdmg | 90186 | 1,000 | 1,000 | PASS |
+| Renux Herkanor HP | 448200 | 120,000 | 120,000 | PASS |
+| #Trakanon triggered (unchanged) | 89181 | 16,000 | 16,000 | PASS |
+| Lhranc (unchanged) | 90093 | 19,000 | 19,000 | PASS |
+| Drusella Sathir (unchanged) | 105153 | 15,750 | 15,750 | PASS |
+| VP classic 108509 (dormant, untouched) | 108509 | 153,500 | 153,500 | PASS |
+| VP classic 108510 (dormant, untouched) | 108510 | 191,500 | 191,500 | PASS |
+| VP classic 108511 (dormant, untouched) | 108511 | 144,500 | 144,500 | PASS |
+| VP classic 108512 (dormant, untouched) | 108512 | 156,500 | 156,500 | PASS |
+| VP classic 108513 (dormant, untouched) | 108513 | 152,500 | 152,500 | PASS |
+| VP classic 108517 (dormant, untouched) | 108517 | 151,500 | 151,500 | PASS |
+
+**Respawn timer verification:**
+
+| NPC | ID | respawntime | Expected | Result |
+|-----|----|-------------|----------|--------|
+| Trakanon | 89154 | 43,200 (12h) | 43,200 | PASS |
+| Gorenaire | 86014 | 43,200 (12h) | 43,200 | PASS |
+| Severilous | 94009 | 43,200 (12h) | 43,200 | PASS |
+| Talendor | 91093 | 43,200 (12h) | 43,200 | PASS |
+| Faydedar | 96089 | 43,200 (12h) | 43,200 | PASS |
+| Kilidna | 90186 | 21,600 (6h) | 21,600 | PASS |
+| Lhranc | 90093 | 49,215 (~13.67h, unchanged) | 49,215 | PASS |
+| Queen Velazul Di'zok | 103055 | 5,400 (1.5h preserved) | 5,400 | PASS |
+| Overking Bathezid | 103056 | 5,400 (1.5h preserved) | 5,400 | PASS |
+| Prince Selrach Di'zok | 103080 | 5,400 (1.5h preserved) | 5,400 | PASS |
+
+**VP respawn condition scoping:**
+- spawn2 rows at respawntime=43200 in zone='veeshan': **7 rows, all _condition=2 only**
+- No condition=1 (classic dormant) rows were touched
+
+**Chardok Royals 1.5h respawn preserved per Decision #21 (Option A): CONFIRMED**
+
+**No accidental changes to Kithicor Night Crew or Classic-only rows:** No npc_types IDs in the 20054-20064 range appear in the Kunark backup table. Classic Phase 2 rows are unaffected (npc_types_backup_raid_scaling still 2548 rows — not queried but pre-existing Phase 2 state unchanged).
