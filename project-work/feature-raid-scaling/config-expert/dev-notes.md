@@ -696,12 +696,14 @@ Full sweep of all 9 Phase 4b bosses with spell lists (AoW has npc_spells_id=0):
 
 No `npc_spells_entries` DELETEs needed for Phase 4b. Zone-restart caveat does not apply. `#reloadworld` will be sufficient post-SQL.
 
+**SCOPE CORRECTION (architect, 2026-04-22):** Initial sweep examined only 10 headline bosses. Full Phase 4b scope is 47 NPCs. Only AoW (113457) and Vulak (124155) have zero spawn2 rows — both are script-spawned. The other 45 have 1-3 spawn2 rows each: all 16 ToV dragon lords, all 16 NToV mid-tier named, Ancients + Progenitor + Final Arbiter + Master of Guard + Milas in sleeper, and the 4 Warders (`_condition=1 cond_value=1` dormant). Phase 4b WILL update `spawn2.respawntime` for ~32 rows to 86,400s (24h per Decision #8). Six L65-66 mid-tier named already at 18h stay; Milas at 4h stays; Defenders (124050/51/52/79, audit-excluded per Decision #2) stay. All core rule/config findings still hold — the spawn2 zero-rows claim was a scope error from examining only the 10 bosses confirmed in the Phase 4a exclusion smoke check.
+
 ### Config-Expert Role in Phase 4b Implementation
 
 Identical to Phase 2/3/4a:
 1. No rule changes needed.
 2. No `eqemu_config.json` or `.env` changes.
 3. Post-SQL: `#reloadworld` via world telnet (port 9000).
-4. Smoke verification via DB read-back on `npc_types` HP/damage values only.
+4. Smoke verification via DB read-back on `npc_types` HP/damage for 47 NPCs + `spawn2.respawntime` for ~32 rows per architect's UPDATE list.
 5. No `npc_spells_entries` changes — no zone-restart caveat.
-6. Respawn timer smoke checks NOT applicable (zero spawn2 rows for all Phase 4b bosses).
+6. Additional untouched-verification: Kerafyrm trio (128089/94/95), spell 1948 in list 489, spawn_conditions state (condition 1=0, condition 2=1), Defenders (124050/51/52/79 at 120k HP unchanged).

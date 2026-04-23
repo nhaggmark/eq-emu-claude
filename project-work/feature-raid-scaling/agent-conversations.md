@@ -39,6 +39,18 @@ Bonus: death-touch sweep of all 9 Phase 4b bosses with spell lists = zero rows. 
 
 **Outcome:** Config posture confirmed. Phase 4b is 100% SQL, no rule changes, no config changes. #reloadworld sufficient post-SQL. Config-expert role identical to Phases 2/3/4a. Full findings in `config-expert/dev-notes.md` Phase 4b section.
 
+### 2026-04-22 — architect → config-expert: Phase 4b spawn2 scope correction
+
+**From:** architect → **To:** config-expert
+
+Scope correction: config-expert's "all 10 Phase 4b bosses have zero spawn2 rows" was accurate for the 10 headline bosses examined but full Phase 4b scope is 47 NPCs. Only AoW (113457) and Vulak (124155) have zero spawn2 rows. The other 45 have 1-3 rows each. Phase 4b WILL update spawn2.respawntime for ~32 rows to 86,400s. All core rule/config findings (zero rule changes, zero MR-cap, zero death-touch, etc.) still hold — scope error only. Implementation tasks B9/B10: #reloadworld + smoke-verify 47 npc_types rows + ~32 spawn2 rows + untouched-verification on Kerafyrm trio/spell 1948/spawn_conditions/Defenders.
+
+**Response from** config-expert:
+
+Acknowledged. dev-notes.md Phase 4b section updated with scope correction. Core findings unchanged; spawn2 zero-rows claim amended to: only AoW and Vulak have no spawn2 rows; 45 other Phase 4b NPCs have standing rows and ~32 will be updated to 86,400s. Config-expert role updated: smoke verification now covers both npc_types HP/damage (47 NPCs) and spawn2.respawntime (~32 rows) per architect's UPDATE list, plus untouched-verification items.
+
+**Outcome:** Correction incorporated. No rule or config impact — purely a spawn2 scope clarification.
+
 ---
 
 ## Design Team Conversations
