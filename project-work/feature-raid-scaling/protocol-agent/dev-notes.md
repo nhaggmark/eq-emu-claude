@@ -285,30 +285,129 @@ are needed in later phases.)_
 
 ## Open Items
 
-- [ ] Await architect task assignments from architecture.md
-- [ ] If Phase 2 yields any scripted quest behavior questions (PoSky
-  event scripts, lua/perl quest mechanics), loop in lua-expert or
-  perl-expert as appropriate
-- [ ] Q13 (Enraged Golem + 9 other NPCs not in raid_target=1 queries)
-  is an architect task — no protocol impact, but if any have special
-  abilities requiring removal, same server-side-only conclusion applies
+- [x] Phase 2 Classic consultation complete
+- [x] Phase 3 Kunark consultation complete (2026-04-22)
+- [ ] Phase 4 Velious (Ring War, ToV, Sleeper) — re-consult when architect starts
+- [ ] Phase 5 Luclin (VT, Shards) — re-consult when architect starts
+
+---
+
+## Phase 3: Kunark Protocol Consultation (2026-04-22)
+
+**Scope:** All 19 Kunark raid bosses cataloged in `game-designer/raid-scaling-audit.md`
+(4 outdoor dragons, Trakanon, Venril Sathir, Drusella, 3 Chardok royals, 2 City of
+Mist, 7 VP dragons).
+
+**Summary finding: Phase 3 is fully server-side. Zero client protocol impact.**
+Same conclusion as Phase 2. Detailed findings below.
+
+### Finding 1: HP/Damage/Respawn scaling — confirmed server-side only
+
+Phase 2 analysis applies unchanged. `MobHealth` sends percentage only; client never
+sees absolute NPC HP. Max-damage values never sent to client. `spawn2.respawntime`
+changes invisible to client. No new protocol concerns for Kunark NPCs.
+
+### Finding 2: Phara Dar HP-percentage add-wave script — safe to scale HP
+
+Phara Dar (`veeshan/108048.pl`) has a `quest::setnexthpevent(N)` / `EVENT_HP` pattern
+that spawns `#Protector_of_Phara_Dar` (NPC 108518) at 80/60/40/20% HP thresholds.
+
+**Protocol assessment:** `quest::setnexthpevent(N)` is a server-side percentage trigger
+computed from the NPC's current HP ratio — the same ratio the server already tracks for
+`MobHealth` packets. When Phara Dar's HP is scaled down (e.g. from 681k to ~120k), the
+percentage thresholds remain meaningful and fire at the same points in the fight. The
+client receives normal `NewSpawn_Struct` packets for each protector as they appear —
+standard spawn traffic, no special client state.
+
+**Conclusion:** HP scaling does not break or alter the Phara Dar add-wave mechanic.
+The wave-spawn behavior is preserved exactly. No protocol impact. This is the most
+interesting scripted encounter in Phase 3 and it is clean.
+
+### Finding 3: Venril Sathir two-form transition — safe to scale HP
+
+VS uses two NPC IDs: form 1 is Spirit of Venril Sathir (102112, script-spawned by
+`karnor/Spirit_of_Venril_Sathir.pl`), form 2 is Venril Sathir himself (102126,
+spawned by the Spirit's EVENT_ITEM handler on turn-in). The `#Venril_Sathir.lua`
+script (`karnor/#Venril_Sathir.lua`) simply depops VS's remains (NPC 102099) on
+spawn if they are already up — a spawn-deduplication guard.
+
+**Protocol assessment:** The form transition is a `quest::spawn2` + `quest::depop`
+pattern. The client sees a standard `DeleteSpawn_Struct` for the Spirit and a
+`NewSpawn_Struct` for VS. This is identical to any other server-side despawn/respawn
+event. Scaling the HP on NPC 102112 (Spirit) and/or 102126 (VS Lich form) via SQL
+has zero effect on the form-transition packet sequence.
+
+**Conclusion:** Two-form scripted transition is fully server-side. HP scaling on both
+NPC IDs is safe. No protocol impact.
+
+### Finding 4: Veeshan's Peak door-gate mechanic — safe, no DZ/instance
+
+`veeshan/player.pl` implements a door-gate for VP's inner chamber (doors 56/57):
+all five outer dragons (108053, 108040, 108047, 108043, 108050) must be dead before
+the door opens. The script uses `entity_list->IsMobSpawnedByNpcTypeID()` checks and
+`quest::forcedooropen()`.
+
+**Protocol assessment:** No Expedition/DZ mechanism is used. VP is a standard open
+zone with a script-driven door lock. `quest::forcedooropen()` sends `OP_MoveDoor`
+to the client — a standard packet already in the Titanium translation layer. Scaling
+HP on the five outer dragons does not affect the door-gate logic (it checks NPC
+presence, not HP). No new packets, no DZ opcodes, no expedition protocol involved.
+
+**Conclusion:** VP door-gate is purely server-side entity presence detection.
+No protocol impact.
+
+### Finding 5: No DZ/Expedition mechanism for any Kunark encounter
+
+Surveyed all VP scripts (`108040.pl`, `108043.pl`, `108047.pl`, `108048.pl`,
+`108050.pl`, `108053.pl`), Karnor scripts, and the VP player script. None use
+`expedition`, `MovePCDynamicZone`, `ServerOP_ExpeditionCreate`, or any DZ API.
+VP is a flat open zone. Contrast with `hateplaneb` (Phase 2) which DOES use
+`MovePCDynamicZone` for Rogue epic access — but VP does not.
+
+**Conclusion:** No Kunark encounter uses Expedition/DZ mechanics. No
+`ServerOP_Expedition*` traffic relevant to Phase 3.
+
+### Finding 6: Outdoor dragon special abilities (npcspecialattks) — no protocol flags
+
+Outdoor dragons (Gorenaire, Severilous, Talendor, Faydedar) have `npcspecialattks`
+flags S (summon), E (enrage), T (triple), R (rampage), M/C/N/I/D/f (immunities).
+All of these are server-side combat behavior flags. Each resulting combat event
+delivers standard `CombatDamage_Struct` / `Action_Struct` packets to the client.
+No special client opcode needed for any of these mechanics.
+
+**Conclusion:** npcspecialattks changes on Kunark bosses (if any flurry or rampage
+trimming is done, as the audit recommends for Trakanon) remain server-side. Same
+pattern as Cazic Thule rampage trim in Phase 2.
+
+### Phase 3 Protocol Summary
+
+| Concern | Source | Verdict |
+|---------|--------|---------|
+| HP/damage/respawn scaling (all 19 bosses) | Phase 2 analysis applies | Server-side only |
+| Phara Dar add-wave (% HP event → spawn adds) | veeshan/108048.pl | Server-side; % thresholds survive HP rescale |
+| Venril Sathir two-form transition | karnor/Spirit_of_Venril_Sathir.pl | Server-side spawn/depop |
+| VP door-gate (5 outer dragons must die) | veeshan/player.pl | Server-side entity check; OP_MoveDoor is standard |
+| VP DZ/Expedition mechanism | All VP scripts + karnor | None — VP is standard open zone |
+| Outdoor dragon npcspecialattks trimming | Audit recommendations | Server-side AI only |
+| Flurry trim on Trakanon | Audit recommendation | special_abilities CSV edit, same as Phase 2 CT rampage |
+
+**No Phase 3 changes require opcode additions, struct modifications, or Titanium
+translation layer changes. Phase 3 is 100% server-side (SQL), same as Phase 2.**
 
 ---
 
 ## Context for Next Agent
 
-Protocol-agent has completed Stage 1 consultation for Phase 2 Classic
-raids. Core finding: **all Phase 2 changes (HP/damage scaling, death-touch
-removal, respawn timer changes) are purely server-side and have zero client
-protocol impact.** The Titanium client does not cache NPC stat values,
-does not have a dedicated death-touch opcode, and has no client state tied
-to respawn timers.
+Protocol-agent has completed consultation for Phase 2 (Classic) and Phase 3
+(Kunark) raid scaling. Core finding in both phases: **all changes are purely
+server-side and have zero Titanium client protocol impact.**
 
 Key source refs:
-- `CombatDamage_Struct` at eq_packet_structs.h:1335 — standard hit packet,
-  death-touch removal just means this packet stops being sent with lethal values
+- `CombatDamage_Struct` at eq_packet_structs.h:1335 — standard hit packet
 - `MobHealth` at eq_packet_structs.h:1487 — HP percentage only, no absolute values
 - `Death_Struct` at eq_packet_structs.h:1367 — same packet used for all kills
+- `quest::setnexthpevent` — server-side trigger, percentage-based, unaffected by HP scale
+- VP door-gate: `OP_MoveDoor` (standard Titanium opcode, no new protocol needed)
 
-If future phases (Kunark VP scripts, Velious Ring War, VT key event) involve
-scripted encounters with custom packet behavior, re-consult before those phases.
+Phase 4 (Velious: Ring War, ToV, Sleeper) may have scripted event complexity worth
+re-checking. Phase 5 (Luclin: VT key event, Shards) likewise. Re-consult for those.

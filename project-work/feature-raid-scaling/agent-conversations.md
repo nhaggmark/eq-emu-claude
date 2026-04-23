@@ -658,3 +658,44 @@ findings (no rule exists, backup pattern, rampage as special_abilities CSV) rema
 > in future by adding a zone_points entry). Backup table should include both for safety.
 
 **Outcome:** hateplaneb is the live Classic PoH for Phase 2. Scope confirmed.
+
+---
+
+## Architecture Team — Phase 3: Kunark (2026-04-22)
+
+### 2026-04-22 — protocol-agent Phase 3 initial read to architect
+
+**From:** protocol-agent  
+**To:** architect  
+**Date:** 2026-04-22
+
+> Phase 2 was fully server-side (confirmed). For Phase 3 Kunark I've completed
+> my consultation. Initial read: Phase 3 is also fully server-side — no protocol
+> concerns. Specific items I investigated:
+>
+> 1. **Phara Dar HP-event add-wave script** — `quest::setnexthpevent(N)` uses HP
+>    percentage not absolute value, so scaling HP from 681k to ~120k preserves
+>    the 80/60/40/20% add-wave triggers exactly. No protocol impact.
+>
+> 2. **Venril Sathir two-form transition** — `spawn2`/`depop` pattern in Perl script.
+>    Client sees standard DeleteSpawn/NewSpawn packets. HP scaling on both form IDs
+>    safe. No protocol impact.
+>
+> 3. **VP door-gate** — `veeshan/player.pl` checks entity presence for 5 outer
+>    dragons and calls `quest::forcedooropen()`, which sends `OP_MoveDoor`. No DZ
+>    or Expedition API involved. Standard open zone. No protocol impact.
+>
+> 4. **No DZ/Expedition for any Kunark encounter** — All VP scripts and Karnor
+>    scripts surveyed. None use MovePCDynamicZone or ServerOP_Expedition*. VP is
+>    a flat open zone.
+>
+> 5. **npcspecialattks trimming (Trakanon flurry, etc.)** — same server-side AI
+>    pattern as Phase 2 CT rampage trim. No protocol impact.
+>
+> **Full findings in:** `protocol-agent/dev-notes.md` Phase 3 section.
+>
+> **Phase 3 verdict: 100% server-side SQL, identical conclusion to Phase 2.
+> No opcode additions, no struct changes, no Titanium translation layer changes.**
+
+**Outcome:** Phase 3 protocol consultation complete. Architect cleared to proceed
+with Kunark architecture plan without protocol blockers.
