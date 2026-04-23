@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2: Complete 2026-04-22. Phase 3 Kunark: Complete 2026-04-22. Phase 4a Velious non-ToV: **Draft delivered 2026-04-23** — architect recommendation for Q8 Ring War pending lore-master final review; 4 user decisions raised (#23-26) | 2026-04-22 | 2026-04-23 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
-| Validation | game-tester + user | Phase 2: Complete — Server-side PASS; Lady Vox PASS; remaining tests deferred. Phase 3 Kunark: Server-side PASS 2026-04-23 (86 checks); user in-game testing deferred per user decision to proceed. Phase 4a Velious non-ToV: Server-side FAIL 2026-04-23 (108 checks; 107 PASS, 1 FAIL — BUG-001 Tunare wrong NPC ID); BUG-001 fix applied 2026-04-23 (127098 hp=150000); pending game-tester re-verification of PoG Tunare fight before Phase 4a can be marked complete | 2026-04-22 | In Progress |
-| Completion | _user_ | Phase 2 Classic Complete 2026-04-23. Phase 3 Kunark Complete 2026-04-23 — proceeding to Phase 4a Velious non-ToV | 2026-04-23 | 2026-04-23 |
+| Validation | game-tester + user | Phase 2: Complete. Phase 3: Server-side PASS (86 checks). Phase 4a: Server-side PASS after BUG-001 fix (107/108 initial + 1 fix verified in DB; user accepted data-expert verification and proceeded) | 2026-04-22 | 2026-04-23 |
+| Completion | _user_ | Phase 2 Complete 2026-04-23. Phase 3 Complete 2026-04-23. Phase 4a Complete 2026-04-23 — proceeding to Phase 4b Velious ToV+Sleeper+Vulak | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 4a (Velious non-ToV) Validation — BUG-001 requires data-expert fix before Phase 4a can be marked complete. Ring War in-game testing is the highest priority session.
+**Current phase:** Phase 4b (Velious ToV + Sleeper + Vulak) Architecture starting 2026-04-23. Scope: NToV/ToV dragons, Sleeper's Tomb warders + Kildrukaun, Avatar of War, Vulak'Aerr. Sleeper's Awake event (Kerafyrm) remains out of scope per Decision #12. Respawn tier: endgame 24h per Decision #8.
 
 ---
 
@@ -50,8 +50,8 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase 1 — Audit | All raid bosses + raid quest chains catalogued with scaling status | **Complete 2026-04-21** |
 | Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | **Complete 2026-04-23** |
 | Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | **Complete 2026-04-23** |
-| Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | In Progress — SQL applied, server validation FAIL (BUG-001 Tunare wrong NPC ID); fix required before completion |
-| Phase 4b — Velious ToV+Sleeper+Vulak | Temple of Veeshan proper, Sleeper's Tomb, Avatar of War, Vulak'Aerr | Not Started |
+| Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | **Complete 2026-04-23** (BUG-001 Tunare fixed; user accepted DB-verified state) |
+| Phase 4b — Velious ToV+Sleeper+Vulak | Temple of Veeshan proper, Sleeper's Tomb, Avatar of War, Vulak'Aerr | In Progress — Architecture starting 2026-04-23 |
 | Phase 5a — Luclin non-VT | Ssraeshza, Grieg's End, Akheva, Luclin raid content ex-VT | Not Started |
 | Phase 5b — Luclin VT+shards | Vex Thal proper, VT key shard rework | Not Started |
 
