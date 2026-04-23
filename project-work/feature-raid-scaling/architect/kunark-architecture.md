@@ -503,3 +503,33 @@ The following are noted for future phases:
 > - **infra-expert** (Task 8, conditional)
 >
 > Do NOT spawn c-expert, lua-expert, perl-expert, or protocol-agent — they have no Phase 3 work.
+
+---
+
+## Addendum 2026-04-22 — Fabled Chardok variant exclusion (config-expert flag)
+
+Config-expert flagged during Phase 3 consultation: **`#The_Fabled_Prince_Selrach_Di'zok` (ID 103218, HP 1.5M)** has a standing `spawn2` row in chardok. This is a Fabled variant — post-Luclin content excluded per the Phase 2 filter (`name NOT LIKE '#The_Fabled%'`).
+
+**Action for data-expert:** Apply the same Fabled exclusion filter as Phase 2 for any zone-scoped queries against Chardok. For the Phase 3 plan specifically:
+
+- Chardok Royals in scope: **103055 Queen Velazul, 103056 Overking Bathezid, 103080 Prince Selrach** only.
+- **NOT in scope:** 103218 `#The_Fabled_Prince_Selrach_Di'zok` (Fabled — post-Luclin era).
+- Similarly confirmed excluded: **102127 `#The_Fabled_Drolvarg_Captain`** in karnor (already noted in Existing System Analysis "Other" table).
+
+Since the Phase 3 `npc_types` UPDATE and backup are both ID-list-scoped (not zone-sweep), the Fabled NPCs won't leak in. This addendum documents the filter for any future data-expert query that uses a zone or level predicate.
+
+**No change to task breakdown.** Just a belt-and-suspenders documentation note per config-expert flag.
+
+---
+
+## Addendum 2026-04-22 — Protocol-agent VP script verification
+
+Protocol-agent final review surfaced two additional script-level verifications:
+
+**1. Phara Dar HP-event add-wave** (`akk-stack/server/quests/veeshan/108048.pl`): uses `quest::setnexthpevent(N)` which fires at HP *percentages*, not absolute values. Scaling Phara Dar HP from 681k to 120k **preserves the 80/60/40/20% add-wave triggers exactly**. No script edit needed.
+
+**2. Venril Sathir two-form transition** (`akk-stack/server/quests/karnor/Spirit_of_Venril_Sathir.pl`): uses pure `quest::spawn2` / `quest::depop` pattern — no absolute HP state stored. Scaling HP on both NPC IDs (102112 Spirit triggered form, 102126 standard VS Lich) is safe. The lich transition depends on event_death, not on HP thresholds.
+
+**3. VP door-gate** (`akk-stack/server/quests/veeshan/player.pl`): uses `quest::forcedooropen()` which sends `OP_MoveDoor` — a standard Titanium opcode. VP is a flat open zone (no DZ/Expedition). Entity presence check for the 5 outer dragons scales transparently — HP change doesn't affect kill detection.
+
+**Implication for data-expert:** no quest script review required for Phase 3 apply. The HP cuts for VP dragons (especially Phara Dar) will not break scripted phase transitions.
