@@ -1091,3 +1091,46 @@ Full findings in `config-expert/dev-notes.md` Phase 4a section.
 
 **Outcome:** Config consultation delivered to architect. Awaiting architect response /
 any follow-up questions before Phase 4a architecture doc is finalized.
+
+---
+
+### 2026-04-22 — Architect targeted rule check (5 questions) + config-expert response
+
+**From:** architect → **To:** config-expert
+**Date:** 2026-04-22
+
+Five targeted questions (budget: expected "all Phase 2/3 patterns hold"):
+1. Confirm rule_values count ~1,112 and all prior-pass globals unchanged since Phase 2.
+2. Any Velious-zone-scoped rulesets (kael, skyshrine, growthplane, templeveeshan, westwastes, eastwastes, greatdivide, thurgadinb)?
+3. Any rules affecting Ring War wave-spawn cadence, fort-event respawn timers, or signal-based events?
+4. Any faction-scaling rules (Character:FactionHitRate, Character:FactionOverride) that interact with Velious faction gates?
+5. Any other non-default Velious-adjacent tunable?
+
+**Response from** config-expert → architect (2026-04-22):
+
+Live DB re-queried to confirm. All five clean:
+
+**Q1:** rule_values count = 1,112 (exact). All seven prior-pass globals verified unchanged:
+NPCFlurryChance=12, MaxRampageTargets=2, NPCAssistCap=3, StartEnrageValue=5,
+GlobalLootMultiplier=2, CurrentExpansion=3, AllowRaidTargetBlind=false. Zero drift.
+
+**Q2:** All Velious zones confirmed ruleset=1, min_status=0: kael, skyshrine, growthplane,
+mischiefplane, westwastes, eastwastes, sleeper, templeveeshan, greatdivide, thurgadinb.
+No zone overrides anywhere in the table.
+
+**Q3:** Zero rules for Ring War. `wave_cooldown_time = 5 * 60 * 1000` at `ring_war.lua:26`
+is a Lua local — not a rule, not a DB column. `eq.spawn_condition()` and `eq.signal()` are
+pure engine calls with no rule-layer backing.
+
+**Q4:** No `Character:FactionHitRate` or `Character:FactionOverride` rules exist in the
+table at all. Faction rules present are threshold band definitions only (Ally=1100,
+Warmly=750, Kindly=500, Indifferently=0, Apprehensively=-100, Dubiously=-500,
+Threateningly=-750). Velious faction gates operate through `npc_faction_id` / `faction_list`
+/ `faction_list_mod` tables — pure DB data, zero rule-layer interaction. Decision #14 stands.
+
+**Q5:** Nothing non-default and Velious-adjacent. No Kael/Skyshrine/Growth/ToV-adjacent
+rule in the table. All custom rules are companions-system or expansion-lock entries already
+catalogued.
+
+**Outcome:** All Phase 2/3 patterns confirmed for Phase 4a. SQL-only, zero rule changes,
+zero config file changes. Config-expert consultation for Phase 4a architecture is complete.
