@@ -1260,3 +1260,30 @@ over my original Option B+ wave-skip draft.
 **Outcome:** Lore-master Q8 consultation complete and adopted. Phase 4a architecture is
 ready for user approval on decisions #23-27 before implementation dispatch.
 
+---
+
+## Implementation Team Conversations (Phase 4a Velious non-ToV)
+
+### 2026-04-22 — data-expert → config-expert: SQL applied, ready for reload + smoke verify
+
+**From:** data-expert → **To:** config-expert
+
+**Summary:** Phase 4a SQL applied (all 63 verification checks passed). Requesting
+`#reloadworld` and smoke verification of 12 key NPCs including both Yelinak variants
+(Q24 confirmation), a Kromrif wave mob (Q23 Lever 1 confirmation), and AoW/Vulak
+exclusion safety check (must remain at 900k/890k HP respectively).
+
+**What data-expert completed before this message:**
+- Backup tables created: `npc_types_backup_raid_scaling_velious_a` (46 rows),
+  `spawn2_backup_raid_scaling_velious_a` (227 rows)
+- 46 `npc_types` HP/damage UPDATEs applied (Kael 4 + Skyshrine 6 + PoG 9 + PoM 1
+  + outdoor dragons 4 + WW 3 + Velketor 2 + Sirens 2 + misc 3 + Narandi/Dain/Chamberlain 3
+  + Ring War wave mobs 8 + Seneschal 1)
+- 15 `spawn2.respawntime` UPDATEs to 43200s
+- All 63 post-change verification checks: PASS
+- AoW (113457) confirmed 900,000 HP — NOT touched
+- Vulak'Aerr (124155) confirmed 890,000 HP — NOT touched
+- SQL files committed and pushed to `feature/raid-scaling`
+
+**Outcome:** Awaiting config-expert reload + smoke verify response.
+
