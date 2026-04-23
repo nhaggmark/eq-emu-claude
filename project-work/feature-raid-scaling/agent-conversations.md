@@ -925,3 +925,49 @@ before implementation dispatch.
 
 **Outcome:** Phase 3 architecture complete. Protocol-agent consultation role for
 Phase 3 closed. No open items.
+
+---
+
+## Architecture Team — Phase 4a: Velious non-ToV (2026-04-22)
+
+### 2026-04-22 — protocol-agent Phase 4a initial assessment to architect
+
+**From:** protocol-agent
+**To:** architect
+**Date:** 2026-04-22
+
+Delivered Phase 4a Velious non-ToV protocol consultation. Summary:
+
+**Verdict: 100% server-side, zero Titanium client protocol impact — same as Phases 2 and 3.**
+
+Key findings:
+
+1. **Coldain Ring War (ring_war.lua):** Uses `eq.spawn_condition()` to toggle 21 wave
+   conditions + `eq.signal()` / timers for wave pacing. No DZ, no Expedition, no special
+   client opcodes. Client sees only normal NewSpawn_Struct / DeleteSpawn_Struct per wave
+   mob. Wave-mob HP scaling is pure SQL. `wave_cooldown_time = 5*60*1000` is a Lua local —
+   lua-expert can reduce it if architect wants to address the small-group throughput problem.
+
+2. **Kael faction gating:** `King_Tormax.lua` uses server-side `GetFaction()` check — no
+   client-cached faction state. Faction data is server-only. Client sees NPC speech /
+   trade results only.
+
+3. **Statue→Idol→Avatar spawn chain:** Both scripts use `eq.unique_spawn()` — standard
+   `NewSpawn_Struct` to client. Same pattern as VP Phase 3 door-gate (`quest::forcedooropen` +
+   entity presence). Avatar has a 1-hour depop timer (server-side only).
+
+4. **Plane of Growth Tunare:** `#_Tunare.lua` spawns fight form (127098) on combat via
+   `eq.spawn2()` with zone-wide aggro, then depops tree form. Standard spawn-swap — same
+   pattern as VS form-transition in Phase 3.
+
+5. **No DZ/Expedition anywhere in Velious non-ToV:** Grepped greatdivide, kael,
+   growthplane, skyshrine, westwastes, necropolis. Zero DZ/Expedition usage.
+
+Flag for architect: Ring War wave-mob scaling and wave-timer reduction require data-expert
+(SQL) + lua-expert (script edit) respectively. Architect should decide scope of Ring War
+work for Phase 4a vs. deferral.
+
+Full findings in `protocol-agent/dev-notes.md` Phase 4a section.
+
+**Outcome:** Phase 4a protocol consultation complete. Architect cleared to proceed
+with Velious non-ToV architecture plan without protocol blockers.

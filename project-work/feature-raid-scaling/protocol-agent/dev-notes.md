@@ -287,7 +287,8 @@ are needed in later phases.)_
 
 - [x] Phase 2 Classic consultation complete
 - [x] Phase 3 Kunark consultation complete (2026-04-22)
-- [ ] Phase 4 Velious (Ring War, ToV, Sleeper) — re-consult when architect starts
+- [x] Phase 4a Velious non-ToV consultation complete (2026-04-22)
+- [ ] Phase 4b Velious ToV+Sleeper+Vulak — re-consult when architect starts
 - [ ] Phase 5 Luclin (VT, Shards) — re-consult when architect starts
 
 ---
@@ -393,6 +394,109 @@ pattern as Cazic Thule rampage trim in Phase 2.
 
 **No Phase 3 changes require opcode additions, struct modifications, or Titanium
 translation layer changes. Phase 3 is 100% server-side (SQL), same as Phase 2.**
+
+---
+
+---
+
+## Phase 4a: Velious non-ToV Protocol Consultation (2026-04-22)
+
+**Scope:** Kael Drakkel, Plane of Growth, Skyshrine, outdoor Velious (Western Wastes,
+Great Divide, necropolis, Siren's Grotto), Coldain Ring War event.
+
+**Summary finding: Phase 4a is fully server-side. Zero client protocol impact.**
+Same conclusion as Phases 2 and 3. Detailed findings below.
+
+### Finding 1: Coldain Ring War — spawn_condition wave system, no DZ
+
+Examined `akk-stack/server/quests/greatdivide/encounters/ring_war.lua` (full read).
+
+The Ring War uses `eq.spawn_condition("greatdivide", 0, N, 0/1)` to toggle 21 spawn
+conditions for wave mobs. A `ringtenmaster` NPC (118173) coordinates waves via `eq.signal()`
+and a `wave_cooldown` timer (`wave_cooldown_time = 5 * 60 * 1000` — 5 minutes, Lua local).
+Wave bosses (WaveMaster NPCs) signal the master on death to trigger the next wave.
+
+`eq.spawn_condition()` is a server-internal state change — no special opcode to client.
+Client sees only `NewSpawn_Struct` / `DeleteSpawn_Struct` for each wave mob. No Expedition,
+no DZ, no progress-bar opcode. The Ring War is a standard open-zone event.
+
+Wave mob HP scaling: pure SQL `npc_types.hp` UPDATE per wave-mob NPC ID — same as any
+boss. Transparent to client. Wave timer reduction (`wave_cooldown_time`): Lua-only local
+variable — lua-expert edit if architect wants to address small-group throughput problem.
+
+Failure conditions (Seneschal Aldikan death OR giants reaching Thurgadin waypoint) trigger
+`Stop_Event()` which resets all spawn conditions — fully server-side.
+
+**Protocol conclusion:** No client protocol impact. No new opcodes.
+
+### Finding 2: Kael faction gating — server-side only
+
+`King_Tormax.lua` uses `e.other:GetFaction(e.self) <= 3` (kindly or better) to gate
+say/trade handlers. Faction data lives in `faction_values` table — no client-cached
+faction state. Client only receives resulting `ChannelMessage_Struct` (NPC speech) or
+item summoning packets after server-side check passes.
+
+Avatar of War spawn chain: `The_Statue_of_Rallos_Zek.lua` event_death_complete →
+`eq.unique_spawn(113341, ...)` (Idol). Then `#The_Idol_of_Rallos_Zek.lua`
+event_death_complete → `eq.unique_spawn(113457, ...)` (Avatar). Both use `eq.unique_spawn`
+which sends a standard `NewSpawn_Struct` — identical to VP's `quest::forcedooropen()` +
+`IsMobSpawnedByNpcTypeID()` pattern confirmed safe in Phase 3.
+
+`The_Avatar_of_War.lua` has a 1-hour `depop` timer that pauses while in combat — server-side
+only, client sees `DeleteSpawn_Struct` on depop.
+
+King Tormax combat (`King_Tormax.lua`) also calls `MoveTo()` on 6 adds (NPCs 113129, 113130,
+113131, 113133, 113134, 113302, 113382, 113383) to assist — standard server-side pathfinding,
+no special opcodes.
+
+**Protocol conclusion:** No client protocol impact. Faction check is server-side.
+Spawn chain is standard NewSpawn_Struct. Same pattern as VP Phase 3.
+
+### Finding 3: Plane of Growth Tunare — spawn-swap, zone aggro
+
+`#_Tunare.lua` (NPC 127001, tree form): on event_combat joined, calls `eq.spawn2(127098,...)`
+(the actual combat form) then `call_zone_to_assist()` (iterates entity_list, adds all non-
+excluded NPCs to hate list) then `eq.depop_with_timer()`.
+
+Client sees: `DeleteSpawn_Struct` for 127001 (depop), `NewSpawn_Struct` for 127098 entering
+combat. Standard spawn-swap — same as VS form-transition in Phase 3. Zone-wide aggro is
+server-side AI hate-list manipulation; no special packet.
+
+**Protocol conclusion:** No client protocol impact. Standard spawn-swap pattern.
+
+### Finding 4: No DZ/Expedition in any Velious non-ToV zone
+
+Grepped all scripts in greatdivide/, kael/, growthplane/, skyshrine/, westwastes/,
+necropolis/ for `MovePCDynamicZone`, `expedition`, `DynamicZone`. Zero results.
+
+All Velious non-ToV zones are standard open zones with `ZoneChange_Struct` →
+`ZoneServerInfo_Struct` entry flow. Contrast: Phase 2's hateplaneb used
+`MovePCDynamicZone("hateplaneb")` from `oasis/player.lua`. No Velious non-ToV equivalent.
+
+**Protocol conclusion:** No DZ/instance overhead in any Phase 4a zone.
+
+### Phase 4a Protocol Summary
+
+| Concern | Source | Verdict |
+|---------|--------|---------|
+| Ring War spawn_condition wave system | greatdivide/encounters/ring_war.lua | Server-side; NewSpawn/DeleteSpawn per wave mob; no special opcodes |
+| Ring War wave_cooldown_time (5 min) | ring_war.lua Lua local | Lua-only; lua-expert editable; no protocol impact |
+| Ring War failure (seneschal death / giants reach Thurgadin) | ring_war.lua | Server-side Stop_Event(); no protocol impact |
+| Kael faction check (GetFaction <= 3) | kael/King_Tormax.lua | Server-side; client sees NPC speech/trade results only |
+| Statue→Idol→Avatar spawn chain | kael/Statue+Idol+Avatar scripts | eq.unique_spawn() = NewSpawn_Struct; same as VP Phase 3 |
+| Avatar of War 1-hour depop timer | kael/The_Avatar_of_War.lua | Server-side timer; DeleteSpawn on depop |
+| Tunare spawn-swap (#_Tunare → #Tunare 127098) | growthplane/#_Tunare.lua | Standard spawn-swap; same as VS Phase 3 |
+| DZ/Expedition usage in Velious non-ToV | grep all scripts | None found — all standard open zones |
+| HP/damage/respawn scaling | Phase 2/3 analysis applies | Server-side SQL only; client sees % HP |
+
+**No Phase 4a changes require opcode additions, struct modifications, or Titanium
+translation layer changes. Phase 4a is 100% server-side (SQL + optional Lua for Ring
+War wave timer), same as Phases 2 and 3.**
+
+**Flag for architect:** Ring War addressing requires two agents:
+- data-expert (wave-mob HP scaling via npc_types UPDATE — same SQL pattern)
+- lua-expert (wave_cooldown_time reduction if architect decides to reduce inter-wave gap)
+Both are server-side. Neither touches protocol layer.
 
 ---
 
