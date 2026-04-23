@@ -527,7 +527,22 @@ a misdiagnosis — data-expert task is npc_spells_entries DELETE only.
 
 _Expert-to-expert exchanges during Phase 4._
 
-_(Empty — implementation phase has not started.)_
+### 2026-04-22 — Config-expert check-in: SQL status before Task 7
+
+**From:** config-expert → **To:** data-expert
+
+> Confirmed ready for Tasks 7 and 8. Holding on dependency gate —
+> cannot issue #reloadworld until data-expert confirms Tasks 1-6
+> (backup, npc_types UPDATEs, spawn2 UPDATEs, npc_spells_entries
+> DELETEs, rollback script, SQL application) are committed.
+> Asked data-expert to confirm: (1) Tasks 1-6 status, (2) any SQL
+> run issues, (3) npc_spells_entries DELETE for spell 982 clean.
+
+**Response from** data-expert:
+
+> _(Awaiting response.)_
+
+**Outcome:** Pending data-expert confirmation.
 
 ---
 

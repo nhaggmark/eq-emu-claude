@@ -2,9 +2,10 @@
 
 > **Feature branch:** `feature/raid-scaling`
 > **Agent:** config-expert
-> **Task(s):** Architecture Phase — initial findings report
+> **Task(s):** Task 7 (reloadworld) + Task 8 (smoke verification)
 > **Date started:** 2026-04-22
-> **Current stage:** Stage 1 — Research Complete, awaiting architecture tasks
+> **Updated:** 2026-04-22 (Implementation phase dispatched)
+> **Current stage:** Stage 1 — Plan (waiting on data-expert Tasks 1-6 before executing)
 
 ---
 
@@ -184,6 +185,52 @@ The heavy lifting for Phase 2 is all **data-expert work** (SQL UPDATEs on `npc_t
 
 ## Open Items
 
-- [ ] Architect to assign specific task numbers once architecture.md is drafted
-- [ ] Data-expert will need the specific NPC IDs for PoSky death-touch mobs (ability 35 removal) — query already confirmed they're in the 3xxx ID range in `npc_types`
-- [ ] Cazic Thule ID confirmation: multiple Innoruuk variants exist; similar pattern likely for CT — data-expert should JOIN to hateplaneb spawns to find live CT ID
+- [x] Architect to assign specific task numbers — Tasks 7 and 8 assigned
+- [x] Death-touch mechanism corrected — data-expert owns npc_spells_entries DELETE
+- [x] CT live ID — architect confirmed via hateplaneb spawn JOIN
+
+---
+
+## Implementation Phase — Stage 1: Plan (2026-04-22)
+
+### Tasks Assigned
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| 7 | `#reloadworld` via Spire or in-game GM command | data-expert Tasks 1-6 committed | WAITING |
+| 8 | Smoke verification of HP, respawn, spell list | Task 7 | WAITING |
+
+### Execution Plan
+
+**Task 7 — `#reloadworld`**
+
+- `#reloadworld` is a world GM command that reloads NPC data and spawn tables across all running zones without a full server restart.
+- The GM command reference at `claude/docs/gm-commands-reference.md` should be checked to confirm exact syntax before issuing.
+- Mechanism: connects to the running world process and signals zone processes to flush and reload NPC/spawn caches from DB.
+- If this command is not available or fails to propagate `npc_spells_entries` changes (spell list cache is loaded per-zone-boot), Task 9 (infra-expert full restart) becomes necessary.
+- Command to issue in-game or via Spire console: `#reloadworld`
+
+**Task 8 — Smoke Verification**
+
+Verification targets (4 representative NPCs spanning scope):
+
+| NPC | ID | Zone | What to Check |
+|-----|----|------|---------------|
+| Lord Nagafen | 32040 | soldungb | `npc_types.hp` = new target value; `spawn2.respawntime` = 21600 (6h) |
+| Cazic Thule (live) | fearplane live ID | fearplane | `npc_types.hp` = new target value; `spawn2.respawntime` = 21600 (6h); rampage special_ability param trimmed |
+| Keeper of Souls | 71075 | posky | `npc_types.hp` = new target value; spell 982 NOT in `npc_spells_entries` for npc_spells_id=969 |
+| Innoruuk (revamp) | 186158 | hateplaneb | `npc_types.hp` = new target value; `spawn2.respawntime` = 21600 (6h) |
+
+Verification method: direct DB read-back via `docker exec ... mysql` query — no in-game login required. Spire NPC viewer at http://192.168.1.86:3000 can also confirm NPC stats.
+
+Key assertions:
+1. `npc_types.hp` for Nagafen (32040): should be ~16000 (50% cut from 32000)
+2. `spawn2.respawntime` for Nagafen spawn2 id 6461: should be 21600
+3. `npc_spells_entries` for npc_spells_id IN (118, 449, 969): spell 982 row count should be 0
+4. If any of the above shows pre-change values, `#reloadworld` did not propagate that table — escalate to infra-expert for Task 9 (full restart)
+
+### Dependency Gate
+
+**DO NOT execute Task 7 until data-expert confirms Tasks 1-6 are committed.**
+
+Checked in with data-expert (2026-04-22) to confirm SQL status. Awaiting response.

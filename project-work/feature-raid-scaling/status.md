@@ -13,7 +13,7 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert | Complete (Phase 2 scope) | 2026-04-22 | 2026-04-22 |
-| Implementation | _implementation team_ | Not Started | | |
+| Implementation | _implementation team_ | In Progress — data-expert tasks 1-6 complete; Tasks 7-8 (config-expert reload+verify) pending | 2026-04-22 | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -145,16 +145,16 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Create backup tables for `npc_types`, `spawn2`, `npc_spells_entries` raid-target rows | data-expert | Not Started | Backs up ~750+1500+20 rows; architecture §Data Model |
-| 2 | Emit per-boss HP/damage/special_abilities UPDATE SQL (30 audit bosses + 13 Q13 + 23 hateplaneb - 6 Night Crew excluded = ~49 rows) | data-expert | Not Started | Depends on #1; authoritative values in architecture §Data Model sketch and audit summary table. Night Crew IDs 20054-20064 EXCLUDED per Decision #20 (user override). |
-| 3 | Emit respawn-timer UPDATE SQL (6h low-tier / 12h Cazic+Guardian of Seal) | data-expert | Not Started | Depends on #1; leave hateplaneb 900s DZ timers untouched |
-| 4 | Emit `npc_spells_entries` DELETE for Cazic Touch (spell 982) from lists 118, 449, 969 | data-expert | Not Started | Depends on #1; exactly 3 rows deleted |
-| 5 | Emit rollback script (INSERT SELECT from backup tables) + verification queries | data-expert | Not Started | Depends on #2-4 |
-| 6 | Apply SQL via `docker exec ... mysql` ; capture before/after row counts | data-expert | Not Started | Depends on #5 |
-| 7 | `#reloadworld` (via Spire or in-game GM command) to refresh zone caches | config-expert | Not Started | Depends on #6 |
+| 1 | Create backup tables for `npc_types`, `spawn2`, `npc_spells_entries` raid-target rows | data-expert | **Complete 2026-04-22** | npc_types_backup: 2548 rows; spawn2_backup: 6669 rows; npc_spells_entries_backup: 6 rows; Cazic Touch captured: 3 rows |
+| 2 | Emit per-boss HP/damage/special_abilities UPDATE SQL (30 audit bosses + 13 Q13 + 23 hateplaneb - 6 Night Crew excluded = ~49 rows) | data-expert | **Complete 2026-04-22** | All verification checks passed. CT special_abilities NOT edited — global MaxRampageTargets=2 cap sufficient. |
+| 3 | Emit respawn-timer UPDATE SQL (6h low-tier / 12h Cazic+Guardian of Seal) | data-expert | **Complete 2026-04-22** | 6h applied to all Classic low-tier; 12h for CT (72003) and Guardian of Seal (39115); hateplaneb outlier 186183 cut to 6h; DZ 900s untouched |
+| 4 | Emit `npc_spells_entries` DELETE for Cazic Touch (spell 982) from lists 118, 449, 969 | data-expert | **Complete 2026-04-22** | Exactly 3 rows deleted (confirmed). Remaining entries in each list preserved. |
+| 5 | Emit rollback script (INSERT SELECT from backup tables) + verification queries | data-expert | **Complete 2026-04-22** | `03-rollback.sql` written — transactional JOIN-UPDATE + INSERT IGNORE for spell 982 re-insert |
+| 6 | Apply SQL via `docker exec ... mysql` ; capture before/after row counts | data-expert | **Complete 2026-04-22** | All verification queries passed. See data-expert/dev-notes.md Stage 4 for full output. |
+| 7 | `#reloadworld` (via Spire or in-game GM command) to refresh zone caches | config-expert | Not Started | Depends on #6 ✓ — ready for config-expert |
 | 8 | Smoke verify: Nagafen HP, CT rampage string, Keeper spell list, hateplaneb Innoruuk HP, respawn timer for Nagafen | config-expert | Not Started | Depends on #7 |
 | 9 | Full-stack restart if `#reloadworld` doesn't propagate npc_spells_entries cache | infra-expert | Not Started | Conditional; depends on #8 result |
-| 10 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | data-expert | Not Started | Depends on #6 success |
+| 10 | Commit + push `claude/` repo changes (architecture, context, status, implementation SQL) to `feature/raid-scaling` branch | data-expert | **Complete 2026-04-22** | Committed on feature/raid-scaling |
 
 ---
 
