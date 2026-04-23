@@ -906,3 +906,22 @@ consultation complete with no remaining open items.
 flags incorporated. Two user decisions (#21 Chardok respawn, #22 Renux Herkanor
 448200) remain before implementation team can be dispatched. Config-expert role
 confirmed as Tasks K6-K7 (identical to Phase 2 Tasks 7-8).
+
+---
+
+### 2026-04-22 — architect Phase 3 architecture finalized (commit 054ba8a)
+
+**From:** architect  
+**To:** protocol-agent  
+**Date:** 2026-04-22
+
+Both protocol-agent confirmations locked into architecture doc:
+1. Trakanon flurry — no special_abilities edit; SERFMCNDf preserved per Decision #11.
+2. VP door-gate GM-depop edge case — added as one-line risk table row, flagged pre-existing.
+
+Architecture doc final: `architect/kunark-architecture.md` (536 lines, commit 054ba8a).
+Waiting on user decisions #21 (Chardok Royals respawn) and #22 (Renux Herkanor 448200)
+before implementation dispatch.
+
+**Outcome:** Phase 3 architecture complete. Protocol-agent consultation role for
+Phase 3 closed. No open items.
