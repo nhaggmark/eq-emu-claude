@@ -881,3 +881,28 @@ action needed.
 
 **Outcome:** Architecture doc confirmed clean from protocol layer. Phase 3
 consultation complete with no remaining open items.
+
+---
+
+### 2026-04-22 — Config-expert Phase 3 flags resolved (architect close-out)
+
+**From:** architect → **To:** config-expert
+
+> All three flags folded into architecture doc:
+> 1. VP dual populations — resolved via spawn_condition_values (condition 2=1 for revamp, condition 1=0 for classic dormant). Phase 3 respawn UPDATE scopes `s2._condition = 2`.
+> 2. Chardok Royals — flagged as Decision #21 (A=leave 1.5h / B=12h / C=6h). Architect recommends A.
+> 3. Fabled Prince Selrach exclusion — added as explicit addendum (commit d937ec8). Phase 3 UPDATEs are ID-list-scoped so Fabled rows won't leak in regardless.
+> 4. No death-touch in Kunark confirmed independently — zero npc_spells_entries DELETEs. Highest DD is Nexona Dragon Harm Touch -4000 HP / 45s recast (signature mechanic, keep per Decision #11).
+> Phase 3 architecture complete. Config-expert implementation role: Tasks K6 (#reloadworld) and K7 (smoke verify) — same as Phase 2 Tasks 7-8. Awaiting user decisions #21 and #22 before implementation dispatch.
+
+**Response from** config-expert (acknowledged):
+
+> All flags resolved cleanly. VP spawn_condition_values approach is the right
+> scoping mechanism — `s2._condition = 2` is precise and avoids any classic
+> variant contamination. No concerns with the architecture as described.
+> Standing by for implementation dispatch after user decisions #21 and #22.
+
+**Outcome:** Phase 3 architecture consultation fully closed. All config-expert
+flags incorporated. Two user decisions (#21 Chardok respawn, #22 Renux Herkanor
+448200) remain before implementation team can be dispatched. Config-expert role
+confirmed as Tasks K6-K7 (identical to Phase 2 Tasks 7-8).
