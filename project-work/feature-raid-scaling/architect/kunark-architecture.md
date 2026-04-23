@@ -304,6 +304,7 @@ Data-expert should produce a single SQL reference document at
 | Faydedar duplicate #Faydedar 96073 is a legacy artifact, not a live encounter — scaling has no effect | Medium | None | Safe no-op. Consistent with main Faydedar for future-proofing. |
 | Drusella Sathir 15,750 HP is already named-tier — no change is the right call, not a gap | — | Nil | Per audit, leave as-is. Included in backup for rollback safety only. |
 | Kilidna damage cut to 1,000 breaks Paladin/SK epic pathing through CoM — she's meant to be a hazard | None | Nil | She is still a hazard with 1,000 max damage; just not an automatic one-shot. Passing her without engaging remains the recommended route. Lore-master flagged Kilidna as a "navigation hazard, not a required kill." |
+| VP door-gate script (`veeshan/player.pl`) re-checks entity presence live at click time; if a VP outer dragon is `#depopclose`'d or GM-depopped mid-fight (not killed), door-gate treats it as "dead" for gating purposes | Pre-existing | Nil | **Not introduced by Phase 3.** HP scaling does not affect this edge case. Normal kill path (dragon killed → entity removed → door opens) works correctly. Flagged for record only per protocol-agent final review. |
 | Backup tables occupy disk space | Near zero | Nil | ~50KB combined. Accept. |
 | VP revamp dragons have diverse special_abilities (SEFQMCNIDf, SERFTUMCNIDfm for GoV) and we're not editing them — does Decision #11 hold? | None | Nil | Decision #11: preserve signature mechanics, scale HP/damage to compensate. This plan does exactly that. |
 
