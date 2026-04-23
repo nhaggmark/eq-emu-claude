@@ -1,6 +1,6 @@
 # Chelon Spell Scroll Loadout
 
-**Date:** 2026-04-22 (v2 — combat-priority reorder)
+**Date:** 2026-04-22 (v3 — overflow second pass)
 **Character:** Chelon (character_id=6, class=14 Enchanter, level=52)
 **Branch:** feature/raid-scaling
 
@@ -35,6 +35,157 @@ excluded from the 90 slots.
 
 - **v1 (2026-04-22):** Initial insert ordered by level_req ASC, name ASC — first 90 slots filled with illusion scrolls (42 illusion/cosmetic before any combat spell)
 - **v2 (2026-04-22):** Reversed v1 and reloaded with combat-priority ordering — all illusion/cosmetic scrolls pushed to overflow
+- **v3 (2026-04-22):** Second pass — loaded 77 overflow scrolls into Chelon's existing bags after she modified her bag layout. Bags were completely replaced with era-appropriate containers (Backpacks x7, Kavruul's Mystic Pouch x1) plus original Pouch of Quellious retained in slot 22. 64 of 77 overflow scrolls inserted; 13 illusion scrolls remain uninserted (all bags now full).
+
+## Second Pass: Overflow Load (v3)
+
+### Chelon's Bag Layout at Time of Pass 2
+
+Chelon had modified her bags between v2 and v3. Inventory state at start of pass 2:
+
+| Bag Slot | Container | Slots | Free Before | Action |
+|----------|-----------|-------|-------------|--------|
+| 22 | (empty — no bag) | — | 0 | Added Pouch of Quellious to adopt 10 orphaned v2 scrolls |
+| 23 | Backpack (17005) | 8 | 8 | Filled with overflow scrolls |
+| 24 | Backpack (17005) | 8 | 8 | Filled with overflow scrolls |
+| 25 | Backpack (17005) | 8 | 8 | Filled with overflow scrolls |
+| 26 | Light Burlap Sack (17353) | 8 | 8 | Filled with overflow scrolls |
+| 27 | Backpack (17005) | 8 | 8 | Filled with overflow scrolls |
+| 28 | Backpack (17005) | 8 | 8 | Filled with overflow scrolls |
+| 29 | Backpack (17005) | 8 | 8 | Filled with overflow scrolls |
+| 30 | Kavruul's Mystic Pouch (17701) | 10 | 8 | Filled with overflow scrolls (2 slots taken by food/water) |
+
+Notes:
+- Slot 22 had no bag container, leaving the 10 v2 mana-regen scrolls at 3810-3819 orphaned (no parent bag). A Pouch of Quellious was added to slot 22 to adopt them.
+- Chelon's spellbook grew from 119 to 194 spells between v2 and v3 (scribed 75 spells).
+- None of the 77 overflow spells were scribed between v2 and v3.
+
+### Overflow Scrolls Inserted in Pass 2 (64 total)
+
+**Bag23 (slots 4010-4017) — Focus high-level:**
+
+| Slot | Spell | Level |
+|------|-------|-------|
+| 4010 | Focus Spellcaster's Empowering Essence | 50 |
+| 4011 | Focus Mass Simple Spellcaster's Empowering Essence | 49 |
+| 4012 | Focus Simple Spellcaster's Empowering Essence | 45 |
+| 4013 | Focus Mass Modest Spellcaster's Empowering Essence | 39 |
+| 4014 | Focus Modest Spellcaster's Empowering Essence | 35 |
+| 4015 | Wuggan's Greater Discombobulation | 34 |
+| 4016 | Wuggan's Greater Extrication | 34 |
+| 4017 | Wuggan's Greater Appraisal | 33 |
+
+**Bag24 (slots 4210-4217) — Focus mid + Wuggan's:**
+
+| Slot | Spell | Level |
+|------|-------|-------|
+| 4210 | Focus Mass Elementary Spellcaster's Empowering Essence | 29 |
+| 4211 | Focus Elementary Spellcaster's Empowering Essence | 25 |
+| 4212 | Wuggan's Discombobulation | 24 |
+| 4213 | Wuggan's Extrication | 24 |
+| 4214 | Wuggan's Appraisal | 23 |
+| 4215 | Focus Mass Crude Spellcaster's Empowering Essence | 20 |
+| 4216 | Focus Mass Makeshift Spellcaster's Empowering Essence | 20 |
+| 4217 | Focus Mass Primitive Spellcaster's Empowering Essence | 20 |
+
+**Bag25 (slots 4410-4417) — Focus low + Wuggan's Lesser + Mass Enchant low:**
+
+| Slot | Spell | Level |
+|------|-------|-------|
+| 4410 | Focus Mass Rudimentary Spellcaster's Empowering Essence | 20 |
+| 4411 | Focus Crude Spellcaster's Empowering Essence | 16 |
+| 4412 | Focus Makeshift Spellcaster's Empowering Essence | 16 |
+| 4413 | Focus Primitive Spellcaster's Empowering Essence | 16 |
+| 4414 | Focus Rudimentary Spellcaster's Empowering Essence | 16 |
+| 4415 | Wuggan's Lesser Discombobulation | 14 |
+| 4416 | Wuggan's Lesser Extrication | 14 |
+| 4417 | Wuggan's Lesser Appraisal | 13 |
+
+**Bag26 (slots 4610-4617) — Mass Enchant low-tier + Illusions (combat-useful):**
+
+| Slot | Spell | Level |
+|------|-------|-------|
+| 4610 | Greater Mass Enchant Silver | 11 |
+| 4611 | Mass Enchant Clay | 8 |
+| 4612 | Mass Enchant Silver | 7 |
+| 4613 | Illusion: Guktan | 52 |
+| 4614 | Illusion: Scaled Wolf | 44 |
+| 4615 | Illusion: Werewolf | 42 |
+| 4616 | Illusion: Spirit Wolf | 38 |
+| 4617 | Illusion: Dry Bone | 37 |
+
+**Bag27 (slots 4810-4817) — Illusions:**
+
+| Slot | Spell | Level |
+|------|-------|-------|
+| 4810 | Illusion: Fire Elemental | 33 |
+| 4811 | Illusion: Drakkin of Draton'ra | 30 |
+| 4812 | Illusion: Drakkin of Osh'vir | 30 |
+| 4813 | Illusion: Arcane Scrykin | 1 |
+| 4814 | Illusion: Aviak Rook | 1 |
+| 4815 | Illusion: Banshee (27717) | 1 |
+| 4816 | Illusion: Banshee (27735) | 1 |
+| 4817 | Illusion: Barraki | 1 |
+
+**Bag28 (slots 5010-5017) — Illusions:**
+
+| Slot | Spell | Level |
+|------|-------|-------|
+| 5010 | Illusion: Bixie Drone | 1 |
+| 5011 | Illusion: Bixie Queen | 1 |
+| 5012 | Illusion: Blood Runed Gargoyle | 1 |
+| 5013 | Illusion: Brownie | 1 |
+| 5014 | Illusion: Brownie Noble | 1 |
+| 5015 | Illusion: Butterfly | 1 |
+| 5016 | Illusion: Centaur | 1 |
+| 5017 | Illusion: Corrupted Shiliskin | 1 |
+
+**Bag29 (slots 5210-5217) — Illusions:**
+
+| Slot | Spell | Level |
+|------|-------|-------|
+| 5210 | Illusion: Crystal Golem | 1 |
+| 5211 | Illusion: Crystalline Sessiloid | 1 |
+| 5212 | Illusion: Crystalline Trichordont | 1 |
+| 5213 | Illusion: Drachnid | 1 |
+| 5214 | Illusion: Eagle Aviak | 1 |
+| 5215 | Illusion: Embattled Minotaur | 1 |
+| 5216 | Illusion: Fairy | 1 |
+| 5217 | Illusion: Frost Goblin | 1 |
+
+**Bag30 free slots (5412-5419, slots 0-1 taken by food/water) — Illusions:**
+
+| Slot | Spell | Level |
+|------|-------|-------|
+| 5412 | Illusion: Gelatinous Cube | 1 |
+| 5413 | Illusion: Gelidran | 1 |
+| 5414 | Illusion: Gnomish Pirate | 1 |
+| 5415 | Illusion: Gunthak Pirate | 1 |
+| 5416 | Illusion: Hideous Harpy | 1 |
+| 5417 | Illusion: Hooded Scrykin | 1 |
+| 5418 | Illusion: Ice Golem | 1 |
+| 5419 | Illusion: Iksar Skeleton | 1 |
+
+### Still Missing After Pass 2 (13 scrolls — all bags full)
+
+All 13 are level 1 illusion scrolls. None are needed for any raid content.
+To insert these, Chelon needs to free up or add bag space.
+
+| Spell ID | Spell Name | Item ID |
+|----------|------------|---------|
+| 27710 | Illusion: Kobold King | 57325 |
+| 27744 | Illusion: Ogre Pirate | 57358 |
+| 27731 | Illusion: Primal Kerran | 57346 |
+| 27715 | Illusion: Pyrilen | 57330 |
+| 27727 | Illusion: Raptor Predator | 57342 |
+| 27742 | Illusion: Recluse Spider | 57356 |
+| 37869 | Illusion: Silver Gnomework | 117702 |
+| 27723 | Illusion: Siren Enticer | 57338 |
+| 27740 | Illusion: Snow Kobold | 57354 |
+| 27702 | Illusion: Spectre | 57317 |
+| 27730 | Illusion: Spirited Satyr | 57345 |
+| 27746 | Illusion: Vitrik | 57360 |
+| 32200 | Visage of the Daft Trickster | 64579 |
 
 ## Bags Inserted
 
