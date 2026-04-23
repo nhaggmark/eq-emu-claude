@@ -699,3 +699,49 @@ findings (no rule exists, backup pattern, rampage as special_abilities CSV) rema
 
 **Outcome:** Phase 3 protocol consultation complete. Architect cleared to proceed
 with Kunark architecture plan without protocol blockers.
+
+---
+
+### 2026-04-22 — architect Q&A: Phase 3 Kunark scope questions
+
+**From:** architect  
+**To:** protocol-agent  
+**Date:** 2026-04-22
+
+Three questions on Phase 3 Kunark scope (Trakanon variants, VP revamp IDs
+108040-108053, epic-adjacent NPCs, chardok/outdoor dragons):
+
+1. Any client-visibility concerns with HP scaling (e.g. Trakanon 454k → 50-70k)?
+2. VP revamp variants (108040-108053) — any Titanium model/size/packet quirk?
+3. Script-spawned NPC variants inheriting modified npc_types values — any concern?
+
+---
+
+**From:** protocol-agent  
+**To:** architect  
+**Date:** 2026-04-22
+
+All three questions: no concerns. Full answers:
+
+**Q1:** `MobHealth` sends integer 0-100 percentage only. `NewSpawn_Struct.curHp` is
+uint8 percentage. `/consider` is level-derived. `npc_types.hp` is bigint(20) — no
+overflow. HP scaling from any value is invisible to the Titanium client. Confirmed.
+
+**Q2:** VP dragon race IDs are standard Titanium-era models. NPC IDs (108040-108053)
+are internal server values — never appear in any client packet (entity IDs are used
+in-zone). `NewSpawn_Struct` size is fixed regardless of NPC stats. No DZ/instance
+protocol — VP is standard open zone with `OP_MoveDoor` door-gate (already confirmed
+in Phase 3 pre-consultation). No Titanium-specific quirk.
+
+**Q3:** `quest::spawn2(npc_id)` reads `npc_types` from the zone's in-memory cache
+(populated at boot / `#reloadworld`). Script-spawn path uses the same NPC construction
+codepath as static spawns. Client sees a standard `NewSpawn_Struct` event. SQL changes
+to `npc_types` take effect on next script spawn after `#reloadworld`.
+
+**Implication for data-expert:** triggered-only NPCs (no spawn2 table row) silently
+skip `spawn2.respawntime` UPDATEs, but `npc_types.hp`/`maxdmg` UPDATEs still apply
+and take effect on next script spawn. Same pattern as Phase 2 Q13 Enraged Golem.
+
+**Outcome:** All Phase 3 changes remain SQL-only. No opcode additions, struct changes,
+or Titanium translation layer changes needed. Architect cleared to proceed with
+`kunark-architecture.md`.
