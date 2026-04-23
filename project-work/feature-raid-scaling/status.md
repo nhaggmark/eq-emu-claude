@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/raid-scaling`
 > **Created:** 2026-04-21
-> **Last updated:** 2026-04-22
+> **Last updated:** 2026-04-23
 
 ---
 
@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert | Complete (Phase 2 scope) | 2026-04-22 | 2026-04-22 |
-| Implementation | _implementation team_ | In Progress — Tasks 1-8 complete; Task 9 conditional on in-game PoSky observation; ready for game-tester validation | 2026-04-22 | |
-| Validation | game-tester | In Progress — Server-side PASS WITH NOTES. In-game testing guide produced; awaiting user execution. | 2026-04-22 | |
-| Completion | _user_ | Not Started | | |
+| Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) — Tasks 1-9 all applied; SQL committed; full-stack restart executed to flush zone caches | 2026-04-22 | 2026-04-23 |
+| Validation | game-tester + user | Complete (Phase 2 Classic) — Server-side PASS; user in-game spot-check: Lady Vox PASS; remaining tests deferred per user decision | 2026-04-22 | 2026-04-23 |
+| Completion | _user_ | Phase 2 Classic era Complete 2026-04-23 — proceeding to Phase 3 Kunark | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 2 (Classic) Validation. Server-side validation complete (PASS WITH NOTES). In-game testing guide ready — user must execute. Awaiting in-game results before marking Validation Complete.
+**Current phase:** Phase 2 (Classic) complete. Phase 3 (Kunark) Architecture starting — architect + protocol-agent + config-expert spawned. Scope: Trakanon, Veeshan's Peak revamp bosses, Kunark epic steps, Q13 Kunark triggered-spawn NPCs (Xenevorash, Renux Herkanor multi-ID, Vessel Drozlin, Thrackin Griften, Caradon+Kyrenna, Mummy of Glohnor, Tortured Soul, triggered Trakanon).
 
 ---
 
@@ -48,8 +48,8 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase | Scope | Status |
 |-------|-------|--------|
 | Phase 1 — Audit | All raid bosses + raid quest chains catalogued with scaling status | **Complete 2026-04-21** |
-| Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | Not Started |
-| Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | Not Started |
+| Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | **Complete 2026-04-23** |
+| Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | In Progress — Architecture starting 2026-04-23 |
 | Phase 4 — Velious | NToV, ToV, Kael, Sleeper's Tomb, AoW, Velious dragons | Not Started |
 | Phase 5 — Luclin | Ssraeshza, Vex Thal, Luclin raid content | Not Started |
 
