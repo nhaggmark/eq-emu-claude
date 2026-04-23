@@ -548,6 +548,117 @@ Key source refs:
 - `eq.unique_spawn()` — standard NewSpawn_Struct to client
 - `thurgadinb` — standard static zone, not DZ/instance
 
-Phase 4b (Velious ToV+Sleeper+Vulak) and Phase 5 (Luclin VT+Shards) warrant
-re-consultation — particularly Sleeper's Tomb (permanent server state change on Warder
-kills) and VT key shard event mechanics.
+Phase 4b (Velious ToV+Sleeper+Vulak) — consultation complete 2026-04-22.
+Phase 5 (Luclin VT+Shards) warrants re-consultation when architect starts.
+
+---
+
+## Phase 4b: Velious ToV + Sleeper + Vulak + AoW Protocol Consultation (2026-04-22)
+
+**Scope:** templeveeshan (16 dragon lords + 12 mid-tier named), sleeper (5 Ancients +
+4 Warders + Progenitor + Final Arbiter + Master of the Guard + Milas An`Rev),
+kael AoW (113457), Vulak`Aerr (124155, script-spawned).
+
+**Summary finding: Phase 4b is fully server-side. Zero client protocol impact.**
+Same conclusion as Phases 2, 3, and 4a. Detailed findings below.
+
+### Files Examined
+
+| File | What You Found |
+|------|----------------|
+| `akk-stack/server/quests/templeveeshan/player.lua` | Illegal-bind guard only — no DZ/expedition logic |
+| `akk-stack/server/quests/sleeper/script_init.lua` | Loads `motg` encounter only — no DZ/expedition |
+| `akk-stack/server/quests/sleeper/#Hraashna_the_Warder.pl` | EVENT_DEATH_COMPLETE checks entity_list for other 3 Warders; signalwith(128094,66,0) only if all 4 dead |
+| `akk-stack/server/quests/sleeper/#Nanzata_the_Warder.pl` | Same pattern as Hraashna — signalwith(128094,66,0) conditional on all-4-dead |
+| `akk-stack/server/quests/sleeper/#Ventani_the_Warder.pl` | Same pattern |
+| `akk-stack/server/quests/sleeper/#Tukaarak_the_Warder.pl` | Same pattern |
+| `akk-stack/server/quests/sleeper/#The_Sleeper.pl` | EVENT_SIGNAL(66): depop_withtimer + spawn2(128089) — spawns #Kerafyrm |
+| `akk-stack/server/quests/sleeper/#Kerafyrm.pl` | EVENT_SPAWN: setglobal("kerafyrm",1,7,"F"), spawn_condition(sleeper,2,1), spawn_condition(sleeper,1,0), forcedooropen(46), timer→spawn2(128095) |
+| `akk-stack/server/quests/sleeper/#Kerafyrm_.pl` | Roaming form (128095); setglobal("kerafyrm",2/3) on zone/death |
+| `akk-stack/server/quests/sleeper/#Kildrukaun_the_Ancient.pl` | Checks entity_list for Kerafyrm on spawn — depops itself if Kerafyrm already up |
+| `akk-stack/server/quests/sleeper/encounters/motg.lua` | Master of the Guard (128145) add-wave script — signal-driven sentry spawns |
+| `akk-stack/server/quests/templeveeshan/#Vulak-Aerr.pl` | EVENT_AGGRO only: adds NPC 124157 to hate list — no spawn chain |
+| `akk-stack/server/quests/templeveeshan/#Thylex_of_Veeshan.pl` | Vulak coordinator: checks 6 lords (124077/76/08/10/74/17) all dead, then spawn2(124155) + setglobal("vulak") |
+| grep: DZ/expedition across both zone dirs | Zero hits — no DZ, no expedition in either zone |
+
+### Finding 1: ToV + Sleeper's Tomb — Standard Static Zones
+
+Both `templeveeshan` and `sleeper` are standard persistent static zones. No
+`MovePCDynamicZone`, `expedition` API call, `DynamicZone`, or `ServerOP_Expedition*`
+anywhere in either zone's scripts. Entry is via standard `ZoneChange_Struct` →
+`ZoneServerInfo_Struct` flow — identical to Phase 4a kael/skyshrine.
+
+ToV: unkeyed entry (L46+ CoV faction). Sleeper's Tomb: key item gates door access,
+but no script enforces it at zone-entry level. Normal `#reloadworld` / repop refresh
+applies to both zones.
+
+### Finding 2: Kerafyrm / Sleeper Awake Event — Behavioral Gate Only
+
+The awakening chain is triggered exclusively by gameplay kills. Exact flow:
+
+1. Any Warder death → `EVENT_DEATH_COMPLETE` → entity_list check (other 3 Warders dead?)
+2. If and only if all 4 dead → `quest::signalwith(128094, 66, 0)` to `#The_Sleeper`
+3. `#The_Sleeper` `EVENT_SIGNAL(66)` → `quest::depop_withtimer()` + `quest::spawn2(128089)` (#Kerafyrm)
+4. `#Kerafyrm` `EVENT_SPAWN` → `setglobal("kerafyrm",1,7,"F")` + `spawn_condition` flips + `forcedooropen(46)` + 1s timer → `spawn2(128095)` (#Kerafyrm_)
+
+Client-visible packets: `OP_MoveDoor` (forcedooropen), `NewSpawn_Struct` (spawn2),
+`DeleteSpawn_Struct` (depop). All standard.
+
+**Scaling Warder HP emits zero awakening-related packets.** Gate is behavioral (kill
+condition), not stat-based. Decision #12 is safe — HP scaling cannot accidentally
+trigger awakening.
+
+### Finding 3: Vulak`Aerr Summoning — Entity-Presence Check
+
+Implemented in `#Thylex_of_Veeshan.pl`. On spawn, Thylex sets a 60s timer. On timer
+fire, checks `GetMobByNpcTypeID()` for six lords (124077, 124076, 124008, 124010,
+124074, 124017). If all absent AND qglobal `vulak` not set AND Vulak not spawned:
+`quest::spawn2(124155, ...)` fires, Thylex depops.
+
+Client sees: standard `NewSpawn_Struct` for Vulak. No altar-click opcode, no DZ.
+Presence check is entity-based (not HP-based) — Phase 4b HP scaling on these 6 lords
+does not affect the Vulak summoning chain. Same pattern as VP door-gate (Phase 3).
+
+**Flag for architect:** Thylex_of_Veeshan is not in the boss catalog and is not a kill
+target. Exclude from HP scaling SQL. Consider noting its coordinator role — if killed
+by AoE before its timer fires, Vulak does not spawn that cycle.
+
+### Finding 4: AoW Chain Closure — No New Concern
+
+AoW (113457) spawned by `#The_Idol_of_Rallos_Zek.lua` `event_death_complete` →
+`eq.unique_spawn(113457, ...)`. Client sees `NewSpawn_Struct`. Phase 4b scaling AoW
+completes the Kael chain. Same pattern confirmed safe in Phase 4a.
+
+### Finding 5: MobHealth Percentage — Ultra-High HP No-Op on Wire
+
+`hp = (int)GetHPRatio()` — 0-100 percentage. Kerafyrm (3.5M untouched) and Jaled
+Dar's Shade (3M untouched) are wire-identical to a 30k named mob. No overflow risk:
+`npc_types.hp` is `bigint(20)`.
+
+### Finding 6: Vyemm MR=1000 — Server-Side Only
+
+`MR` is a `npc_types` column used in server-side spell resist calculation only. Client
+never receives NPC resist values — sees only combat result packets. MR=1000 invisible
+on wire. No client display concern.
+
+### Finding 7: No Zone-Specific Titanium Quirks
+
+No zone-specific protocol quirks in `templeveeshan` or `sleeper`. `player.lua`'s
+MovePC on illegal bind sends standard zone-change traffic. No exotic opcodes.
+
+### Phase 4b Protocol Summary
+
+| Concern | Verdict |
+|---------|---------|
+| ToV / ST zone type | Standard static — no DZ/expedition |
+| Warder HP scaling triggering awakening | Impossible — behavioral kill gate only |
+| Kerafyrm awakening chain on wire | OP_MoveDoor + NewSpawn + DeleteSpawn — all standard |
+| Vulak summoning | Entity presence check + NewSpawn_Struct — same as VP/AoW pattern |
+| Vulak HP scaling vs summoning chain | Safe — check is entity presence, not HP |
+| AoW chain closure | No new protocol concern |
+| Ultra-high HP wire format (3.5M) | Percentage-only, no impact |
+| Vyemm MR=1000 | Server-side only, invisible to client |
+| Zone-specific Titanium quirks | None found |
+
+**No Phase 4b changes require opcode additions, struct modifications, or Titanium
+translation layer changes. Phase 4b is 100% server-side (SQL), same as Phases 2, 3, 4a.**

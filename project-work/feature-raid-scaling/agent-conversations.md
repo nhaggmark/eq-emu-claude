@@ -1310,3 +1310,59 @@ exclusion safety check (must remain at 900k/890k HP respectively).
 
 **Outcome:** Awaiting config-expert reload + smoke verify response.
 
+---
+
+## Architecture Team Conversations (Phase 4b Velious ToV + Sleeper + Vulak + AoW)
+
+### 2026-04-22 — architect → protocol-agent: Phase 4b feasibility consult
+
+**From:** architect → **To:** protocol-agent
+
+**Summary:** Architect requested Phase 4b protocol consultation on 7 questions:
+1. ToV / Sleeper's Tomb — static zone or DZ/Expedition?
+2. Kerafyrm / Sleeper Awake event isolation — can Warder HP scaling accidentally trigger it?
+3. Vulak`Aerr altar-summon event — any client protocol concerns?
+4. AoW chain closure — Phase 4b completing Statue→Idol→AoW staggered scaling safe?
+5. MobHealth percentage behavior for ultra-high HP (Kerafyrm 3.5M untouched)
+6. Vyemm MR=1000 + special_abilities flag 42 — client visibility concern?
+7. Any Titanium-era protocol quirks for `sleeper` / `templeveeshan` zones?
+
+**From:** protocol-agent → **To:** architect
+
+**Summary:** All 7 questions answered from source examination of quest scripts and
+prior protocol topography work. Key findings:
+
+1. **ToV + ST: standard static zones.** Grep of all scripts in both zone dirs: zero
+   hits for DZ/expedition APIs. Entry via standard `ZoneChange_Struct` → `ZoneServerInfo_Struct`.
+   Same `#reloadworld` / repop refresh applies as Phase 4a zones.
+
+2. **Kerafyrm awakening: behavioral gate only. HP scaling cannot trigger it.**
+   All 4 Warder scripts (`#Hraashna`, `#Nanzata`, `#Ventani`, `#Tukaarak`) check
+   `entity_list` to confirm all 4 are dead before calling `quest::signalwith(128094, 66, 0)`.
+   The signal chain (`#The_Sleeper` → `quest::spawn2(128089)` → `#Kerafyrm`) fires only
+   on actual gameplay kills. Client-visible packets are standard: `OP_MoveDoor` (door 46),
+   `NewSpawn_Struct`, `DeleteSpawn_Struct`. Decision #12 is fully safe.
+
+3. **Vulak summoning: entity-presence check, not altar items.**
+   `#Thylex_of_Veeshan.pl` checks `GetMobByNpcTypeID()` for 6 specific lords (124077,
+   124076, 124008, 124010, 124074, 124017) all being absent, then `quest::spawn2(124155)`.
+   Client sees standard `NewSpawn_Struct`. HP scaling on those 6 lords does not affect
+   the presence check. Thylex_of_Veeshan is not a kill target — flag for architect to
+   exclude from scaling SQL.
+
+4. **AoW chain closure: no new concern.** Same `eq.unique_spawn()` / `event_death_complete`
+   pattern confirmed safe in Phase 4a.
+
+5. **MobHealth ultra-high HP: percentage-only, no wire impact.** Confirmed from mob.cpp:1500.
+
+6. **Vyemm MR=1000: server-side only.** `MR` column never sent to client. Invisible on wire.
+
+7. **No zone-specific Titanium quirks** in either zone. Standard static-zone flows.
+
+**Overall verdict:** Phase 4b is 100% server-side (SQL). Zero opcode additions, zero
+struct changes, zero Titanium translation layer changes. Same conclusion as Phases 2, 3, 4a.
+
+**Outcome:** Architect has full protocol clearance for Phase 4b. Thylex_of_Veeshan flagged
+as coordinator NPC to exclude from scaling SQL. Full findings in
+`protocol-agent/dev-notes.md` Phase 4b section.
+
