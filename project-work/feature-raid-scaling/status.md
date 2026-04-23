@@ -234,29 +234,33 @@ _Record each handoff between agents with context and any notes._
   - Appendix in main doc includes Phase 4b deferred list (AoW, ToV proper, Sleeper,
     Vulak) and future user-decision flags (faction grind, Ring 8/9 UX)
 - **Key decisions made during architecture:**
-  - **Architect Q8 recommendation: Option B+ wave-skip** (pending lore-master final OK).
-    Modify `Master_Timer` in `ring_war.lua` to advance `current_spawn_condition` by 2
-    (with Narandi clamp at 16). Halves total wave giant count (~190 → ~95) while
-    preserving 5-min cadence and event identity. Two-line Lua edit.
-  - **100% SQL + 1 Lua file** implementation. Three tables touched: `npc_types`
-    (~35 UPDATEs), `spawn2` (~14-16 UPDATEs), backup tables. **No** `npc_spells_entries`
-    changes (death-touch sweep returned zero rows).
+  - **Q8 resolution (lore-master-endorsed, supersedes my original draft):** Option D =
+    Lever 1 (SQL wave-mob HP cuts — 8 Kromrif IDs exclusive to greatdivide conditions
+    3-15 + Seneschal 10k→30k bump) + conditional Lever 2 (one-line `wave_cooldown_time`
+    5min→8min Lua edit, invoked only if game-tester shows Lever 1 insufficient).
+    Preserves all 13 waves + Narandi. Event duration ~45-90 min.
+  - **Default: 100% SQL** (Lever 1 only). Three tables touched: `npc_types`
+    (~44 UPDATEs incl. 8 Kromrif wave mobs + Seneschal), `spawn2` (~14-16 UPDATEs),
+    backup tables. **No** `npc_spells_entries` changes (death-touch sweep returned zero
+    rows). **Conditional:** 1 Lua file edit only if Lever 2 triggered.
   - **Lord Yelinak dual scaling** — both 114106 (500k→110k) and 114618 (297k→110k).
   - **Event-trigger NPCs and Jaled Dar's Shade left untouched** — quest-NPC / event-control
     design per lore-master and audit. Protocol-agent confirmed no client-visibility issue.
-  - **First phase with lua-expert in implementation team.** Phases 2-3 were
-    data-expert + config-expert + (conditional) infra-expert. Phase 4a adds lua-expert.
-- **FOUR USER DECISIONS RAISED (#23-26):**
-  - **#23 Coldain Ring War lever** — architect Option B+; awaiting lore-master final
+  - **lua-expert is CONDITIONAL only** (Lever 2 fallback). Default Phase 4a team
+    is data-expert + config-expert (identical to Phases 2/3). lua-expert invoked only
+    after game-tester validation + user approval.
+- **FIVE USER DECISIONS RAISED (#23-27):**
+  - **#23 Coldain Ring War lever** — **lore-master-endorsed Option D** (Lever 1 SQL + Lever 2 fallback). Architect now recommends Option D.
   - **#24 Yelinak duplicates** — architect recommends scale both to 110k
   - **#25 Faction grind acceleration** — architect recommends out-of-Phase-4a
   - **#26 Ring 8/9 UX softening** — architect recommends out-of-Phase-4a
+  - **#27 Plane of Mischief Jester inclusion** — lore-master recommends exclude; architect defers to user
 - **Protocol-agent Phase 4a consultation confirmed** zero client impact (logged 2026-04-22).
 - **Config-expert Phase 4a consultation confirmed** no rule changes needed, all prior-pass
   globals unchanged, no zone-scoped rulesets (logged 2026-04-22).
-- **Lore-master Q8 consultation** in-flight as of 2026-04-23.
-- **Required agents for implementation:** data-expert (primary), lua-expert (new to Phase 4a),
-  config-expert (reload + smoke), infra-expert (conditional restart).
+- **Lore-master Q8 re-engagement complete 2026-04-23** — Option D (Lever 1 + conditional Lever 2) adopted.
+- **Required agents for implementation (default path):** data-expert (primary), config-expert
+  (reload + smoke). lua-expert and infra-expert are CONDITIONAL fallback only.
 - **NOT needed:** c-expert, perl-expert, protocol-agent (already advised).
 - **Ready for:** user decisions #23-#26 → then implementation team dispatch (includes
   lua-expert for first time in raid-scaling project).
@@ -304,17 +308,17 @@ _Populated by the architect for Phase 4a (Velious non-ToV). Awaiting user decisi
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| V1 | Build backup tables `npc_types_backup_raid_scaling_velious_a` (33 rows) and `spawn2_backup_raid_scaling_velious_a` (~35-40 rows); emit SQL reference doc structure | data-expert | **Not Started** | Mirrors Phase 3 pattern with `_velious_a` suffix |
-| V2 | Emit per-boss HP/damage UPDATE SQL (~35 Velious non-ToV bosses: Kael 4 + Skyshrine 6 + PoG 9 + Jester + WW dragons 3 + Velketor pair + Kelorek + WW trim 3 + Sirens 2 + Narandi + Dain + Chamberlain + Taskmaster + Wuoshi + Lodizal) | data-expert | **Not Started** | Commit to `data-expert/context/phase4a-velious-a-implementation.sql` |
-| V3 | Emit `spawn2.respawntime` UPDATE SQL (12h for ~15 mid-tier bosses; skip already-short; skip Narandi condition-gated) | data-expert | **Not Started** | Mirror Phase 3 pattern |
-| V4 | Emit rollback script (INSERT…SELECT from backup tables, transactional) + verification queries | data-expert | **Not Started** | Mirror `06-kunark-rollback.sql` pattern |
-| V5 | Backup `ring_war.lua` (cp with `_velious_a` suffix OR rely on git revertibility) | lua-expert | **Not Started** | First phase with a Lua script change |
-| V6 | Edit `akk-stack/server/quests/greatdivide/encounters/ring_war.lua` — modify `Master_Timer` per Decision #23 resolution (architect recommends wave-skip +2 advance with Narandi clamp at 16) | lua-expert | **Not Started** | Pending Decision #23 resolution |
-| V7 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase4a-velious-a-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | — |
-| V8 | `#reloadworld` + `#reloadquests` via Spire or world telnet port 9000 | config-expert | **Not Started** | Quest script reload needed for Ring War Lua change |
-| V9 | Smoke verify: Kael bosses HP, Skyshrine Yelinak duals at 110k, Tunare 150k, outdoor dragons 35-40k, Ring War script contains `current_spawn_condition + 2`, respawn 12h applied to correct IDs | config-expert | **Not Started** | — |
-| V10 | Full-stack restart (conditional) if `#reloadquests` doesn't propagate ring_war.lua changes | infra-expert | **Not Started** | Encounter scripts sometimes need zone restart for re-registration |
-| V11 | Commit + push `claude/` + `akk-stack/` repo changes (architecture doc, context files, status, SQL, modified ring_war.lua) to `feature/raid-scaling` branch | data-expert | **Not Started** | — |
+| V1 | Build backup tables `npc_types_backup_raid_scaling_velious_a` (42 rows incl. 8 Kromrif + Seneschal) and `spawn2_backup_raid_scaling_velious_a` (~35-40 rows); emit SQL reference doc structure | data-expert | **Not Started** | Mirrors Phase 3 pattern with `_velious_a` suffix |
+| V2 | Emit per-boss HP/damage UPDATE SQL (~35 Velious non-ToV bosses: Kael 4 + Skyshrine 6 + PoG 9 + Jester (pending Decision #27) + WW dragons 3 + Velketor pair + Kelorek + WW trim 3 + Sirens 2 + Dain + Chamberlain + Taskmaster + Wuoshi + Lodizal) | data-expert | **Not Started** | Commit to `data-expert/context/phase4a-velious-a-implementation.sql` |
+| V3 | Emit Ring War Lever 1 SQL (8 Kromrif wave-mob HP cuts + Seneschal Aldikar 10k→30k bump + Narandi 150k→45k) | data-expert | **Not Started** | Lore-master-endorsed Q8 resolution. Kromrif IDs confirmed exclusive to greatdivide conditions 3-15. |
+| V4 | Emit `spawn2.respawntime` UPDATE SQL (12h for ~15 mid-tier bosses; skip already-short; skip Narandi condition-gated; Kromrif wave mobs no respawn change) | data-expert | **Not Started** | Mirror Phase 3 pattern |
+| V5 | Emit rollback script (INSERT…SELECT from backup tables, transactional) + verification queries | data-expert | **Not Started** | Mirror `06-kunark-rollback.sql` pattern |
+| V6 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase4a-velious-a-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | — |
+| V7 | `#reloadworld` via Spire or world telnet port 9000 | config-expert | **Not Started** | No `ring_war.lua` edit by default — no `#reloadquests` needed. |
+| V8 | Smoke verify: Kael bosses HP, Skyshrine Yelinak duals at 110k, Tunare 150k, outdoor dragons 35-40k, respawn 12h applied to correct IDs, Kromrif wave-mob HP at Lever 1 targets, Seneschal at 30k | config-expert | **Not Started** | — |
+| V9 | Commit + push `claude/` repo changes (architecture doc, context files, status, SQL) to `feature/raid-scaling` branch. `akk-stack/` untouched unless Lever 2 triggered. | data-expert | **Not Started** | — |
+| V10 | (**CONDITIONAL Lever 2**) IF game-tester validation shows ≥3 consecutive waves overlapping with Lever 1 alone, AND user approves: lua-expert edits `ring_war.lua:26` wave_cooldown_time from 5min to 8min | lua-expert | **Not Started (conditional)** | Fallback only. lua-expert invoked post-validation, not in default dispatch. |
+| V11 | (**CONDITIONAL**) `#reloadquests` via Spire, OR full-stack restart (infra-expert) if `#reloadquests` doesn't propagate Lua script change | config-expert OR infra-expert | **Not Started (conditional)** | Only needed after V10. |
 
 
 ## Open Questions
@@ -398,13 +402,17 @@ _Key decisions made during this feature's development._
 | 21 | Chardok Royals: respawn stays at 1.5h (Option A) | user | 2026-04-23 | Preserve farming cadence; 1.5h was intentional per audit |
 | 22 | Renux Herkanor 448200: include in Phase 3 scaling (Option A) | user | 2026-04-23 | Monk epic Kunark-era terminus must be doable by small group |
 
-| 23 | Coldain Ring War lever — Option B+ (wave-skip) recommended | architect | 2026-04-23 | Preserves event identity (13 wave structure with cadence) while halving DPS burden. Minimal blast radius (2-line Lua edit). Awaiting lore-master final recommendation. |
+| 23 | Coldain Ring War lever — **Option D (Lever 1 SQL wave-mob HP cuts + conditional Lever 2 Lua cooldown bump)** — lore-master-endorsed | architect + lore-master | 2026-04-23 | Lore-master Q8 re-engagement: event has no overall timer, only per-wave cooldowns. SQL HP cuts make each wave tractable while preserving all 13 waves + Narandi + lore-consistent "epic multi-wave defense" feel. 8 Kromrif NPC IDs confirmed exclusive to greatdivide conditions 3-15 (zero static-zone ID-sharing). Narandi 150k→45k + Seneschal 10k→30k bump. Lever 2 (`wave_cooldown_time` 5min→8min at `ring_war.lua:26`) is conditional fallback only if game-tester shows ≥3 waves overlapping. Supersedes my original Option B+ wave-skip draft. |
 | 24 | Lord Yelinak duplicates — scale both (Option A) recommended | architect | 2026-04-23 | DB sweep confirms both 114106 and 114618 are live with independent spawn2 rows. Consistency > partial scaling. |
 | 27 | Phase 4a scope excludes AoW (113457) and Vulak`Aerr (124155); scope limited to non-ToV, non-Sleeper Velious content | architect | 2026-04-23 | Per Decision #4 phased delivery; AoW and ToV proper go to Phase 4b. Idol of Rallos Zek (113341) in scope as part of Kael chain; Statue→Idol→AoW chain completes in 4b. |
 | 28 | Phase 4a introduces first Lua quest-script change in raid-scaling project | architect | 2026-04-23 | Coldain Ring War wave gate cannot be solved by SQL alone (it's a DPS-over-time gate, not a boss-HP gate). Lua change is required. lua-expert added to implementation team for first time. |
 | 29 | No `npc_spells_entries` DELETEs needed for Phase 4a | architect | 2026-04-23 | DB sweep of Phase 4a in-scope bosses' spell lists vs death-touch profile (mana=0, cast_time=0, damage<=-10000): zero rows. Highest 0-cast damage spell is Kelorek Entomb in Ice (-1000, 18s recast) — signature mechanic, not death-touch. Keep per Decision #11. |
 | 30 | Jaled Dar's Shade (3M HP uncombattable turn-in NPC) left untouched | architect | 2026-04-23 | Per lore-master Section 4 (velious-chains.md): intentional quest-NPC design. Client renders HP as percentage so 3M HP is visually indistinguishable from any other full-HP NPC to player. |
 | 31 | Plane of Growth event-trigger NPCs (a_warm_light, a_thifling_focuser, #Lantaric`Dar) left untouched | architect | 2026-04-23 | Per audit and lore-master Section 6 guidance. Event-control NPCs, not kill targets. Protocol-agent confirmed no Titanium client anomaly from L1/1M HP combination. |
+| 32 | **Wave count corrected from 21 to 13** per live script review | architect + lore-master | 2026-04-23 | Phase 1 audit cited P99 wiki's "21 waves" figure. Live `ring_war.lua:9-12` says 13 mob waves + Narandi = 14 conditions. DB confirmed via spawn_conditions 3-16. All Phase 4a docs use 13-wave structure. |
+| 33 | **lua-expert needed CONDITIONALLY only** — Phase 4a default is SQL-only | architect + lore-master | 2026-04-23 | Default Phase 4a implementation team is data-expert + config-expert (identical to Phases 2/3). lua-expert only invoked if Lever 2 (one-line `wave_cooldown_time` edit) is triggered by game-tester validation AND approved by user. This is simpler than my draft (which had lua-expert primary on V5-V6). |
+| 34 | **Kromrif wave-mob HP cuts acceptable under Decision #2** per lore-master Q8 | architect + lore-master | 2026-04-23 | Decision #2 (trash/named untouched) applies to standing-zone content, not scripted event waves. Kromrif wave mobs are event-trash within a raid event. 8 NPC IDs confirmed exclusive to greatdivide conditions 3-15 — zero impact on static zone content. Lore-master explicitly endorses this scoping. |
+| 35 | **Seneschal Aldikar HP bump 10k→30k** — fail prevention | architect + lore-master | 2026-04-23 | Seneschal death fails the Ring War event. At 10k HP, AOE overflow during wave cooldowns could nuke him. 30k HP provides belt-and-suspenders margin. Per lore-master flag (2026-04-23). |
 
 ---
 

@@ -1199,3 +1199,64 @@ Full Phase 4a target value table and SQL sketch in architecture doc.
 **Outcome:** DB layer cleared for implementation dispatch (after Decision #23 resolution
 via lore-master response).
 
+
+---
+
+### 2026-04-23 — architect adopts lore-master Q8 recommendation over original draft
+
+**From:** architect → **To:** lore-master, protocol-agent, config-expert (FYI)
+**Date:** 2026-04-23
+
+Lore-master delivered comprehensive Q8 resolution + Phase 4a sign-off. Architect adopts
+their Lever 1 (SQL wave-mob HP cuts) + conditional Lever 2 (Lua cooldown bump) approach
+over my original Option B+ wave-skip draft.
+
+**Key insights adopted:**
+
+1. **Wave count corrected from 21 to 13.** Phase 1 catalog cited P99 wiki's 21 waves; live
+   `ring_war.lua:9-12` says 13 mob waves + Narandi = 14 conditions. DB confirmed.
+
+2. **No overall event timeout.** Only per-wave 5-min cooldowns. This changes the design
+   space: reducing wave-mob HP to make each wave clearable is viable without breaking
+   event pacing. My draft assumed a time constraint that doesn't exist.
+
+3. **8 Kromrif wave-mob IDs exclusive to greatdivide.** Architect DB sweep confirmed zero
+   ID-sharing with static zone or other zones. Kromrif Captain (118130), Recruit (118160),
+   Warrior (118150), General (118120), Priest (118209), Warlord (118158), Veteran (118156),
+   High Priest (118210). Clean scope.
+
+4. **Seneschal Aldikar HP bump (10k→30k)** — prevents AOE overflow from failing event.
+   Lore-master Flag 2.
+
+5. **Decision #2 (trash/named untouched) applies to standing-zone content, not scripted
+   event waves.** Lore-master endorses Kromrif wave-mob HP cuts.
+
+6. **Prayer Shawl NOT raid-tier** — confirmed my DB + script review finding. 8-shawl chain
+   is turn-in driven; no raid bosses required.
+
+7. **Plane of Mischief Jester (126012) recommended for exclusion** — lore-master flagged
+   as era-boundary. **Decision #27 raised** for user.
+
+8. **Ring 8/9 UX** — lore-master agrees out of Phase 4a scope.
+
+**Architect revised approach:**
+
+- **Default implementation: Lever 1 SQL-only** — extends `npc_types` UPDATE list by 9 rows
+  (8 Kromrif + Seneschal). Same team as Phases 2/3 (data-expert + config-expert). lua-expert
+  moves to CONDITIONAL-only.
+- **Lever 2 conditional fallback** — one-line `ring_war.lua:26` edit only if game-tester
+  validation shows ≥3 consecutive waves overlapping + user approval.
+
+**Implications:**
+- Implementation task count: 9 default tasks (V1-V9), 2 conditional (V10-V11)
+- Implementation team simpler: data-expert + config-expert default; lua-expert+infra-expert
+  conditional-only
+- Event identity preserved: 13 waves, 5-min cadence, lore-consistent "epic multi-wave defense"
+- Event duration ~45-90 min (longer than my draft's ~30-35 min but lore-consistent)
+
+**Architecture doc and status.md updated.** User decisions expanded from #23-26 to #23-27
+(adding Jester inclusion Q). Commit inbound.
+
+**Outcome:** Lore-master Q8 consultation complete and adopted. Phase 4a architecture is
+ready for user approval on decisions #23-27 before implementation dispatch.
+
