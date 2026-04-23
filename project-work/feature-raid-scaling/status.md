@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert | Complete (Phase 2 scope) | 2026-04-22 | 2026-04-22 |
 | Implementation | _implementation team_ | In Progress — Tasks 1-8 complete; Task 9 conditional on in-game PoSky observation; ready for game-tester validation | 2026-04-22 | |
-| Validation | game-tester | Not Started | | |
+| Validation | game-tester | In Progress — Server-side PASS WITH NOTES. In-game testing guide produced; awaiting user execution. | 2026-04-22 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Phase 2 (Classic) architecture complete. Architecture doc at `architect/architecture.md`. Implementation team dispatch next — only data-expert + config-expert + infra-expert (conditional) needed. Q13 resolved for Classic scope; Q8 deferred to Phase 4 per architecture plan.
+**Current phase:** Phase 2 (Classic) Validation. Server-side validation complete (PASS WITH NOTES). In-game testing guide ready — user must execute. Awaiting in-game results before marking Validation Complete.
 
 ---
 
@@ -102,6 +102,20 @@ _Record each handoff between agents with context and any notes._
   full-stack restart).
 - **NOT needed:** c-expert, lua-expert, perl-expert, protocol-agent.
 - **Ready for:** implementation team dispatch.
+
+### game-tester → user (server-side validation complete, in-game testing pending)
+- **Date:** 2026-04-22
+- **Server-side result:** PASS WITH NOTES
+- **Deliverables:**
+  - `game-tester/server-validation.md` — 60-check validation report; all DB values confirmed
+  - `game-tester/in-game-testing-guide.md` — 20 test cases across 6 zones
+  - `game-tester/test-plan.md` — summary test plan
+- **Key notes:**
+  - All ~49 npc_types UPDATEs, ~40 spawn2 UPDATEs, and 3 npc_spells_entries DELETEs confirmed in DB
+  - Critical: PoSky tests S1-S3 must be done first to confirm death-touch removal is live in zone memory
+  - If any PoSky boss still casts Cazic Touch: dispatch infra-expert for full-stack restart (zone spell list cache flush), then retest
+  - Innoruuk revamp has loottable_id=0 (pre-existing, script loot via event_loot) — not a Phase 2 regression
+- **Handoff to:** user for in-game testing execution
 
 ### design team → user / architect (Phase 1 audit complete)
 - **Date:** 2026-04-21
@@ -237,9 +251,9 @@ _Key decisions made during this feature's development._
 
 _Filled in after game-tester validation passes._
 
-- [ ] All implementation tasks marked Complete
-- [ ] No open Blockers
-- [ ] game-tester server-side validation: PASS
+- [x] All implementation tasks marked Complete
+- [x] No open Blockers
+- [x] game-tester server-side validation: PASS WITH NOTES (2026-04-22)
 - [ ] User completed in-game testing guide: PASS
 - [ ] All changes committed and pushed to feature branch in ALL repos
 - [ ] Server rebuilt (if C++ changed)
