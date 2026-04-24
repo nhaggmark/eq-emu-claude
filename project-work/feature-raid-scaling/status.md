@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/raid-scaling`
 > **Created:** 2026-04-21
-> **Last updated:** 2026-04-23 (Phase 4b user decisions resolved: Q36=A, Q37=B USER OVERRIDE, Q38=A; architecture ready for implementation dispatch)
+> **Last updated:** 2026-04-22 (Phase 4b server-side validation PASS — 127 checks; in-game testing guide ready for user)
 
 ---
 
@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2: Complete 2026-04-22. Phase 3 Kunark: Complete 2026-04-22. Phase 4a Velious non-ToV: Complete 2026-04-23. Phase 4b Velious ToV+Sleeper+Vulak+AoW: **Complete 2026-04-23** — all advisors cleared (protocol-agent 2026-04-22, config-expert 2026-04-23, lore-master 2026-04-23); user decisions #36-38 resolved (#36=A joint recommendation, #37=B user override, #38=A recommendation). 51 npc_types UPDATEs (47 + 4 Defenders per Q37). Ready for implementation dispatch. | 2026-04-22 | 2026-04-23 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
-| Validation | game-tester + user | Phase 2: Complete. Phase 3: Server-side PASS (86 checks). Phase 4a: Server-side PASS after BUG-001 fix (107/108 initial + 1 fix verified in DB; user accepted data-expert verification and proceeded) | 2026-04-22 | 2026-04-23 |
+| Validation | game-tester + user | Phase 2: Complete. Phase 3: Server-side PASS (86 checks). Phase 4a: Server-side PASS after BUG-001 fix (107/108 initial + 1 fix verified in DB; user accepted data-expert verification and proceeded). **Phase 4b: Server-side PASS (127 checks) 2026-04-22** — all 51 npc_types values confirmed, all spawn2 respawn timers confirmed, Kerafyrm trio safety confirmed, DT sweep clean, all Phase 2/3/4a regressions clean. In-game testing guide delivered. | 2026-04-22 | 2026-04-22 (server-side) |
 | Completion | _user_ | Phase 2 Complete 2026-04-23. Phase 3 Complete 2026-04-23. Phase 4a Complete 2026-04-23 — proceeding to Phase 4b Velious ToV+Sleeper+Vulak | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 4b (Velious ToV + Sleeper + Vulak + AoW) Architecture **COMPLETE 2026-04-23**. Scope: 16 ToV dragon lords + 16 NToV mid-tier named + **4 NToV Defenders (added per user Q37 override)** + 13 Sleeper's Tomb bosses + AoW (113457) + Vulak`Aerr (124155) = **51 npc_types UPDATEs**. All advisors cleared. User decisions resolved: #36=A (Warders scaled 200k→60k, joint architect+lore-master recommendation), #37=B USER OVERRIDE (Defenders INCLUDED, scale 120k→45k HP / 550 maxdmg / respawn unchanged), #38=A (Lendiniara 24h endgame respawn accepted). Kerafyrm trio (128089/94/95) + Destroy spell + all Warder/Sleeper/Kerafyrm scripts UNTOUCHED per Decision #12. Ready for implementation team dispatch (data-expert + config-expert).
+**Current phase:** Phase 4b (Velious ToV + Sleeper + Vulak + AoW) **SERVER-SIDE VALIDATION COMPLETE 2026-04-22**. 127 checks PASS. All 51 npc_types UPDATEs confirmed; all spawn2 respawn timers confirmed at 86400s (24h); Kerafyrm trio (128089/94/95) + The Sleeper (128094) + Thylex (124000) confirmed UNTOUCHED; Destroy spell (1948) confirmed in list 489; DT sweep clean (only Vyskudra Lightning Breath, signature mechanic preserved); all Phase 2/3/4a regressions clean; no Phase 4b-related server log errors. In-game testing guide at `game-tester/velious-b-in-game-testing-guide.md`. **Awaiting user in-game testing (8 sessions, priority order: Vyemm MR wall → Aaryonar breath → Kildrukaun + Sleeper safety → MotG sentry waves → Defender → Lendiniara → AoW rampage → Vulak).**
 
 ---
 
@@ -51,7 +51,7 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | **Complete 2026-04-23** |
 | Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | **Complete 2026-04-23** |
 | Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | **Complete 2026-04-23** (BUG-001 Tunare fixed; user accepted DB-verified state) |
-| Phase 4b — Velious ToV+Sleeper+Vulak+AoW | Temple of Veeshan proper (16 lords + 16 NToV mid-tier named + 4 Defenders), Sleeper's Tomb (5 Ancients + 4 Warders + Progenitor + Final Arbiter + MotG + Milas), Avatar of War (113457), Vulak'Aerr (124155) = 51 NPCs. Kerafyrm trio untouched per Decision #12. | **Architecture Complete 2026-04-23** — Q36=A / Q37=B USER OVERRIDE / Q38=A — ready for implementation |
+| Phase 4b — Velious ToV+Sleeper+Vulak+AoW | Temple of Veeshan proper (16 lords + 16 NToV mid-tier named + 4 Defenders), Sleeper's Tomb (5 Ancients + 4 Warders + Progenitor + Final Arbiter + MotG + Milas), Avatar of War (113457), Vulak'Aerr (124155) = 51 NPCs. Kerafyrm trio untouched per Decision #12. | **Server-side PASS 2026-04-22** (127 checks). Implementation commits 55fe92f + 57ee369. Awaiting user in-game testing. |
 | Phase 5a — Luclin non-VT | Ssraeshza, Grieg's End, Akheva, Luclin raid content ex-VT | Not Started |
 | Phase 5b — Luclin VT+shards | Vex Thal proper, VT key shard rework | Not Started |
 
@@ -442,7 +442,31 @@ _Populated by the architect for Phase 4b. Awaiting user decisions #36, #37, #38 
 | B8 | Apply SQL via `docker exec akk-stack-mariadb-1 mysql … < phase4b-velious-b-implementation.sql`; capture before/after row counts | data-expert | **Not Started** | — |
 | B9 | `#reloadworld` via Spire or world telnet port 9000 | config-expert | **Not Started** | No `npc_spells_entries` changes — no full-stack restart needed |
 | B10 | Smoke verify: Koi`Doken/Vyemm/Vulak/AoW/Kildrukaun HP targets; respawn 24h applied to correct IDs; **Defenders 45k/550** per Q37 override with respawn UNCHANGED (11,250-16,200s); Kerafyrm trio (128089/94/95) UNTOUCHED at 3.5M HP; Destroy spell (1948) still in list 489; Warder HPs per Decision #36 Option A (60k); Thylex (124000) UNTOUCHED at 100 HP | config-expert | **Not Started** | — |
-| B11 | Commit + push `claude/` repo changes (architecture doc, context files, status, implementation SQL) to `feature/raid-scaling` branch. `akk-stack/` and `eqemu/` untouched. | data-expert | **Not Started** | — |
+| B11 | Commit + push `claude/` repo changes (architecture doc, context files, status, implementation SQL) to `feature/raid-scaling` branch. `akk-stack/` and `eqemu/` untouched. | data-expert | **Complete 2026-04-22** | Commits 55fe92f + 57ee369 pushed on feature/raid-scaling |
+
+### game-tester → user (Phase 4b server-side validation complete — in-game testing pending)
+- **Date:** 2026-04-22
+- **Server-side result:** PASS (127 checks)
+- **Deliverables:**
+  - `game-tester/velious-b-server-validation.md` — 127-check validation report; all DB values confirmed
+  - `game-tester/velious-b-in-game-testing-guide.md` — 8 sessions in priority order (Vyemm → Aaryonar → Kildrukaun/Sleeper safety → MotG → Defender → Lendiniara → AoW → Vulak)
+- **Key notes:**
+  - All 51 npc_types UPDATEs confirmed in DB at architecture target values
+  - All spawn2 respawn timers confirmed at 86,400s (24h) for endgame content
+  - CRITICAL safety confirmed: Kerafyrm 128089/95 at 3,500,000 HP, The Sleeper 128094 at 3,500,000 HP, Thylex 124000 at 100 HP — all unchanged
+  - Destroy spell (1948) confirmed in spell list 489 — Kerafyrm's death-touch preserved
+  - Kerafyrm trio absent from backup table — Decision #12 boundary respected
+  - spawn_condition_values: Warders dormant (cond1=0), Ancients live (cond2=1) — confirmed; note spawn_conditions.value column represents default-after-onchange state, not current runtime state
+  - DT sweep clean: only Vyskudra Lightning Breath (-1,500 dmg, 12s recast, signature preserved per Decision #11)
+  - MR signature mechanics confirmed: Vyemm/Telkorenar/Gozzrem MR=1000, Kildrukaun MR=400
+  - AC signature mechanics confirmed: AoW AC=850, Vulak AC=950
+  - Dagarn HP-regen flag (10^8) confirmed present; AoW rampage 6x6 (5,1^6,1) confirmed present
+  - Defenders (Q37 override): all 4 at 45k HP / 550 maxdmg, respawn 16,200s unchanged
+  - Backup table row counts: npc_types 51 rows (matches architecture), spawn2 62 rows (architecture estimated 46-49; difference from shared spawngroups, all correct Phase 4b rows)
+  - Phase 2/3/4a regressions: all clean (Nagafen 14,400, Vox 16,000, Innoruuk 60,000, Trakanon 16,000, Klandicar 40,000, Yelinak 110,000, Derakor 60,000, Kromrif Captain 6,000)
+  - No Phase 4b-related errors in server logs
+  - NOTE: Sevalak (124075) maxdmg is 950 (not cut) — architecture did not specify a damage cap for Sevalak; the HP cut to 40k is the primary lever; 950 maxdmg is a NOTE, not a blocker
+- **Handoff to:** user for in-game testing execution (8 sessions)
 
 
 ## Open Questions
