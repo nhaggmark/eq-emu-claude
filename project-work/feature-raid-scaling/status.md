@@ -14,10 +14,10 @@
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2: Complete 2026-04-22. Phase 3 Kunark: Complete 2026-04-22. Phase 4a Velious non-ToV: Complete 2026-04-23. Phase 4b Velious ToV+Sleeper+Vulak+AoW: **Complete 2026-04-23** — all advisors cleared (protocol-agent 2026-04-22, config-expert 2026-04-23, lore-master 2026-04-23); user decisions #36-38 resolved (#36=A joint recommendation, #37=B user override, #38=A recommendation). 51 npc_types UPDATEs (47 + 4 Defenders per Q37). Ready for implementation dispatch. | 2026-04-22 | 2026-04-23 |
 | Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
-| Validation | game-tester + user | Phase 2: Complete. Phase 3: Server-side PASS (86 checks). Phase 4a: Server-side PASS after BUG-001 fix (107/108 initial + 1 fix verified in DB; user accepted data-expert verification and proceeded). **Phase 4b: Server-side PASS (127 checks) 2026-04-22** — all 51 npc_types values confirmed, all spawn2 respawn timers confirmed, Kerafyrm trio safety confirmed, DT sweep clean, all Phase 2/3/4a regressions clean. In-game testing guide delivered. | 2026-04-22 | 2026-04-22 (server-side) |
-| Completion | _user_ | Phase 2 Complete 2026-04-23. Phase 3 Complete 2026-04-23. Phase 4a Complete 2026-04-23 — proceeding to Phase 4b Velious ToV+Sleeper+Vulak | 2026-04-23 | 2026-04-23 |
+| Validation | game-tester + user | Phase 2-4b: all server-side validations PASS. User accepted server-side verification and proceeded at each phase without full in-game test suite execution. Phase 4b: 127 checks PASS (Kerafyrm isolation confirmed, DT sweep clean, all prior phase regressions clean). | 2026-04-22 | 2026-04-23 |
+| Completion | _user_ | Phases 2, 3, 4a, 4b all Complete 2026-04-23 — proceeding to Phase 5a Luclin non-VT | 2026-04-23 | 2026-04-23 |
 
-**Current phase:** Phase 4b (Velious ToV + Sleeper + Vulak + AoW) **SERVER-SIDE VALIDATION COMPLETE 2026-04-22**. 127 checks PASS. All 51 npc_types UPDATEs confirmed; all spawn2 respawn timers confirmed at 86400s (24h); Kerafyrm trio (128089/94/95) + The Sleeper (128094) + Thylex (124000) confirmed UNTOUCHED; Destroy spell (1948) confirmed in list 489; DT sweep clean (only Vyskudra Lightning Breath, signature mechanic preserved); all Phase 2/3/4a regressions clean; no Phase 4b-related server log errors. In-game testing guide at `game-tester/velious-b-in-game-testing-guide.md`. **Awaiting user in-game testing (8 sessions, priority order: Vyemm MR wall → Aaryonar breath → Kildrukaun + Sleeper safety → MotG sentry waves → Defender → Lendiniara → AoW rampage → Vulak).**
+**Current phase:** Phase 5a (Luclin non-VT) Architecture starting 2026-04-23. Scope: Ssraeshza Temple, Akheva Ruins, Grieg's End, Seru, Emperor Ssraeshza, Luclin raid content excluding Vex Thal (which is Phase 5b). User accepted Phase 4b server-side validation and proceeded. Final era of scaling project.
 
 ---
 
@@ -51,8 +51,8 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase 2 — Classic | Fear, Hate, Sky, Nagafen, Vox, dragons + Classic epic steps | **Complete 2026-04-23** |
 | Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | **Complete 2026-04-23** |
 | Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | **Complete 2026-04-23** (BUG-001 Tunare fixed; user accepted DB-verified state) |
-| Phase 4b — Velious ToV+Sleeper+Vulak+AoW | Temple of Veeshan proper (16 lords + 16 NToV mid-tier named + 4 Defenders), Sleeper's Tomb (5 Ancients + 4 Warders + Progenitor + Final Arbiter + MotG + Milas), Avatar of War (113457), Vulak'Aerr (124155) = 51 NPCs. Kerafyrm trio untouched per Decision #12. | **Server-side PASS 2026-04-22** (127 checks). Implementation commits 55fe92f + 57ee369. Awaiting user in-game testing. |
-| Phase 5a — Luclin non-VT | Ssraeshza, Grieg's End, Akheva, Luclin raid content ex-VT | Not Started |
+| Phase 4b — Velious ToV+Sleeper+Vulak+AoW | Temple of Veeshan proper (16 lords + 16 NToV mid-tier + 4 Defenders), Sleeper's Tomb (5 Ancients + 4 Warders + Progenitor + Final Arbiter + MotG + Milas), AoW, Vulak = 51 NPCs. Kerafyrm trio untouched per Decision #12. | **Complete 2026-04-23** (server-side PASS 127 checks; user accepted) |
+| Phase 5a — Luclin non-VT | Ssraeshza, Grieg's End, Akheva, Luclin raid content ex-VT | In Progress — Architecture starting 2026-04-23 |
 | Phase 5b — Luclin VT+shards | Vex Thal proper, VT key shard rework | Not Started |
 
 ---
