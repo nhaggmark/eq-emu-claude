@@ -798,3 +798,76 @@ No `npc_spells_entries` changes this phase — reloadworld propagates `npc_types
 Both backup tables intact post-reload.
 
 **All-clear: B-reload and B-smoke COMPLETE. Ready for game-tester validation.**
+
+---
+
+## Phase 5a (Luclin Non-VT) — Config Consultation (2026-04-22)
+
+### Summary
+
+**Phase 2/3/4a/4b config findings carry forward unchanged to Phase 5a. No new rules. No config changes. SQL-only pattern confirmed. One structural flag: SSra/Akheva bosses have zero or event-only spawn2 rows — #reloadworld caveat applies to npc_types only for those NPCs.**
+
+### Verification
+
+**rule_values count:** 1,112 — identical to Phase 4b baseline. Zero drift across all five phases to date.
+
+**No Luclin-specific rules exist:** Searched `rule_values` for Luclin, SSra, Akheva, Seru, Grieg, Acrylia keyword matches. Zero hits on zone-specific or era-specific rule names. All seven prior-pass combat-tuning globals still in effect unchanged.
+
+**Zone ruleset/insttype check — all Luclin non-VT zones:**
+
+| Zone | ruleset | min_status | expansion | insttype |
+|------|---------|-----------|-----------|---------|
+| ssratemple | 1 | 0 | 3 | 0 |
+| akheva | 1 | 0 | 3 | 0 |
+| griegsend | 1 | 0 | 3 | 0 |
+| acrylia | 1 | 0 | 3 | 0 |
+| sseru | 1 | 0 | 3 | 0 |
+
+All `insttype=0` — none are flagged as DZ zones. `dynamic_zones` table has 0 rows. No Akheva DZ system is active. Standard `spawn2` pattern applies for all zones with standing rows.
+
+**griegsend has two zone table rows** (ruleset=1 and ruleset=0). This is a duplicate — same pattern seen in other zones. The ruleset=1 row is the active one. No gameplay implication for NPC stats.
+
+### Luclin Non-VT Boss spawn2 Coverage
+
+| NPC | ID | Zone | spawn2_rows | respawntime | spawn2 writable? |
+|-----|----|------|-------------|-------------|-----------------|
+| Lord Inquisitor Seru | 159691 | sseru | 1 | 259,200s (72h) | YES |
+| High Priest of Ssraeshza | 162076 | ssratemple | 1 | 259,200s (72h) | YES |
+| Xerkizh The Creator | 162190 | ssratemple | 1 | 259,200s (72h) | YES |
+| Emperor Ssraeshza | 162227 | — | 0 | N/A | NO — event-only |
+| Arch Lich Rhag`Zadune | 162177 | — | 0 | N/A | NO — event-only |
+| Vyzh`dra the Cursed | 162206 | — | 0 | N/A | NO — event-only |
+| Vyzh`dra the Exiled | 162232 | — | 0 | N/A | NO — event-only |
+| Vyzh`dra the Banished | 162214 | — | 0 | N/A | NO — event-only |
+| Shei Vinitras (primary) | 179032 | — | 0 | N/A | NO — event-only |
+| Shei Vinitras (variant) | 179157 | akheva | 1 | 194,474s (~54h) | YES |
+| Shar Vinitras | 179134 | akheva | 1 | 10,800s (3h) | YES |
+| The Itraer Vius | 179037 | akheva | 1 | 210,924s (~58.6h) | YES |
+| Spirit of Akelha`Ra | 179144 | — | 0 | N/A | NO — event-only |
+| Grieg Veneficus | 163075 | griegsend | 0 | N/A | NO — no spawn2 row |
+| Ancient Necromantic Shade | 163052 | griegsend | 1 | 7,200s (2h) | YES |
+| Thought Horror Overfiend | 164078 | thedeep | 1 | 194,400s (54h) | YES |
+| Nathyn Illuminious | 160135 | katta | 1 | 194,400s (54h) | YES |
+| Lcea Katta | 160375 | katta | 1 | 258,750s (~71.9h) | YES |
+| Va_Dyn_Khar | 158081 | vexthal | 1 | 21,600s (6h) | YES — NOTE: in vexthal |
+
+**IMPORTANT: VT bosses (158xxx) are Phase 5b scope**, not 5a. Confirmed in `vexthal` zone with standing spawn2 rows at 468,720s (~130h). Va_Dyn_Khar (158081) appears in vexthal at 21,600s — this may already be at a scaled value or is an outlier; architect should verify Phase 5b scope boundary.
+
+**Akhevan Warders (158087-158094):** HP 901,000, zero spawn2 rows. Event-triggered only.
+
+### Death-Touch Sweep
+
+No spell 982 (Cazic Touch) found in any Luclin non-VT boss spell list (npc_id range 155000-185000, raid_target=1). Zero `npc_spells_entries` DELETEs needed for Phase 5a. Zone spell-list cache restart caveat does not apply.
+
+Grieg's End NPCs have standard special_abilities (ability codes 1,2,5,8,13,14,15,16,17,21,31). No instakill mechanics found. The `an_ancient_necromantic_shade` (163052) has ability 4 with parameters `4,1,25,0,50` — this is a charm/mez-immunity or enrage flag; not a death-touch. No `npc_spells_entries` action needed.
+
+### Config-Expert Role in Phase 5a Implementation
+
+Identical to all prior phases:
+1. No rule changes needed.
+2. No `eqemu_config.json` or `.env` changes.
+3. Post-SQL: `#reloadworld` via world telnet (port 9000) to propagate `npc_types`/`spawn2` changes.
+4. Smoke verification via DB read-back on `npc_types` HP/damage + `spawn2.respawntime` for rows that exist.
+5. No `npc_spells_entries` changes — no zone-restart caveat.
+
+**Special note for architect:** Many SSra and Akheva headline bosses (Emperor Ssraeshza, Arch Lich, Vyzh`dra trio, Shei Vinitras primary, Spirit of Akelha`Ra) have ZERO standing spawn2 rows. Their HP cuts will apply via `npc_types` UPDATE and will propagate with `#reloadworld`. Respawn timer changes are not applicable for those NPCs. The `npc_types` HP change will take effect on the next time those NPCs are spawned (event trigger). No separate spawn2 concern.
