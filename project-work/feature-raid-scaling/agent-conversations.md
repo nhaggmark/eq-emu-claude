@@ -18,6 +18,34 @@ rationale are never lost.
 
 ---
 
+## Phase 5a Architecture Team Conversations
+
+### 2026-04-22 — protocol-agent → architect: Phase 5a protocol consultation complete
+
+**From:** protocol-agent → **To:** architect
+
+Delivered full Phase 5a Luclin non-VT protocol consultation.
+
+**Summary:** Phase 5a is 100% server-side. Zero opcode additions, struct modifications, or Titanium translation layer changes required. All 8 Phase 5a zones (ssratemple, akheva, griegsend, sseru, katta, thedeep, acrylia, umbral) are standard static zones with no DZ/expedition usage. Zero HP-percentage event hooks found — boss HP can be freely reduced without breaking any scripted thresholds.
+
+**Key scripted encounters confirmed safe:**
+- Emperor Ssraeshza event chain (EmpCycle qglobals + unique_spawn + signalwith) — kill-gate is NPC-presence based, not HP-based
+- Vyzh`dra multi-form chain (Cursed/Exiled/Banished/Glyphed/Runed) — same qglobal + spawn2 pattern as Kerafyrm Phase 4b
+- Shei Vinitras spawn-swap + 5-min periodic add rewave — standard spawn-swap, server-side timer
+- Grieg Veneficus dual-guardian entity-presence gate — same pattern as VP/Vulak
+- Lord Inquisitor Seru placeholder→real boss timer-swap — same as Tunare Phase 4a
+- Khati Sha periodic combat adds (every 2 min) — server-side timer spawns
+- Burrower Beast wave event (The Deep) — proximity-triggered waves, no DZ
+
+**Three architect flags raised:**
+1. **Flag A — EmpCycle timers need perl-expert:** `$EmpRepopTime` (3-5 day respawn) and `$BloodCoolDownTime` (3-4h failure cooldown) in `#EmpCycle.pl` are Perl locals, not SQL/rule_values. Tuning requires perl-expert edit.
+2. **Flag B — Shei Vinitras two NPC IDs:** Audit catalogs 179157 (merchant trigger form). Real fight boss is 179032. Both may need separate UPDATE rows with different HP targets.
+3. **Flag C — Vyzh`dra intermediate forms:** 162206 is the kill target. 162232 (Exiled), 162214 (Banished), 162261 (Glyphed serpent), 162253 (Runed serpent) are pre-event chain forms. Emperor placeholder 162065 should be excluded from scaling SQL.
+
+**Outcome:** Consultation delivered to architect. Awaiting architect's follow-up if any.
+
+---
+
 ## Phase 4b Architecture Team Conversations
 
 ### 2026-04-22 — architect → config-expert: Phase 4b config posture consult

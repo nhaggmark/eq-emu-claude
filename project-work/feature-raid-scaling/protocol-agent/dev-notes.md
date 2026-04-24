@@ -662,3 +662,210 @@ MovePC on illegal bind sends standard zone-change traffic. No exotic opcodes.
 
 **No Phase 4b changes require opcode additions, struct modifications, or Titanium
 translation layer changes. Phase 4b is 100% server-side (SQL), same as Phases 2, 3, 4a.**
+
+---
+
+## Phase 5a: Luclin non-VT Protocol Consultation (2026-04-22)
+
+**Scope:** Ssraeshza Temple (ssratemple), Akheva Ruins (akheva), Sanctus Seru
+(sseru), Katta Castellum (katta), Grieg's End (griegsend), Umbral Plains (umbral),
+Acrylia Caverns (acrylia), The Deep (thedeep). All Luclin raid zones excluding Vex
+Thal (Phase 5b).
+
+**Summary finding: Phase 5a is fully server-side. Zero client protocol impact.**
+Same conclusion as Phases 2, 3, 4a, and 4b. Detailed findings below.
+
+### Files Examined
+
+| File | What You Found |
+|------|----------------|
+| `akk-stack/server/quests/ssratemple/#Emperor_Ssraeshza_.pl` | EVENT_SPAWN: 30-min depop timer. EVENT_COMBAT: extends timer to 40 min. EVENT_DEATH_COMPLETE: spawn2 x5 (A_shissar_wraith 162210), signal(162260,2) to EmpCycle. Standard spawn/signal only. |
+| `akk-stack/server/quests/ssratemple/#EmpCycle.pl` | Full Emperor event controller. Uses qglobals (Emperor, BloodCoolDown), unique_spawn for Blood_of_Ssraeshza (162189) + Emperor_No_Target (162065), then EmpPrep timer spawns real Emperor (162227). Signal 1=Blood/Golem dead→EmpPrep, 2=Emperor dead→qglobal respawn timer (3-5 days), 3=raid failure→BloodCoolDown. No DZ. |
+| `akk-stack/server/quests/ssratemple/#Blood_of_Ssraeshza.lua` | event_combat: spawns 4× Ssraezsha (162280) adds. event_death_complete: signal(162260,1) to EmpCycle. |
+| `akk-stack/server/quests/ssratemple/#Ssraeshzian_Blood_Golem.lua` | Same pattern as Blood_of_Ssraeshza — combat spawns 4× Ssraezsha adds, death_complete signals EmpCycle. |
+| `akk-stack/server/quests/ssratemple/#Vyzh-dra_the_Cursed.lua` | 30-min depop timer paused in combat. death_complete: signal(162255,3) to cursed_controller. |
+| `akk-stack/server/quests/ssratemple/#Vyzh-dra_the_Exiled.lua` | 30-min depop timer. death_complete: signal(162255,2) + set_global("exiled_dead"). |
+| `akk-stack/server/quests/ssratemple/#cursed_controller.pl` | Manages Cursed/Exiled/Banished/Glyphed/Runed Vyzh`dra spawn chain via entity_list checks and qglobals. Cascading qglobal-gated spawn sequence. No DZ. |
+| `akk-stack/server/quests/akheva/#Shei_Vinitras_.lua` | Non-aggro merchant form. death_complete: spawns real Shei (179032=NPC ID for `#Shei_Vinitras`) + 4 named adds (Diabo_Tatrua, Tavuel_Tatrua, Thall_Tatrua, Va_Tatrua). Standard spawn-swap. |
+| `akk-stack/server/quests/akheva/#Shei_Vinitras.lua` | Real Shei. event_spawn: spawns 4 named adds + sets 10-min depop. event_combat: stops depop, sets 5-min repopadds timer. event_timer(repopadds): re-spawns missing named adds on timer + AddToHateList. event_slay: spawns random Tatrua. |
+| `akk-stack/server/quests/akheva/#The_Insanity_Crawler.lua` | event_slay only: spawns 5× A_mind_worm (179136). No death_complete chain. |
+| `akk-stack/server/quests/akheva/#The_Itraer_Vius_.lua` | event_combat: CastSpell(2818,"Shadow Fog") + depop_with_timer. Simple script — casts one spell on aggro then vanishes. |
+| `akk-stack/server/quests/griegsend/163045.lua` and `163046.lua` | Grieg Veneficus dual-guardian spawn chain: both guards must die + guard NPC 163097 still present → eq.unique_spawn(163075 = #Grieg_Veneficus) + depop_with_timer(163097). Entity-presence check. Same pattern as VP Phase 3. |
+| `akk-stack/server/quests/sseru/#Lord_Inquisitor_Seru.pl` | Non-targetable placeholder. EVENT_AGGRO: starts timer. EVENT_TIMER: if still engaged → continue; else spawn2(159691 = real Seru) + depop. Timer-based swap from placeholder to real boss. Standard spawn-swap. |
+| `akk-stack/server/quests/sseru/#Lord_Inquisitor_Seru_.pl` | Real Seru. EVENT_SPAWN: 1s timer → GMMove to time chamber if out of bounds. EVENT_DEATH: stoptimer. Pure positioning guard. |
+| `akk-stack/server/quests/katta/#Nathyn_Illuminious.pl` | Quest NPC only (dialogue/item turn-in). Not a combat boss. No spawn or signal calls. |
+| `akk-stack/server/quests/umbral/#Doomshade.lua` | 1-hour depop timer paused in combat. No add-wave or spawn chain. Simpler than Velious bosses. |
+| `akk-stack/server/quests/acrylia/Khati_Sha_the_Twisted.lua` | event_combat: spawns 4× Defiled Minion adds + sets 120s re-spawn timer. event_timer(2): re-spawns 4 Defiled Minions every 2 min. event_timer(1): position guard — if Khati has left chamber, depops + respawns at original position. |
+| `akk-stack/server/quests/thedeep/The_Burrower_Beast.pl` | Event controller for Burrower Beast encounter. Wave-based spawn sequence (8 counters: rock burrowers → spined rock burrowers → stone carvers → core burrowers → parasite larva → burrower parasite). Proximity-triggered. No DZ. |
+| DZ/expedition grep — all Phase 5a zones | Zero hits across ssratemple, akheva, griegsend, sseru, katta, thedeep, acrylia, umbral. One false positive ("expedition" in NPC dialogue text — Tilbok_Furrunner.pl, not API call). |
+| spawn_condition/setnexthpevent grep — all Phase 5a zones | Zero hits. No HP-percentage event hooks in any Phase 5a zone. |
+
+### Finding 1: All Phase 5a Zones Are Standard Static Zones — No DZ/Expedition
+
+Zero use of `MovePCDynamicZone`, `expedition` API, `DynamicZone`, or
+`ServerOP_Expedition*` in any Phase 5a zone. All zones use standard
+`ZoneChange_Struct` → `ZoneServerInfo_Struct` entry flow.
+
+Contrast with Phase 2's `hateplaneb` which DID use `MovePCDynamicZone("hateplaneb")`.
+No Phase 5a equivalent. No expedition protocol overhead.
+
+### Finding 2: Emperor Ssraeshza — Complex Event, Server-Side Only
+
+The Emperor encounter uses the most complex event script in any phase so far.
+The full flow:
+
+```
+#EmpCycle (162260) — always-running coordinator NPC
+  ↓ unique_spawn #Blood_of_Ssraeshza (162189) + #Emperor_NoTarget (162065)
+  ↓ Blood killed → signal(162260,1) → EmpPrep 150s timer
+  ↓ EmpPrep fires → depop(162065) + unique_spawn real Emperor (162227) → qglobal BloodCoolDown
+Blood_of_Ssraeshza combat → 4× Ssraezsha adds (162280)
+Emperor (162227) killed → 5× shissar_wraith (162210) + signal(162260,2) → qglobal EmpRespawnTimer (3-5 days)
+Raid failure (Emperor_NoTarget depop timer) → signal(162260,3) → qglobal BloodCoolDown (3-4h)
+```
+
+**Protocol assessment:** The entire event chain uses `quest::unique_spawn`,
+`quest::spawn2`, `quest::signalwith`, and qglobals. Client sees only:
+- `NewSpawn_Struct` for each spawned NPC
+- `DeleteSpawn_Struct` for each depop
+- `ChannelMessage_Struct` for the death emote
+
+No new opcodes. No DZ. No client-cached event state. The cascading spawn
+sequence is indistinguishable on the wire from any other quest-script spawn chain.
+
+**HP scaling implication:** The Emperor's 1,250,500 HP drop to ~120k does NOT
+affect EmpCycle's qglobal-gate logic (gate checks NPC presence via
+`GetNPCByNPCTypeID`, not HP). Blood_of_Ssraeshza's HP drop (no audit figure
+given — investigate) similarly safe; signal fires on death_complete not on
+HP threshold. Ssraezsha adds (162280) are NOT in the boss catalog — verify HP.
+
+**Key flag for architect:** The EmpPrep 150s timer and BloodCoolDown (3-4h) /
+EmpRespawnTimer (3-5 days) are Lua/Perl LOCAL variables. These timers are not
+`rule_values` — they cannot be tuned via SQL. If the architect wants to reduce
+the 3-5 day post-kill respawn window, that requires a **Perl edit** to `#EmpCycle.pl`
+variables `$BloodCoolDownTime` and `$EmpRepopTime`. lua-expert / perl-expert task.
+
+### Finding 3: Vyzh`dra Chain — Server-Side Spawn Sequence
+
+`#cursed_controller.pl` (162255) manages a multi-form boss sequence:
+1. Entity-check loop every 60s: checks all 10 `#cursed_*` NPCs (162270-162279)
+2. If all dead → spawns Glyphed (162261) or Runed (162253) serpent based on qglobal `glyphed_dead`
+3. Signal 1 from Exiled death → spawns Exiled or Banished based on qglobal `exiled_dead`
+4. Signal 2 from Exiled death → spawns Cursed (162206)
+5. Signal 3 from Cursed death → qglobal `cursed_dead` (respawn timer)
+
+**Protocol assessment:** Multi-form chain of 4-5 Vyzh`dra variants. All transitions
+are `quest::spawn2` + qglobal checks. Client sees standard `NewSpawn_Struct` /
+`DeleteSpawn_Struct`. Same pattern as Kerafyrm chain (Phase 4b). No protocol impact.
+
+**HP scaling implication:** Cursed (162206), Exiled (NPC ID from scripts: 162232
+"Exiled" reference in cursed_controller), Banished (162214), and their pre-boss
+cursed_1-10 variants are all separate NPC IDs. Architect should enumerate all
+IDs in the Vyzh`dra chain for the SQL UPDATE list.
+
+### Finding 4: Shei Vinitras — Spawn-Swap with Periodic Add Wave
+
+`#Shei_Vinitras_.lua` (non-aggro merchant form, NPC 179157) → death triggers
+spawn of real Shei (179032) + 4 named adds. Real Shei then re-spawns those 4 adds
+every 5 minutes via timer if they die.
+
+**Protocol assessment:** Standard spawn-swap (same VS, Tunare patterns from
+Phases 3/4a). The 5-min add-rewave is a server-side timer + entity_list presence
+check — `NewSpawn_Struct` + `AddToHateList` (server AI action). No new opcodes.
+
+**HP scaling implication:** Only the non-aggro merchant form (179157) is in the
+boss catalog. The real boss form (179032) is a separate NPC ID — needs to be in
+the UPDATE list. The 4 periodic adds (Diabo_Tatrua 179174, Tavuel_Tatrua 179181,
+Thall_Tatrua 179164, Va_Tatrua 179173) are not in the audit catalog. Architect:
+flag these as potential add-scaling candidates.
+
+### Finding 5: Grieg's End — Dual-Guardian Entity-Check Gate
+
+Grieg Veneficus (163075) is spawned only after both guardian NPCs 163045 and 163046
+are dead AND event-control NPC 163097 is still present. Same entity-presence pattern
+as VP door-gate (Phase 3) and Vulak summoning (Phase 4b). No protocol impact.
+
+No `player.lua` / `player.pl` in griegsend. No zone-entry mechanics beyond
+standard Grieg's Key (item check at door — client sees `OP_ClickDoor` /
+`OP_MoveDoor` standard opcodes).
+
+### Finding 6: Lord Inquisitor Seru — Timer-Based Swap from Placeholder
+
+Non-targetable placeholder NPC (159691 in sseru — `#Lord_Inquisitor_Seru.pl`)
+transitions to targetable real boss via a timer/engagement check. Same
+timer-swap pattern as Velious Tunare (`#_Tunare.lua`, Phase 4a). Client sees:
+`DeleteSpawn_Struct` for placeholder, `NewSpawn_Struct` for real boss. No new opcodes.
+
+### Finding 7: Khati Sha the Twisted — Periodic Combat Adds
+
+`Khati_Sha_the_Twisted.lua` (likely NPC 154145 in acrylia): on combat spawns 4×
+Defiled Minion adds, then re-spawns them every 2 minutes via timer. Position
+guard timer resets Khati if she leaves her chamber. Same periodic-add pattern
+as Shei Vinitras real form.
+
+**Protocol assessment:** Server-side timer spawns. Client sees `NewSpawn_Struct`
+per add. No new opcodes.
+
+### Finding 8: Burrower Beast (The Deep) — Wave Event, No DZ
+
+The Burrower Beast encounter uses a proximity-triggered 8-wave add sequence
+(rock burrowers → core burrowers → parasite larva → burrower parasite). The
+event controller (164120) spawns waves on a repeating timer, success/failure
+signals back to event-controller NPC (164098). No DZ, no expedition. Same
+pattern as Ring War (Phase 4a) but simpler.
+
+**Thought Horror Overfiend (164078):** No quest scripts found referencing this
+NPC ID. No add-wave or event chain. Simple static spawn — pure SQL scaling.
+
+### Finding 9: No HP-Percentage Event Hooks in Phase 5a
+
+Zero `quest::setnexthpevent`, `eq.set_hp_event_by_number`, or `EVENT_HP`
+usage across all Phase 5a zones. Contrast with Phase 3's Phara Dar which used
+`quest::setnexthpevent(80/60/40/20)` add-wave triggers. Phase 5a has NO
+HP-threshold scripted events. Boss HP can be freely reduced without affecting
+any scripted thresholds.
+
+### Finding 10: Doomshade (Umbral Plains) — Simple, No Script Concerns
+
+Simple depop-timer script only. No add-waves, no spawn chain. Not in the
+audit boss catalog. Architect should verify: is Doomshade (176111 per audit
+lore section?) distinct from `#Netherbian_Swarmfiend` (L73, OOE)?
+
+### Phase 5a Protocol Summary
+
+| Concern | Source | Verdict |
+|---------|--------|---------|
+| HP/damage/respawn scaling (all ~30 bosses) | Phase 2-4b analysis applies | Server-side SQL only; client sees % HP |
+| All Phase 5a zones — DZ/expedition | grep all zone scripts | Zero hits — all standard static zones |
+| HP-percentage event hooks | grep all zone scripts | Zero — no EVENT_HP / setnexthpevent in any Phase 5a zone |
+| Emperor Ssraeshza event chain (EmpCycle, Blood, Golem, adds) | ssratemple/#EmpCycle.pl + friends | Fully server-side: qglobals, unique_spawn, signalwith. No protocol impact. |
+| EmpCycle respawn timers ($EmpRepopTime 3-5 days, $BloodCoolDownTime 3-4h) | ssratemple/#EmpCycle.pl | Perl LOCAL variables — NOT rule_values. Tuning requires perl-expert edit. |
+| Vyzh`dra multi-form chain (Cursed/Exiled/Banished/Glyphed/Runed) | ssratemple/#cursed_controller.pl | Server-side qglobal + spawn2 chain. Same pattern as Kerafyrm. |
+| Shei Vinitras spawn-swap + periodic adds | akheva/#Shei_Vinitras_.lua + #Shei_Vinitras.lua | Standard spawn-swap; add-rewave is server-side timer. |
+| Grieg Veneficus dual-guardian gate | griegsend/163045.lua + 163046.lua | Entity-presence check; same as VP/Vulak. |
+| Lord Inquisitor Seru placeholder swap | sseru/#Lord_Inquisitor_Seru.pl | Timer-swap; same as Tunare Phase 4a. |
+| Khati Sha periodic combat adds | acrylia/Khati_Sha_the_Twisted.lua | Server-side timer; standard NewSpawn_Struct. |
+| Burrower Beast wave event (The Deep) | thedeep/The_Burrower_Beast.pl | Proximity-triggered wave script; no DZ. |
+| Thought Horror Overfiend (164078) | grep — no script | Simple static spawn. Pure SQL. |
+| Doomshade (Umbral) | umbral/#Doomshade.lua | Simple depop-timer; no chain. |
+
+**No Phase 5a changes require opcode additions, struct modifications, or Titanium
+translation layer changes. Phase 5a is 100% server-side (SQL + optional Perl edit
+for EmpCycle timers), same as Phases 2, 3, 4a, 4b.**
+
+**One notable flag for architect:** EmpCycle `$EmpRepopTime` (3-5 days post-kill
+respawn) and `$BloodCoolDownTime` (3-4h failure cooldown) are hardcoded Perl locals,
+not SQL-tunable. If architect wants shorter post-kill window for Phase 5a small-group
+cadence, a perl-expert edit is required — similar to Ring War's lua-expert wave timer
+reduction in Phase 4a.
+
+**Second flag:** Shei Vinitras real boss form (179032) is a DIFFERENT NPC ID from
+the merchant form (179157) in the audit catalog. Both need to be in the SQL UPDATE
+list. Same issue applies to any NPC with a placeholder + real form split (Emperor
+pre-target 162065 is NOT the fight boss 162227 — pre-target should be excluded).
+
+**Third flag:** Vyzh`dra chain has multiple NPC IDs beyond the audit's "162206" entry:
+also Exiled (162232 in scripts), Banished (162214), Glyphed serpent (162261), Runed
+serpent (162253). Most are intermediate forms or pre-cursed mobs, not the boss kill
+target. Architect should confirm which IDs receive the boss-tier HP treatment vs. which
+are pre-event mobs.
