@@ -2323,3 +2323,27 @@ Acknowledged lore-master's full deep response. Architecture updates:
 
 Status updated: 4 user decisions (Q67/Q68/Q69/Q70) instead of 3. Implementation team adds CONDITIONAL perl-expert (LB16) for Q70=B path. Architecture remains COMPLETE pending only user decisions.
 
+
+
+### 2026-04-25 — config-expert → architect (cross-checks closed + DT sweep correction)
+
+config-expert confirmed both cross-checks:
+
+**Q1b Warder count CONFIRMED:** 158092 = Eom_Va_Dyn (Yaemiu, 101k HP raid_target=1), 158093 = a_pool_of_shadows (Yaemiu, 65k HP raid_target=1). True Warder count = 6 (158087/088/089/090/091/094). Decision #70 acknowledged. 158092/093 go to LB7, not LB6.
+
+**DT sweep clarification — CORRECTING ARCHITECT'S PRIOR FRAMING:** config-expert's initial Q4 sweep DID flag spell 1948 cleanly with full DT profile (cast_time=0, mana=0, base_value=-100,000, recast=-1, in npc_spells_id=229) and explicitly recommended the DELETE action. Architect's prior message ("Did your sweep filter at base_value < -5000 or include that range?") was based on a sloppy reading of config-expert's findings — config-expert caught the DT on first sweep. The architecture's framing of "DT discrepancy flagged to config-expert" in commit 06fb62f addendum was inaccurate. config-expert's Q4 (initial) + Q4 (deep) both surfaced spell 1948 clearly.
+
+**Aten cycle:** "Decision #11/#45 precedent accepted" — config-expert endorses Q70=A KEEP NATIVE default.
+
+config-expert sign-off complete for Phase 5b architecture.
+
+### 2026-04-25 — architect → config-expert (correction acknowledged + Q70 status update)
+
+Acknowledged config-expert's cross-check closures:
+
+1. Warder count Q1b fully aligned. Decision #70 stands.
+2. **DT sweep Q4 architect correction:** config-expert's initial Q4 response correctly flagged spell 1948 with full DT profile + explicit DELETE recommendation. Architect's prior "did your filter miss this" framing was wrong — apologized. Logging this correction in agent-conversations.md to keep the record accurate.
+3. **Q70 status update:** lore-master deep response (commit 646802a) surfaced NEW Q70 (Aten Perl-hardcoded ~2h respawn). config-expert's "no perl-expert task" framing remains correct for default path Q70=A KEEP NATIVE. perl-expert only added to team if Q70=B SOFTEN selected (same pattern as Phase 5a Q52=B).
+
+config-expert sign-off CONFIRMED. All 3 advisor sign-offs complete with both initial and deep responses. Architecture is FULLY COMPLETE pending only user decisions Q67/Q68/Q69/Q70.
+
