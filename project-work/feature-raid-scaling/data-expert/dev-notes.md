@@ -321,6 +321,120 @@ Key confirmed post-apply values:
 
 ---
 
+---
+
+## Phase 5a Luclin non-VT — Task Assignment
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| L1 | Create 3 backup tables | — | Complete (applied 2026-04-22) |
+| L2 | Emit ssratemple HP/damage SQL (13+2 serpents) | L1 | Complete (applied 2026-04-22) |
+| L3 | Emit akheva HP/damage SQL (3 Vyzh`dra + 6 primary + 3 elite-named Q51=B) | L1 | Complete (applied 2026-04-22) |
+| L4 | Emit Touch of Vinitras DELETE (list 196 only; list 179 preserved) | L1 | Complete (applied 2026-04-22) |
+| L5 | Emit sseru/katta HP/damage SQL (7) | L1 | Complete (applied 2026-04-22) |
+| L6 | Emit griegsend/acrylia/thedeep/umbral SQL + Q59=A Arcanist | L1 | Complete (applied 2026-04-22) |
+| L7 | Emit spawn2 respawntime UPDATE SQL (~17-18 rows) | L1 | Complete (applied 2026-04-22) |
+| L8 | Write rollback script | L2-L7 | Complete (2026-04-22) |
+| L9 | Apply all SQL changes | L8 | Complete (applied 2026-04-22) |
+| L12 | Commit + push claude/ repo | L9 | In Progress |
+
+---
+
+## Phase 5a Luclin non-VT — Stage 4: Build
+
+### Implementation Log
+
+#### 2026-04-22 — Phase 5a backup tables created (Task L1)
+
+**What:** Created 3 backup tables via `13-luclin-a-backup.sql`.
+**Row counts:**
+- `npc_types_backup_raid_scaling_luclin_a`: 45 rows (41 UPDATE targets + 4 additional: includes Grieg variant 163231 for rollback safety — correct over-capture)
+- `spawn2_backup_raid_scaling_luclin_a`: 80 rows (includes pre-Emperor 1080s rows for safety + 5 Akheva elite-named rows)
+- `npc_spells_entries_backup_raid_scaling_luclin_a`: 1 row (Touch of Vinitras list 196)
+
+#### 2026-04-22 — Phase 5a implementation applied (Tasks L2-L9)
+
+**What:** Applied all Phase 5a changes via `14-luclin-a-implementation.sql`.
+
+**npc_types UPDATEs — 41 rows (Grieg variant 163231 HP UNCHANGED intentionally):**
+
+| Cluster | NPC | ID | HP old→new | Damage changes |
+|---------|-----|----|-----------|----------------|
+| ssratemple | Emperor Ssraeshza | 162227 | 1250500→120000 | mindmg 283→200, maxdmg 904→620 |
+| ssratemple | High Priest | 162076 | 941000→90000 | — |
+| ssratemple | Xerkizh | 162190 | 806516→80000 | — |
+| ssratemple | Arch Lich Rhag`Zadune | 162177 | 790000→75000 | — |
+| ssratemple | Rhag`Mozdezh | 162192 | 226000→60000 | — |
+| ssratemple | Rhag`Zhezum | 162178 | 201000→55000 | — |
+| ssratemple | Blood of Ssraeshza | 162189 | 200000→60000 | — |
+| ssratemple | Blood Golem | 162064 | 201000→60000 | — |
+| ssratemple | General Kizuhx | 162066 | 250000→60000 | maxdmg 510 (unchanged) |
+| ssratemple | Arbiter Korazhk | 162191 | 205000→55000 | — |
+| ssratemple | Advisor Zekuzh | 162067 | 150000→45000 | — |
+| ssratemple | Rhozth Ssrakezh | 162258 | 119000→40000 | — |
+| ssratemple | Rhozth Ssravizh | 162089 | 105200→38000 | — |
+| ssratemple | rune serpent (Q50=A) | 162253 | 221000→60000 | — |
+| ssratemple | glyph serpent (Q50=A) | 162261 | 300000→70000 | — |
+| akheva | Vyzh`dra Cursed | 162206 | 900000→90000 | — |
+| akheva | Vyzh`dra Exiled | 162232 | 450000→70000 | — |
+| akheva | Vyzh`dra Banished | 162214 | 403000→65000 | — |
+| akheva | Itraer Vius | 179037 | 601000→80000 | — |
+| akheva | Shei Vinitras REAL | 179032 | 690000→85000 | maxdmg 700→600 |
+| akheva | Shei Vinitras MERCHANT | 179157 | 400000→60000 | — |
+| akheva | Insanity Crawler | 179180 | 401000→60000 | — |
+| akheva | Va`Dyn | 179178 | 250000→50000 | — |
+| akheva | Shar Vinitras | 179134 | 460900→70000 | maxdmg 1010→600 |
+| akheva (Q51=B) | Sheleric Vis 179133 | 179133 | 116000→35000 | maxdmg 746→550 |
+| akheva (Q51=B) | Sheleric Vis 179046 | 179046 | 70000→30000 | — |
+| akheva (Q51=B) | Xaui Tatrua | 179044 | 70000→30000 | — |
+| sseru | Lord Inquisitor Seru | 159691 | 1201500→120000 | mindmg 339→220, maxdmg 915→620; MR=800 preserved |
+| sseru | Praesertum Vantorus | 159113 | 250000→55000 | — |
+| sseru | Praesertum Rhugol | 159112 | 200000→50000 | — |
+| sseru | Praesertum Bikun | 159115 | 160000→45000 | — |
+| sseru | Praesertum Matpa | 159114 | 150000→45000 | — |
+| katta | Lcea Katta | 160375 | 401200→80000 | maxdmg 827→620 |
+| katta | Nathyn Illuminious | 160135 | 430000→80000 | — |
+| griegsend | Grieg Veneficus MAIN | 163075 | 475500→80000 | — |
+| griegsend | Servitor of Luclin | 163013 | 120021→40000 | — |
+| griegsend | Praetorian Myral | 163078 | 95051→35000 | — |
+| acrylia | Khati Sha | 154145 | 475000→90000 | maxdmg 1004→750 |
+| acrylia | evolved burrower | 154142 | 300750→60000 | — |
+| acrylia (Q59=A) | A_Spiritual_Arcanist | 154153 | 150000→40000 | — |
+| thedeep | Thought Horror Overfiend | 164078 | 807000→90000 | — |
+| umbral | Doomshade | 176088 | 350000→70000 | — |
+| umbral | Zelnithak | 176089 | 251000→60000 | — |
+| umbral | Rumblecrush | 176002 | 150000→45000 | maxdmg 720→600 |
+
+**spawn2 UPDATEs — ~17-18 rows to 86400s (24h):**
+ssratemple 3 rows (162076/190/178) + akheva 4 rows (179037/157/180/178) + sseru 5 rows (159691/113/112/115/114) + katta 2 rows (160375/135) + griegsend 3 rows (163231/013/078) + acrylia 1 row (154142) + thedeep 1 row (164078) + umbral 2 rows (176089/002)
+
+**Preserved respawns:**
+- Pre-Emperor named 162066/067/191: 1080s (18m farming cadence)
+- Rhozth pair 162258/089: 5400s/21600s mid-tier
+- Shar Vinitras 179134: 10800s (3h short-tier per audit)
+- Akheva elite-named 179133/046/044: 5400s (Q51 philosophy)
+
+**Touch of Vinitras DELETE:**
+- List 196 spell 2859: DELETED (1 row removed)
+- List 179 spell 2859: PRESERVED (Shei Vinitras signature DT per Decision #60)
+
+**All verification checks passed:**
+- Emperor special_abilities `32,1,290` (Leash) preserved
+- Lord Seru MR=800 preserved
+- Spirit of Akelha`Ra 179144: 1,000,000 HP unchanged (Decision #30)
+- Va_Dyn_Khar 158081: untouched (Phase 5b)
+- Event-control NPCs 162269 (999M) / 176110 (99M): untouched
+
+### Files Created
+
+| File | Description |
+|------|-------------|
+| `data-expert/sql/13-luclin-a-backup.sql` | Pre-change Phase 5a backup tables (3 tables) |
+| `data-expert/sql/14-luclin-a-implementation.sql` | All 41 UPDATEs + ~17 respawn UPDATEs + 1 DELETE + verification queries |
+| `data-expert/sql/15-luclin-a-rollback.sql` | Emergency rollback using Phase 5a backup tables |
+
+---
+
 ## BUG-001 Fix — Phase 4a Tunare Combat Boss (2026-04-23)
 
 **Bug:** Phase 4a implementation targeted NPC 127001 (`#_Tunare`, passive trigger in tree) instead of NPC 127098 (`#Tunare`, actual killable combat boss spawned via `eq.spawn2(127098,...)`). NPC 127098 was left at 530,000 HP.
