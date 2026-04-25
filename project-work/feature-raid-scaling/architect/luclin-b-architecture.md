@@ -12,7 +12,7 @@
 > **DB investigation:** `architect/context/luclin-b-db-investigation.md`
 > **Author:** architect
 > **Date:** 2026-04-25
-> **Status:** **COMPLETE — READY FOR USER DECISIONS.** All 3 advisor sign-offs CONFIRMED 2026-04-25. config-expert CONFIRMED (initial + deep 12-Q; LB13b zone-restart REQUIRED for Q67=B DELETE — promoted to default). protocol-agent CONFIRMED (zero protocol impact + PBAE DT flag → Q67 default reversed to DELETE; **Q12 spawn2-zone disagreement RESOLVED 2026-04-25 commit a9bfc31** — protocol-agent retracted finding due to wrong join column; architect's `WHERE zone='vexthal'` SQL is correct). lore-master CONFIRMED (VT deep-dive APPROVED with 3 DB-disagreed flags pushed back via DB evidence). Three user-decision items surfaced (Q67 Aten Destroy DT disposition [architect default now DELETE per protocol-agent PBAE finding], Q68 burrower-parasite Phase 5a leak, Q69 13-shard briefing correction). Ready for lore-master sign-off + user decisions, then implementation dispatch.
+> **Status:** **COMPLETE — READY FOR USER DECISIONS Q67/Q68/Q69/Q70.** All 3 advisor sign-offs CONFIRMED 2026-04-25 (deep-Q responses delivered). config-expert CONFIRMED (initial + deep 12-Q; LB13b zone-restart REQUIRED for Q67=B DELETE — promoted to default). protocol-agent CONFIRMED (zero protocol impact + PBAE DT flag → Q67 default reversed to DELETE; **Q12 spawn2-zone disagreement RESOLVED 2026-04-25 commit a9bfc31** — protocol-agent retracted finding due to wrong join column; architect's `WHERE zone='vexthal'` SQL is correct). lore-master CONFIRMED both initial + deep 10-Q (VT deep-dive APPROVED; Q67=B DELETE LORE-APPROVED as zone-policing mechanic per Decision #11; **NEW Q70 raised** — Aten Ha Ra Perl-hardcoded ~2h respawn, architect+lore-master joint default KEEP NATIVE). Three user-decision items surfaced (Q67 Aten Destroy DT disposition [architect default now DELETE per protocol-agent PBAE finding], Q68 burrower-parasite Phase 5a leak, Q69 13-shard briefing correction). Ready for lore-master sign-off + user decisions, then implementation dispatch.
 > **Scope:** **Phase 5b ONLY — FINAL PHASE OF PROJECT.** Vex Thal proper (vexthal zone): Aten Ha Ra dual-form (158006/158096), 9 inner-VT bosses (158007-015), Thall Va Xakra dual (158016/158125), Va_Dyn_Khar (158081, drops Palace Key), 6 Akhevan Warders (158087/88/89/90/91/94 — script-spawned ADDS, NOT 8 as briefing assumed), 104 Yaemiu elite trash mobs (per Q4=A user decision). PLUS one Phase 5a audit-leak: A_burrower_parasite (164089, thedeep, 840k HP, Glowing Orb of Luclinite dropper). Touch of Vinitras DT not present in vexthal — only DT in zone is `Destroy` spell 1948 in list 229 (used by 158006 "Destroy Aten" form, script-gated by Aten_Trigger).
 
 ---
@@ -45,6 +45,13 @@ The phase preserves the **same SQL-only pattern established in Phases 2/3/4a/4b/
 **No C++ changes. No `rule_values` changes. No `eqemu_config.json` changes. No `.env` changes. No Lua edits. No Perl edits by default.** SQL-only changes + infra-expert vexthal zone-restart required for spell list 229 cache flush post-DELETE (per config-expert Q7 2026-04-25; same pattern as Phase 2 + Phase 5a).
 
 **User decisions surfaced 2026-04-25 (Phase 5b):**
+- **Q67 — Aten Destroy DT disposition** (architect default Option B DELETE per protocol-agent + lore-master 2026-04-25; lore-master explicit endorsement: zone-policing mechanic, not signature)
+- **Q68 — A_burrower_parasite Phase 5a leak** (architect default Option A INCLUDE)
+- **Q69 — VT key 13-shard correction** (architect default Option A acknowledge — lore-master confirmed 2026-04-25)
+- **Q70 (NEW per lore-master 2026-04-25)** — Aten Ha Ra cycle respawn (architect + lore-master joint default Option A KEEP NATIVE ~2h; alternative Option B SOFTEN to 24h via perl-expert task LB16)
+
+Original verbose Q67 text follows for full context:
+
 - **Q67 — Aten Destroy DT disposition:** Option A (PRESERVE the spell 1948 row in list 229; rely on Aten_Trigger script-gate) — architect default. Option B (DELETE the row entirely; Decision #16 precedent for absolute safety).
 - **Q68 — A_burrower_parasite Phase 5a audit-leak:** Option A (INCLUDE in Phase 5b's npc_types UPDATE batch — one extra row, project-closure clean) — architect default. Option B (defer to a Phase 5a fixup ticket post-project).
 - **Q69 — VT key "13-shard" briefing correction:** Option A (acknowledge: it's 10 Lucid Shards + 3 components = 13 items total; no scaling action required because Phase 1 sources are non-raid and Phases 2-4 are addressed in Phase 5a). Option B (deeper investigation if user intended something other than what the lore-master canonical says).
@@ -742,6 +749,30 @@ So the "13" number = 10 shards + 3 components. **Only 10 are formally "shards."*
 
 **Implementation impact:** None on Phase 5b SQL. Q69 is a documentation/clarity issue — the architecture and validation plan are already correct.
 
+
+### Decision #70 — Aten Ha Ra cycle respawn (NEW per lore-master deep Q2 2026-04-25) — **OPEN**
+
+`#Aten_Ha_Ra.pl:25` and `#Aten_Ha_Ra_.pl:25` set Aten respawn via Perl: `$spawntime = 6480 + rand(720)` = 108-120 minutes (~1.8-2.0h). This is a Perl local variable, NOT `spawn2.respawntime` — config-expert Q6 + lore-master Q2 confirmed. SQL cannot tune it; only perl-expert can.
+
+**Architect recommendation: Option A — KEEP NATIVE ~2h.**
+
+Rationale (lore-master-aligned):
+- Aten Ha Ra is the pinnacle boss of the expansion; ~2h respawn is already generous for endgame content
+- Decision #11 signature mechanic preservation extends to cadence — her identity benefits from feeling "momentous"
+- Same posture as Phase 5a Decision #45 Thylex (script-driven respawn untouched)
+- Same posture as Phase 5b LB10 architectural separation (script-spawned bosses preserve cycle timers)
+- Phase 5a Q52 Emperor cycle was softened (3-5d → 22-24h) only at user explicit override; default was KEEP NATIVE
+
+**Alternative — Option B: SOFTEN to 24h endgame tier.**
+
+Invoke perl-expert task LB16 (NEW). One-line edit at `#Aten_Ha_Ra.pl:25` + `#Aten_Ha_Ra_.pl:25`: `$spawntime = 6480 + rand(720)` → `$spawntime = 79200 + rand(7200)` (22-24h range, mirroring Phase 5a Q52=B `#EmpCycle.pl` edit). User decision required.
+
+**Implementation impact:**
+- Q70=A: No additional task. Cycle preserved at native ~2h. Default architect path.
+- Q70=B: Add task LB16 (perl-expert; `#Aten_Ha_Ra.pl:25` + `#Aten_Ha_Ra_.pl:25` edits). 2-line change. Independent of LB1-LB15. Adds perl-expert to implementation team.
+
+**Note:** This is a fundamentally different kind of respawn change than Q67 (which is a DT spell DELETE). Q70 only affects how often Aten can be re-engaged after a successful kill — a small group that beats Aten once at 180k HP can return ~2h later (Q70=A) or 24h later (Q70=B). Phase 5b spawn2-respawn UPDATE in LB10 only touches the 9 inner-VT bosses + Thall Va Xakra dual; Aten's respawn lives in scripts.
+
 ---
 
 ## Required Implementation Agents
@@ -1032,4 +1063,44 @@ Lore-master delivered comprehensive Phase 5b sign-off. Files: `lore-master/vt-in
 - lore-master (VT deep-dive): APPROVED with 3 lore flags DB-disagreed (architecture LB6/LB9 unchanged; LB5 preserved per Decision #11)
 
 Architecture is READY for user decisions Q67/Q68/Q69, then implementation dispatch. Same default team as Phases 2-5a (data-expert + config-expert) plus infra-expert (LB13b zone restart required).
+
+
+### 2026-04-25 — Lore-master Phase 5b deep-Q response (10 questions, comprehensive sign-off)
+
+Lore-master delivered comprehensive 10-question Phase 5b sign-off + reference doc filing at `lore-master/luclin-vexthal.md`. Full transcript in `agent-conversations.md`. Highlights:
+
+1. **Q1 VT progression confirmed:** 9 inner bosses (158007-158015) gate Aten dual-form spawn via Aten_Trigger entity-list polling. Akhevan Warders enforce kill order (script-summoned per-boss, depopalled on boss death). No scripted inter-boss dependency.
+
+2. **Q2 Aten Destroy DT — EXPLICIT LORE APPROVAL of DELETE.** Lore-master ruling: 158096 (non-aggro form) is the *intended* kill target with signature mechanics (Fling, Silence, Word of Command in list 540 — preserve all). 158006 (Destroy form) spawns only on out-of-order progression — spell 1948 is a *zone-policing mechanic* analogous to a zone gate, NOT signature encounter mechanic. Decision #11 supports DELETE because Aten's actual fight identity (Fling/Silence/Word of Command on 158096) survives. **Q67=B DELETE is LORE-APPROVED.** Different from Phase 5a Decision #60 Shei Vinitras Touch of Vinitras (which fires on aggro on the *intended kill target* and defines her encounter identity).
+
+3. **Q2 Aten Respawn (NEW Q70):** Aten Ha Ra respawn is Perl-hardcoded at `$spawntime = 6480 + rand(720)` (~1.8-2.0h) in `#Aten_Ha_Ra.pl:25` + `#Aten_Ha_Ra_.pl:25`. SQL cannot tune. Lore-master+architect joint recommendation: **Option A KEEP NATIVE** (Decision #11 signature cadence preservation; ~2h is already generous for endgame). Alternative Option B: perl-expert task LB16 to soften to 24h (mirrors Phase 5a Q52=B Emperor Ssraeshza override pattern). **Q70 raised for user decision.**
+
+4. **Q3 13-shard CONFIRMED** as 10 Lucid Shards + 3 components. Architecture's Q69 framing matches lore-master canonical interpretation. Decision #10 user intent = full 13-item progression preserved with no shortcut.
+
+5. **Q4 Diabo trio CONFIRMED roster** (158014/158015/158012 + 158013 Kaas Thox Xi Ans Dyek). No "Diabo Xi Hin" exists in DB.
+
+6. **Q5 Thall Va tier CONFIRMED roster** (158016/158125 dual + 158011 + 158008). Mirror north/south wing.
+
+7. **Q6 Khati Sha VT variant: ZERO** in 158xxx range. Decision #55 boundary holds.
+
+8. **Q7 Akhevan Warder lore context:** Akheva native zone security force; banish-on-proximity is lore-canon "the Akheva reject you from their sanctum until you've earned passage." Lore-master raised an "untargetable?" flag for architect verification.
+
+   **Architect DB cross-check:** `untargetable=0`, `raid_target=1`, `no_target_hotkey=0` for all 6 Warders (158087/088/089/090/091/094). They ARE targetable combat adds. Lore-master's "non-targetable" reading is live-era memory, not PEQ implementation. **Architecture LB6 stays at 901k → 80k HP UPDATE on all 6 Warders.**
+
+9. **Q8 Va_Dyn_Khar lore:** Courtyard warden, lowest-rank named Akheva, drops Palace Key (item 8010) for the only keyed door. Lore-master suggested "960s in nurga" respawn.
+
+   **Architect DB cross-check:** `respawntime=21600s (6h)` in `vexthal` zone (NOT 960s in nurga — that's mirroring protocol-agent's earlier retracted Q12 query error). **Architecture preserves 21,600s respawn per audit + Decision #11.**
+
+10. **Q9 Yaemiu suffix-tiered scaling guidance:** Centien=tank, Thall/Zethon=gating priority (must burn before they GATE 20+ adds), Liako=melee, Va_Liako=elevated melee, Senshali=caster/healer. Shadow forms = secondary spawns. Architecture's level-tiered HP cuts already cover this; suffix info added to game-tester smoke notes (gate-mob trigger pulls).
+
+11. **Q10 Signature mechanics preservation table:** Aten 158006 Destroy = DELETE (zone-policing); Aten 158096 Fling/Silence/WoC = PRESERVE; Kaas Thox Xi Ans Dyek CounterAvoidDamage + PacifyImmune = PRESERVE; Thall Xundraux Diabo Flurry 20% = PRESERVE; Diabo Xi Xin Thall Rampage 20% + TripleAttack = PRESERVE; Thall Va Xakra dual Rampage 30% = PRESERVE; Yaemiu gating behavior = AI-level (not in npc_types, not HP-dependent — flag for game-tester); Akhevan Warder banish = AI-level. **No other DT-profile spells in VT outside list 229 (architect + protocol-agent + config-expert all confirmed independently).**
+
+**LORE SIGN-OFF: Phase 5b scope APPROVED (final, comprehensive).**
+
+**Q67 LORE-APPROVED for DELETE.** Architect default Option B confirmed by lore-master.
+**Q70 NEW user decision raised** — Aten respawn (KEEP NATIVE ~2h vs SOFTEN to 24h).
+
+Era compliance: CLEAN. All 158xxx VT content is Shadows of Luclin era. No post-Luclin references.
+
+Files: `lore-master/luclin-vexthal.md` (persistent reference), `lore-master/13-shard-quest.md`, `lore-master/luclin-chains.md` Section 10.
 

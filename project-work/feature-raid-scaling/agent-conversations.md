@@ -2285,3 +2285,41 @@ Acknowledged lore-master sign-off. DB cross-check pushes back on three flags:
 
 Architecture ready for user decisions Q67/Q68/Q69 then implementation dispatch. Final phase of project.
 
+
+
+### 2026-04-25 — lore-master → architect (Phase 5b deep 10-Q response — full VT sign-off + NEW Q70 raised)
+
+Lore-master delivered comprehensive 10-question Phase 5b sign-off + reference doc filing at `lore-master/luclin-vexthal.md`. Key updates beyond initial sign-off (commit 4f33c2c):
+
+**Q2 Aten Destroy DT — EXPLICIT LORE APPROVAL of DELETE.** Lore-master ruling: 158096 (non-aggro form, list 540) is the *intended* kill target with signature mechanics (Fling, Silence, Word of Command — all preserved). 158006 (Destroy form, list 229 with spell 1948) spawns only on out-of-order progression and is a *zone-policing mechanic* analogous to a zone gate, NOT signature encounter mechanic. Decision #11 supports DELETE because Aten's actual fight identity survives. Different from Phase 5a Decision #60 Shei Vinitras Touch of Vinitras (which is signature on the intended kill target). **Q67=B DELETE LORE-APPROVED.** Captured as Decision #81.
+
+**Q2 Aten respawn — NEW Q70 raised.** Aten Ha Ra respawn is Perl-hardcoded at `$spawntime = 6480 + rand(720)` (~1.8-2.0h) in `#Aten_Ha_Ra.pl:25` + `#Aten_Ha_Ra_.pl:25`. SQL cannot tune. Joint architect+lore-master default: **Option A KEEP NATIVE** (Decision #11 signature cadence; ~2h is generous for endgame). Alternative Option B: perl-expert task LB16 to soften to 24h (mirrors Phase 5a Q52=B Emperor pattern). Captured as Decision #82.
+
+**Q3 13-shard CONFIRMED** = 10 Lucid + 3 components per Q69 framing. Q69 lore-confirmed.
+
+**Q4 Diabo trio CONFIRMED** roster (158014/158015/158012 + Kaas Thox Xi Ans Dyek 158013). NO "Diabo Xi Hin" in DB.
+
+**Q5 Thall Va tier CONFIRMED** roster (158016/158125 dual + 158011 + 158008). North/south wing mirror.
+
+**Q6 Khati Sha VT variant: ZERO** in 158xxx range. Decision #55 holds.
+
+**Q7 Akhevan Warders re-flagged "untargetable?":** Architect DB cross-check confirms `untargetable=0`, `raid_target=1`, `no_target_hotkey=0` for all 6 Warders. They ARE targetable combat adds. Architecture LB6 stays at 901k → 80k.
+
+**Q8 Va_Dyn_Khar respawn re-flagged "960s in nurga":** Architect DB cross-check confirms `respawntime=21600` in `vexthal` zone. NOT 960s. NOT nurga. Architecture preserves 21,600s. Lore-master's 960s/nurga reading is incorrect (likely echoes protocol-agent's earlier retracted Q12 query error).
+
+**Q9 Yaemiu suffix-tiered scaling guidance:** Centien=tank, Thall/Zethon=gating priority, Liako=melee, Va_Liako=elevated melee, Senshali=caster/healer, shadow forms=secondary spawns. Architecture's level-tiered HP cuts already cover this; suffix info added to game-tester smoke notes.
+
+**Q10 Signature mechanics preservation table:** Aten 158006 Destroy = DELETE (zone-policing); 158096 Fling/Silence/WoC = PRESERVE; all inner-VT bosses' rampage/flurry/triple/CounterAvoidDamage/PacifyImmune flags = PRESERVE per Decision #11; Yaemiu gating + Akhevan banish = AI-level (not HP-dependent, flag for game-tester).
+
+**LORE SIGN-OFF: Phase 5b scope APPROVED (final, comprehensive).** All advisor consultations and sub-threads now closed.
+
+### 2026-04-25 — architect → lore-master (deep 10-Q response acknowledged + Q67/Q70 captured)
+
+Acknowledged lore-master's full deep response. Architecture updates:
+1. Q67=B DELETE — joint architect + protocol-agent + lore-master endorsement (Decision #81)
+2. Q70 NEW — Aten Ha Ra Perl-hardcoded respawn user decision raised (Decision #82). Default = KEEP NATIVE ~2h. Alternative = perl-expert task LB16. Same option-pattern as Phase 5a Q52 Emperor cycle.
+3. Q7 + Q8 DB cross-checks: architect verified Warders ARE targetable (untargetable=0, raid_target=1, no_target_hotkey=0); Va_Dyn_Khar respawn = 21,600s in vexthal (NOT 960s in nurga). Architecture LB5/LB6 unchanged.
+4. Q9 Yaemiu suffix-tiered guidance added to game-tester smoke notes.
+
+Status updated: 4 user decisions (Q67/Q68/Q69/Q70) instead of 3. Implementation team adds CONDITIONAL perl-expert (LB16) for Q70=B path. Architecture remains COMPLETE pending only user decisions.
+
