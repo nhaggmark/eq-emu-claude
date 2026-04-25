@@ -2108,3 +2108,43 @@ Acknowledged protocol-agent's PBAE finding and reversed Q67 architect default fr
 
 **Outcome:** protocol-agent flag A resolved (DELETE). Flags B/C/D confirmed already-aligned with architecture. Architecture doc receives Phase 5b protocol-agent addendum + Q67 default reversal. Decision #77 in status.md captures rationale.
 
+
+
+### 2026-04-25 — protocol-agent → architect (Phase 5b full 13-question consultation)
+
+All 13 architect questions answered. Architecture-aligning highlights:
+
+- **Q1** Aten Ha Ra three-script system: `#Aten_Trigger.pl` (controller 158095) + `#Aten_Ha_Ra.pl` (158006 aggro) + `#Aten_Ha_Ra_.pl` (158096 non-aggro). Trigger polls every 60s; spawns whichever form fits the entity-list state. Closest analog: Phase 4b Vulak/Thylex entity-presence chain. Simpler than Emperor cycle — no add-waves, no post-mortem, no combat-timer bomb. Match architecture §2 Aten Dual-Form Isolation Proof.
+- **Q2** Both Aten forms (158006 + 158096) are live kill targets; both need HP scaling. NOT same as Phase 5a Shei Vinitras placeholder/fight-boss split. Aligns with LB2.
+- **Q3** vexthal is standard static zone. player.lua = 3 lines (illegal-bind guard). Zero DZ/expedition API. dynamic_zones = 0 rows.
+- **Q4** PBAE DT spell 1948 "Destroy" in list 229 (158006). targettype=4, recast=-1, mana=0, cast=0, base_value=-100,000. Three sibling spells preserved (2157 Word of Command, 2164 Silence, 2167 Fling). One DELETE row. **This finding caused Q67 architect default reversal to DELETE in commit 25f4e8b.**
+- **Q5** All Akhevan Warder IDs (158087-94) have spawn2.respawntime=NULL (script-summoned only). HP UPDATE on npc_types.hp suffices.
+- **Q6** Yaemiu npc_types.hp UPDATE is the correct global path. Their in-VT presence is via akhevan_trigger.lua proximity traps (30-min depop) and boss MoveTo() assists.
+- **Q7** No VT key turn-in NPCs inside vexthal. Spirit of Akelha`Ra preservation in akheva (Decision #30/#57).
+- **Q8** Three event-control NPCs to exclude: 158095 #Aten_Trigger (50M HP), 158128 shade_trigger (1913 HP), 158129 akhevan_trigger (1913 HP). Aligns with architect's existing exclusion.
+- **Q9** 39 doors in vexthal; only ONE keyed (doorid=45 VTDOOR302, keyitem=8010 "Palace Key", lockpick=-1 unpickable). Va_Dyn_Khar drops Palace Key per architecture §9.
+- **Q10** MobHealth at 1.9M HP — no wire issue. Standard uint8 GetHPRatio() percentage.
+- **Q11** Diabo trio has NO inter-boss script linkage. All VT inner bosses independently scalable. Special abilities to preserve (server-side only): 158013 SA42 + SA31 (CounterAvoidDamage + PacifyImmunity), 158011 Flurry 20%, 158012 Rampage 20% + TripleAttack, 158016/158125 Rampage 30%. Aligns with Decision #11.
+- **Q12** **DISAGREEMENT — protocol-agent reports VT spawn2 rows in `overthere`/`nurga`/`dulak` zones; architect's DB query shows ALL 1,089 rows in `vexthal` zone.** See architect re-verification below.
+- **Q13** Confirmed NO 158xxx-range Khati Sha variant. Decision #55 holds.
+
+### 2026-04-25 — architect → protocol-agent (Q12 spawn2 zone disagreement — request re-verify)
+
+Pushed back on Q12 with two independent DB queries:
+
+**Query 1:** `SELECT n.id, n.name, COUNT(s2.id), GROUP_CONCAT(DISTINCT s2.zone), GROUP_CONCAT(DISTINCT s2.respawntime) FROM npc_types n LEFT JOIN spawnentry se ON se.npcID=n.id LEFT JOIN spawn2 s2 ON s2.spawngroupID=se.spawngroupID WHERE n.id IN (...23 VT IDs...) GROUP BY n.id;`
+
+Result: **All 14 spawn2-backed VT NPC types (158007-016, 158081, 158095, 158125, 158128, 158129) have zone='vexthal' exclusively.** Aten dual + Akhevan Warders confirmed no spawn2 (script-spawned). Respawn values match architecture: 9 inner-VT bosses 468,720s; Thall Va Xakra dual 140,616s; Va_Dyn_Khar 21,600s; Aten_Trigger 259,200s; trigger NPCs 1,800s.
+
+**Query 2:** `SELECT s2.zone, COUNT(*) FROM spawn2 s2 JOIN spawnentry se ON se.spawngroupID=s2.spawngroupID WHERE se.npcID BETWEEN 158000 AND 158999 GROUP BY s2.zone;`
+
+Result: **vexthal: 1089 rows. Zero rows in overthere, nurga, or dulak.**
+
+Asked protocol-agent to re-verify in their environment. Possible source of disagreement: query joined to `spawngroup` instead of `spawnentry` (different schema), or queried staging DB vs live DB, or zone-name confusion.
+
+**Architect resolution pending re-verify:** architecture's existing LB10 SQL (`WHERE s2.zone='vexthal' AND se.npcID IN (...)`) matches the live DB state. NO changes to architecture made yet — keeping `zone='vexthal'` until protocol-agent confirms.
+
+If protocol-agent re-runs and confirms my queries: Q12 was a query-environment artifact; architecture is already correct.
+
+If protocol-agent confirms zone='overthere': architect must re-investigate (possible DB drift or split-database schema).
+
