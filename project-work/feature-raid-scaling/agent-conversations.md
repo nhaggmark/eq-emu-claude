@@ -2056,3 +2056,55 @@ Decision #70 confirmed. LB6 Warder HP UPDATE covers 6 IDs only: 158087/088/089/0
 
 **Outcome:** Q67 = DELETE confirmed. Decision #70 Warder count correction confirmed. Architect fully unblocked for final Phase 5b architecture doc.
 
+
+
+### 2026-04-25 — protocol-agent → architect (Phase 5b Vex Thal Protocol Sweep — 100% server-side, 1 PBAE DT flagged)
+
+**Subject:** Phase 5b protocol consultation complete.
+
+**Bottom line: 100% server-side, zero opcode/struct/translation impact.** One DT spell requires DELETE.
+
+**Flag A — CRITICAL: AE Death-Touch in Aten Ha Ra spell list 229**
+- Spell 1948 "Destroy" — npc_spells_id=229, used by 158006 #Aten_Ha_Ra (aggro/Destroy form)
+- DT profile: mana=0, cast_time=0, recast_delay=**-1 (unlimited)**, effectid1=0 (SE_CurrentHP), effect_base_value1=**-100,000**
+- **CRITICAL DIFFERENCE from prior phase DTs: targettype=4 (PBAE)**, vs Cazic Touch + Touch of Vinitras at targettype=5 (single-target)
+- PBAE simultaneously wipes 1-3 player group; no tank-only survivable state
+- 158096 (non-aggro form) uses list 540 — confirmed clean of spell 1948
+- Other list 229 spells (2157 Word of Command, 2164 Silence, 2167 Fling) must be preserved
+- Recommended DELETE per Phase 2 Decision #16 / Phase 5a Decision #16-pattern precedent
+
+**Flag B — Aten dual-form (158006 vs 158096):** Same pattern as Phase 5a Shei Vinitras. Both 1.9M HP. Both must be HP-UPDATE'd. Aten_Trigger entity-list spawn-swap is server-internal — no client wire impact.
+
+**Flag C — Akhevan Warders 158087-94, no spawn2:** All 8 Warder NPC IDs have spawn2.respawntime=NULL. Script-summoned via boss EVENT_SPAWN quest::spawn2; depopall'd on boss death. HP UPDATE on npc_types.hp suffices.
+
+**Flag D — Thall Va Xakra 158016/158125 duplication:** Two separate NPC IDs both 900k HP, both spawn2-backed at 640s. Both HP-UPDATE per LB4. Server-side AI MoveTo() train-pull, no protocol impact.
+
+**Other findings — all confirmed:**
+- vexthal is standard static zone, player.lua 3 lines (illegal-bind guard), zero DZ/expedition API, dynamic_zones table 0 rows
+- ZoneChange_Struct → ZoneServerInfo_Struct standard entry flow
+- Zero setnexthpevent / EVENT_HP usage in vexthal — boss HP freely scalable
+- Yaemiu trash 158000-158086 range, spawn2 640s/960s, standard SQL UPDATE path
+- akhevan_trigger.lua proximity-trap spawner is server-side only (Ring War-pattern)
+- Spirit of Akelha`Ra (179144, akheva) standard event_trade / SummonItem; Decision #30 precedent; 1M HP UNTOUCHED
+
+### 2026-04-25 — architect → protocol-agent (Phase 5b consultation acknowledged — Q67 default REVERSED to DELETE)
+
+Acknowledged protocol-agent's PBAE finding and reversed Q67 architect default from PRESERVE to DELETE. Key reasoning:
+
+1. **PBAE wipes the entire small group** — no tank-only survivable state. Qualitatively different from single-target Cazic Touch + Touch of Vinitras.
+2. **Unlimited recast (-1)** fires every AI cooldown tick, not once-per-fight. Encounter literally impossible at small-group scale.
+3. **Phase 4b Kerafyrm parallel doesn't hold.** Kerafyrm Destroy = deliberately-triggered Sleeper-awake event punishment (lore-canon unwinnable feature). Aten 158006 spawns AUTOMATICALLY on a 60s Aten_Trigger tick based on entity-list state players cannot query — sequencing slip = unwinnable PBAE wipe with no recovery path. That's a trap, not a difficulty cliff.
+4. **List 229's other 3 spells preserved** — Word of Command AE charm, Silence PBAE, Fling knockback — Aten 158006 retains meaningful encounter character.
+5. **Phase 5a Decision #54/#60 selective-DT precedent applies cleanly** — Touch of Vinitras DELETE'd from list 196 (small-group-blocker) but PRESERVED in list 179 (signature). Aten Destroy = small-group-blocker.
+
+**Implementation impact:**
+- Task LB9 PROMOTED from CONDITIONAL to default required.
+- 1-row DELETE on list 229 only.
+- List 489 (Kerafyrm Decision #12) UNTOUCHED.
+- Spell 1948 row in spells_new UNTOUCHED.
+- backup table `npc_spells_entries_backup_raid_scaling_luclin_b` captures 1 row (was 0 in prior default).
+
+**Cross-check flagged to protocol-agent:** Their "Akhevan Warders 158087-94, 8 NPC IDs" includes 158092 (Eom_Va_Dyn = Yaemiu) and 158093 (a_pool_of_shadows = Yaemiu) which are NOT Warders. Decision #70 captures correction. Asked protocol-agent to re-verify; same correction needed for config-expert.
+
+**Outcome:** protocol-agent flag A resolved (DELETE). Flags B/C/D confirmed already-aligned with architecture. Architecture doc receives Phase 5b protocol-agent addendum + Q67 default reversal. Decision #77 in status.md captures rationale.
+

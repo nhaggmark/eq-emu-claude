@@ -12,7 +12,7 @@
 > **DB investigation:** `architect/context/luclin-b-db-investigation.md`
 > **Author:** architect
 > **Date:** 2026-04-25
-> **Status:** **DRAFT** — advisor consultations in flight (lore-master, protocol-agent, config-expert sent 2026-04-25). Three user-decision items surfaced (Q67 Aten Destroy DT disposition, Q68 burrower-parasite Phase 5a leak, Q69 13-shard briefing correction). Ready for user/advisor review then implementation dispatch.
+> **Status:** **DRAFT (2 of 3 advisors signed off 2026-04-25)** — config-expert CONFIRMED 2026-04-25 (zero rule/config changes); protocol-agent CONFIRMED 2026-04-25 (zero protocol impact + 1 PBAE DT flagged → Q67 default reversed to DELETE); lore-master pending. Three user-decision items surfaced (Q67 Aten Destroy DT disposition [architect default now DELETE per protocol-agent PBAE finding], Q68 burrower-parasite Phase 5a leak, Q69 13-shard briefing correction). Ready for lore-master sign-off + user decisions, then implementation dispatch.
 > **Scope:** **Phase 5b ONLY — FINAL PHASE OF PROJECT.** Vex Thal proper (vexthal zone): Aten Ha Ra dual-form (158006/158096), 9 inner-VT bosses (158007-015), Thall Va Xakra dual (158016/158125), Va_Dyn_Khar (158081, drops Palace Key), 6 Akhevan Warders (158087/88/89/90/91/94 — script-spawned ADDS, NOT 8 as briefing assumed), 104 Yaemiu elite trash mobs (per Q4=A user decision). PLUS one Phase 5a audit-leak: A_burrower_parasite (164089, thedeep, 840k HP, Glowing Orb of Luclinite dropper). Touch of Vinitras DT not present in vexthal — only DT in zone is `Destroy` spell 1948 in list 229 (used by 158006 "Destroy Aten" form, script-gated by Aten_Trigger).
 
 ---
@@ -27,7 +27,7 @@ The phase preserves the **same SQL-only pattern established in Phases 2/3/4a/4b/
 
 1. **The single largest HP cut in the project.** Aten Ha Ra dual at 1,901,500 → architect target **180k** (90.5% cut, mirroring audit's `-91%` recommendation). Kaas Thox Xi Aten Ha Ra at 1,900,000 + 1,650 max dmg → **160k + 800 max** (92% cut + 51% damage trim). These are the single hardest fights in the game.
 
-2. **First Phase since Phase 2/Decision #16 to face a -100,000 DT spell.** Spell 1948 "Destroy" appears in only one VT spell list (229 = "Destroy Aten" 158006). It is the SAME spell ID as Kerafyrm's Destroy (Phase 4b Decision #12 — PRESERVE). Architect recommends **PRESERVE the row but rely on the Aten_Trigger script to gate the Destroy form** — small group full-clears the 9 gating bosses and faces the safe 158096 form. Alternative is DELETE for absolute safety (Decision #16 precedent). User decision Q67.
+2. **First Phase since Phase 2/Decision #16 to face a -100,000 DT spell — and the FIRST PBAE DT in the project.** Spell 1948 "Destroy" appears in only one VT spell list (229 = "Destroy Aten" 158006). It is the SAME spell ID as Kerafyrm's Destroy (Phase 4b Decision #12 — PRESERVE) but with one critical difference: Aten Destroy is **targettype=4 PBAE** (per protocol-agent 2026-04-25), whereas Cazic Touch + Touch of Vinitras + Kerafyrm's Destroy are all targettype=5 single-target. PBAE wipes the entire 1-3 player group simultaneously — no recovery state. Architect default flipped 2026-04-25 to **DELETE** (Decision #16/#54 precedent — selective DT removal where DT is small-group-blocker not signature mechanic). Q67 user decision still surfaces but architect now defaults to Option B.
 
 3. **Major add-wave architecture.** The 6 Akhevan Warders (158087/88/89/90/91/094) are NOT standing spawns — they're **script-summoned by 6 specific Diabo/Thall boss .pl files**, totaling **45 Warder summons across the zone when all bosses are up**. Phase 5b cuts Warder HP from 901k → ~80-90k (mirrors Phase 5a 158087-094 audit-flag noting "vexthal-zoned despite Akhevan name"). **This is the biggest small-group play unblocker in the phase** — Va_Xi_Aten_Ha_Ra alone summons 14 Warders at 901k HP each on engage.
 
@@ -38,7 +38,7 @@ The phase preserves the **same SQL-only pattern established in Phases 2/3/4a/4b/
 **Change footprint:**
 - **~125 `npc_types` HP/damage UPDATEs** — 13 inner bosses + 6 Akhevan Warders + 1 Va_Dyn_Khar + 104 Yaemiu trash + 1 burrower-parasite (Q68=A architect default) = 125. Subset breakdown: Aten dual (2) + 9 inner-VT bosses + Thall Va Xakra dual (2) + Va_Dyn_Khar + Warders (6) + Yaemiu (104) + burrower (1).
 - **~12 `spawn2.respawntime` UPDATEs** to 86,400s (24h endgame) — 9 inner-VT bosses (158007 has 2 rows, others 1 each = 10 rows) + 2 Thall Va Xakra rows = 12 rows. Va_Dyn_Khar at 21,600s preserved (already 6h short-tier; Palace Key cycle).
-- **0 OR 1 `npc_spells_entries` DELETE** — depends on Q67 (PRESERVE Destroy DT relying on script gate, or DELETE for absolute safety).
+- **1 `npc_spells_entries` DELETE** (default per Q67 reversal 2026-04-25) — spell 1948 Destroy from list 229 only. List 489 (Kerafyrm Decision #12) untouched. List 540 (Aten 158096 non-Destroy form) untouched.
 - **0 script edits required by default** — `#Aten_Ha_Ra.pl`, `#Aten_Ha_Ra_.pl`, `#Aten_Trigger.pl`, the 6 Diabo/Thall warder-control scripts, `158016.lua`, `158125.lua` all preserve verbatim per Decision #11.
 - Backup tables: `npc_types_backup_raid_scaling_luclin_b` (~125 rows), `spawn2_backup_raid_scaling_luclin_b` (~110 rows incl. trap respawn rows for safety), `npc_spells_entries_backup_raid_scaling_luclin_b` (0-1 rows depending on Q67).
 
@@ -495,7 +495,7 @@ Rationale:
 | LB6 | Emit Akhevan Warder HP UPDATE SQL for 6 NPC IDs (158087/088/089/090/091/094 → 80k each); preserve 6 Diabo/Thall .pl warder-control scripts (HP-independent) | data-expert | LB1 | ~15m |
 | LB7 | Emit Yaemiu trash HP UPDATE SQL (104 NPCs by level/role tier; Eom L66 → 22-25k, Pli L64 → 20-22k, Zun L61 → 18k, Zov L58 → 14-15k, Qua L55 → 11-12k, shadow tier → 12-25k by level); damage UNCHANGED | data-expert | LB1 | ~60m (largest single batch) |
 | LB8 | (**Q68=A default**) Emit A_burrower_parasite (164089) UPDATE SQL (840k → 90k HP); add 164089 to npc_types backup table | data-expert | LB1 | ~5m |
-| LB9 | (**CONDITIONAL Q67=B only**) Emit Aten Destroy DELETE: `DELETE FROM npc_spells_entries WHERE npc_spells_id = 229 AND spellid = 1948;` (1 row) | data-expert | LB1 | ~5m |
+| LB9 | (**REQUIRED per Q67 reversal 2026-04-25**) Emit Aten Destroy DELETE: `DELETE FROM npc_spells_entries WHERE npc_spells_id = 229 AND spellid = 1948;` (1 row, list 229 only). List 489 Kerafyrm Decision #12 UNTOUCHED. | data-expert | LB1 | ~5m |
 | LB10 | Emit `spawn2.respawntime` UPDATE SQL (86,400s for ~12 rows: 9 inner-VT boss IDs incl. 158007 second row + 2 Thall Va Xakra rows; EXCLUDE Va_Dyn_Khar 21600s; EXCLUDE Yaemiu standing/trap rows; EXCLUDE script-spawned which have no spawn2) | data-expert | LB1 | ~15m |
 | LB11 | Emit rollback script: 3-stage transactional INSERT…SELECT from backup tables + verification queries comparing row counts before/after; mirror Phase 5a `06-luclin-a-rollback.sql` pattern | data-expert | LB2-LB10 | ~30m |
 | LB12 | Apply all SQL changes via `docker exec akk-stack-mariadb-1 mysql -ueqemu -p'…' peq < phase5b-luclin-b-implementation.sql`; capture before/after row counts and diff stats | data-expert | LB11 | ~15m |
@@ -688,22 +688,26 @@ LB1 (3 backups) ──┬──> LB2 (Aten dual SQL)
 
 ## Items flagged to user — PHASE 5b USER DECISIONS
 
-### Decision #67 — Aten Destroy DT disposition — **OPEN**
+### Decision #67 — Aten Destroy DT disposition — **OPEN (architect default UPDATED 2026-04-25 post-protocol-agent finding)**
 
-Spell **1948 "Destroy"** (-100,000 HP, 0 mana, 0 cast, 0 recast) appears in spell list **229** which is used by **158006 #Aten_Ha_Ra "Destroy form"**. The Aten_Trigger script (158095) gates the Destroy form: it spawns 158006 only when at least one of 9 inner-VT bosses (158007-015) is alive, and spawns 158096 (non-Destroy form) when all 9 are dead.
+Spell **1948 "Destroy"** (-100,000 HP, 0 mana, 0 cast, **recast=-1 unlimited**, **targettype=4 PBAE**) appears in spell list **229** which is used by **158006 #Aten_Ha_Ra "Destroy form"**. The Aten_Trigger script (158095) gates the Destroy form: it spawns 158006 only when at least one of 9 inner-VT bosses (158007-015) is alive, and spawns 158096 (non-Destroy form) when all 9 are dead.
 
-**Architect recommendation: Option A — PRESERVE.**
+**Architect recommendation: Option B — DELETE** (REVERSED 2026-04-25 after protocol-agent flagged targettype=4 PBAE — see Phase 5b protocol-agent addendum).
 
-Rationale:
-- Aten dual-form is a signature mechanic (Decision #11).
-- Phase 4b Decision #12 PRESERVED Kerafyrm's Destroy spell (same spell ID 1948 in list 489).
-- Phase 5a Decision #54+#60 set the precedent: DT removal is selective per encounter — Vyzh\`dra Touch of Vinitras list 196 DELETE (gameplay barrier, no signature role) vs Shei list 179 PRESERVE (signature mechanic).
-- Aten Destroy is closer to "signature gate" than "general barrier." Script gates which form spawns.
-- A small group naturally clears the 9 gating bosses first, hitting only the safe form.
+Rationale (revised):
+- **PBAE Destroy wipes the entire 1-3 player group simultaneously.** Cazic Touch (Phase 2) and Touch of Vinitras (Phase 5a) were targettype=5 single-target — tank takes hit, group recovers. **Aten Destroy is targettype=4 area-of-effect** — player + all companions in range take -100,000 HP simultaneously. No survivable state for a small group.
+- **Unlimited recast (recast_delay=-1)** means Destroy fires every AI cooldown tick once cast, not once-per-fight. Makes the encounter literally impossible at small-group scale.
+- **Phase 4b Decision #12 Kerafyrm parallel does NOT hold.** Kerafyrm's Destroy is the lore-intended punishment of a deliberately-triggered Sleeper-awake event — an explicit "this fight is supposed to wipe a 72-player raid" feature. Aten 158006 spawns automatically on a 60s Aten_Trigger script tick based on entity-list state the player cannot query — a small group that mis-sequences by 30 seconds (last gating boss respawns mid-attempt) gets one-shotted as a group with no recovery path. That's an unwinnable trap, not an intended difficulty cliff.
+- **List 229's other 3 spells** (2157 Word of Command AE charm, 2164 Silence of the Shadows PBAE silence, 2167 Fling knockback) are preserved by the DELETE. These provide the Aten 158006 encounter's signature character. DT removal leaves a meaningfully harder fight than 158096, just no longer instakill.
+- **Phase 5a Decision #54/#60 selective-DT precedent applies cleanly.** Touch of Vinitras DELETE'd from list 196 (Vyzh\`dra forms — small-group-blocker not signature) but PRESERVED in list 179 (Shei Vinitras — signature mechanic). Aten 158006 Destroy is "small-group-blocker not signature" — same posture as Vyzh\`dra list 196.
 
-**Alternative — Option B: DELETE.**
+**Alternative — Option A: PRESERVE.**
 
-DELETE the spell 1948 row from list 229 only. Decision #16 / Decision #54 precedent. Removes the gate's punishment effect — Aten 158006 spawns harmlessly even if gating bosses are alive. **Trivializes the dual-form mechanic** but offers absolute safety.
+Keep spell 1948 row in list 229. Aten_Trigger script-gate handles which form spawns; players who perfectly sequence kills face only 158096 (safe). **Trade-off:** any sequencing error or boss-respawn timing mishap → unwinnable PBAE wipe. Architect's prior reasoning (Decision #11 signature mechanic + Decision #12 Kerafyrm precedent) holds in spirit but the PBAE distinction breaks the small-group analogy.
+
+**Implementation impact:**
+- **Q67=B (NEW DEFAULT):** task LB9 PROMOTED from CONDITIONAL to default required. 1-row DELETE on `npc_spells_entries WHERE npc_spells_id=229 AND spellid=1948`. backup table `npc_spells_entries_backup_raid_scaling_luclin_b` captures 1 row pre-DELETE. List 489 (Kerafyrm Decision #12) UNTOUCHED. Spell 1948 row in `spells_new` UNTOUCHED (Kerafyrm still uses it).
+- **Q67=A:** task LB9 skipped. backup table 0 rows. Architect-flagged risk: small group faces unwinnable PBAE if sequencing slips.
 
 **Implementation impact:**
 - Q67=A: Skip task LB9. backup table empty for npc_spells_entries.
@@ -948,6 +952,33 @@ Config-expert delivered Phase 5b configuration sweep with zero new rules + zero 
 10. **DT sweep gap flagged:** Config-expert's filter at `base_value < -5000` did not surface spell 1948 "Destroy" (-100,000) in list 229 (which sits well below -5000 but should have been included in `<` predicate); architect's broader sweep found it independently. Q67 user decision surfaces — same spell ID as Phase 4b Kerafyrm list 489 (Decision #12 PRESERVED). Asked config-expert to re-verify.
 
 **Verdict: Phase 5b is 100% SQL-only by default. Zero rule changes. Zero config changes. SQL-only pattern holds across the entire raid-scaling project (Phases 2-5b cumulative).**
+
+### 2026-04-25 — Protocol-agent Phase 5b consultation (CONFIRMED — 1 DT FLAGGED)
+
+Protocol-agent confirmed **zero Titanium client protocol impact** for Phase 5b. Full transcript in `agent-conversations.md`. Summary:
+
+1. **Phase 5b is 100% server-side.** Zero new opcodes, no struct changes, no Titanium translation layer impact. Same conclusion as Phases 2-5a.
+2. **vexthal is a standard static zone.** `player.lua` is 3 lines (illegal-bind guard only). Zero DZ/expedition API usage anywhere in `vexthal/`. `dynamic_zones` table 0 rows confirmed (Phase 5a holds).
+3. **Zone change flow:** standard `ZoneChange_Struct` → `ZoneServerInfo_Struct` entry, same as every prior phase.
+4. **Zero HP-percentage event hooks in vexthal:** No `setnexthpevent` / `EVENT_HP` usage anywhere in vexthal scripts. Boss HP freely scalable.
+5. **Aten dual-form spawn-swap (Flag B):** Same pattern as Phase 5a Shei Vinitras. Both 158006 + 158096 must be HP UPDATE'd. Aten_Trigger entity-list spawn-swap is server-internal — no client wire impact.
+6. **Akhevan Warders no spawn2 (Flag C):** Confirmed all Warder NPC IDs have `spawn2.respawntime=NULL` (script-summoned only). HP UPDATE on `npc_types.hp` propagates on next repop via standard path.
+7. **Thall Va Xakra duplication (Flag D):** 158016 + 158125 both 900k HP, both spawn2-backed. Both HP-UPDATE per LB4. Server-side AI MoveTo() train-pull, no protocol impact.
+8. **Yaemiu trash scope:** All in 158000-158086 / 158097-127 range, standard SQL UPDATE path. `akhevan_trigger.lua` proximity-trap spawner is server-side only (Ring War-pattern).
+9. **Spirit of Akelha\`Ra preservation:** Standard `event_trade` / `SummonItem` sequence. Decision #30 precedent. 1M HP UNTOUCHED.
+10. **Akhevan Warder count discrepancy** (architect cross-check): protocol-agent's "8 NPCs (158087-94)" included 158092 + 158093 — DB confirms these are Yaemiu, not Warders. Decision #70 captures correction.
+
+**CRITICAL — Flag A: AE Death-Touch found.** Spell 1948 "Destroy" in list 229 (used by 158006 #Aten_Ha_Ra Destroy form):
+- mana=0, cast_time=0, recast_delay=**-1 (unlimited)**, effect_base_value1=**-100,000**, effectid1=0 (SE_CurrentHP)
+- **targettype=4 PBAE** — fundamentally different from prior phase DT removals (Cazic Touch + Touch of Vinitras were targettype=5 single-target)
+- Wipes entire 1-3 player group simultaneously when in melee range
+- Protocol impact of removal: zero (standard CombatDamage_Struct/Death_Struct path)
+- List 229's other 3 spells (2157 Word of Command, 2164 Silence, 2167 Fling) MUST be preserved
+- 158096 list 540 confirmed clean of spell 1948
+
+**Protocol-agent recommended DELETE.** Architect concurs and **REVERSES Q67 default to Option B — DELETE**. The PBAE distinction is decisive: it wipes the entire small group with no recovery state. Decision #67 updated above. Task LB9 promoted from CONDITIONAL to default required.
+
+**Verdict: Phase 5b is 100% server-side, SQL-only, with one mandatory `npc_spells_entries` DELETE (per architect's revised Q67 default). Zero opcode additions, zero struct changes, zero Titanium translation layer changes.**
 
 
 
