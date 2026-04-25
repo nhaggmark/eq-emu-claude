@@ -1855,3 +1855,39 @@ Phase 5b is 100% server-side. Zero opcode changes. One DT DELETE (spell 1948, li
 
 **Outcome:** Architect unblocked for Phase 5b architecture doc.
 
+### 2026-04-22 — architect → config-expert: formal 12-question Phase 5b config brief
+
+**From:** architect → **To:** config-expert
+
+Formal 12-question advisory request covering: rule drift check, zone ruleset, DZ check, DT sweep (headline bosses + all Yaemiu trash), respawn philosophy 24h alignment, #reloadworld behavior, hp bigint overflow check, backup table naming, spawn conditions, out-of-era/Fabled exclusion, and cumulative rule drift summary for project record.
+
+### 2026-04-22 — config-expert → architect: 12-question response
+
+**From:** config-expert → **To:** architect
+
+**Q1:** rule_values=1,112. Zero drift. Confirmed.
+
+**Q2:** vexthal: ruleset=1, expansion=3, insttype=0, version=0. Default ruleset, Luclin era, not a DZ zone.
+
+**Q3:** dynamic_zones table 0 rows. No DZ/expedition config for vexthal.
+
+**Q4 — DT HIT:** Spell 1948 "Destroy" (cast_time=0, mana=0, effect_base_value1=-100,000) in npc_spells_id=229 (#Aten_Ha_Ra non-destroy, NPC 158006). min_hp=0, max_hp=0 — fires at any HP level. Full DT profile. **data-expert: DELETE FROM npc_spells_entries WHERE npc_spells_id=229 AND spellid=1948.** Destroy variant (158096, list 540) is clean. All other VT boss spells (2144 Shadow Warding, 2157 Word of Command, 2162 Black Winds, 2163 Lure of Shadows, 2164 Silence, 2167 Fling) are clean — none DT profile. Zone-restart caveat: infra-expert full restart required post-SQL to flush in-memory list 229.
+
+**Q5:** VT trash spell lists 1, 2, 8, 9, 448, 1472, 1473 audited. Lists 448/1472/1473 empty. Lists 1/2/8/9 are standard class libraries — largest negative value -2,740 (wizard DD with cast_time=7000, mana=640). No DT profile anywhere.
+
+**Q6:** No rule or config concern with 24h on wing bosses. spawn2 UPDATE to 86,400s is clean. Aten Ha Ra has no spawn2 rows — Perl-hardcoded at ~1.8-2.0h (`$spawntime = 6480 + rand(720)`). SQL cannot change it. perl-expert required if 24h alignment is desired for AHR.
+
+**Q7:** #reloadworld handles npc_types and spawn2 cleanly. Exception: spell 1948 DELETE requires full zone restart (same precedent as Phase 2 PoSky and Phase 5a Akheva).
+
+**Q8:** npc_types.hp is bigint(20). 1,901,500 is well within range. Titanium client renders percentage — no overflow risk.
+
+**Q9:** Backup naming confirmed: `_raid_scaling_luclin_b`. Three tables: npc_types_backup_raid_scaling_luclin_b, spawn2_backup_raid_scaling_luclin_b, npc_spells_entries_backup_raid_scaling_luclin_b.
+
+**Q10:** spawn_conditions and spawn_condition_values for vexthal: both 0 rows. All spawn2 rows use _condition=0, cond_value=1 (unconditional default). No VP-style condition filtering. No accidental variant hits.
+
+**Q11:** Only out-of-era flag: NPC 158095 #Aten_Trigger (L90, 50M HP, raid_target=0). Must be excluded from npc_types UPDATEs. raid_target=1 scope guard covers it; `AND level < 70` adds safety. No Fabled NPCs in VT range. npc_types has no expansion columns.
+
+**Q12:** Zero rule_values changes across entire project (Phases 2-5b). Pure data-layer work throughout.
+
+**Outcome:** Architect has all inputs for Phase 5b architecture doc. One DT DELETE (list 229, spell 1948) required — adds npc_spells_entries backup table and zone-restart requirement to Phase 5b.
+

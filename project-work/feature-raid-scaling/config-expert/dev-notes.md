@@ -1187,3 +1187,128 @@ Identical to all prior phases:
 5. No `npc_spells_entries` changes — no zone-restart caveat.
 6. **New flag for architect:** Aten Ha Ra respawn tuning (if desired) requires Perl script changes to `#Aten_Ha_Ra.pl` and `#Aten_Ha_Ra_.pl` — not SQL, not config. Currently ~1.8-2.0h post-death.
 7. **Akhevan Warder clarification needed:** architect to confirm whether 158087-158094 (maxdmg=4) are combat targets or event entities to exclude.
+
+---
+
+## Phase 5b — Architect 12-Question Response (2026-04-22)
+
+Architect asked 12 specific questions. Answers follow, all based on live DB queries.
+
+### Q1: rule_values count (drift check)
+**1,112 — confirmed, zero drift.** Same count since Phase 2 baseline.
+
+### Q2: vexthal zone ruleset
+```
+short_name=vexthal, ruleset=1, expansion=3, insttype=0, version=0
+```
+**Confirmed:** ruleset=1 (default), expansion=3 (Luclin), insttype=0 (not a DZ zone). No version flag. No custom ruleset override.
+
+### Q3: DZ/expedition check
+`dynamic_zones` table: **0 rows** — confirmed. No DZ/expedition-only configuration for vexthal. All content is standard static-zone access.
+
+### Q4: DT/Cazic-Touch sweep across VT headline boss spell lists
+
+All VT headline boss spell list IDs confirmed:
+- 229 (#Aten_Ha_Ra non-destroy), 230 (#Kaas_Thox_Xi_Ans_Dyek), 231 (#Kaas_Thox_Xi_Aten_Ha_Ra), 232 (#Thall_Va_Kelun), 233 (#Thall_Va_Xakra), 234 (#Va_Xi_Aten_Ha_Ra), 236 (Akhevan_Warder), 237 (#Diabo_Xi_Xin_Thall), 238 (#Diabo_Xi_Va_Temariel), 239 (#Diabo_Xi_Va), 540 (#Aten_Ha_Ra_ destroy), 1353 (#Thall_Xundraux_Diabo)
+
+Spell IDs present across all 15 npc_spells_entries rows for these lists: 1948, 2144, 2157, 2162, 2163, 2164, 2167.
+
+**DT HIT FOUND — spell 1948 "Destroy" in list 229 (#Aten_Ha_Ra non-destroy, NPC 158006):**
+- cast_time=0, mana=0, effect_base_value1=-100,000
+- npc_spells_entries for this row: `min_hp=0, max_hp=0` — fires at ANY HP level, no HP-threshold gating
+- This IS a death-touch profile. Same mechanism as spell 982 (Phase 2 PoSky) and spell 2859 (Phase 5a Shei Vinitras).
+- **Action required: DELETE FROM npc_spells_entries WHERE npc_spells_id=229 AND spellid=1948**
+
+**Destroy variant (158096, list 540): CLEAN** — spell 1948 NOT in list 540. Only spells 2157, 2164, 2167.
+
+Note: spell 1948 "Destroy" also exists in list 489 (Kerafyrm — Decision #12, untouched/out of scope).
+
+Other spells in the VT boss lists — **all normal, no DT profile:**
+- 2144 "Shadow Warding 5": cast_time=0, mana=0, effect_base_value1=0 — immunity buff, not damage
+- 2157 "Word of Command": cast_time=0, mana=0, value=3000 — positive value, not damage
+- 2162 "Black Winds": cast_time=4800, mana=180 — standard AoE, not DT profile
+- 2163 "Lure of Shadows": cast_time=5000, mana=400 — standard, not DT
+- 2164 "Silence of the Shadows": cast_time=1000, mana=0, value=1 — silence effect
+- 2167 "Fling": cast_time=0, mana=0, value=-1 — knockback (1-point), NOT -100k DT
+
+**Summary: 1 DT DELETE needed.** data-expert task: `DELETE FROM npc_spells_entries WHERE npc_spells_id=229 AND spellid=1948`
+
+Zone-restart caveat APPLIES: npc_spells_entries changes require full zone process restart to flush in-memory spell list 229 (same as Phase 2 PoSky and Phase 5a Akheva precedent). infra-expert full-stack restart required after data-expert SQL.
+
+### Q5: Yaemiu trash spell list audit
+
+Non-headline VT raid_target=1 NPCs with spell lists: lists 1, 2, 8, 9, 448, 1472, 1473.
+
+**Lists 448, 1472, 1473: EMPTY — 0 entries** (Eom_Centien_Xakra, Eom_Thall_Xakra, Eom_Senshali_Xakra families). No spells at all.
+
+**Lists 1, 2, 8, 9 fully audited:** Standard cleric/wizard/paladin/shadow knight spell libraries respectively. All spells have cast_time > 0 or mana > 0 or effect_base_value1 > -5000. No DT profile spells in any trash spell list.
+
+Largest negative values in trash lists: list 2 "Garrison's Superior Sundering" (-2000), "Agnarr's Thunder" (-2350), "Strike of Solusek" (-2740) — these are wizard DD spells, not DT profile (all have cast_time > 5000, mana > 400). Not a concern.
+
+**VERDICT: No DT instakills in VT trash spell lists. Clear.**
+
+### Q6: Phase 5b respawn philosophy — 24h on Aten Ha Ra
+
+Decision #8 = 24h for endgame tier. For VT:
+- 9 wing bosses (158007-158015): standing spawn2 at 468,720s (~130h). These have spawn2 rows and CAN be updated to 86,400s (24h).
+- #Thall_Va_Xakra (158016): standing spawn2 at 140,616s (~39h). Already different from wing bosses — architect to decide whether to normalize to 24h or leave.
+- Aten Ha Ra (158006 and 158096): **no spawn2 rows**. Event-spawned. Post-death respawn hardcoded in Perl at ~1.8-2.0h via `quest::setglobal("aten",1,3,"M$spawntime")`. No `spawn2.respawntime` UPDATE possible for Aten Ha Ra — SQL can't touch it.
+- Va_Dyn_Khar (158081): already at 21,600s (6h) — already in range.
+
+**No config/rule concern with 24h on VT wing bosses.** The 63× HP gap (1.9M→~30k) is a data-expert concern, not config. There is no minimum respawn rule, no respawn-floor rule, no raid-tier respawn rule. The spawn2 UPDATE to 86,400s is safe from a rules/config standpoint.
+
+Aten Ha Ra's 1.8-2.0h post-death respawn via Perl qglobal is **already very short** relative to Decision #8's 24h intent. If architect wants to lengthen it to align with Decision #8, that requires perl-expert editing `#Aten_Ha_Ra.pl` line `$spawntime = 6480 + $variance` — currently targeting ~1.8-2.0h. A 24h equivalent would be `$spawntime = 86400`.
+
+### Q7: #reloadworld behavior for vexthal
+
+Same as all prior phases. `npc_types` (HP/damage) and `spawn2` (respawn timer) changes propagate cleanly via `#reloadworld` (world telnet port 9000). No VT-specific cache behavior.
+
+**EXCEPTION: Q4 DT DELETE.** The `npc_spells_entries` DELETE (spell 1948 from list 229) requires a full zone process restart to flush vexthal's in-memory spell list — same as Phase 2 PoSky (list 118/449/969) and Phase 5a Akheva (list 196). `#reloadworld` alone will NOT flush it. infra-expert full-stack restart required after Phase 5b SQL.
+
+### Q8: npc_types.hp bigint at 1,901,500
+
+`npc_types.hp` column type: **bigint(20)**. Max value ≈ 9.2×10¹⁸. 1,901,500 is well within range — no overflow risk. Phase 5a confirmed Emperor Ssraeshza at 1,250,500 without issue; 1,901,500 is ~52% larger, no concern.
+
+Titanium client HP bar rendering: the `hp_percent` display on the Titanium client is percentage-based, not absolute. The client renders a health bar from the `HP_Regen` opcode percentage field. Absolute HP values above ~2.1B can cause client-side rendering issues on some clients (32-bit signed integer limit), but 1,901,500 is orders of magnitude below that threshold. Clean.
+
+### Q9: Backup table naming
+
+Pattern confirmed: `_raid_scaling_luclin_b` — mirrors Phase 5a's `_luclin_a` and Phase 4b's `_velious_b`. Full set:
+- `npc_types_backup_raid_scaling_luclin_b`
+- `spawn2_backup_raid_scaling_luclin_b`
+- `npc_spells_entries_backup_raid_scaling_luclin_b` (for the spell 1948 DELETE row)
+
+### Q10: Spawn condition / spawn_conditions check
+
+- `spawn_conditions` table for vexthal: **0 rows**
+- `spawn_condition_values` table for vexthal: **0 rows**
+- All 451 spawn2 rows in vexthal have `_condition=0, cond_value=1` — the unconditional default
+
+**No VP-style condition filtering, no Ring War wave conditions, no Sleeper dormant/active conditions.** Standard unconditional spawn2 throughout. No accidental variant hits possible.
+
+### Q11: Out-of-era / Fabled / expansion-filtered VT NPCs
+
+Query on `id BETWEEN 158000 AND 158999 AND level >= 70`: **1 result:**
+- ID 158095, `#Aten_Trigger`, L90, HP=50,000,000, `raid_target=0`
+
+This is the event controller NPC from `#Aten_Trigger.pl`. L90, 50M HP, non-combat (raid_target=0). **Must be excluded from all npc_types UPDATEs.** It is already raid_target=0 so a `WHERE raid_target=1` scope guard will correctly exclude it. For belt-and-suspenders: architect should also add `AND id != 158095` or `AND level < 70` to any HP UPDATE scoped to vexthal.
+
+No Fabled NPCs (name LIKE '%Fabled%') in 158000-158999 range: **0 rows**.
+
+`npc_types` table has no min_expansion/max_expansion columns — expansion filtering is zone-level only (`zone.expansion=3` already correct). No per-NPC expansion exclusion columns exist in this schema.
+
+### Q12: Cumulative rule drift summary — full project record
+
+| Phase | rule_values count | Changes | Notes |
+|-------|------------------|---------|-------|
+| Pre-project baseline | 1,112 | — | Starting state |
+| Phase 2 (Classic) | 1,112 | 0 | SQL only, no rules |
+| Phase 3 (Kunark) | 1,112 | 0 | SQL only, no rules |
+| Phase 4a (Velious non-ToV) | 1,112 | 0 | SQL only, no rules |
+| Phase 4b (Velious ToV/Sleeper) | 1,112 | 0 | SQL only, no rules |
+| Phase 5a (Luclin non-VT) | 1,112 | 0 | SQL + 1 Perl change (L13 EmpCycle respawn) |
+| Phase 5b (Luclin VT) | 1,112 | 0 | SQL + DT DELETE + zone restart |
+
+**Zero rule_values changes across the entire raid-scaling project.** The prior-pass rules (34 rows set during Phase 1 small-group-scaling) remain the governing ruleset. No new rules were added, modified, or removed in Phases 2-5b.
+
+The project has been entirely data-layer: `npc_types` HP/damage updates, `spawn2` respawn timer updates, `npc_spells_entries` DT DELETEs (3 in Phase 2, 1 in Phase 5a, 1 in Phase 5b), and one Perl script respawn variable (Phase 5a #EmpCycle.pl).
