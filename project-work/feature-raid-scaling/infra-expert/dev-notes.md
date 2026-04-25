@@ -76,9 +76,34 @@ No socialization required. Task 9 is a standard server restart using the documen
 
 ## Stage 4: Build
 
-### Implementation Log
+### Implementation Log — Task L-restart (2026-04-22)
 
-_Not yet triggered. Will be populated if config-expert Task 8 reports #reloadworld failure._
+**Trigger:** Unconditional for Phase 5a Luclin non-VT. Full-stack restart required because `npc_spells_entries` DELETE (spell 2859 from list 196) requires zone process restart to flush in-memory spell caches.
+
+**Step 1 — Docker containers:**
+- `cd /mnt/d/Dev/eq/akk-stack && make restart` — SUCCESS
+- All containers up: mariadb, eqemu-server, phpmyadmin, peq-editor, npc-llm, ftp-quests
+- Note: `akk-stack-fail2ban-mysqld-1` shows Restarting(255) — pre-existing, not related to this restart
+
+**Step 2 — EQ server processes (inside akk-stack-eqemu-server-1):**
+- `shared_memory` — completed successfully (first attempt failed: MariaDB not ready yet; retried after `mysqladmin ping --wait=30` confirmed ready)
+- `loginserver` — started, PID 427
+- `world` — started, PID 523
+- 8 zone processes (dynamic_01–08) — all started successfully
+
+**Verification:**
+- Zone count: 8 confirmed (`ps aux | grep 'zone dynamic' | grep -v grep | wc -l` = 8)
+- World log: clean — 8 zones registered in sequence, no crash/restart loop
+- Containers: all core containers healthy
+
+**DB spot-check result:**
+```
+SELECT npc_spells_id, spellid, type FROM npc_spells_entries WHERE spellid=2859 AND npc_spells_id IN (179, 196);
+npc_spells_id  spellid  type
+179            2859     1
+196            2859     1     ← STILL PRESENT
+```
+Spell 2859 is present in BOTH list 179 (Shei Vinitras, expected) AND list 196 (should be deleted per Phase 5a plan). This DELETE may not yet have been applied by data-expert. Flagged to data-expert for confirmation.
 
 ### Files Modified (final)
 
@@ -88,7 +113,8 @@ _None — full-stack restart is an operational procedure, not a file change._
 
 ## Open Items
 
-- [ ] Waiting on config-expert Task 8 result to determine if Task 9 is needed
+- [x] Task L-restart complete — full-stack restart executed 2026-04-22
+- [ ] DB spot-check ALERT: spell 2859 still present in npc_spells_id=196 — data-expert to confirm DELETE was applied
 
 ---
 
