@@ -1705,3 +1705,30 @@ Relayed dependency gate block status. data-expert L1-L9 SQL not applied. perl-ex
 
 **Outcome:** Team-lead informed. Awaiting data-expert.
 
+---
+
+## Phase 5a Implementation Team Conversations — data-expert round
+
+### 2026-04-22 — data-expert → perl-expert: L13 task details + coordination
+
+**From:** data-expert → **To:** perl-expert
+
+Notified perl-expert that Phase 5a SQL is fully applied and committed. Provided exact L13 edit details: `#EmpCycle.pl` line 3, `int(rand(2880)) + 4320` → `int(rand(7200)) + 79200`. Noted `$BloodCoolDownTime` is NOT edited. Requested `perl -c` syntax check before commit, commit to `akk-stack/` on `feature/raid-scaling` branch, and ping config-expert after.
+
+**Outcome:** perl-expert was already confirmed complete per config-expert's earlier message (L13 read `int(rand(7200)) + 79200` at time of config-expert's DB gate check). No action needed from perl-expert — already done.
+
+### 2026-04-22 — data-expert → config-expert: SQL complete, ready for L10/L11
+
+**From:** data-expert → **To:** config-expert
+
+Notified config-expert that Phase 5a SQL is applied:
+- 41 npc_types UPDATEs complete
+- ~17-18 spawn2 respawn UPDATEs to 86400s complete
+- Touch of Vinitras DELETE from list 196 confirmed (list 179 preserved per Decision #60)
+- All verification checks passed (Emperor Leash, Lord Seru MR=800, Spirit of Akelha`Ra 1M HP, vexthal NPCs untouched, event-control NPCs untouched)
+- Backup tables: 45/80/1 rows
+
+Instructed config-expert to proceed with L10 (`#reloadworld`) and L11 (smoke verify), then ping infra-expert for full-stack restart (required per architecture for npc_spells_entries DELETE zone-cache flush).
+
+**Outcome:** config-expert unblocked for L10/L11.
+
