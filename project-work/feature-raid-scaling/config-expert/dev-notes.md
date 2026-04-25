@@ -1071,3 +1071,119 @@ Zone-spell cache caveat: Phase 5a has one `npc_spells_entries` DELETE (Touch of 
 **ALL-CLEAR: L-reload and L-smoke COMPLETE. 41+ HP/dmg checks PASS, 21 respawntime checks PASS, 2 spell-list DELETE checks PASS, 7 safety checks PASS.**
 
 **Outstanding action: infra-expert full-stack restart required to flush akheva zone spell list 196 cache (Touch of Vinitras zone-memory flush).**
+
+---
+
+## Phase 5b (Luclin VT + Shards) — Config Consultation (2026-04-22)
+
+### Summary
+
+**Phase 2/3/4a/4b/5a config findings carry forward unchanged to Phase 5b. No new rules exist for VT or shard content. No `eqemu_config.json` or `.env` changes needed. 100% SQL + possibly Perl/Lua script pattern confirmed. Two rule entries are present but irrelevant.**
+
+### rule_values Count and Drift Check
+
+Current count: **1,112** — identical to every prior phase baseline. Zero drift across all six phases to date.
+
+Two rule entries matched "Shard" keyword search:
+- `HotReload:QuestsAutoReloadGlobalScripts = false` — quest hot-reload toggle, completely unrelated to shard mechanics
+- `Zone:ZoneShardQuestMenuOnly = false` — this is a zone-shard UI flag (shard quest menu gate), NOT a scaling parameter. Already false; no change needed or appropriate.
+
+No rule controls VT boss HP, damage, respawn, or shard-drop behavior.
+
+### vexthal Zone Config
+
+| Field | Value |
+|-------|-------|
+| ruleset | 1 (default — same as all standard zones) |
+| min_status | 0 (player-accessible) |
+| expansion | 3 (Luclin) |
+| insttype | 0 (NOT a DZ zone) |
+| maxclients | 0 (no cap) |
+
+No custom ruleset override. No DZ system active. `dynamic_zones` table has 0 rows (confirmed Phase 5a). `spawn_condition_values` for vexthal: **0 rows** — VT has no spawn_conditions system. All boss sequencing is handled via qglobals + Perl quest scripts.
+
+### VT Boss Population — NPC Stats
+
+VT has **127 raid_target=1 NPCs** in the 158000-158200 range. Key headline boss data:
+
+| NPC | ID | Level | HP (current) | maxdmg | mindmg | MR | npc_spells_id |
+|-----|----|-------|-------------|--------|--------|----|---------------|
+| #Aten_Ha_Ra (non-destroy) | 158006 | 66 | 1,901,500 | 1,054 | 294 | 162 | 229 |
+| #Aten_Ha_Ra_ (destroy variant) | 158096 | 66 | 1,901,500 | 1,054 | 294 | 144 | 540 |
+| #Kaas_Thox_Xi_Aten_Ha_Ra | 158007 | 66 | 1,900,000 | 1,650 | 320 | 110 | 231 |
+| #Thall_Va_Kelun | 158008 | 66 | 1,825,000 | 1,000 | 240 | 128 | 232 |
+| #Va_Xi_Aten_Ha_Ra | 158009 | 66 | 1,601,500 | 1,254 | 304 | 144 | 234 |
+| #Diabo_Xi_Va_Temariel | 158010 | 66 | 1,706,000 | 1,400 | 165 | 125 | 238 |
+| #Thall_Xundraux_Diabo | 158011 | 66 | 1,475,000 | 654 | 274 | 185 | 1353 |
+| #Diabo_Xi_Xin_Thall | 158012 | 66 | 1,501,500 | 750 | 180 | 106 | 237 |
+| #Kaas_Thox_Xi_Ans_Dyek | 158013 | 66 | 1,201,500 | 650 | 270 | 120 | 230 |
+| #Diabo_Xi_Va | 158014 | 66 | 1,050,000 | 654 | 274 | 185 | 239 |
+| #Diabo_Xi_Xin | 158015 | 66 | 1,106,500 | 1,200 | 250 | 164 | 0 |
+| #Thall_Va_Xakra | 158016 | 60 | 900,000 | 950 | 285 | 125 | 233 |
+| Va_Dyn_Khar | 158081 | 66 | 600,000 | 455 | 265 | 120 | 0 |
+| Akhevan_Warders (x8) | 158087-158094 | 60 | 901,000 | 4 | 0 | 157 | 236 |
+
+Non-headline VT named (shard source NPCs, ~100 NPCs in 158000-158093): HP range 45k-101k, maxdmg 352-438. These are the "Xakra" and "Centien" etc. mobs that drop shards. They were already confirmed untouched in Phase 5a L-smoke (Va_Dyn_Khar at 600,000, Akhevan_Warder at 901,000).
+
+### Spawn2 Coverage for VT Bosses
+
+| NPC | ID | spawn2 rows | respawntime | Notes |
+|-----|----|------------|-------------|-------|
+| #Aten_Ha_Ra (non-destroy) | 158006 | **0** | N/A | Event-spawned via #Aten_Trigger.pl |
+| #Aten_Ha_Ra_ (destroy variant) | 158096 | **0** | N/A | Event-spawned via #Aten_Trigger.pl |
+| #Kaas_Thox_Xi_Aten_Ha_Ra | 158007 | 2 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Thall_Va_Kelun | 158008 | 1 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Va_Xi_Aten_Ha_Ra | 158009 | 1 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Diabo_Xi_Va_Temariel | 158010 | 1 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Thall_Xundraux_Diabo | 158011 | 1 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Diabo_Xi_Xin_Thall | 158012 | 1 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Kaas_Thox_Xi_Ans_Dyek | 158013 | 1 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Diabo_Xi_Va | 158014 | 1 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Diabo_Xi_Xin | 158015 | 1 | 468,720s (~130h) | Standing spawn2, updatable |
+| #Thall_Va_Xakra | 158016 | 1 | 140,616s (~39h) | Anomalous respawn — NOT 130h; already at a shorter timer |
+| Va_Dyn_Khar | 158081 | 1 | 21,600s (6h) | Already confirmed untouched in Phase 5a smoke |
+
+**IMPORTANT:** Aten Ha Ra (158006 and 158096) are **both event-spawned via `#Aten_Trigger.pl`** — a controller NPC checks if all 9 prerequisite wing bosses are dead, then spawns either the non-destroy or destroy variant. The destroy variant's respawn post-death is controlled by `quest::setglobal("aten",1,3,"M$spawntime")` where `$spawntime = 6480 + rand(720)` ≈ **1.8-2.0 hours**. This is hardcoded in `#Aten_Ha_Ra_.pl` and `#Aten_Ha_Ra.pl`. There are no spawn2 rows to update for either Aten Ha Ra variant — any respawn tuning requires Perl script changes (lua/perl-expert domain), not SQL.
+
+**Thall Va Xakra (158016):** Already at 140,616s (~39h) — shorter than the other 9 wing bosses at 468,720s. This may already reflect prior tuning or a deliberate design difference. Architect should confirm whether this gets the standard endgame respawn cut or stays differentiated.
+
+**Va_Dyn_Khar (158081):** Already at 21,600s (6h) — already in low-boss range. No change needed; confirmed untouched in Phase 5a smoke.
+
+### Shard Quest Mechanics — Rule-Tunable Parameters
+
+**No rules control shard quest behavior.** The 13-shard quest for Vex Thal access uses:
+
+1. **Shard drops from named mobs** — controlled by `lootdrop_entries.chance` (plain DB data, already covered by Phase 2 loot multiplier ×1.5 via `Zone:GlobalLootMultiplier=2`)
+2. **Aten Ha Ra event sequencing** — controlled entirely by Perl scripts (`#Aten_Trigger.pl`, `#Aten_Ha_Ra.pl`, `#Aten_Ha_Ra_.pl`) using qglobals. Not a rule. Not a DB config column.
+3. **Aten Ha Ra respawn timing** — set via `quest::setglobal("aten",1,3,"M$spawntime")` where spawntime ≈ 1.8-2.0h post-kill. Hardcoded in Perl. No rule. Any changes require lua/perl-expert.
+4. **Zone access gate** — `Zone:ZoneShardQuestMenuOnly = false` is present but already false, meaning standard access (not shard-gated). This is the correct state.
+
+**Shard source NPC scaling:** The non-headline Xakra/Centien/etc. named mobs (HP 45k-101k) were already in Phase 5a scope but their IDs start at 158000. They were excluded from Phase 5a (which covered non-VT Luclin only). Phase 5b will need to include them. No rule governs their stats — standard `npc_types` UPDATE pattern.
+
+### Death-Touch Sweep — VT Headline Boss Spell Lists
+
+Sweep of spell lists 229, 230, 231, 232, 233, 234, 236, 237, 238, 239, 540, 1353, 1472, 1473, 448 for spells with `base_value1 < -5000` or `base_value2 < -5000`:
+
+**Result: ZERO rows.** No death-touch profile spells in any VT boss spell list.
+
+- List 233 (Thall Va Xakra): empty — confirmed 0 entries
+- Akhevan Warder list 236: confirmed no death-touch (warders use `7,1` rampage + immunity flags only)
+
+**No `npc_spells_entries` DELETEs needed for Phase 5b.** Zone spell-list cache restart caveat does NOT apply. `#reloadworld` will be sufficient post-SQL.
+
+### Akhevan Warder Special Note
+
+Warders (158087-158094, 8 NPCs): HP 901,000, maxdmg=4, mindmg=0. These look like scripted event entities — maxdmg=4 at L60 is not a combat NPC, it's a script controller or checkpoint guard. Architect should confirm whether these are actual combat targets requiring HP cuts or event placeholders that should be excluded (similar to Area%dead NPCs in sleeper).
+
+Special abilities: `7,1^12,1^13,...^23,1` — ability 7 = rampage, ability 12 = innate dual wield. Very heavy immunity stack. If these are meant to be combat, they may be intentionally unkillable (maxdmg=4 means they do essentially zero damage — possible lore event guardians).
+
+### Config-Expert Role in Phase 5b Implementation
+
+Identical to all prior phases:
+1. No rule changes needed.
+2. No `eqemu_config.json` or `.env` changes.
+3. Post-SQL: `#reloadworld` via world telnet (port 9000) to propagate `npc_types`/`spawn2` changes.
+4. Smoke verification via DB read-back.
+5. No `npc_spells_entries` changes — no zone-restart caveat.
+6. **New flag for architect:** Aten Ha Ra respawn tuning (if desired) requires Perl script changes to `#Aten_Ha_Ra.pl` and `#Aten_Ha_Ra_.pl` — not SQL, not config. Currently ~1.8-2.0h post-death.
+7. **Akhevan Warder clarification needed:** architect to confirm whether 158087-158094 (maxdmg=4) are combat targets or event entities to exclude.
