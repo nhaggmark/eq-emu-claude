@@ -11,7 +11,7 @@
 > **DB investigation:** `architect/context/luclin-a-db-investigation.md`
 > **Author:** architect
 > **Date:** 2026-04-23
-> **Status:** **READY FOR USER REVIEW 2026-04-23.** Two advisors cleared (protocol-agent 2026-04-22 full Q1-Q10 + initial flags; config-expert 2026-04-22 — pattern holds, zero rule changes, DT sweep clean from their angle). Lore-master Phase 5a consultation in flight (luclin-chains.md serves as primary lore reference; six follow-up questions sent 2026-04-23 — sign-off pending). Three user-decision items surfaced.
+> **Status:** **READY FOR IMPLEMENTATION 2026-04-25.** All advisors cleared (protocol-agent 2026-04-22; config-expert 2026-04-22; lore-master 2026-04-25 APPROVED Q1-Q17). All four user decisions resolved 2026-04-25: **Q50=A INCLUDE** (joint recommendation), **Q51=B INCLUDE USER OVERRIDE** (Akheva elite-named scope-consistency), **Q52=B SOFTEN USER OVERRIDE** (Emperor cycle 22-24h via perl-expert task L13 — now required, not conditional), **Q59=A INCLUDE** (joint recommendation, 150k→40k).
 > **Scope:** **Phase 5a ONLY.** Ssraeshza Temple (13 bosses + 2 flagged-for-lore), Akheva Ruins (8 bosses), Sanctus Seru / Katta Castellum (7 bosses), Grieg's End (3 bosses), Acrylia Caverns (2 bosses including Khati Sha), The Deep (1 boss), Umbral Plains (3 bosses), Echo Caverns (0 — Decision #2 elite-named tier). **Out of scope permanently for Phase 5a:** Vex Thal proper, Yaemiu elite trash (vexthal-exclusive per protocol-agent verification), Va_Dyn_Khar (158081, vexthal), Akhevan Warders (158087-94, vexthal — name-misleading but VT-zoned), 13-shard VT key rework, Spirit of Akelha`Ra (179144, VT-key turn-in NPC — Decision #30 precedent).
 
 ---
@@ -39,19 +39,20 @@ This is the **final-era endgame tier** per Decision #1 — the hardest in-era fi
 
 6. **Two Lord Inquisitor Seru-tier "MR walls."** Lord Inquisitor Seru (159691, MR=800) and Lord Vyemm-style caster-resist signature carries forward into Phase 5a. Decision #11 preserve. Small-group caster-heavy comps need a backup melee plan for Seru (same friction as Vyemm in Phase 4b). Plus the Praesertum cluster all use spell list 1086/1087 with no DT but standard combat spells.
 
-**Change footprint:**
-- **~37 `npc_types` HP/damage UPDATEs** — 13 ssratemple + 2 lore-master-flagged serpents (default include) + 8 akheva (3 Vyzh\`dra + Itraer Vius + Shei real + Shei merchant + Insanity Crawler + Va\`Dyn) + 7 sseru/katta + 3 griegsend + 2 acrylia + 1 thedeep + 3 umbral. Plus 2 elite-named-tier akheva (Sheleric Vis, Xaui Tatrua) flagged for user — see Decision #51.
-- **~16-18 `spawn2.respawntime` UPDATEs** to 86,400s (24h endgame tier). Most Phase 5a bosses are script-spawned (no spawn2 row), so the respawn UPDATE list is far smaller than Phase 4b's ~32 rows.
+**Change footprint (post-user-decisions 2026-04-25):**
+- **41 `npc_types` HP/damage UPDATEs** — 13 ssratemple + 2 cycle serpents (Q50=A) + 8 akheva primary + **3 Akheva elite-named (Q51=B INCLUDE override)** + 7 sseru/katta + 3 griegsend + 2 acrylia + **1 Spiritual Arcanist (Q59=A INCLUDE)** + 1 thedeep + 3 umbral = 41 total.
+- **~17-18 `spawn2.respawntime` UPDATEs** to 86,400s (24h endgame tier). Most Phase 5a bosses are script-spawned (no spawn2 row), so the respawn UPDATE list is far smaller than Phase 4b's ~32 rows. **Q51 Akheva elite-named (Sheleric Vis ×2 IDs across 4 spawn2 rows + Xaui Tatrua 1 spawn2 row = 5 spawn2 rows total) — respawn UNCHANGED at native 5400s** per Q51 named-tier philosophy (same pattern as Phase 4b Q37 Defenders override).
 - **1 `npc_spells_entries` DELETE** — Touch of Vinitras spell 2859 from list 196 (precedent: Decision #16). Architect-recommended.
-- **0 Lua or Perl script edits.** Per Decision #11. Emperor cycle timers, Vyzh\`dra script chain, Doomshade mechanics, Khati Sha script, Grieg Veneficus chain, Shei Vinitras trigger-and-real spawn-swap, Lord Inquisitor Seru placeholder swap — all preserved untouched.
-- Backup tables: `npc_types_backup_raid_scaling_luclin_a`, `spawn2_backup_raid_scaling_luclin_a`, `npc_spells_entries_backup_raid_scaling_luclin_a` (the third backup is 1-row, capturing the Touch of Vinitras DELETE for rollback).
+- **1 Perl script edit (Q52=B USER OVERRIDE).** `akk-stack/server/quests/ssratemple/#EmpCycle.pl:3` — `$EmpRepopTime` softened from `int(rand(2880)) + 4320` (3-5 day) to `int(rand(7200)) + 79200` (22-24h endgame tier per Decision #8). All other scripts untouched per Decision #11 (Vyzh\`dra chain, Doomshade, Khati Sha event, Grieg cycle, Shei dual-form, Lord Seru placeholder swap). perl-expert task L13 promoted from conditional to required.
+- Backup tables: `npc_types_backup_raid_scaling_luclin_a` (41 rows post-Q51/Q59 inclusions), `spawn2_backup_raid_scaling_luclin_a` (~22-23 rows incl. 5 Akheva elite-named rows for completeness), `npc_spells_entries_backup_raid_scaling_luclin_a` (1 row — Touch of Vinitras pre-DELETE). Plus `#EmpCycle.pl` git history serves as Q52 perl-edit rollback (perl-expert task).
 
 **No C++ changes. No `rule_values` changes. No `eqemu_config.json` changes. No `.env` changes.** Protocol-agent confirmed zero client-visibility impact (2026-04-22 full Q1-Q10 log). Config-expert confirmed pattern carryover with zero rule changes, ruleset=1 across all Phase 5a zones, and zero DZ/instance configuration on this PEQ version.
 
-**User-decision items surfaced:**
-- **Decision #50** — Rune/glyph serpent inclusion (162253/162261, ssratemple, 221k/300k HP, raid_target=1, audit-missed). Architect recommends INCLUDE per protocol-agent Flag C (they're chain stepping-stones). Lore-master sign-off pending.
-- **Decision #51** — Akheva elite-named tier (Sheleric Vis 179133/179046, Xaui Tatrua 179044, all 70-116k HP, 5,400s respawn). Architect recommends EXCLUDE per Decision #2 (elite-named tier untouched) — same posture as Phase 2's "Night Crew" exclusion. User can override.
-- **Decision #52** — Emperor Ssraeshza 3-5 day post-kill respawn (`#EmpCycle.pl` `$EmpRepopTime`). Architect recommends KEEP NATIVE per Decision #11 + Decision #45 (Thylex precedent — script-driven respawn timers preserved). Alternative: invoke perl-expert to soften to 24h endgame tier (per protocol-agent Flag A — would require `#EmpCycle.pl` edit). User decision.
+**User decisions resolved 2026-04-25:**
+- **Decision #50 = A INCLUDE** (joint architect+lore-master recommendation accepted) — rune/glyph serpents 162253 → 60k, 162261 → 70k.
+- **Decision #51 = B INCLUDE USER OVERRIDE** — Akheva elite-named scaled for scope consistency. Architect-specified targets (named-tier philosophy): Sheleric Vis 179133 116k → 35k HP, maxdmg 746 → 550; Sheleric Vis 179046 70k → 30k HP, damage unchanged; Xaui Tatrua 179044 70k → 30k HP, damage unchanged. Respawn UNCHANGED at native 5400s.
+- **Decision #52 = B SOFTEN USER OVERRIDE** — Emperor cycle respawn softened to 22-24h via perl-expert task L13. Edit: `#EmpCycle.pl:3` `$EmpRepopTime = int(rand(2880)) + 4320` → `int(rand(7200)) + 79200` (22-24h range). L13 promoted from conditional to required. perl-expert added to implementation team.
+- **Decision #59 = A INCLUDE** (joint architect+lore-master recommendation accepted) — Spiritual Arcanist 154153 (Khati Sha event Phase 2 wrong-choice penalty) 150k → 40k HP.
 
 ---
 
@@ -192,9 +193,10 @@ This is the **final-era endgame tier** per Decision #1 — the hardest in-era fi
 | `npc_types.special_abilities` | **NO CHANGE** | Decision #11 preserves all signature mechanics |
 | `npc_types.MR` | **NO CHANGE** | Lord Inquisitor Seru MR=800 wall preserved |
 | Backup tables `npc_types_backup_raid_scaling_luclin_a`, `spawn2_backup_raid_scaling_luclin_a`, `npc_spells_entries_backup_raid_scaling_luclin_a` | CREATE + INSERT-SELECT | Mirrors prior phase patterns with `_luclin_a` suffix |
+| **`#EmpCycle.pl:3` `$EmpRepopTime`** | **EDIT (Q52=B perl-expert task L13)** | One-line softening 3-5d → 22-24h endgame tier per Decision #8 |
 | `rule_values` | NO CHANGE | Confirmed by config-expert |
 | `eqemu_config.json` / `.env` | NO CHANGE | Same as Phase 4b |
-| Lua/Perl scripts | NO CHANGE | All signature behaviors read NPC stats at runtime |
+| Lua scripts | NO CHANGE | All signature behaviors read NPC stats at runtime |
 | C++ source | NO CHANGE | N/A |
 
 ### Data Model
@@ -206,29 +208,29 @@ CREATE TABLE npc_types_backup_raid_scaling_luclin_a AS
 SELECT id, hp, mindmg, maxdmg, AC, MR, special_abilities, npcspecialattks, npc_spells_id
 FROM npc_types
 WHERE id IN (
-    -- ssratemple — 13 + 2 flagged serpents (Decision #50 default include)
+    -- ssratemple — 13 + 2 cycle serpents (Q50=A INCLUDE)
     162227, 162076, 162190, 162177, 162192, 162178,
     162189, 162064,                                 -- Blood + Blood Golem
     162066, 162067, 162191,                         -- pre-Emperor named L53/55
     162258, 162089,                                 -- Rhozth pair
-    162253, 162261,                                 -- rune/glyph serpents (Decision #50)
-    -- akheva — 8 (excludes Sheleric Vis + Xaui Tatrua per Decision #51)
+    162253, 162261,                                 -- rune/glyph serpents (Q50=A)
+    -- akheva — 8 primary + 3 elite-named (Q51=B INCLUDE override)
     162206, 162232, 162214,                         -- Vyzh`dra trio
     179037, 179032, 179157, 179180, 179178, 179134, -- Itraer Vius + Shei real + Shei merchant + Insanity Crawler + Va`Dyn + Shar Vinitras
+    179133, 179046, 179044,                         -- Sheleric Vis (×2 IDs) + Xaui Tatrua (Q51=B)
     -- sseru/katta — 7
     159691, 159113, 159112, 159115, 159114,
     160375, 160135,
     -- griegsend — 3 (+ 1 variant)
     163075, 163231, 163013, 163078,
-    -- acrylia — 2
-    154145, 154142,
+    -- acrylia — 2 + Spiritual Arcanist (Q59=A INCLUDE)
+    154145, 154142, 154153,
     -- thedeep — 1
     164078,
     -- umbral — 3
     176088, 176089, 176002
 );
--- Expected rows: 37 (assuming Decision #50 includes 162253/162261; Decision #51 excludes)
--- If Decision #50 = exclude: 35 rows. If Decision #51 = include: 39 rows.
+-- Expected rows: 41 (post-Q50/Q51/Q59 inclusions)
 
 CREATE TABLE spawn2_backup_raid_scaling_luclin_a AS
 SELECT s2.id, s2.zone, s2.spawngroupID, s2.respawntime, s2.variance,
@@ -239,7 +241,8 @@ WHERE se.npcID IN (
     162076, 162190, 162178,                         -- ssratemple standing-spawn (3 rows)
     162066, 162067, 162191,                         -- pre-Emperor 17 spawn2 each = 51 rows (already short-tier 1080s; backup for safety, NOT in respawn UPDATE)
     162258, 162089,                                 -- Rhozth pair (2 rows; mid-tier respawn already)
-    179037, 179032, 179157, 179180, 179178, 179134, -- akheva 6 rows
+    179037, 179032, 179157, 179180, 179178, 179134, -- akheva primary 6 rows
+    179133, 179046, 179044,                         -- akheva elite-named (Q51=B INCLUDE) — 5 spawn2 rows: Sheleric 179133 ×2 + Sheleric 179046 ×2 + Xaui 179044 ×1; backup captured but respawn UNCHANGED at 5400s
     159691, 159113, 159112, 159115, 159114,         -- sseru 5 rows
     160375, 160135,                                 -- katta 2 rows
     163231, 163013, 163078,                         -- griegsend variant + Servitor + Praetorian (3 rows; 163075 has no spawn2)
@@ -247,8 +250,8 @@ WHERE se.npcID IN (
     164078,                                         -- thedeep Thought Horror (1 row, if exists — query confirmation needed)
     176089, 176002                                  -- umbral Zelnithak + Rumblecrush (rows TBD)
 );
--- Expected rows: ~16-18 standing-spawn rows + ~51 pre-Emperor rows captured (but only the standing-spawn raid-tier ~16-18 get respawn UPDATE; pre-Emperor preserved)
--- Note: 162227 Emperor + 162065 placeholder + 162064 Blood Golem + 162189 Blood + 162177 Rhag`Zadune + 162192 Rhag`Mozdezh + 162206/214/232 Vyzh`dra trio + 162253/261 serpents + 154145 Khati Sha + 176088 Doomshade + 163075 Grieg main have NO spawn2 rows (script-spawned)
+-- Expected rows: ~22-23 standing-spawn rows (incl. 5 Akheva elite-named) + ~51 pre-Emperor rows captured (only standing-spawn raid-tier ~17-18 get respawn UPDATE; pre-Emperor + Akheva-elite-named + Shar Vinitras 10800s preserved)
+-- Note: 162227 Emperor + 162065 placeholder + 162064 Blood Golem + 162189 Blood + 162177 Rhag`Zadune + 162192 Rhag`Mozdezh + 162206/214/232 Vyzh`dra trio + 162253/261 serpents + 154145 Khati Sha + 154153 Spiritual Arcanist + 176088 Doomshade + 163075 Grieg main have NO spawn2 rows (script-spawned)
 
 CREATE TABLE npc_spells_entries_backup_raid_scaling_luclin_a AS
 SELECT * FROM npc_spells_entries
@@ -308,6 +311,19 @@ DELETE FROM npc_spells_entries WHERE npc_spells_id = 196 AND spellid = 2859;
 -- 1 row affected
 ```
 
+**Akheva elite-named (Q51=B INCLUDE USER OVERRIDE):**
+
+```sql
+-- Per user override 2026-04-25: scale Akheva elite-named for scope consistency
+-- HP targets: shallow cuts following Phase 4b Q37 Defender named-tier-but-included pattern
+-- Damage: trim Sheleric 179133 outlier (746→550); preserve already-named-tier on 179046 + 179044
+-- Respawn: UNCHANGED at native 5400s (1.5h short-tier; below Decision #8 endgame 24h)
+-- special_abilities: UNCHANGED per Decision #11
+UPDATE npc_types SET hp = 35000, maxdmg = 550 WHERE id = 179133;  -- Sheleric Vis (L61) 116k→35k, 746→550
+UPDATE npc_types SET hp = 30000               WHERE id = 179046;  -- Sheleric Vis variant (L62) 70k→30k, 173 dmg unchanged
+UPDATE npc_types SET hp = 30000               WHERE id = 179044;  -- Xaui Tatrua (L60) 70k→30k, 376 dmg unchanged
+```
+
 **Sanctus Seru / Katta Castellum:**
 
 ```sql
@@ -337,6 +353,7 @@ UPDATE npc_types SET hp =  35000               WHERE id = 163078;  -- Praetorian
 -- Acrylia
 UPDATE npc_types SET hp =  90000, maxdmg = 750 WHERE id = 154145;  -- Khati Sha the Twisted 475k→90k, 1004→750
 UPDATE npc_types SET hp =  60000               WHERE id = 154142;  -- evolved burrower 300.75k→60k
+UPDATE npc_types SET hp =  40000               WHERE id = 154153;  -- A_Spiritual_Arcanist (Q59=A — Khati Sha event Phase 2 wrong-choice penalty) 150k→40k
 
 -- The Deep
 UPDATE npc_types SET hp =  90000               WHERE id = 164078;  -- Thought Horror Overfiend 807k→90k
@@ -393,12 +410,13 @@ No `rule_values` changes. No `eqemu_config.json` changes. No `.env` changes. Con
 
 | Item | Type | Rows affected (approx) |
 |------|------|------------------------|
-| `npc_types_backup_raid_scaling_luclin_a` | CREATE TABLE AS SELECT | 37 rows snapshot (35 if Decision #50 = exclude; 39 if Decision #51 = include) |
-| `spawn2_backup_raid_scaling_luclin_a` | CREATE TABLE AS SELECT | ~16-18 rows snapshot |
+| `npc_types_backup_raid_scaling_luclin_a` | CREATE TABLE AS SELECT | **41 rows** snapshot (post-Q50/Q51/Q59 inclusions) |
+| `spawn2_backup_raid_scaling_luclin_a` | CREATE TABLE AS SELECT | **~22-23 rows** snapshot (incl. 5 Akheva elite-named rows) |
 | `npc_spells_entries_backup_raid_scaling_luclin_a` | CREATE TABLE AS SELECT | 1 row snapshot |
-| `npc_types` | UPDATE | 37 rows (per Decision #50 default include + Decision #51 default exclude) |
-| `spawn2` | UPDATE | ~17-18 rows |
-| `npc_spells_entries` | DELETE | 1 row (Touch of Vinitras spell 2859 from list 196) |
+| `npc_types` | UPDATE | **41 rows** (Q50=A + Q51=B + Q59=A all include) |
+| `spawn2` | UPDATE | ~17-18 rows (Akheva elite-named respawn UNCHANGED per Q51 named-tier philosophy) |
+| `npc_spells_entries` | DELETE | 1 row (Touch of Vinitras spell 2859 from list 196 only) |
+| `akk-stack/server/quests/ssratemple/#EmpCycle.pl:3` | EDIT (Q52=B perl-expert task L13) | 1 line: `$EmpRepopTime = int(rand(2880)) + 4320;` → `$EmpRepopTime = int(rand(7200)) + 79200;` (22-24h range) |
 
 Data-expert produces a single SQL reference at `data-expert/context/phase5a-luclin-a-implementation.sql` with:
 1. Backup table creates first (3 backups).
@@ -467,24 +485,27 @@ Per protocol-agent's grep of `#cursed_controller.pl`, chain control uses entity-
 | L10 | `#reloadworld` via Spire or world telnet port 9000 — propagates `npc_types` HP changes + `spawn2.respawntime` changes. **Caveat:** the `npc_spells_entries` DELETE may need a full zone-process restart to flush the spell list cache (config-expert Phase 2 precedent — Cazic Touch DELETE worked with `#reloadworld` only, but architect flags as risk and asks game-tester to confirm). | config-expert | L9 | ~5m (or ~5m + zone restart contingency) |
 | L11 | Smoke verification: HP targets for Emperor / Lord Seru / Vyzh`dra Cursed / Khati Sha / Thought Horror / Doomshade / Grieg / Servitor; respawn 24h targets for ~17-18 rows; **Touch of Vinitras DELETE confirmed (spell 2859 NOT in list 196 anymore)**; Lord Seru MR=800 preserved; Emperor placeholder 162065 untouched; Spirit of Akelha`Ra (179144) untouched; vexthal NPCs (158081 Va_Dyn_Khar, 158087-94 Akhevan Warders) untouched; OOE NPCs (163051/52, 154161, 176111) untouched; event-control NPCs (162269, 176110, 160177/178) untouched | config-expert | L10 | ~40m |
 | L12 | Commit + push all changed files in `claude/` repo (architecture doc, context files, status updates, implementation SQL) to `feature/raid-scaling` branch. `akk-stack/` and `eqemu/` untouched. | data-expert | L9 | ~10m |
+| L13 | **Q52=B USER OVERRIDE — REQUIRED.** perl-expert edits `akk-stack/server/quests/ssratemple/#EmpCycle.pl:3` to change `$EmpRepopTime = int(rand(2880)) + 4320;` (3-5d) to `$EmpRepopTime = int(rand(7200)) + 79200;` (22-24h endgame tier). Verify Perl syntax with `perl -c` before commit. Commit on akk-stack repo `feature/raid-scaling`. | perl-expert | — (independent of L1-L12 chain) | ~10m |
 
-**Critical ordering constraint:** L1 gates L2-L7. L8 depends on all of L2-L7. L9 depends on L8. L10 depends on L9. L11 depends on L10. L12 is git-commit only, can run in parallel with L11.
+**Critical ordering constraint:** L1 gates L2-L7. L8 depends on all of L2-L7. L9 depends on L8. L10 depends on L9. L11 depends on L10. L12 is git-commit only, can run in parallel with L11. **L13 is independent** of the L1-L12 chain — runs in parallel.
 
 **Tasks NOT required:**
-- **lua-expert / perl-expert** — NO script changes by default. (If user invokes Decision #52 alternative — soften Emperor's `$EmpRepopTime` from 3-5d to 24h — perl-expert would do a one-line edit at `#EmpCycle.pl:3`. Conditional task L13 below.)
+- **lua-expert** — NO Lua script changes. Khati Sha event verified SQL-safe per Decision #61.
 - **c-expert** — no C++ changes.
-- **infra-expert** — no full-stack restart expected by default. If `#reloadworld` doesn't propagate the `npc_spells_entries` DELETE for spell list 196 in live Akheva zone, L10b (zone-process restart for akheva) is contingent.
+- **protocol-agent** — already advised 2026-04-22.
 
-**Conditional task (only if user picks Decision #52 alternative):**
-- L13 (CONDITIONAL) — **perl-expert** edits `akk-stack/server/quests/ssratemple/#EmpCycle.pl:3` to change `$EmpRepopTime = int(rand(2880)) + 4320;` (3-5 days) to `$EmpRepopTime = int(rand(7200)) + 79200;` (22-24 hours). Triggers Emperor cycle to align with Decision #8 endgame respawn tier. Default: NOT invoked (preserve native per Decision #11).
+**Required tasks (post user-decisions):**
+- **L13 perl-expert** — promoted from conditional to required per Q52=B USER OVERRIDE.
+- **L10b infra-expert (CONTINGENT)** — zone-process restart for akheva if `#reloadworld` doesn't flush spell list 196 cache. Phase 2 Decision #16 precedent suggests `#reloadworld` is sufficient.
 
 **Required implementation agents:**
 
 | Agent | Role | Tasks |
 |-------|------|-------|
-| data-expert | primary | L1, L2, L3, L4, L5, L6, L7, L8, L9, L12 |
+| data-expert | primary | L1, L2, L3, L4, L5, L6, L7, L8, L9, L12 — **41 npc_types UPDATEs + 1 DELETE + ~17-18 spawn2 UPDATEs** |
 | config-expert | reload + smoke | L10, L11 |
-| (perl-expert) | CONDITIONAL — Decision #52 alternative only | L13 |
+| **perl-expert** | **REQUIRED** per Q52=B | L13 — `#EmpCycle.pl:3` edit |
+| infra-expert | CONTINGENT only | L10b — single zone-process restart for akheva if `#reloadworld` cache flush insufficient |
 
 Same default team composition as Phases 2/3/4b. (Phase 4a invoked lua-expert conditionally; Phase 5a invokes perl-expert conditionally with same posture.)
 
@@ -563,7 +584,7 @@ Every lever used is established Phase 2/3/4a/4b practice:
 **Challenge: Can we do less?**
 
 - **Could we skip the rune/glyph serpents (162253/261)?** Decision #50 — architect default INCLUDE per protocol-agent Flag C. Lore-master can override. Skipping = 2 fewer UPDATEs.
-- **Could we skip Sheleric Vis + Xaui Tatrua + variants (Akheva elite-named)?** Decision #51 — architect default EXCLUDE per Decision #2 (elite-named tier). Including would be 3-4 more UPDATEs. Architect recommends skip (consistent with Phase 4b's Defenders default exclude before user override).
+- **Could we skip Sheleric Vis + Xaui Tatrua + variants (Akheva elite-named)?** Resolved Q51=B INCLUDE per user override 2026-04-25. +3 UPDATEs (architect-specified targets in §Data Model). Same posture as Phase 4b Q37 Defender override. Respawn UNCHANGED at native 5400s — preserves natural farm-tier cadence.
 - **Could we skip the pre-Emperor named (Kizuhx/Korazhk/Zekuzh)?** They're L53/55 with 17 spawn2 rows each at 1080s short-tier respawn. They're the Ring of the Shissar Insignia drop. Audit calls for HP cuts to 50-60k. Including makes them tractable for solo/duo runs. Skip → small group cannot complete Ring of the Shissar. Include.
 - **Could we skip Shei Vinitras MERCHANT form (179157)?** Per protocol-agent Flag B — if we don't scale the merchant form, the trigger-kill itself becomes a raid-tier wall. Include with deeper cut so it's not a pre-fight blocker.
 - **Could we skip the Touch of Vinitras DELETE?** No. -20,000 HP instant-cast death-touch on Vyzh`dra Banished + Exiled is a small-group blocker (insta-kills tank or any companion). Phase 13 PoSky precedent + Decision #16 Cazic Touch precedent both apply.
@@ -617,17 +638,18 @@ Every lever used is established Phase 2/3/4a/4b practice:
 **Task ordering:**
 ```
 L1 (3 backups) ──┬──> L2 (ssratemple SQL)
-                 ├──> L3 (akheva SQL)
-                 ├──> L4 (Touch of Vinitras DELETE)
+                 ├──> L3 (akheva SQL incl. Q51=B 3 elite-named)
+                 ├──> L4 (Touch of Vinitras DELETE list 196 only)
                  ├──> L5 (sseru/katta SQL)
-                 ├──> L6 (griegsend/acrylia/thedeep/umbral SQL)
-                 └──> L7 (respawn SQL)
+                 ├──> L6 (griegsend/acrylia incl. Q59=A Arcanist/thedeep/umbral SQL)
+                 └──> L7 (respawn SQL — Akheva elite-named NOT in respawn UPDATE per Q51 named-tier)
                         │
                         └──> L8 (rollback) ──> L9 (apply) ──> L10 (reload) ──> L11 (smoke verify)
                                                                   │
                                                                   └──> L12 (commit)
-                                                                  │
-                                                                  └──> [L13 conditional: perl-expert Emperor respawn softening]
+
+L13 (perl-expert) — independent of L1-L12 chain — runs in parallel:
+   edit #EmpCycle.pl:3 → commit on akk-stack feature/raid-scaling → no #reloadworld required (script-loaded fresh on next zone reboot or via `#reloadquest`)
 ```
 
 - L1 gates everything.
@@ -648,9 +670,9 @@ L1 (3 backups) ──┬──> L2 (ssratemple SQL)
 
 ---
 
-## Items flagged to user (decisions required before implementation)
+## Items flagged to user — RESOLVED 2026-04-25
 
-### Decision #50 — Rune/glyph serpent inclusion (architect-recommended INCLUDE; lore-master sign-off pending)
+### Decision #50 — Rune/glyph serpent inclusion — **RESOLVED 2026-04-25 Option A INCLUDE (joint architect+lore-master recommendation accepted)**
 
 Two ssratemple NPCs not in audit:
 - **162253 #a_rune_covered_serpent** (L63, 221k HP, raid_target=1, script-spawned)
@@ -664,28 +686,47 @@ Both are part of `#cursed_controller.pl` chain orchestration per protocol-agent 
 
 User decision required. **Lore-master sign-off pending — final recommendation may shift.**
 
-### Decision #51 — Akheva elite-named exclusion (architect-recommended EXCLUDE)
+### Decision #51 — Akheva elite-named — **RESOLVED 2026-04-25 Option B INCLUDE (USER OVERRIDE)**
 
 Three Akheva NPCs at elite-named tier:
-- **179133 Sheleric Vis** (L61, 116k HP, raid_target=1, 5400s × 2 spawn2 rows)
-- **179046 Sheleric Vis** (variant, L62, 70k HP, raid_target=1, 5400s × 2 spawn2 rows)
-- **179044 Xaui Tatrua** (L60, 70k HP, raid_target=1, 5400s × 1 spawn2 row)
+- **179133 Sheleric Vis** (L61, 116k HP, 176/746 dmg, raid_target=1, 5400s × 2 spawn2 rows)
+- **179046 Sheleric Vis** (variant, L62, 70k HP, 59/173 dmg, raid_target=1, 5400s × 2 spawn2 rows)
+- **179044 Xaui Tatrua** (L60, 70k HP, 110/376 dmg, raid_target=1, 5400s × 1 spawn2 row)
 
-**Architect recommendation: EXCLUDE (Option A).** Decision #2 precedent — these are at 70-116k HP / 5400s short-tier respawn — elite-named tier, not raid-tier. Same posture as Phase 4b's Defenders pre-override.
+**Architect's original recommendation:** Option A (EXCLUDE per Decision #2 elite-named tier).
 
-**Alternative (Option B, scope-consistency override):** Include (akin to Phase 4b Q37 override). +3-4 UPDATEs. HP target ~30-40k each.
+**User decision (2026-04-25):** Option B (INCLUDE) — scope consistency with the rest of Phase 5a, matching the Phase 4b Q37 Defender override pattern.
 
-User decision required. (If user follows the Phase 4b Q37 pattern of "include for scope consistency," this should be re-evaluated.)
+**Architect-specified targets per Q51 named-tier-but-included philosophy:**
+- Sheleric Vis 179133: HP 116k → **35k** (-70%); maxdmg 746 → **550** (-26% outlier trim aligning with NToV mid-tier post-scale band); mindmg 176 unchanged
+- Sheleric Vis 179046: HP 70k → **30k** (-57%); damage UNCHANGED at 59/173 (already named-tier)
+- Xaui Tatrua 179044: HP 70k → **30k** (-57%); damage UNCHANGED at 110/376 (already named-tier)
+- `respawn`: **UNCHANGED** at native 5400s (1.5h short-tier; below Decision #8 endgame 24h — bumping would over-extend natural farm-tier cadence, same as Q37 Defender pattern)
+- `special_abilities`: UNCHANGED per Decision #11
 
-### Decision #52 — Emperor Ssraeshza cycle respawn timer (architect-recommended KEEP NATIVE)
+Backup table scope: +3 `npc_types` rows + 5 `spawn2` rows captured for rollback safety. spawn2 rows backed up but NOT in respawn UPDATE.
 
-`#EmpCycle.pl:3` defines `$EmpRepopTime = int(rand(2880)) + 4320;` = 3-5 day post-kill respawn (4320s+ = 72h-120h range). This is a Perl local variable, NOT `spawn2.respawntime` — config-expert and protocol-agent confirmed. SQL cannot tune it; only perl-expert can.
+### Decision #52 — Emperor Ssraeshza cycle respawn — **RESOLVED 2026-04-25 Option B SOFTEN (USER OVERRIDE)**
 
-**Architect recommendation: KEEP NATIVE (Option A).** Per Decision #11 (preserve signature mechanics) + Decision #45 (Thylex precedent — script-driven respawn timers preserved as load-bearing for cycle integrity). Emperor is the pinnacle of Phase 5a; 3-5 days between kills enforces "earn the loot pinata" feel per brief.
+`#EmpCycle.pl:3` defines `$EmpRepopTime = int(rand(2880)) + 4320;` = 3-5 day post-kill respawn. This is a Perl local variable, NOT `spawn2.respawntime` — config-expert and protocol-agent confirmed. SQL cannot tune it; only perl-expert can.
 
-**Alternative (Option B):** Invoke perl-expert (task L13) to soften to 22-24h endgame tier (`$EmpRepopTime = int(rand(7200)) + 79200;`). Aligns with Decision #8 endgame respawn tier. +1 small Perl edit; +1 commit; +1 smoke test.
+**Architect's original recommendation:** Option A (KEEP NATIVE per Decision #11 + #45 Thylex precedent).
 
-User decision required. **Architect strongly recommends Option A** — Emperor at 24h respawn would feel less like a once-per-week event and more like a daily target. The 3-5 day cadence is signature.
+**User decision (2026-04-25):** Option B (SOFTEN) — align with Decision #8 endgame respawn tier (22-24h) for cadence consistency with the rest of Phase 5a.
+
+**Architect-specified perl-expert edit (task L13 promoted from conditional to required):**
+
+`akk-stack/server/quests/ssratemple/#EmpCycle.pl:3`:
+```perl
+# BEFORE:
+my $EmpRepopTime = int(rand(2880)) + 4320; #Waiting time to reattempt Emp after failure (Current setting: 3-4 hours)
+# AFTER (Q52=B):
+my $EmpRepopTime = int(rand(7200)) + 79200; #Respawn time for Emp after success (22-24h endgame tier per Decision #8)
+```
+
+The original comment is misleading — variable is `$EmpRepopTime` (post-success respawn, not post-failure). The 4320 base = 72h (3 days), +rand(2880) = +0-48h, giving 72h-120h (3-5 day) range. New target: 79200 base = 22h, +rand(7200) = +0-2h, giving 22-24h range. perl-expert verifies `perl -c #EmpCycle.pl` syntax pre-commit. The companion `$BloodCoolDownTime = int(rand(60)) + 180;` (3-4h failure cooldown) is **NOT** edited — failure cooldown stays at 3-4h to preserve "raid attempt cadence." Only the post-success cycle is softened.
+
+**Implementation-team impact:** perl-expert task L13 is **REQUIRED**, not conditional. perl-expert added to implementation team. Edit is in `akk-stack/` repo (not eqemu/ or claude/) — perl-expert commits and pushes on `feature/raid-scaling` branch in akk-stack.
 
 ---
 
@@ -717,8 +758,8 @@ _game-tester should verify each of the following after the implementation team c
 ### Backup integrity
 - [ ] **3 backup tables exist and are populated.**
   ```sql
-  SELECT COUNT(*) FROM npc_types_backup_raid_scaling_luclin_a;          -- expect 37 (35-39 per Decisions #50/#51)
-  SELECT COUNT(*) FROM spawn2_backup_raid_scaling_luclin_a;              -- expect ~16-18 (excluding pre-Emperor static rows preserved)
+  SELECT COUNT(*) FROM npc_types_backup_raid_scaling_luclin_a;          -- expect 41 (post-Q50/Q51/Q59 inclusions)
+  SELECT COUNT(*) FROM spawn2_backup_raid_scaling_luclin_a;              -- expect ~22-23 (incl. 5 Akheva elite-named rows; pre-Emperor static rows excluded from count for clarity)
   SELECT COUNT(*) FROM npc_spells_entries_backup_raid_scaling_luclin_a;  -- expect 1 (Touch of Vinitras pre-DELETE)
   ```
 
@@ -754,6 +795,9 @@ _game-tester should verify each of the following after the implementation team c
 - [ ] Insanity Crawler 179180: 60000.
 - [ ] Va\`Dyn 179178: 50000.
 - [ ] Shar Vinitras 179134: 70000, maxdmg=600.
+- [ ] **Q51=B Akheva elite-named (USER OVERRIDE):** Sheleric Vis 179133 hp=35000, maxdmg=550, mindmg=176 (unchanged); Sheleric Vis 179046 hp=30000, damage 59/173 unchanged; Xaui Tatrua 179044 hp=30000, damage 110/376 unchanged. Respawn UNCHANGED at 5400s (verify all 5 spawn2 rows for these 3 NPCs).
+- [ ] **Q59=A Spiritual Arcanist 154153:** hp=40000 (joint architect+lore-master recommendation; Khati Sha event Phase 2 wrong-choice penalty).
+- [ ] **Q51 backup completeness:** `SELECT id, hp, mindmg, maxdmg FROM npc_types_backup_raid_scaling_luclin_a WHERE id IN (179133, 179046, 179044);` returns 3 rows with pre-scale values (179133=116000/176/746, 179046=70000/59/173, 179044=70000/110/376).
 - [ ] **Touch of Vinitras DT REMOVED:**
   ```sql
   SELECT COUNT(*) FROM npc_spells_entries WHERE npc_spells_id = 196 AND spellid = 2859;  -- expect 0
@@ -790,8 +834,8 @@ _game-tester should verify each of the following after the implementation team c
 - [ ] **Pre-Emperor named (162066/162067/162191) preserved at 1080s** — 17 spawn2 rows each unchanged for Ring of the Shissar Insignia farming.
 - [ ] **Rhozth Ssrakezh 162258 preserved at 5400s, Rhozth Ssravizh 162089 preserved at 21600s** — Taskmaster's Pouch farming.
 - [ ] **Shar Vinitras 179134 preserved at 10800s** — audit explicitly notes "respawn fine."
-- [ ] **Sheleric Vis 179133/179046 + Xaui Tatrua 179044 preserved at 5400s** — Decision #51 elite-named exclude.
-- [ ] **Decision #52 Option A: Emperor cycle `#EmpCycle.pl` UNCHANGED** — `$EmpRepopTime` line unchanged at `int(rand(2880)) + 4320`.
+- [ ] **Sheleric Vis 179133/179046 + Xaui Tatrua 179044 spawn2 rows preserved at 5400s** — per Q51=B named-tier respawn philosophy (HP scaled, respawn unchanged at native short-tier).
+- [ ] **Q52=B Emperor cycle `#EmpCycle.pl` EDITED** — `$EmpRepopTime` line MUST now read `int(rand(7200)) + 79200;` (22-24h).
 
 ### Untouched-NPC verification
 - [ ] **Spirit of Akelha\`Ra 179144 UNTOUCHED** at 1M HP (VT-key turn-in NPC, Decision #30 precedent):
@@ -816,7 +860,10 @@ _game-tester should verify each of the following after the implementation team c
   ```
 
 ### Quest-script verification
-- [ ] `#EmpCycle.pl`, `#Emperor_Ssraeshza_.pl`, `#Blood_of_Ssraeshza.lua`, `#Ssraeshzian_Blood_Golem.lua` mtimes BEFORE Phase 5a apply timestamp (NOT modified — Decision #52 = Option A).
+- [ ] **Q52=B perl-edit verification:** `#EmpCycle.pl:3` line MUST read `my $EmpRepopTime = int(rand(7200)) + 79200;` (22-24h tier). Pre-edit value `int(rand(2880)) + 4320;` MUST NOT remain. Verify via `git show HEAD:akk-stack/server/quests/ssratemple/#EmpCycle.pl | head -5` after L13 commit.
+- [ ] **Q52 perl-syntax sanity:** `docker exec -i akk-stack-eqemu-server-1 perl -c /home/eqemu/server/quests/ssratemple/#EmpCycle.pl` returns no syntax errors.
+- [ ] **Q52 BloodCoolDown UNCHANGED:** `#EmpCycle.pl:2` MUST still read `my $BloodCoolDownTime = int(rand(60)) + 180;` (3-4h failure cooldown preserved).
+- [ ] `#Emperor_Ssraeshza_.pl`, `#Blood_of_Ssraeshza.lua`, `#Ssraeshzian_Blood_Golem.lua` mtimes BEFORE Phase 5a apply timestamp (NOT modified — only `#EmpCycle.pl` edited per Q52=B).
 - [ ] `#cursed_controller.pl`, `#Vyzh-dra_the_Cursed.lua`, `#Vyzh-dra_the_Exiled.lua`, `#Vyzh-dra_the_Banished.pl` mtimes BEFORE.
 - [ ] `Khati_Sha_the_Twisted.lua` mtime BEFORE.
 - [ ] `#Doomshade.lua` mtime BEFORE.
@@ -868,12 +915,13 @@ _game-tester should verify each of the following after the implementation team c
 
 ---
 
-> **Next step:** User decisions on Decisions #50 (rune/glyph serpents — architect recommends include), #51 (Akheva elite-named — architect recommends exclude), #52 (Emperor cycle respawn — architect recommends keep native). Lore-master sign-off pending. Then spawn the implementation team with:
-> - **data-expert** (Tasks L1-L9, L12)
-> - **config-expert** (Tasks L10-L11)
-> - **(perl-expert)** — only if Decision #52 = Option B
+> **Next step:** All four user decisions resolved 2026-04-25. Lore-master sign-off COMPLETE 2026-04-25. **Spawn the implementation team with:**
+> - **data-expert** (Tasks L1-L9, L12 — 41 npc_types UPDATEs + 1 DELETE + ~17-18 spawn2 UPDATEs)
+> - **config-expert** (Tasks L10-L11 — `#reloadworld` + smoke verify)
+> - **perl-expert** (Task L13 REQUIRED per Q52=B — one-line `#EmpCycle.pl` edit on akk-stack repo)
+> - **infra-expert** (Task L10b CONTINGENT — single zone-process restart for akheva if `#reloadworld` doesn't flush spell list 196 cache)
 >
-> Do NOT spawn c-expert, lua-expert, infra-expert, or protocol-agent — they have no Phase 5a default-path implementation work.
+> Do NOT spawn c-expert, lua-expert, or protocol-agent — they have no Phase 5a implementation work.
 
 ---
 

@@ -111,7 +111,7 @@ None of these affect Phase 5a raid bosses. `ssratemple`, `akheva`, `sseru`, `kat
 | 179046 | Sheleric_Vis (variant) | 62 | 70,000 | 59 / 173 | 271 / 190 | 0 | 5,400s × 2 — elite named tier |
 | 179044 | Xaui_Tatrua | 60 | 70,000 | 110 / 376 | 262 / 24 | 1 | 5,400s — elite named tier |
 
-**Phase 5a scope for akheva:** 8 primary bosses (3 Vyzh\`dra variants + Itraer Vius + Shar Vinitras + Shei Vinitras + Insanity Crawler + Va\`Dyn). Sheleric Vis and Xaui Tatrua are elite named at 70-116k — flag for user decision / treat as Decision #2 elite-trash.
+**Phase 5a scope for akheva:** 8 primary bosses (3 Vyzh\`dra variants + Itraer Vius + Shar Vinitras + Shei Vinitras + Insanity Crawler + Va\`Dyn) + 3 elite-named per Q51=B USER OVERRIDE 2026-04-25 (Sheleric Vis 179133 116k → 35k, Sheleric Vis 179046 70k → 30k, Xaui Tatrua 179044 70k → 30k; respawn UNCHANGED at native 5400s — same pattern as Phase 4b Q37 Defenders override).
 
 **DT FINDING:** `spell list 196` contains spell **2859 Touch of Vinitras** (base_value1 = **-20,000**, mana 0, cast 0, recast 120s) — DEATH TOUCH profile. Used by Vyzh\`dra the Exiled (162232) and Vyzh\`dra the Banished (162214). Phase 5a must **DELETE** the spell 2859 row from `npc_spells_entries` where `npc_spells_id = 196` — follows Phase 2 Decision #16 pattern (Cazic Touch DELETE) and Decision #13 PoSky DT precedent. List 197 (Vyzh\`dra the Cursed) is clean — no DT.
 
@@ -162,6 +162,7 @@ Confirm with config-expert that these 2 have `min_expansion > 3` filtering and a
 |---|---|---|---|---|---|---|---|
 | 154142 | #an_evolved_burrower | 63 | **300,750** | 200 / 693 | 466 / 56 | 0 | 97,200s (27h) |
 | 154145 | Khati_Sha_the_Twisted | 68 | **475,000** | 400 / **1,004** | 502 / 64 | 616 | no spawn2 — script-spawned (`Khati_Sha_the_Twisted.lua`) |
+| 154153 | A_Spiritual_Arcanist (Khati Sha event Phase 2 wrong-choice penalty per Q59=A) | 68 | **150,000** | 400 / 904 | — / — | 956 | no spawn2 — script-spawned (`#Raidman.lua`) |
 
 **OUT OF ERA:**
 - 154161 `#The_Fabled_Khati_Sha_the_Twisted` (L80) — confirm expansion filter excludes.
@@ -223,7 +224,7 @@ WHERE nse.npc_spells_id IN (
 
 ## 5. Summary of scope
 
-### Total Phase 5a scaling targets: ~35 NPCs
+### Total Phase 5a scaling targets: 41 NPCs (post-user-decisions 2026-04-25)
 
 **Ssraeshza Temple (ssratemple) — 13:**
 - Emperor Ssraeshza 162227 (main, 1.25M HP → target)
@@ -244,7 +245,7 @@ WHERE nse.npc_spells_id IN (
 - #a_rune_covered_serpent 162253 (221k HP, raid_target=1)
 - #a_glyph_covered_serpent 162261 (300k HP, raid_target=1)
 
-**Akheva (akheva) — 8:** Vyzh\`dra Cursed + Exiled + Banished, Itraer Vius, Shar Vinitras, Shei Vinitras, Insanity Crawler, Va\`Dyn.
+**Akheva (akheva) — 8 primary + 3 elite-named per Q51=B USER OVERRIDE 2026-04-25:** Primary: Vyzh\`dra Cursed + Exiled + Banished, Itraer Vius, Shar Vinitras, Shei Vinitras (real 179032 + merchant 179157 dual-form), Insanity Crawler, Va\`Dyn. Elite-named (Q51=B): Sheleric Vis 179133 + 179046, Xaui Tatrua 179044.
 
 **Seru/Katta — 7:** Lord Inquisitor Seru + 4 Praesertum, Lcea Katta, Nathyn Illuminious.
 
@@ -254,7 +255,7 @@ WHERE nse.npc_spells_id IN (
 
 **The Deep — 1:** Thought Horror Overfiend.
 
-**Acrylia — 2:** Khati Sha the Twisted, evolved burrower.
+**Acrylia — 2 + 1 per Q59=A INCLUDE 2026-04-25:** Khati Sha the Twisted, evolved burrower, A_Spiritual_Arcanist 154153 (Khati Sha event Phase 2 wrong-choice penalty).
 
 **Echo — 0** (General Blaystich at 60k HP is already elite-named tier; Decision #2 applies).
 
