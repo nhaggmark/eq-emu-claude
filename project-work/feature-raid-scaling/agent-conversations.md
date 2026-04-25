@@ -20,6 +20,36 @@ rationale are never lost.
 
 ## Phase 5a Architecture Team Conversations
 
+### 2026-04-22 — architect → protocol-agent: Phase 5a Q1-Q10 feasibility questions
+
+**From:** architect → **To:** protocol-agent
+
+Ten targeted feasibility questions: (Q1) Luclin DZ/instance mechanics for all Phase 5a zones, (Q2) Khati Sha zone confirmation, (Q3) Yaemiu elite trash zone boundary, (Q4) Emperor Ssraeshza add-wave mechanism, (Q5/Q9) full DT sweep across all Phase 5a spell lists, (Q6) event-control NPC enumeration, (Q7) MobHealth overflow at 1.25M HP, (Q8) Luclin-specific Titanium client quirks, (Q10) respawn change wire impact.
+
+**Response from** protocol-agent (DB-verified):
+
+Q1: All Phase 5a zones are standard static. `zone` table has no `instancetype` column on this PEQ version — DZ system post-dates Luclin. `#reloadworld` sufficient. Zero DZ opcodes in scope.
+
+Q2: Khati Sha 154145 is script-spawned in `acrylia` (confirmed by quest script location). No spawn2 rows. No VT variant. Phase 5a only, no 5a/5b split needed.
+
+Q3: All Yaemiu-pattern mobs (Eom_*, Pli_*, Zun_*, etc.) spawn exclusively in `vexthal`. Zero in any Phase 5a zone. Phase 5b only.
+
+Q4: Emperor adds are script-spawned only — 4× Ssraezsha from Blood/Golem `event_combat`, 5× shissar_wraith from Emperor `event_death_complete`. Spell 2310 "Rage of Ssraeshza" = SPA11 haste + SPA79 AC debuff + SPA114 ATK debuff — no SPA 46 (SummonPet). `special_abilities 32` = Leash (movement constraint, param0=290 distance). Decision #11 safe — no spell-list changes needed.
+
+Q5/Q9: Full DT sweep across all 30 Phase 5a spell list IDs (mana=0, cast_time=0, SPA 0, value ≤ −10000) returned zero rows. No DT spells in Phase 5a. Seru's `O` npcspecialattks = MeleeImmunityExceptBane (SpecialAbility 22, `npc.cpp:1948`), not a DT flag. Seru's spell 2061 "Torturing Winds" = −300 HP, cast_time=2000 — not instant kill.
+
+Q6: Event-control NPCs to exclude from Phase 5a SQL: 162269 (ssratemple keycheck, 999M HP), 176110 (umbral #Keymaster, 99M HP), 160177/160178 (katta Bella/Heracus Helsin, 1M HP L1), 162065 (Emperor placeholder, no-target), 162260 (#EmpCycle controller). 12× griegsend untargetable trigger NPCs and Akheva flavor/environmental NPCs excluded automatically by raid_target=0.
+
+Q7: `npc_types.hp` is `bigint(20)`. `MobHealth` sends `(int)GetHPRatio()` — percentage only. 1.25M HP is wire-identical to 30k HP. No overflow.
+
+Q8: Zero Luclin-specific Titanium client quirks affecting scaling. Vertical geometry, lighting, faction-war NPCs, Vah Shir/shissar models — all client-side rendering, unaffected by npc_types changes. All Phase 5a zones ruleset=1 except griegsend which has a duplicate row at ruleset=0 (two zone table entries for griegsend — flag for config-expert).
+
+Q10: Same as Phases 2-4b. spawn2.respawntime is server-internal; zero client opcodes fire from the change.
+
+**Outcome:** All 10 questions answered. Phase 5a confirmed 100% SQL. Protocol-agent consultation complete.
+
+---
+
 ### 2026-04-22 — protocol-agent → architect: Phase 5a protocol consultation complete
 
 **From:** protocol-agent → **To:** architect
