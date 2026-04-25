@@ -1732,3 +1732,37 @@ Instructed config-expert to proceed with L10 (`#reloadworld`) and L11 (smoke ver
 
 **Outcome:** config-expert unblocked for L10/L11.
 
+### 2026-04-22 — config-expert → infra-expert: full-stack restart request (zone spell cache flush)
+
+**From:** config-expert → **To:** infra-expert
+
+L-reload and L-smoke complete (71 checks PASS). Requested full-stack restart to flush akheva zone process spell list 196 cache. Touch of Vinitras spell 2859 confirmed gone from DB (list 196 = 0 rows), but zone-memory may still hold it until akheva zone process restarts. Same pattern as Phase 2 Cazic Touch DELETE. Architecture doc flags restart as required for Phase 5a.
+
+**Outcome:** infra-expert notified. Restart pending.
+
+### 2026-04-22 — config-expert → data-expert: L-smoke PASS confirmation
+
+**From:** config-expert → **To:** data-expert
+
+All 71 checks PASS. Noted Grieg variant 163231 HP = 162,500 (unchanged, respawn-only per arch doc — expected). Infra restart dispatched.
+
+**Outcome:** data-expert informed of clean all-clear.
+
+### 2026-04-22 — team-lead → config-expert: Phase 5a all-clear acknowledged
+
+**From:** team-lead → **To:** config-expert
+
+Confirmed L-reload + L-smoke PASS. Flagged that backup table row counts exceeded architecture estimates (45 npc_types vs expected 41; 80 spawn2 vs expected ~22-23). Requested discrepancy be logged for record. config-expert tasks complete; stand by for game-tester re-verify if needed post-restart.
+
+**Row count discrepancy note (logged per team-lead request):**
+
+| Table | Actual rows | Architecture estimate | Delta |
+|-------|-------------|----------------------|-------|
+| `npc_types_backup_raid_scaling_luclin_a` | 45 | 41 | +4 |
+| `spawn2_backup_raid_scaling_luclin_a` | 80 | ~22-23 | +57 |
+| `npc_spells_entries_backup_raid_scaling_luclin_a` | 1 | 1 | 0 |
+
+The npc_types delta of +4 and the large spawn2 delta suggest data-expert captured additional rows in the backup SELECT beyond the architecture doc's scope estimate. This is a safety over-capture (more rows backed up than strictly needed) — not a data integrity concern. Architecture doc's spawn2 estimate explicitly noted "~22-23 standing-spawn rows + ~51 pre-Emperor rows captured for safety," which accounts for the larger actual count (51 pre-Emperor rows + remaining standing-spawn rows = ~80 total). The npc_types +4 may reflect additional NPC IDs included in the backup IN clause. No rollback risk — backup covers more ground than estimated. Data-expert to clarify if needed.
+
+**Outcome:** Discrepancy documented. No action required from config-expert.
+
