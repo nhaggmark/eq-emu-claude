@@ -869,3 +869,236 @@ also Exiled (162232 in scripts), Banished (162214), Glyphed serpent (162261), Ru
 serpent (162253). Most are intermediate forms or pre-cursed mobs, not the boss kill
 target. Architect should confirm which IDs receive the boss-tier HP treatment vs. which
 are pre-event mobs.
+
+---
+
+## Phase 5b: Vex Thal Protocol Consultation (2026-04-22)
+
+**Scope:** Vex Thal proper (vexthal zone) — Aten Ha Ra encounter system, 13 inner
+bosses (158006-158016), Akhevan Warders (158087-94), Va_Dyn_Khar (158081), ~80 Yaemiu
+elite trash (158000-158086 range), Spirit of Akelha`Ra key mechanic (179144 in akheva),
+13-shard VT key quest structure.
+
+**Summary finding: Phase 5b is fully server-side. Zero client protocol impact.**
+Same conclusion as Phases 2, 3, 4a, 4b, and 5a. **One DT spell found — see Flag A.**
+
+### Files Examined
+
+| File | What You Found |
+|------|----------------|
+| `akk-stack/server/quests/vexthal/player.lua` | Illegal-bind guard only (MovePC if bind == zone 158). No DZ/expedition. |
+| `akk-stack/server/quests/vexthal/#Aten_Ha_Ra.pl` | Qglobal-gated respawn via `quest::setglobal("aten",1,3,"M$spawntime")` — 1.8h variance. EVENT_SPAWN 1s timer checks qglobal. EVENT_DEATH_COMPLETE sets qglobal. |
+| `akk-stack/server/quests/vexthal/#Aten_Ha_Ra_.pl` | Non-aggro form (158096). 48-hour depop timer. Same death_complete → qglobal pattern as 158006. |
+| `akk-stack/server/quests/vexthal/#Aten_Trigger.pl` | Entity-presence controller NPC. 60s poll loop: if no inner bosses (9 IDs 158007-158015) present → spawn non-aggro Aten (158096); elif Aten not spawned → spawn aggro Aten (158006). Same entity-check pattern as Vulak (Phase 4b). |
+| `akk-stack/server/quests/vexthal/#Kaas_Thox_Xi_Ans_Dyek.pl` | On spawn: `quest::spawn2(158087,...)` × 2 — Akhevan Warder guards. On death_complete: `quest::depopall(158087)`. Pattern: boss summons guards on spawn, depops guards on death. |
+| `akk-stack/server/quests/vexthal/#Diabo_Xi_Va.pl` | Same warder-control pattern — summons NPC 158088 × 5. |
+| `akk-stack/server/quests/vexthal/#Diabo_Xi_Xin.pl` | Same warder-control pattern — summons NPC 158088 × 5. |
+| `akk-stack/server/quests/vexthal/#Diabo_Xi_Xin_Thall.pl` | Same warder-control pattern — summons NPC 158089 × 7. |
+| `akk-stack/server/quests/vexthal/#Thall_Xundraux_Diabo.pl` | Same warder-control pattern — summons NPC 158091 × 5. |
+| `akk-stack/server/quests/vexthal/#Thall_Va_Kelun.pl` | Same warder-control pattern — summons NPC 158090 × 2. |
+| `akk-stack/server/quests/vexthal/#Va_Xi_Aten_Ha_Ra.pl` | Same warder-control pattern — summons NPC 158094 × 14 (second floor area). On death_complete: depopall(158094). |
+| `akk-stack/server/quests/vexthal/#Diablo_Xi_Va_Temariel.pl` | Same warder-control pattern — summons NPC 158091 × 5. |
+| `akk-stack/server/quests/vexthal/158016.lua` | #Thall_Va_Xakra (south wing) — on combat, calls MoveTo() on 26 spawn-group IDs every 30s to assist. Same zone-aggro-move pattern as Phase 4a King Tormax adds. Server-side AI only. |
+| `akk-stack/server/quests/vexthal/158125.lua` | #Thall_Va_Xakra (north wing, NPC 158125) — identical 27-spawn-group MoveTo assist pattern. |
+| `akk-stack/server/quests/vexthal/akhevan_trigger.lua` | Proximity-trigger trap spawner (NPC 158468). On event_enter (non-GM): spawns random Yaemiu mob from tiered pool (Qua/Zov/Zun/Pli/Eom classes, 30 mob IDs) with 30-min depop. eq.set_proximity() for detection radius. No DZ. |
+| `akk-stack/server/quests/vexthal/#Eom_Centien_Xakra.lua` | Simple 37-min depop timer. No add-wave, no chain. Representative of all named Yaemiu Xakra variants. |
+| `akk-stack/server/quests/vexthal/#Pli_Thall_Xakra.lua` | Identical 37-min depop timer. Same pattern. |
+| `akk-stack/server/quests/akheva/#The_Spirit_of_Akelha-Ra.lua` | NPC 179144 in akheva (NOT vexthal). event_trade with item 9963 → summons item 17323 (Shadowed Scepter Frame) + 20k XP. 4-min depop timer. Standard event_trade / SummonItem — no special protocol. |
+| DB query: npc_types WHERE id 158000–158200 AND raid_target=1 | Full VT NPC catalog: 127 distinct raid_target=1 IDs. Inner bosses 158006-158016, 158125. Warders 158087-94 (NULL respawn = script-only). Va_Dyn_Khar 158081 (600k HP). Yaemiu trash 158000-158086 range. |
+| DB query: npc_spells_entries for all VT boss spell lists | **CRITICAL: spell 1948 "Destroy" found in list 229** (NPC 158006 #Aten_Ha_Ra). DT-profile: mana=0, cast_time=0, effectid1=0 (SE_CurrentHP), effect_base_value1=-100,000. Same DT signature as spell 982 (Cazic Touch) and spell 2859 (Touch of Vinitras). recast_delay=-1, priority=35. |
+| DZ/expedition grep — vexthal/ | Zero hits. vexthal is a standard static zone. |
+
+### Finding 1: Vex Thal Zone Type — Standard Static Zone, No DZ
+
+`vexthal/player.lua` contains only an illegal-bind guard with `MovePC()`. No `MovePCDynamicZone`, no `expedition` API, no `DynamicZone`, no `ServerOP_Expedition*` anywhere in the vexthal quest directory (full grep confirmed).
+
+Config-expert's Phase 5a confirmation noted `dynamic_zones` table has 0 rows on this PEQ version. VT entry is via standard `ZoneChange_Struct` → `ZoneServerInfo_Struct` flow, identical to every prior phase.
+
+**Protocol conclusion:** No DZ/expedition overhead. Same as all prior phases.
+
+### Finding 2: Aten Ha Ra Encounter System — Qglobal + Entity-Check, Server-Side Only
+
+The Aten Ha Ra encounter uses a three-NPC coordination system:
+
+```
+#Aten_Trigger (entity-presence controller, always up)
+  ↓ 60s poll: checks 9 inner bosses (158007-158015) all absent?
+  ↓ If all absent AND qglobal "aten" not set → spawn #Aten_Ha_Ra_ (158096, non-aggro)
+  ↓ If any inner boss present AND #Aten_Ha_Ra not up → spawn #Aten_Ha_Ra (158006, aggro)
+#Aten_Ha_Ra (158006) killed → qglobal "aten"=1 with M$spawntime variance (~1.8h)
+#Aten_Ha_Ra (158006) EVENT_SPAWN → 1s timer checks qglobal; depops if qglobal set
+#Aten_Ha_Ra_ (158096) killed → same qglobal set; 48h depop timer
+```
+
+**Protocol assessment:** Identical architecture to Phase 4b's `#Thylex_of_Veeshan.pl`
+(entity-presence gate) + Phase 5a's `#Aten_Ha_Ra.pl` (qglobal respawn window). All
+transitions are `quest::spawn2` + qglobal checks. Client sees `NewSpawn_Struct` /
+`DeleteSpawn_Struct`. No new opcodes.
+
+**HP scaling implication:** Both 158006 (#Aten_Ha_Ra, aggro form) and 158096 (#Aten_Ha_Ra_,
+non-aggro / "destroy" form) have 1,901,500 HP. The entity-presence check is NPC-type-ID
+based, not HP-based — scaling is safe for both forms.
+
+**CRITICAL FLAG A — see Finding 5.**
+
+### Finding 3: Warder-Control Pattern — Boss Summons Guards on Spawn, Depops on Death
+
+Every VT inner boss (except Aten Ha Ra system and Thall Va Xakra) uses the same
+warder-control pattern in its script:
+
+- `EVENT_SPAWN` → `quest::spawn2(158087/88/89/90/91/94, ...)` × N (2-14 guards depending on boss)
+- `EVENT_DEATH_COMPLETE` → `quest::depopall(158087/88/89/90/91/94)`
+
+The Akhevan Warder NPC IDs (158087-94) all have `spawn2.respawntime = NULL` — they have
+no independent spawn2 rows, existing solely as script-spawned guards.
+
+**Protocol assessment:** This is the same `quest::spawn2` + `quest::depopall` pattern
+confirmed safe in Phase 3 (VP door-gate) and Phase 4b (AoW chain). Client sees
+`NewSpawn_Struct` per guard (on boss spawn) and `DeleteSpawn_Struct` per guard
+(on boss death). No new opcodes.
+
+**HP scaling implication for Akhevan Warders (158087-94):** Current HP is 901,000.
+Since they have no spawn2 rows (NULL respawn), they cannot be scaled via the standard
+`spawn2.respawntime` UPDATE path. HP UPDATE on `npc_types.hp` for these 8 IDs is safe
+and will take effect on next repop/zone restart.
+
+### Finding 4: Thall Va Xakra Zone-Aggro Assist — Server-Side AI Only
+
+NPC 158016 (south) and NPC 158125 (north) both run Lua scripts that call `GetNPCBySpawnID()`
+for 26-27 spawn group entries and invoke `MoveTo()` every 30 seconds when engaged. This
+pulls trash mobs from across the wing to assist the boss.
+
+**Protocol assessment:** Server-side `MoveTo()` pathfinding AI. Client sees normal
+`PlayerPositionUpdateServer_Struct` packets as the mobs path toward the boss — standard
+mob movement traffic. No special opcode. Same pattern as Phase 4a King Tormax's
+`MoveTo()` on adds.
+
+**HP scaling implication:** Scaling 158016 and 158125 HP is safe. The assist mechanic
+checks spawn-group presence, not HP threshold.
+
+### Finding 5: DEATH-TOUCH SPELL — Spell 1948 "Destroy" in List 229 (Aten Ha Ra)
+
+**This is the critical protocol finding for Phase 5b.**
+
+DB query of npc_spells_entries for all VT boss spell lists reveals:
+
+```
+npc_spells_id=229 (used by NPC 158006 #Aten_Ha_Ra):
+  spellid=1948  "Destroy"  mana=0  cast_time=0  recast_delay=-1  priority=35
+                effectid1=0 (SE_CurrentHP)  effect_base_value1=-100,000  targettype=4
+```
+
+Comparison against prior DT spells:
+
+| Spell ID | Name | Value | Recast | Target | Used in Phase |
+|----------|------|-------|--------|--------|---------------|
+| 982 | Cazic Touch | -100,000 | 0 | Single (type 5) | Phase 2 — DELETED |
+| 2859 | Touch of Vinitras | -20,000 | 120s | Single (type 5) | Phase 5a — DELETED |
+| **1948** | **Destroy** | **-100,000** | **-1 (no limit)** | **AE/Group (type 4)** | **Phase 5b — TO FLAG** |
+
+"Destroy" (spell 1948) is MORE dangerous than prior DTs: it is targettype=4, which
+in EQEmu is PBAE (point-blank area effect on the caster's targets). Cazic Touch and
+Touch of Vinitras were single-target (type 5). "Destroy" can potentially hit multiple
+players simultaneously.
+
+**Protocol assessment:** The DT kill is delivered as standard `CombatDamage_Struct` /
+`Death_Struct` packets exactly as with Cazic Touch and Touch of Vinitras. No special
+client opcode needed for DT removal. Removal is a single `DELETE` from `npc_spells_entries`
+WHERE npc_spells_id=229 AND spellid=1948.
+
+**Other spells in list 229 to PRESERVE:**
+- spellid=2157 "Word of Command" (effectid1=21, type=AE charm) — Aten Ha Ra signature mechanic
+- spellid=2164 "Silence of the Shadows" (effectid1=96, silence/stun) — signature
+- spellid=2167 "Fling" (effectid1=0, -1 HP) — proximity knockback
+
+**List 540 (#Aten_Ha_Ra_, NPC 158096) — CLEAN:** No spell 1948. Contains only 2157,
+2164, 2167. No DT delete needed for the non-aggro form.
+
+**Decision required from architect:** Delete spell 1948 from list 229 (same pattern
+as Phase 2 Decision #16 Cazic Touch DELETE and Phase 5a Decision #16-pattern Touch of
+Vinitras DELETE), or keep it as an Aten Ha Ra signature mechanic. Given that:
+- "Destroy" is AE (not single-target), making it more punishing at small group scale
+- Aten Ha Ra already has Word of Command (AE charm), Silence of the Shadows, and Fling
+  as signature mechanics
+- The PBAE DT would hit a 1-3 player group simultaneously (potentially wiping entire raid)
+- Phase precedent strongly favors DELETE per Decisions #13 and #16
+
+Architect recommendation: **DELETE spell 1948 from list 229.** One row.
+
+### Finding 6: Yaemiu Trap Spawner — Proximity Event, No Protocol Concern
+
+`akhevan_trigger.lua` (NPC 158468) uses `eq.set_proximity()` to detect zone entry
+into trap areas. On enter, spawns a random Yaemiu mob from 30 IDs across five tiers
+(Qua L55 / Zov L58 / Zun L61 / Pli L64 / Eom L66) with a 30-min depop timer.
+
+**Protocol assessment:** `eq.set_proximity()` is server-side entity proximity detection —
+same mechanism confirmed safe in Phase 4a (Ring War approach detection). Client sees
+`NewSpawn_Struct` for the trap spawn. No special opcodes.
+
+### Finding 7: Spirit of Akelha`Ra Key Mechanic — Standard EVENT_TRADE, No Protocol Concern
+
+NPC 179144 (`#The_Spirit_of_Akelha-Ra`) lives in `akheva` (not vexthal). The shard
+turn-in script checks `item_lib.check_turn_in(e.trade, {item1 = 9963})` and responds
+with `e.other:SummonItem(17323)` — Shadowed Scepter Frame.
+
+**Protocol assessment:** This is a standard `OP_TradeAccept` / `OP_ItemPacket` sequence.
+`SummonItem()` sends `ItemPacket_Struct` with type `CharInventory` (0x69). No new opcodes.
+The NPC's 1M HP (untouched per Decision #30 precedent) is cosmetic — client sees percentage
+only via `MobHealth` uint8 percentage field.
+
+**Phase 5b implication:** No HP scaling on 179144 per Decision #30 precedent. The shard
+turn-in quest works regardless of the NPC's HP value.
+
+### Finding 8: No HP-Percentage Event Hooks in Vex Thal
+
+Full grep of vexthal quest directory for `setnexthpevent`, `set_hp_event_by_number`,
+`EVENT_HP` returned zero results. Boss HP can be freely reduced without affecting any
+scripted thresholds. Same finding as Phase 5a.
+
+### Phase 5b Protocol Summary
+
+| Concern | Source | Verdict |
+|---------|--------|---------|
+| vexthal zone type | vexthal/player.lua + config-expert DZ table (0 rows) | Standard static zone — no DZ/expedition |
+| HP-percentage event hooks | grep vexthal scripts | Zero — boss HP freely scalable |
+| Aten Ha Ra encounter system (158006/158096 + Aten_Trigger) | #Aten_Ha_Ra.pl, #Aten_Ha_Ra_.pl, #Aten_Trigger.pl | Qglobal + entity-check; all server-side; same as Phase 4b Vulak pattern |
+| Warder-control pattern (all inner bosses 158007-158015, 158009) | All boss .pl scripts | quest::spawn2 guards on spawn, depopall on death; same as VP Phase 3 |
+| Akhevan Warder respawn (158087-94) | DB query (NULL respawn) | Script-only spawns, no spawn2 rows; HP UPDATE on npc_types safe |
+| Thall Va Xakra zone-aggro assist (158016, 158125) | 158016.lua, 158125.lua | Server-side MoveTo(); same as King Tormax adds Phase 4a |
+| Proximity trap spawner (akhevan_trigger.lua) | akhevan_trigger.lua | eq.set_proximity() server-side; NewSpawn_Struct per trap; no DZ |
+| Spirit of Akelha`Ra shard turn-in (179144) | akheva/#The_Spirit_of_Akelha-Ra.lua | Standard OP_TradeAccept / SummonItem — no new opcodes |
+| **DT spell "Destroy" (1948) in list 229 (Aten Ha Ra 158006)** | npc_spells_entries DB query | **FLAG A: AE DT — DELETE recommended. One row. Same pattern as Phase 2 + 5a DT removals.** |
+| List 540 (#Aten_Ha_Ra_ 158096) — DT check | DB query | Clean — no spell 1948. No action needed. |
+| Fling spell 2167 (multiple VT lists) | DB query + spells_new | effectid1=0, value=-1 HP, targettype=2 (PBAE). Knockback utility, NOT a DT. |
+| Yaemiu trash scaling (158000-158086 range) | DB query | All have spawn2.respawntime = 640 or 960s — standard SQL UPDATE path |
+| Va_Dyn_Khar (158081) | DB query | spawn2.respawntime=960 — standard SQL UPDATE path |
+| HP/damage scaling (all VT NPCs) | Phase 2-5a analysis applies | Server-side SQL only; client sees % HP |
+
+**No Phase 5b changes require opcode additions, struct modifications, or Titanium
+translation layer changes. Phase 5b is 100% server-side (SQL + 1 npc_spells_entries
+DELETE for Aten Ha Ra DT), same as all prior phases.**
+
+**Phase 5b Flags for Architect:**
+
+**Flag A — CRITICAL DT:** Spell 1948 "Destroy" in npc_spells_id=229 (NPC 158006
+#Aten_Ha_Ra). This is an AREA-EFFECT DT (targettype=4 PBAE, -100,000 HP, no recast
+limit per recast_delay=-1). Protocol impact of removal: zero — same standard
+CombatDamage_Struct / Death_Struct path as prior DT removals. Data-expert task:
+DELETE FROM npc_spells_entries WHERE npc_spells_id=229 AND spellid=1948. Preserve
+2157, 2164, 2167.
+
+**Flag B — Aten Ha Ra dual-form (158006 vs 158096):** Same pattern as Phase 5a
+Shei Vinitras dual-form (179032 vs 179157). Both forms have 1,901,500 HP. Both need
+to be in the HP UPDATE list if architect wants to scale them equally. The non-aggro
+form (158096) drops into role once inner bosses are killed — it is still a kill target.
+List 540 (158096's spell list) is clean (no DT).
+
+**Flag C — Warders script-only spawn:** Akhevan Warders (158087-94, 901k HP each)
+have no spawn2 rows (NULL respawntime) — they exist only via boss script spawn2 calls.
+HP UPDATE on npc_types.hp for these 8 IDs will take effect on next repop. No
+spawn2.respawntime UPDATE possible or needed for warders.
+
+**Flag D — Thall Va Xakra duplication:** Two NPC IDs for Thall Va Xakra: 158016
+(south wing) and 158125 (north wing). Both have 900,000 HP. Both have spawn2 rows
+with respawntime=640s. Both need to be in the SQL UPDATE list (same issue as
+Phase 5a Shei dual-form and Akheva elite-named duplicate IDs).
