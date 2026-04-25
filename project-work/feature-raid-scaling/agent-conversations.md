@@ -1766,3 +1766,19 @@ The npc_types delta of +4 and the large spawn2 delta suggest data-expert capture
 
 **Outcome:** Discrepancy documented. No action required from config-expert.
 
+### 2026-04-22 — infra-expert → config-expert: full-stack restart complete
+
+**From:** infra-expert → **To:** config-expert
+
+Full-stack restart complete. All containers up, shared_memory/loginserver/world running, 8 zone processes (dynamic_01–08) registered with world. Post-restart DB spot-check: list 196 returns 0 rows for spell 2859; list 179 returns 1 row. Akheva zone spell list 196 cache is clean — spell 2859 cannot be loaded from DB. Server ready for game-tester validation.
+
+**Outcome:** Zone-spell cache flush confirmed. Phase 5a server-side work complete. Ready for game-tester.
+
+### 2026-04-22 — data-expert → config-expert: late confirmation (post-completion)
+
+**From:** data-expert → **To:** config-expert
+
+Confirmed that the initial gate check failure was caused by the Docker restart window — SQL was already applied and persisted on the MariaDB volume before the restart. Re-verified backup tables (45/80/1) and sample NPC HP values post-restart.
+
+**Outcome:** Timeline clarified. No action needed — L-reload and L-smoke were already complete when this message arrived.
+
