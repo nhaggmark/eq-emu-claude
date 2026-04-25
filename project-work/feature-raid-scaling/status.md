@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-04-21 | 2026-04-21 |
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2-4b: all Complete 2026-04-23. **Phase 5a Luclin non-VT: Complete 2026-04-25** — all advisors cleared (protocol-agent + config-expert 2026-04-22; lore-master 2026-04-25 APPROVED). **All 4 user decisions resolved 2026-04-25:** Q50=A INCLUDE (joint), Q51=B INCLUDE USER OVERRIDE, Q52=B SOFTEN USER OVERRIDE, Q59=A INCLUDE (joint). **41 npc_types UPDATEs** + 1 npc_spells_entries DELETE (Touch of Vinitras list 196 only) + ~17-18 spawn2 UPDATEs + 1 perl edit (`#EmpCycle.pl:3`). Implementation team: data-expert + config-expert + perl-expert + infra-expert (contingent). Ready for implementation dispatch. | 2026-04-22 | 2026-04-25 |
-| Implementation | data-expert + config-expert + infra-expert | Complete (Phase 2 Classic) 2026-04-23. Complete (Phase 3 Kunark) 2026-04-23 — Kunark SQL applied, reload verified (27/27 pass) | 2026-04-22 | 2026-04-23 |
-| Validation | game-tester + user | Phase 2-4b: all server-side validations PASS. User accepted server-side verification and proceeded at each phase without full in-game test suite execution. Phase 4b: 127 checks PASS (Kerafyrm isolation confirmed, DT sweep clean, all prior phase regressions clean). | 2026-04-22 | 2026-04-23 |
-| Completion | _user_ | Phases 2, 3, 4a, 4b all Complete 2026-04-23 — proceeding to Phase 5a Luclin non-VT | 2026-04-23 | 2026-04-23 |
+| Implementation | data-expert + config-expert + perl-expert + infra-expert | Phases 2/3/4a/4b/5a all Complete. Phase 5a included 1 Perl edit (`#EmpCycle.pl:3` for Q52 user override) + cross-repo akk-stack commit. | 2026-04-22 | 2026-04-25 |
+| Validation | game-tester + user | Phases 2-5a: all server-side validations PASS. Phase 5a: 117 checks PASS (Touch of Vinitras DELETE confirmed list 196 cleared / list 179 preserved, Spirit of Akelha`Ra unchanged, Phase 5b reservations clean, all prior phases clean). | 2026-04-22 | 2026-04-25 |
+| Completion | _user_ | Phases 2, 3, 4a, 4b, 5a all Complete — proceeding to Phase 5b Luclin VT (final phase) | 2026-04-23 | 2026-04-25 |
 
-**Current phase:** Phase 5a (Luclin non-VT) Architecture starting 2026-04-23. Scope: Ssraeshza Temple, Akheva Ruins, Grieg's End, Seru, Emperor Ssraeshza, Luclin raid content excluding Vex Thal (which is Phase 5b). User accepted Phase 4b server-side validation and proceeded. Final era of scaling project.
+**Current phase:** Phase 5b (Luclin VT + 13-shard key rework) Architecture starting 2026-04-25. **FINAL PHASE OF PROJECT.** Scope: Vex Thal proper (Aten Ha Ra at audit-flagged 63× HP gap, Diabo trio, Thall Va tier, all 158xxx-range VT inner bosses), Yaemiu elite trash (~80 mobs, Q4 in scope), Va_Dyn_Khar 158081, Akhevan Warders 158087-94 (vexthal-zoned), 13-shard VT key quest (Q7 = keep all 13).
 
 ---
 
@@ -52,8 +52,8 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | **Complete 2026-04-23** |
 | Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | **Complete 2026-04-23** (BUG-001 Tunare fixed; user accepted DB-verified state) |
 | Phase 4b — Velious ToV+Sleeper+Vulak+AoW | Temple of Veeshan proper (16 lords + 16 NToV mid-tier + 4 Defenders), Sleeper's Tomb (5 Ancients + 4 Warders + Progenitor + Final Arbiter + MotG + Milas), AoW, Vulak = 51 NPCs. Kerafyrm trio untouched per Decision #12. | **Complete 2026-04-23** (server-side PASS 127 checks; user accepted) |
-| Phase 5a — Luclin non-VT | ssratemple (13 + 2 cycle serpents per Q50=A), akheva (8 primary + 3 elite-named per Q51=B), sseru/katta (7), griegsend (3), acrylia (2 + 1 Spiritual Arcanist per Q59=A), thedeep (1), umbral (3) = **41 NPCs**. Touch of Vinitras DT removal list 196 only (list 179 preserved per Decision #60). Q52=B perl edit `#EmpCycle.pl:3` softens Emperor cycle 3-5d → 22-24h. | **Server-Side Validation PASS 2026-04-22** — 117 checks; all DB values confirmed; Perl edit verified; in-game testing guide ready |
-| Phase 5b — Luclin VT+shards | Vex Thal proper, VT key shard rework | Not Started |
+| Phase 5a — Luclin non-VT | ssratemple (13 + 2 cycle serpents per Q50=A), akheva (8 primary + 3 elite-named per Q51=B), sseru/katta (7), griegsend (3), acrylia (2 + 1 Spiritual Arcanist per Q59=A), thedeep (1), umbral (3) = **41 NPCs**. Touch of Vinitras DT removal list 196 only (list 179 preserved per Decision #60). Q52=B perl edit `#EmpCycle.pl:3` softens Emperor cycle 3-5d → 22-24h. | **Complete 2026-04-25** (server-side PASS 117 checks; user accepted) |
+| Phase 5b — Luclin VT+shards | Vex Thal proper (Aten Ha Ra, Diabo trio, Thall Va tier, all 158xxx VT inner bosses), Yaemiu elite trash (~80 mobs Q4=A), Va_Dyn_Khar 158081, Akhevan Warders 158087-94, 13-shard VT key quest (Q7=A keep all 13) | In Progress — Architecture starting 2026-04-25 |
 
 ---
 
