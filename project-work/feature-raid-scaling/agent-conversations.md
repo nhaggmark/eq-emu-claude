@@ -1495,3 +1495,91 @@ as coordinator NPC to exclude from scaling SQL. Full findings in
 - Decision #36 formalized as architect + lore-master joint recommendation (Option A)
 - Thylex respawn exception documented
 - Full lore-master addendum recorded in architecture doc
+
+---
+
+## Architecture Team Conversations (Phase 5a Luclin non-VT)
+
+### 2026-04-22 — architect → config-expert (Phase 5a initial scoping consult)
+
+Architect sent 10-question consultation covering: rule_values posture (Q1), zone ruleset verification across all Phase 5a zones (Q2), death-touch sweep for Luclin boss spell lists (Q3), instance/DZ posture (Q4), data_buckets/quest globals interactions (Q5), Emperor Ssraeshza event-gated respawn mechanism (Q6), evolved burrower respawn target (Q7), OOE NPC filtering for shrouded minion / necromantic shade / Netherbian Swarmfiend (Q8), spawn_conditions for Luclin zones (Q9), spells_new Luclin DT cross-check (Q10).
+
+**Response (2026-04-22) summary:**
+- rule_values count = 1,112 (zero drift from Phase 4b baseline). No Luclin-specific rules.
+- All Phase 5a zones (ssratemple, akheva, griegsend, acrylia, sseru) have ruleset=1, min_status=0, insttype=0. No DZ configuration — dynamic_zones table has 0 rows.
+- DT sweep clean: no spell 982 (Cazic Touch) on any Luclin non-VT raid boss spell list. (Architect ran broader sweep separately and found Touch of Vinitras spell 2859 in list 196 — handled by Phase 5a Decision #16-pattern DELETE.)
+- Critical spawn2 finding: Many Phase 5a bosses are EVENT-ONLY (zero spawn2 rows): Emperor 162227, Arch Lich Rhag`Zadune 162177, Vyzh`dra Cursed/Exiled/Banished 162206/232/214, Shei Vinitras primary 179032 (variant 179157 has spawn2), Spirit of Akelha`Ra 179144, Akhevan Warders 158087-94, Grieg Veneficus main 163075. HP cuts on zero-spawn2 bosses land in npc_types and take effect on next event spawn — `#reloadworld` sufficient.
+- Standing-spawn bosses: Lord Seru (sseru, 259,200s), High Priest of Ssraeshza + Xerkizh (ssratemple, 259,200s), Itraer Vius (akheva, 210,924s), Shar Vinitras (akheva, 10,800s), Thought Horror Overfiend (thedeep, 194,400s), Nathyn Illuminious + Lcea Katta (katta, 194,400s / 258,750s).
+- VT boundary confirmed: 158xxx VT bosses are vexthal with 468,720s respawn — Phase 5b only. Va_Dyn_Khar 158081 in vexthal at 21,600s — flagged for architect Phase 5a/5b verification (architect confirmed vexthal = Phase 5b).
+- `#reloadworld` mechanism unchanged: world telnet port 9000.
+
+**Outcome:** Pattern carryover confirmed. Architect proceeded with SQL-only design.
+
+### 2026-04-22 — architect → protocol-agent (Phase 5a initial scoping consult)
+
+Architect sent 10-question consultation covering: Luclin DZ/instance mechanics (Q1), Khati Sha zone confirmation for 5a/5b boundary (Q2), Yaemiu elite trash zone confirmation (Q3), Emperor Ssraeshza add-wave mechanic (Q4), DT audit follow-up (Q5), event-control NPC presence in Luclin (Q6), MobHealth packet behavior at 1.25M HP (Q7), Luclin-specific Titanium quirks (Q8), DT audit summary request (Q9), respawn change wire impact (Q10).
+
+**Initial response + flags + full Q1-Q10 response (2026-04-22):**
+
+**All 10 questions answered + 3 architect flags:**
+
+Q1: All Phase 5a zones static, no instancetype column on this PEQ version. Standard ZoneChange_Struct entry. `#reloadworld` propagates normally. OP_ExpeditionLockoutTimers/OP_DzCompass post-Luclin, not in scope.
+
+Q2: Khati Sha 154145 — script-spawned (no spawn2), script lives in `acrylia/`. Confirmed zone = acrylia. No VT variant. The 155xxx Khati_Sha named in sharvahl are unrelated Vah Shir trainers L45-50.
+
+Q3: Yaemiu mob pattern (Eom_*, Pli_*, Zun_*, etc.) spawns exclusively in vexthal. Zero in any Phase 5a zone. Phase 5b only.
+
+Q4: Emperor adds are SCRIPT-spawned, not spell-summoned:
+- Blood/Golem combat adds: `#Blood_of_Ssraeshza.lua` and `#Ssraeshzian_Blood_Golem.lua` use `eq.spawn2` in event_combat to spawn 4× Ssraezsha (162280) when engaged.
+- Post-death wraiths: `#Emperor_Ssraeshza_.pl` `EVENT_DEATH_COMPLETE` uses `quest::spawn2` x5 for A_shissar_wraith (162210).
+- Spell list 227 contains spell 2310 "Rage of Ssraeshza": SPA 11 (haste +10%), SPA 79 (-4000 AC debuff), SPA 114 (-95 ATK debuff). NO summon (SPA 46), NO DT. Cast=0, mana=0, recast=60s. Wire format standard.
+- Emperor's special_abilities `32,1,290`: ability 32 = Leash, param 290 = leash distance. Server-side AI behavior only.
+- All add mechanics preserved without spell-list edits. Decision #11 safe.
+
+Q5/Q9: DT sweep complete across all 30 Phase 5a spell list IDs. Mana=0 cast=0 SPA 0 effect_base_value1 ≤ -10000 → ZERO ROWS. Lord Seru's `O` flag = MeleeImmunityExceptBane (SpecialAbility 22), not DT. Seru's spell 2061 "Torturing Winds" mana=0 cast=2000ms (2s cast, NOT instant) value=-300, not DT.
+
+Q6: Event-control exclusion list:
+- 162269 keycheck (ssratemple, 999M HP, instance gate)
+- 176110 #Keymaster (umbral, 99M HP, key gate)
+- 160177 Bella_Helsin + 160178 Heracus_Helsin (katta, L1 1M HP, untargetable=24)
+- 162065 Emperor_Ssraeshza placeholder (no-target, 6516 HP, depopped at real spawn)
+- 162260 #EmpCycle (controller NPC, 4375 HP, untargetable)
+- Plus 12× Grieg_VeneficusTrigger* untargetable proximity NPCs (excluded by raid_target=0)
+- Plus Akheva environmental flavor NPCs (Shadows, A_rock, Altar_Invis 179148-179172, untargetable=1)
+- Plus Itraer Vius depop form 179154 (650 HP, untargetable=1)
+
+Q7: npc_types.hp = bigint(20). MobHealth packet sends (int)GetHPRatio() — uint8 percentage server-side. 1.25M and 1.2M HP identical to 30k on wire. No overflow.
+
+Q8: Zero Luclin-specific Titanium quirks affecting scaling. Multi-floor geometry / lighting / faction states / Vah Shir + shissar models all unaffected by HP/damage column changes.
+
+Q10: spawn2.respawntime changes are server-internal. Client sees only DeleteSpawn_Struct/NewSpawn_Struct. Zero opcode firing from respawntime change.
+
+**Three architect flags:**
+
+**Flag A — EmpCycle timers require perl-expert, not SQL:**
+`$EmpRepopTime = int(rand(2880)) + 4320` (3-5 day post-kill respawn) and `$BloodCoolDownTime = int(rand(60)) + 180` (3-4h failure cooldown) are Perl local variables in `#EmpCycle.pl`, not rule_values. SQL cannot tune them. If user wants softer cycle, perl-expert task needed. → **Phase 5a Decision #52 covers; default Option A keeps native.**
+
+**Flag B — Shei Vinitras has TWO npc_type IDs:**
+Audit catalog lists 179157 (#Shei_Vinitras_, merchant form, 400k HP, only-immunities special_abilities, no spell list). Real fight boss is **179032 #Shei_Vinitras (no underscore)** — L64, 690k HP, 273-700 dmg, has spell list 179. Both need separate npc_types HP UPDATE rows. Architect can scale merchant deeper (so trigger-kill not raid-tier itself) and scale real boss to standard target. → **Phase 5a Data Model includes BOTH 179032 and 179157.**
+
+**Flag C — Vyzh`dra trio is multi-form chain via `#cursed_controller.pl`:**
+162206 Cursed = final boss; 162232 Exiled + 162214 Banished = intermediate forms; 162261 glyph-covered serpent + 162253 rune-covered serpent = chain stepping stones. All raid_target=1. Audit only listed 162206. Architect must decide which IDs receive boss-tier scaling vs which are pre-event mobs. → **Phase 5a Decision #50 covers serpent inclusion (architect default INCLUDE per chain interpretation); Vyzh`dra trio all in scope.**
+
+**Outcome:** Phase 5a is 100% server-side. Zero protocol changes. Architect incorporated:
+- Decision #50 (rune/glyph serpents) created based on Flag C
+- Decision #52 (EmpCycle respawn) created based on Flag A; default Option A keeps native
+- Shei Vinitras dual-form scaling per Flag B
+- Event-control NPC exclusion list per Q6
+- Khati Sha = acrylia (resolves audit's "grimling?")
+- Yaemiu = vexthal-only (Phase 5b)
+
+### 2026-04-23 — architect → lore-master (Phase 5a lore consult — initial 17 questions)
+
+Architect sent 17-question consultation covering: Emperor add-wave mechanic lore (Q1), Vyzh`dra trio zone split lore (Q2), Khati Sha zone confirmation (Q3), Lord Inquisitor Seru / Lcea Katta faction-war mechanic (Q4), Ring of the Shissar quest dependency (Q5), VT key Phase 3 Planes Rift drop (Q6), Akheva Sacrificed Remains chain (Q7), Grieg's End keying (Q8), Grimling War event boundary (Q9), Umbral Plains and Doomshade lore (Q10), Thought Horror Overfiend mechanics (Q11), Khati Sha zone lore (Q12), Epic 1.0 dependency (Q13), respawn tier exceptions (Q14), signature mechanics per boss (Q15), faction gates for scaling (Q16), overall lore sign-off (Q17).
+
+### 2026-04-23 — architect → lore-master (Phase 5a lore consult — 6-question follow-up ping)
+
+Architect sent follow-up after 25 hours pinging on highest-priority items: Emperor cycle mechanic confirmation (Q1), Vyzh`dra rune/glyph serpent inclusion (Q2), Touch of Vinitras DT removal lore acceptance (Q3), Ring of the Shissar quest preservation under HP cuts (Q4 / Q5 from initial), Doomshade quest dependency (Q6 / Q10 from initial), Lord Inquisitor Seru MR=800 preservation (Q7 / Q15 from initial).
+
+**Response: PENDING as of 2026-04-23.** Architect proceeded with `luclin-chains.md` as primary lore reference; default recommendations stand. Decisions #50/#51/#52 surfaced for user. Architecture doc records sign-off as pending; addendum will be added if lore-master findings require corrections.
+
