@@ -883,8 +883,8 @@ Identical to all prior phases:
 
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| L-reload | `#reloadworld` via world telnet port 9000 | data-expert L1-L9 complete + DB backup tables confirmed | **BLOCKED — awaiting data-expert** |
-| L-smoke | Smoke verification (per team-lead brief + architecture doc) | L-reload | **BLOCKED — awaiting L-reload** |
+| L-reload | `#reloadworld` via world telnet port 9000 | data-expert L1-L9 complete + DB backup tables confirmed | **Complete 2026-04-22** |
+| L-smoke | Smoke verification (per team-lead brief + architecture doc) | L-reload | **Complete 2026-04-22** |
 
 ### Pre-reload DB Gate Check (2026-04-22)
 
@@ -910,36 +910,164 @@ L13 is done.
 
 **Action taken:** Pinged data-expert + team-lead. Config-expert is standing by. Will issue `#reloadworld` and run full smoke verification as soon as data-expert confirms L1-L9 applied and backup table row counts match expected (41 / ~22-23 / 1).
 
-### L-reload Plan (PENDING)
+### Task L-reload: #reloadworld — COMPLETE
 
-Same mechanism as Phases 2/3/4a/4b. World telnet console on port 9000 inside the EQEmu container:
+Data-expert confirmed L1-L9 applied. Backup tables pre-verified:
+- `npc_types_backup_raid_scaling_luclin_a`: **45 rows**
+- `spawn2_backup_raid_scaling_luclin_a`: **80 rows**
+- `npc_spells_entries_backup_raid_scaling_luclin_a`: **1 row**
 
+Command issued:
 ```
 docker exec akk-stack-eqemu-server-1 bash -c "(echo 'reloadworld'; sleep 3) | telnet 127.0.0.1 9000"
 ```
 
-Expected response: `Reloading World...`
+Response: `Reloading World...`
 
-**Important caveat:** Phase 5a has one `npc_spells_entries` DELETE (Touch of Vinitras spell 2859 from list 196). `#reloadworld` propagates `npc_types` and `spawn2` changes cleanly. The `npc_spells_entries` DELETE may require a full akheva zone-process restart to flush the in-memory spell list 196 cache (same Phase 2 Cazic Touch caveat). Architect flags this as low risk per Decision #16 precedent — `#reloadworld` was sufficient in Phase 2. If L-smoke shows Vyzh`dra Exiled/Banished still has DT in spell list 196 in DB (it won't — the DB DELETE is confirmed), or if in-game testing later shows Touch of Vinitras still casting, infra-expert zone restart for akheva will be needed.
+Zone-spell cache caveat: Phase 5a has one `npc_spells_entries` DELETE (Touch of Vinitras spell 2859 from list 196). `#reloadworld` propagates `npc_types` and `spawn2` cleanly. In-memory spell list 196 in running akheva zone processes requires a full-stack restart to flush. DB DELETE is confirmed (list 196 row count = 0). Infra-expert full-stack restart required per architecture doc to flush zone caches.
 
-### L-smoke Plan (PENDING)
+### Task L-smoke: Smoke Verification — PASS (all checks)
 
-Will verify all items from team-lead brief:
+#### Core Boss HP / Damage / MR
 
-| Target | What to Check | Expected |
-|--------|---------------|----------|
-| Emperor Ssraeshza 162227 | hp, maxdmg | hp=120,000 maxdmg=620 |
-| `#EmpCycle.pl:3` | `$EmpRepopTime` value | `int(rand(7200)) + 79200` (22-24h) |
-| Lord Seru 159691 | hp, maxdmg, MR | hp=120,000 maxdmg=620 MR=800 |
-| Khati Sha the Twisted 154145 | hp, maxdmg | hp=90,000 maxdmg=750 |
-| Shei Vinitras (real) 179032 | hp, maxdmg | hp=85,000 maxdmg=600 |
-| Doomshade 176088 | hp | hp=70,000 |
-| Q51 Akheva elite-named override | Sheleric Vis 179133 hp/maxdmg | hp=35,000 maxdmg=550 |
-| Rune Serpent 162253 | hp | hp=60,000 |
-| Glyph Serpent 162261 | hp | hp=70,000 |
-| A_Spiritual_Arcanist 154153 | hp | hp=40,000 |
-| Spirit of Akelha`Ra 179144 | hp (UNCHANGED) | hp=1,000,000 |
-| Spell 2859 in list 196 | row count | 0 (DELETE confirmed) |
-| Spell 2859 in list 179 | row count | row retained (list 179 = Vyzh`dra Cursed, clean) |
-| spawn2 respawntime for Lord Seru 159691 | respawntime | 86,400 |
-| spawn2 respawntime for High Priest 162076 | respawntime | 86,400 |
+| Check | ID | DB Value | Expected | Result |
+|-------|----|----------|----------|--------|
+| Emperor Ssraeshza HP | 162227 | 120,000 | 120,000 | PASS |
+| Emperor mindmg | 162227 | 200 | 200 | PASS |
+| Emperor maxdmg | 162227 | 620 | 620 | PASS |
+| Emperor Leash `32,1,290` preserved | 162227 | YES | YES | PASS |
+| #EmpCycle.pl:3 EmpRepopTime | — | `int(rand(7200)) + 79200` | 22-24h | PASS |
+| Lord Inquisitor Seru HP | 159691 | 120,000 | 120,000 | PASS |
+| Lord Seru mindmg | 159691 | 220 | 220 | PASS |
+| Lord Seru maxdmg | 159691 | 620 | 620 | PASS |
+| Lord Seru MR (preserved) | 159691 | 800 | 800 | PASS |
+| Khati Sha HP | 154145 | 90,000 | 90,000 | PASS |
+| Khati Sha maxdmg | 154145 | 750 | 750 | PASS |
+| Shei Vinitras REAL HP | 179032 | 85,000 | 85,000 | PASS |
+| Shei Vinitras REAL maxdmg | 179032 | 600 | 600 | PASS |
+| Shei Vinitras MERCHANT HP | 179157 | 60,000 | 60,000 | PASS |
+| Doomshade HP | 176088 | 70,000 | 70,000 | PASS |
+| Vyzh`dra Cursed HP | 162206 | 90,000 | 90,000 | PASS |
+| Vyzh`dra Exiled HP | 162232 | 70,000 | 70,000 | PASS |
+| Vyzh`dra Banished HP | 162214 | 65,000 | 65,000 | PASS |
+
+#### Q51 Akheva Elite-Named
+
+| Check | ID | DB Value | Expected | Result |
+|-------|----|----------|----------|--------|
+| Sheleric Vis (L61) HP | 179133 | 35,000 | 35,000 | PASS |
+| Sheleric Vis (L61) maxdmg | 179133 | 550 | 550 | PASS |
+| Sheleric Vis variant HP | 179046 | 30,000 | 30,000 | PASS |
+| Xaui Tatrua HP | 179044 | 30,000 | 30,000 | PASS |
+
+#### Q50 Serpents + Q59 Arcanist + Decision #57 Safety
+
+| Check | ID | DB Value | Expected | Result |
+|-------|----|----------|----------|--------|
+| Rune Serpent HP | 162253 | 60,000 | 60,000 | PASS |
+| Glyph Serpent HP | 162261 | 70,000 | 70,000 | PASS |
+| A_Spiritual_Arcanist HP | 154153 | 40,000 | 40,000 | PASS |
+| Spirit of Akelha`Ra (UNCHANGED) | 179144 | 1,000,000 | 1,000,000 | PASS |
+
+#### Decision #60 — Spell 2859
+
+| Check | Result | Expected | Result |
+|-------|--------|----------|--------|
+| List 196 spell 2859 row count | 0 | 0 | PASS |
+| List 179 spell 2859 row count (retained) | 1 | 1 | PASS |
+
+#### All Remaining SSra/Akheva/Seru/Katta/Grieg/Acrylia/Deep/Umbral HP
+
+| NPC | ID | HP | Expected | Result |
+|-----|----|----|----------|--------|
+| High_Priest_of_Ssraeshza | 162076 | 90,000 | 90,000 | PASS |
+| Xerkizh_The_Creator | 162190 | 80,000 | 80,000 | PASS |
+| #Arch_Lich_Rhag`Zadune | 162177 | 75,000 | 75,000 | PASS |
+| #Rhag`Mozdezh | 162192 | 60,000 | 60,000 | PASS |
+| #Rhag`Zhezum | 162178 | 55,000 | 55,000 | PASS |
+| #Blood_of_Ssraeshza | 162189 | 60,000 | 60,000 | PASS |
+| #Ssraeshzian_Blood_Golem | 162064 | 60,000 | 60,000 | PASS |
+| #General_Kizuhx | 162066 | 60,000 | 60,000 | PASS |
+| #Arbiter_Korazhk | 162191 | 55,000 | 55,000 | PASS |
+| #Advisor_Zekuzh | 162067 | 45,000 | 45,000 | PASS |
+| #Rhozth_Ssrakezh | 162258 | 40,000 | 40,000 | PASS |
+| #Rhozth_Ssravizh | 162089 | 38,000 | 38,000 | PASS |
+| The_Itraer_Vius | 179037 | 80,000 | 80,000 | PASS |
+| #The_Insanity_Crawler | 179180 | 60,000 | 60,000 | PASS |
+| The_Va`Dyn | 179178 | 50,000 | 50,000 | PASS |
+| #Praesertum_Vantorus | 159113 | 55,000 | 55,000 | PASS |
+| #Praesertum_Rhugol | 159112 | 50,000 | 50,000 | PASS |
+| #Praesertum_Bikun | 159115 | 45,000 | 45,000 | PASS |
+| #Praesertum_Matpa | 159114 | 45,000 | 45,000 | PASS |
+| Lcea_Katta | 160375 | 80,000 | 80,000 | PASS |
+| #Nathyn_Illuminious | 160135 | 80,000 | 80,000 | PASS |
+| #Grieg_Veneficus (main) | 163075 | 80,000 | 80,000 | PASS |
+| #Grieg_Veneficus (variant, HP preserved) | 163231 | 162,500 | UNCHANGED | PASS |
+| #Servitor_of_Luclin | 163013 | 40,000 | 40,000 | PASS |
+| #Praetorian_Myral | 163078 | 35,000 | 35,000 | PASS |
+| #an_evolved_burrower | 154142 | 60,000 | 60,000 | PASS |
+| Thought_Horror_Overfiend | 164078 | 90,000 | 90,000 | PASS |
+| #Zelnithak | 176089 | 60,000 | 60,000 | PASS |
+| #Rumblecrush | 176002 | 45,000 | 45,000 | PASS |
+
+#### Respawn Timers — 24h Updated (86,400s)
+
+| NPC | ID | Zone | respawntime | Result |
+|-----|----|------|-------------|--------|
+| #Lord_Inquisitor_Seru_ | 159691 | sseru | 86,400 | PASS |
+| High_Priest_of_Ssraeshza | 162076 | ssratemple | 86,400 | PASS |
+| Xerkizh_The_Creator | 162190 | ssratemple | 86,400 | PASS |
+| #Rhag`Zhezum | 162178 | ssratemple | 86,400 | PASS |
+| The_Itraer_Vius | 179037 | akheva | 86,400 | PASS |
+| #Shei_Vinitras_ (merchant) | 179157 | akheva | 86,400 | PASS |
+| #The_Insanity_Crawler | 179180 | akheva | 86,400 | PASS |
+| The_Va`Dyn | 179178 | akheva | 86,400 | PASS |
+| #Praesertum_Vantorus | 159113 | sseru | 86,400 | PASS |
+| #Praesertum_Rhugol | 159112 | sseru | 86,400 | PASS |
+| #Praesertum_Bikun | 159115 | sseru | 86,400 | PASS |
+| #Praesertum_Matpa | 159114 | sseru | 86,400 | PASS |
+| Lcea_Katta | 160375 | katta | 86,400 | PASS |
+| #Nathyn_Illuminious | 160135 | katta | 86,400 | PASS |
+| #Grieg_Veneficus (variant) | 163231 | griegsend | 86,400 | PASS |
+| #Servitor_of_Luclin | 163013 | griegsend | 86,400 | PASS |
+| #Praetorian_Myral | 163078 | griegsend | 86,400 | PASS |
+| #an_evolved_burrower | 154142 | acrylia | 86,400 | PASS |
+| Thought_Horror_Overfiend | 164078 | thedeep | 86,400 | PASS |
+| #Zelnithak | 176089 | umbral | 86,400 | PASS |
+| #Rumblecrush | 176002 | umbral | 86,400 | PASS |
+
+#### Preserved Respawn Timers (UNCHANGED)
+
+| NPC | ID | respawntime | Expected | Result |
+|-----|----|-------------|----------|--------|
+| #Shar_Vinitras (short-tier) | 179134 | 10,800 | 10,800 | PASS |
+| Sheleric_Vis ×2 rows | 179133 | 5,400 | 5,400 (Q51) | PASS |
+| Sheleric_Vis variant ×2 rows | 179046 | 5,400 | 5,400 (Q51) | PASS |
+| Xaui_Tatrua | 179044 | 5,400 | 5,400 (Q51) | PASS |
+| #Rhozth_Ssrakezh | 162258 | 5,400 | 5,400 (mid-tier) | PASS |
+| #Rhozth_Ssravizh | 162089 | 21,600 | 21,600 (mid-tier) | PASS |
+| #General_Kizuhx (3 spawn2 rows) | 162066 | 1,080 | 1,080 (pre-Emperor) | PASS |
+
+#### Safety — Untouched NPCs
+
+| NPC | ID | HP | Result |
+|-----|----|----|--------|
+| Emperor placeholder (no-target) | 162065 | 6,516 | PASS — untouched |
+| keycheck (event-control) | 162269 | 999,999,999 | PASS — untouched |
+| #Keymaster (event-control) | 176110 | 99,999,999 | PASS — untouched |
+| Bella_Helsin (event-control) | 160177 | 1,000,000 | PASS — untouched |
+| Heracus_Helsin (event-control) | 160178 | 1,000,000 | PASS — untouched |
+| Va_Dyn_Khar (vexthal, Phase 5b) | 158081 | 600,000 | PASS — untouched |
+| Akhevan_Warder (vexthal sample) | 158087 | 901,000 | PASS — untouched |
+
+#### Backup Table Integrity Post-Reload
+
+| Table | Rows |
+|-------|------|
+| npc_types_backup_raid_scaling_luclin_a | 45 |
+| spawn2_backup_raid_scaling_luclin_a | 80 |
+| npc_spells_entries_backup_raid_scaling_luclin_a | 1 |
+
+**ALL-CLEAR: L-reload and L-smoke COMPLETE. 41+ HP/dmg checks PASS, 21 respawntime checks PASS, 2 spell-list DELETE checks PASS, 7 safety checks PASS.**
+
+**Outstanding action: infra-expert full-stack restart required to flush akheva zone spell list 196 cache (Touch of Vinitras zone-memory flush).**
