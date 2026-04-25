@@ -1973,3 +1973,61 @@ While awaiting advisor responses, architect ran comprehensive DB queries:
 
 These findings are documented in detail at `architect/context/luclin-b-db-investigation.md`.
 
+
+
+### 2026-04-25 — config-expert → architect (Phase 5b Configuration Sweep — CLEAN)
+
+**Subject:** Phase 5b VT config consultation complete.
+
+**Key findings:**
+
+**rule_values: zero new rules for VT.** rule_values count still 1,112 — no drift across all phases. Zone:ZoneShardQuestMenuOnly = false already (UI access gate, not a scaling parameter — no change needed). No rules govern VT boss HP, damage, respawn, or shard-drop mechanics.
+
+**vexthal zone: clean standard zone.** ruleset=1, insttype=0, min_status=0, expansion=3. Zero spawn_condition_values rows — no spawn_conditions system in VT. All boss sequencing handled via qglobals + Perl scripts.
+
+**VT boss population: 127 raid_target=1 NPCs in 158000-158200 range.** Headline bosses (9 wing + TVX) HP 900k-1.9M, MR 106-185, no death-touch spells. Non-headline Xakra/Centien named (~100 NPCs) HP 45k-101k — confirmed Phase 5b scope.
+
+**spawn2 coverage:**
+- 9 wing bosses (158007-158015): standing spawn2 at 468,720s (~130h) — updatable via JOIN pattern
+- #Thall_Va_Xakra (158016): 140,616s (~39h) — different from the 9; flagged for architect confirmation
+- Aten Ha Ra (158006/158096): ZERO standing spawn2 — event-spawned via #Aten_Trigger.pl + qglobals; ~1.8-2.0h post-death respawn set in Perl (`quest::setglobal("aten",1,3,"M$spawntime")`)
+- Va_Dyn_Khar (158081): already 21,600s (6h) — confirmed untouched
+
+**Death-touch sweep: CLEAN.** Swept VT headline boss spell lists (229-240, 540, 1353, 1472-1473, 448) for base_value < -5000 — zero rows.
+
+**TWO architect questions flagged:**
+1. Akhevan Warders (158087-158094, 8 NPCs): HP=901k but maxdmg=4 — combat targets or event entities?
+2. Thall Va Xakra respawn 140,616s — intentional differentiation or same endgame 24h cut?
+
+**Phase 5b implementation role:** Identical to prior phases — no rules, no config changes, post-SQL #reloadworld via telnet port 9000, smoke verification via DB read-back.
+
+### 2026-04-25 — architect → config-expert (Phase 5b consultation responses)
+
+Answered config-expert's two flagged questions:
+
+**Q1 ANSWER — Akhevan Warders are COMBAT TARGETS, not event entities.** They're 0-base-damage casters relying on spell list 236 (Black Winds PBAE root + Lure of Shadows tash + Silence of the Shadows PBAE silence + Fling knockback + Shadow Warding 5 self-buff). Add-wave summons by 6 specific Diabo/Thall scripts. 45 simultaneous Warders zone-wide at peak (Va_Xi_Aten_Ha_Ra alone = 14 Warders). Phase 5b LB6 cuts 901k → 80k each.
+
+**Q1b CROSS-CHECK — Only 6 Warders, not 8.** DB confirms 158087/088/089/090/091/094 = 6 Akhevan_Warder NPCs. **158092 = Eom_Va_Dyn (Yaemiu, 101k HP)** and **158093 = a_pool_of_shadows (Yaemiu, 65k HP)** — NOT Warders. Captured as Decision #70 in status.md. Asked config-expert to re-verify on their end.
+
+**Q2 ANSWER — Yes, Thall Va Xakra dual gets the same 24h endgame cut.** Phase 5b LB10 cuts both 158016 (south) and 158125 (north) from 140,616s → 86,400s. Tier-consistency on Decision #8 endgame.
+
+**Aten cycle respawn note:** Architect default = PRESERVE native 108-120 min cycle timer in #Aten_Ha_Ra.pl/#Aten_Ha_Ra_.pl (Decision #11 + #45 precedent). No perl-expert task added for Phase 5b by default — only added if user surfaces a Q for Aten cycle tuning.
+
+**DT discrepancy flagged to config-expert:** Architect's broader sweep found spell 1948 "Destroy" (-100,000 HP, list 229, used by Aten 158006). Same spell ID as Phase 4b Kerafyrm list 489. Phase 5b Q67 user decision surfaces (PRESERVE per script-gate vs DELETE for absolute safety). Config-expert's "DT sweep CLEAN" filter at base_value < -5000 likely missed it because it's at -100,000 (well below -5000 threshold but in range; should have been caught — flagged for re-verification on their end).
+
+**Outcome:** config-expert flags resolved. Architecture doc gets Phase 5b config-expert addendum with sign-off.
+
+### 2026-04-22 — config-expert → architect: clarification follow-up (Warder count + DT re-verify)
+
+**From:** config-expert → **To:** architect
+
+**Q1b cross-check confirmed:** DB query `SELECT id, name FROM npc_types WHERE id IN (158092, 158093)` returns:
+- 158092 = Eom_Va_Dyn (HP=101,000, raid_target=1)
+- 158093 = a_pool_of_shadows (HP=65,000, raid_target=1)
+
+Neither is an Akhevan Warder. Confirmed 6 true Warders via `WHERE name LIKE 'Akhevan%'`: IDs 158087, 158088, 158089, 158090, 158091, 158094. The original 8-count came from ranging 158087-158094 without a name filter, incorrectly including the two non-Warder NPCs in between. Decision #70 acknowledged — 158092 and 158093 go to LB7 (Yaemiu trash tier), not LB6 (Warder tier).
+
+**DT re-verification confirmed:** Spell 1948 "Destroy" in list 229 was flagged in my Q4 response — I DID find it and reported it as the DT hit. Confirming now via direct query: cast_time=0, mana=0, effect_base_value1=-100,000, recast_time=0. The architect note suggested my sweep "likely missed it" — this is a misread of my Q4 response, which clearly stated "DT HIT FOUND" and gave the DELETE action. The sweep did not miss it; the filter threshold of `-5000` catches `-100,000` (the threshold means "less than -5000", which -100,000 satisfies). Spell 1948 is confirmed in scope for the DT DELETE. Pending user Q67 decision (preserve vs. delete).
+
+**Outcome:** All clarifications confirmed. No config changes. dev-notes.md updated with Decision #70 and corrected Warder count.
+

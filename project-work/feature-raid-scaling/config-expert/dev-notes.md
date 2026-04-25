@@ -1177,6 +1177,8 @@ Warders (158087-158094, 8 NPCs): HP 901,000, maxdmg=4, mindmg=0. These look like
 
 Special abilities: `7,1^12,1^13,...^23,1` — ability 7 = rampage, ability 12 = innate dual wield. Very heavy immunity stack. If these are meant to be combat, they may be intentionally unkillable (maxdmg=4 means they do essentially zero damage — possible lore event guardians).
 
+**RESOLVED (architect 2026-04-22):** Akhevan Warders are combat targets — pure caster adds, fight entirely via spell list 236 (Black Winds root, Silence, Lure of Shadows tash, Fling knockback). maxdmg=4 is the weapon-swing default for caster NPCs, not an event-entity flag. 6 Warder IDs: 158087-158091 and 158094. IDs 158092 (Eom_Va_Dyn) and 158093 (a_pool_of_shadows) are NOT Warders — confirmed via `WHERE name LIKE 'Akhevan%'` (6 rows returned). The original query ranged 158087-158094 without a name filter and caught 2 non-Warder NPCs. Decision #70: 158092 and 158093 scale in LB7 (Yaemiu trash tier), not LB6 (Warder tier). Phase 5b LB6 HP cut: 901,000 → 80,000 for all 6 true Warders.
+
 ### Config-Expert Role in Phase 5b Implementation
 
 Identical to all prior phases:
@@ -1184,9 +1186,9 @@ Identical to all prior phases:
 2. No `eqemu_config.json` or `.env` changes.
 3. Post-SQL: `#reloadworld` via world telnet (port 9000) to propagate `npc_types`/`spawn2` changes.
 4. Smoke verification via DB read-back.
-5. No `npc_spells_entries` changes — no zone-restart caveat.
-6. **New flag for architect:** Aten Ha Ra respawn tuning (if desired) requires Perl script changes to `#Aten_Ha_Ra.pl` and `#Aten_Ha_Ra_.pl` — not SQL, not config. Currently ~1.8-2.0h post-death.
-7. **Akhevan Warder clarification needed:** architect to confirm whether 158087-158094 (maxdmg=4) are combat targets or event entities to exclude.
+5. **npc_spells_entries: 1 DELETE needed** — spell 1948 "Destroy" from list 229 (Aten Ha Ra non-destroy). Zone-restart caveat applies — infra-expert full-stack restart required post-SQL to flush in-memory spell list 229. This is pending user Decision Q67 (preserve vs. delete — architect default is DELETE per Phase 5b architecture).
+6. **Aten Ha Ra respawn: NO perl-expert task.** Architect default is to preserve native 1.8-2.0h cycle (`6480 + rand(720)` seconds). Decision #11/#45 precedent — no change needed.
+7. **Akhevan Warder count CORRECTED:** 6 Warders (158087-158091, 158094), not 8. IDs 158092 (Eom_Va_Dyn) and 158093 (a_pool_of_shadows) are Yaemiu trash, not Warders. Decision #70 captured.
 
 ---
 
