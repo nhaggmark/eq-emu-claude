@@ -1891,3 +1891,85 @@ Formal 12-question advisory request covering: rule drift check, zone ruleset, DZ
 
 **Outcome:** Architect has all inputs for Phase 5b architecture doc. One DT DELETE (list 229, spell 1948) required — adds npc_spells_entries backup table and zone-restart requirement to Phase 5b.
 
+
+
+---
+
+## Phase 5b Architecture Team Conversations (2026-04-25)
+
+### architect → lore-master (2026-04-25, sent)
+
+Subject: Phase 5b VT lore sync request
+
+Asked lore-master for 10 specific deliverables for the FINAL phase:
+1. Vex Thal internal progression / pull order
+2. 13-shard VT key quest enumeration (cross-reference with Phase 2-5a scaling status)
+3. Aten Ha Ra mechanics lore — DT, summoning, encounter-defining spells
+4. Diabo trio confirmation (exact NPC set, encounter linkage)
+5. Thall Va tier roster confirmation
+6. Khati Sha of VT verification (re-confirm acrylia is the only one)
+7. Akhevan Warder context (vexthal-zoned despite name; gate guardians?)
+8. Va_Dyn_Khar role
+9. Yaemiu elite trash categorization (~80 mobs, role classification)
+10. Signature mechanics to preserve
+
+Database access provided. Response pending as of architecture doc finalization. Architecture default recommendations stand pending lore-master response.
+
+### architect → protocol-agent (2026-04-25, sent)
+
+Subject: Phase 5b VT protocol consultation
+
+Asked protocol-agent 13 questions covering:
+1. Aten Ha Ra encounter scripts
+2. Aten Ha Ra dual-ID resolution (158096 + 158006)
+3. vexthal zone instance/DZ status
+4. DT spell sweep on VT spell lists (architect already swept independently — only spell 1948 Destroy in list 229)
+5. Akhevan Warder zone confirmation (vexthal not akheva)
+6. Yaemiu elite trash boundary (raid_target, spawn topology, DT presence)
+7. VT key Phase 2 chain boundary (Spirit of Akelha`Ra preserved per Phase 5a)
+8. Event-control NPCs in vexthal (158095 Aten_Trigger, 158128/129 proximity-trap controllers)
+9. VT inner door/key mechanics (Va_Dyn_Khar drops Palace Key for door 8010 — only keyed door)
+10. MobHealth percentage at 1.9M HP (no overflow on Titanium)
+11. Diabo trio linkage confirmation
+12. Backwards check — Phase 5a leftovers (architect found A_burrower_parasite 164089 in thedeep)
+13. Khati Sha of VT verification (DB confirms zero 158xxx Khati Sha — Decision #55 holds)
+
+Database access provided. Response pending. Architecture's independent DB sweep findings are reflected in the doc; protocol-agent confirmation will close the loop.
+
+### architect → config-expert (2026-04-25, sent)
+
+Subject: Phase 5b VT config-expert consultation
+
+Asked config-expert 12 questions covering:
+1. Rule values count drift since Phase 5a (expected 1,112)
+2. vexthal zone ruleset (expected 1, expansion=3, no DZ)
+3. DZ/expedition check
+4. DT/Cazic-Touch sweep across VT spell lists (architect found only Destroy 1948 in list 229)
+5. Yaemiu trash spell list audit (architect's broader sweep across all 158xxx-used spell lists — 0 DT-profile hits beyond Destroy)
+6. Phase 5b respawn philosophy alignment (24h endgame per Decision #8)
+7. #reloadworld behavior for vexthal
+8. MobHealth at 1.9M HP overflow check
+9. Backup table naming pattern (`_raid_scaling_luclin_b`)
+10. Spawn condition / spawn_conditions check (DB query showed no condition gating)
+11. Out-of-era / Fabled exclusion check (158xxx range clean — no LoN/Fabled in vexthal range)
+12. Cumulative project rule drift summary (closure metric)
+
+Database access provided. Response pending. Architecture default = SQL-only with zero rule changes (matching Phase 2-5a precedent).
+
+### Architect-driven DB findings (independent of advisor responses)
+
+While awaiting advisor responses, architect ran comprehensive DB queries:
+
+- **`vexthal` zone NPC inventory**: 130 NPCs in 158xxx range. 13 boss-tier (HP ≥ 600k raid_target=1), 6 Akhevan Warders (NOT 8 — briefing wrong; 158092=Eom_Va_Dyn, 158093=a_pool_of_shadows are Yaemiu not Warders), 104 Yaemiu raid_target=1 mid-tier (50-110k HP), 4 trigger/control NPCs.
+- **DT sweep**: ZERO DT-profile spells in any vexthal NPC spell list except spell 1948 "Destroy" (-100k HP, 0 cost, 0 cast) in list 229 (used by Aten 158006 "Destroy form" only). Same spell ID as Kerafyrm Phase 4b list 489.
+- **Aten dual-form decoded**: `#Aten_Trigger.pl` controls 158006 (with Destroy) vs 158096 (no Destroy) based on whether ANY of 9 inner-VT bosses (158007-015) is alive. After kill, qglobal `aten` lockout 108-120 minutes via `M$spawntime`.
+- **Akhevan Warder summon map**: 6 Warder NPC IDs (158087, 88, 89, 90, 91, 94) script-summoned by 6 specific Diabo/Thall boss .pl files. 45 simultaneous Warder summons across zone when all bosses up. Va_Xi_Aten_Ha_Ra alone summons 14 Warders at 901k each on engage.
+- **Thall Va Xakra dual mechanic**: 158016 (south) + 158125 (north) use `MoveTo()` on 27 hard-coded spawn IDs each — train-pull (NOT spawn) of existing Yaemiu trash. Spawn-ID-based, HP-independent.
+- **Va_Dyn_Khar drops Palace Key (item 8010)** — gates the only keyed door in vexthal. Already 6h short-tier respawn (audit-acknowledged).
+- **VT key "13-shard" briefing correction**: DB items query confirms exactly 10 Lucid Shards (items 22185-22194). 3 component items: Shadowed Scepter Frame (17323) + Planes Rift (9410) + Glowing Orb of Luclinite (22196). 10 + 3 = 13 items, but only 10 are formally "shards." All shard sources non-raid (sub-15k HP raid_target=0). All 3 components addressed by Phase 5a + Q68 burrower-parasite leak.
+- **Phase 5a audit-leak**: A_burrower_parasite (164089, thedeep, 840k HP, raid_target=1, no spawn2 — script-spawned, drops Glowing Orb at 100% chance). Phase 5a addressed thedeep's Thought Horror Overfiend but missed this script-spawned variant. Q68 surfaces.
+- **Vexthal zone**: ruleset=1, expansion=3 (Luclin), version=0. Pattern-aligned with all Phase 5a zones.
+- **Trap/proximity controllers**: 158128 shade_trigger (67 spawn2 rows, 1800s respawn), 158129 akhevan_trigger (18 spawn2 rows). 30-min depop on engage. raid_target=0 (excluded from boss scope).
+
+These findings are documented in detail at `architect/context/luclin-b-db-investigation.md`.
+
