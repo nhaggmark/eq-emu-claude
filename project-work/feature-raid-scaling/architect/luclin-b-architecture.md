@@ -12,7 +12,7 @@
 > **DB investigation:** `architect/context/luclin-b-db-investigation.md`
 > **Author:** architect
 > **Date:** 2026-04-25
-> **Status:** **DRAFT (2 of 3 advisors signed off 2026-04-25)** — config-expert CONFIRMED 2026-04-25 (zero rule/config changes); protocol-agent CONFIRMED 2026-04-25 (zero protocol impact + 1 PBAE DT flagged → Q67 default reversed to DELETE); lore-master pending. Three user-decision items surfaced (Q67 Aten Destroy DT disposition [architect default now DELETE per protocol-agent PBAE finding], Q68 burrower-parasite Phase 5a leak, Q69 13-shard briefing correction). Ready for lore-master sign-off + user decisions, then implementation dispatch.
+> **Status:** **DRAFT (2 of 3 advisors signed off 2026-04-25)** — config-expert CONFIRMED 2026-04-25 (zero rule/config changes; deep 12-Q sweep added LB13b zone-restart REQUIRED for Q67=B DELETE — promoted from contingent to default); protocol-agent CONFIRMED 2026-04-25 (zero protocol impact + 1 PBAE DT flagged → Q67 default reversed to DELETE; Q12 spawn2-zone disagreement open pending re-verify); lore-master pending. Three user-decision items surfaced (Q67 Aten Destroy DT disposition [architect default now DELETE per protocol-agent PBAE finding], Q68 burrower-parasite Phase 5a leak, Q69 13-shard briefing correction). Ready for lore-master sign-off + user decisions, then implementation dispatch.
 > **Scope:** **Phase 5b ONLY — FINAL PHASE OF PROJECT.** Vex Thal proper (vexthal zone): Aten Ha Ra dual-form (158006/158096), 9 inner-VT bosses (158007-015), Thall Va Xakra dual (158016/158125), Va_Dyn_Khar (158081, drops Palace Key), 6 Akhevan Warders (158087/88/89/90/91/94 — script-spawned ADDS, NOT 8 as briefing assumed), 104 Yaemiu elite trash mobs (per Q4=A user decision). PLUS one Phase 5a audit-leak: A_burrower_parasite (164089, thedeep, 840k HP, Glowing Orb of Luclinite dropper). Touch of Vinitras DT not present in vexthal — only DT in zone is `Destroy` spell 1948 in list 229 (used by 158006 "Destroy Aten" form, script-gated by Aten_Trigger).
 
 ---
@@ -42,7 +42,7 @@ The phase preserves the **same SQL-only pattern established in Phases 2/3/4a/4b/
 - **0 script edits required by default** — `#Aten_Ha_Ra.pl`, `#Aten_Ha_Ra_.pl`, `#Aten_Trigger.pl`, the 6 Diabo/Thall warder-control scripts, `158016.lua`, `158125.lua` all preserve verbatim per Decision #11.
 - Backup tables: `npc_types_backup_raid_scaling_luclin_b` (~125 rows), `spawn2_backup_raid_scaling_luclin_b` (~110 rows incl. trap respawn rows for safety), `npc_spells_entries_backup_raid_scaling_luclin_b` (0-1 rows depending on Q67).
 
-**No C++ changes. No `rule_values` changes. No `eqemu_config.json` changes. No `.env` changes. No Lua edits. No Perl edits by default.** SQL-only continuation.
+**No C++ changes. No `rule_values` changes. No `eqemu_config.json` changes. No `.env` changes. No Lua edits. No Perl edits by default.** SQL-only changes + infra-expert vexthal zone-restart required for spell list 229 cache flush post-DELETE (per config-expert Q7 2026-04-25; same pattern as Phase 2 + Phase 5a).
 
 **User decisions surfaced 2026-04-25 (Phase 5b):**
 - **Q67 — Aten Destroy DT disposition:** Option A (PRESERVE the spell 1948 row in list 229; rely on Aten_Trigger script-gate) — architect default. Option B (DELETE the row entirely; Decision #16 precedent for absolute safety).
@@ -499,7 +499,8 @@ Rationale:
 | LB10 | Emit `spawn2.respawntime` UPDATE SQL (86,400s for ~12 rows: 9 inner-VT boss IDs incl. 158007 second row + 2 Thall Va Xakra rows; EXCLUDE Va_Dyn_Khar 21600s; EXCLUDE Yaemiu standing/trap rows; EXCLUDE script-spawned which have no spawn2) | data-expert | LB1 | ~15m |
 | LB11 | Emit rollback script: 3-stage transactional INSERT…SELECT from backup tables + verification queries comparing row counts before/after; mirror Phase 5a `06-luclin-a-rollback.sql` pattern | data-expert | LB2-LB10 | ~30m |
 | LB12 | Apply all SQL changes via `docker exec akk-stack-mariadb-1 mysql -ueqemu -p'…' peq < phase5b-luclin-b-implementation.sql`; capture before/after row counts and diff stats | data-expert | LB11 | ~15m |
-| LB13 | `#reloadworld` via Spire or world telnet port 9000 — propagates `npc_types` HP changes + `spawn2.respawntime` changes. **Caveat:** if Q67=B, `npc_spells_entries` DELETE may need full vexthal zone-process restart to flush the spell list cache (Phase 2 Decision #16 precedent: `#reloadworld` was sufficient for Cazic Touch DELETE; Phase 5a Decision #16 precedent: `#reloadworld` worked for Touch of Vinitras DELETE — same DELETE-then-reload pattern expected for Aten Destroy). Architect flags as low risk. | config-expert | LB12 | ~5m (or +5m zone restart contingency) |
+| LB13 | `#reloadworld` via Spire or world telnet port 9000 — propagates `npc_types` HP changes + `spawn2.respawntime` changes. **Then immediately invoke LB13b zone-process restart for `vexthal`** to flush the in-memory spell list 229 cache (Q67=B DELETE requires it per config-expert 2026-04-25 — same pattern as Phase 2 PoSky Cazic Touch + Phase 5a Akheva Touch of Vinitras DELETEs). | config-expert | LB12 | ~5m |
+| LB13b | **REQUIRED** infra-expert full-stack restart (or single-zone restart for vexthal if supported) to flush spell list 229 in-memory cache after Q67=B DELETE. Promoted from CONDITIONAL to default per config-expert Q7 finding 2026-04-25. | infra-expert | LB13 | ~10m |
 | LB14 | Smoke verification: HP targets for Aten dual / 9 inner bosses / Thall Va Xakra dual / Va_Dyn_Khar / 6 Warders / 104 Yaemiu / 164089 burrower-parasite (Q68=A); respawn 24h targets for ~12 rows; **(Q67=B only) Aten Destroy DELETE confirmed** spell 1948 NOT in list 229; Aten 158096 list 540 untouched (Word of Command 2157 / Silence 2164 / Fling 2167 still present); Kerafyrm list 489 spell 1948 PRESERVED (Phase 4b Decision #12 untouched); Spirit of Akelha\`Ra (179144) PRESERVED; Phase 5a IDs (162227 Emperor 120k, 159691 Lord Seru 120k, etc.) all preserved | config-expert | LB13 | ~50m (largest validation batch) |
 | LB15 | Commit + push all changed files in `claude/` repo (architecture doc, context files, status updates, implementation SQL) to `feature/raid-scaling` branch. `akk-stack/` and `eqemu/` untouched (no script edits). | data-expert | LB12 | ~10m |
 
@@ -511,13 +512,13 @@ Rationale:
 - **c-expert** — no C++ changes.
 - **protocol-agent** — already advised (consult sent 2026-04-25; pending response).
 
-**Required implementation agents (default path = Q67/Q68 = A):**
+**Required implementation agents (default path = Q67=B DELETE / Q68=A INCLUDE per advisor consultations 2026-04-25):**
 
 | Agent | Role | Tasks |
 |-------|------|-------|
-| data-expert | primary | LB1, LB2, LB3, LB4, LB5, LB6, LB7, LB8, LB9 (skip if Q67=A), LB10, LB11, LB12, LB15 — **125 npc_types UPDATEs + ~12 spawn2 UPDATEs + 0-1 DELETEs** |
+| data-expert | primary | LB1, LB2, LB3, LB4, LB5, LB6, LB7, LB8, LB9, LB10, LB11, LB12, LB15 — **125 npc_types UPDATEs + ~12 spawn2 UPDATEs + 1 DELETE (Q67=B default)** |
 | config-expert | reload + smoke | LB13, LB14 |
-| infra-expert | CONTINGENT only | Vexthal zone-process restart if `#reloadworld` doesn't flush spell list 229 cache (Q67=B only) |
+| **infra-expert** | **REQUIRED** zone-process restart for vexthal post-DELETE | LB13b (promoted from CONTINGENT to default per config-expert Q7 2026-04-25 — spell list 229 cache flush required, same as Phase 2 + Phase 5a precedent) |
 
 Same default team composition as Phases 2/3/4b/5a (data-expert + config-expert).
 
@@ -981,4 +982,25 @@ Protocol-agent confirmed **zero Titanium client protocol impact** for Phase 5b. 
 **Verdict: Phase 5b is 100% server-side, SQL-only, with one mandatory `npc_spells_entries` DELETE (per architect's revised Q67 default). Zero opcode additions, zero struct changes, zero Titanium translation layer changes.**
 
 
+
+
+### 2026-04-25 — Config-expert Phase 5b deep-Q response (12 questions)
+
+Config-expert delivered comprehensive 12-question Phase 5b response aligning with prior consultation. Full transcript in `agent-conversations.md`. Highlights:
+
+1. **Q1 rule_values count = 1,112** (zero drift). **Q12 cumulative project rule drift = ZERO across all phases (2 → 5b).**
+2. **Q4 DT HIT CONFIRMED:** spell 1948 in list 229 — config-expert's deeper sweep matched protocol-agent's finding. min_hp=0, max_hp=0 (no HP gating — fires any time). DELETE recommended. **Q67 default already reversed to DELETE in commit 25f4e8b.**
+3. **Q5 Yaemiu trash spell lists CLEAN.** Lists 1/2/8/9 are standard class libraries (largest -2,740 wizard DD, cast=7000ms, not DT). Lists 448/1472/1473 are empty. Zero DT-profile spells across all 104 Yaemiu.
+4. **Q7 ZONE-RESTART CAVEAT APPLIES** for the Q67=B DELETE (was previously characterized as low-risk contingency by architect; config-expert confirms Phase 2 + Phase 5a precedent both required full zone restart for spell list cache flush). **Architecture updated 2026-04-25:** task LB13b PROMOTED from CONDITIONAL to default required. infra-expert added to default implementation team. Same expectation as Phase 2 PoSky Cazic Touch DELETE + Phase 5a Akheva Touch of Vinitras DELETE.
+5. **Q10 spawn_conditions / spawn_condition_values both 0 rows for vexthal.** All 451 vexthal spawn2 rows use _condition=0, cond_value=1 (unconditional). No VP-style filtering, no Ring War wave conditions, no Sleeper-style dormant/active variants. Clean UPDATE path with zero accidental variants.
+6. **Q11 Out-of-era exclusion:** Only 158095 #Aten_Trigger (L90, 50M HP, raid_target=0). Belt-and-suspenders guard: architecture's existing `raid_target=1` scope already excludes it; LB1 backup also confirms.
+7. **Q6 Aten cycle respawn note:** Aten Ha Ra has NO spawn2 rows — post-death respawn is Perl-hardcoded at ~1.8-2.0h via `$spawntime = 6480 + rand(720)` in `#Aten_Ha_Ra.pl`. If 24h alignment is wanted for AHR, that's a perl-expert task (1-line edit). **Architect default = PRESERVE Phase 5b** (Decision #11 + Phase 5a #45 Thylex precedent).
+8. **Q9 Backup naming pattern confirmed:** `_raid_scaling_luclin_b` suffix.
+9. **Q3 dynamic_zones = 0 rows** — no expedition configuration.
+10. **Q8 Titanium MobHealth at 1.9M HP** — bigint(20) safe, percentage-based render. Confirmed.
+11. **Q2 vexthal zone:** ruleset=1, expansion=3, insttype=0, version=0. Default ruleset.
+
+**Verdict: Q67=B DELETE required + zone restart required.** Implementation impact: data-expert (LB1-LB12, LB15) + config-expert (LB13, LB14) + **infra-expert (LB13b — required vexthal zone restart, NOT contingent)**.
+
+**Q12 cumulative project rule drift across Phases 2/3/4a/4b/5a/5b: ZERO rule_values changes.** Entire raid-scaling project has been data-layer: ~322 npc_types UPDATEs + ~130 spawn2 UPDATEs + 5 npc_spells_entries DELETEs (Phase 2 = 3 Cazic Touch + Phase 5a = 1 Touch of Vinitras + Phase 5b = 1 Destroy) + 1 Perl edit (Phase 5a #EmpCycle.pl). Confirms architect's "100% SQL with one Perl edit" project-closure framing.
 
