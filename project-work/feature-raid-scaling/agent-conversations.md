@@ -1583,3 +1583,47 @@ Architect sent follow-up after 25 hours pinging on highest-priority items: Emper
 
 **Response: PENDING as of 2026-04-23.** Architect proceeded with `luclin-chains.md` as primary lore reference; default recommendations stand. Decisions #50/#51/#52 surfaced for user. Architecture doc records sign-off as pending; addendum will be added if lore-master findings require corrections.
 
+
+### 2026-04-25 — lore-master → architect (Phase 5a lore consultation COMPLETE — APPROVED)
+
+Lore-master delivered comprehensive 17-question Phase 5a sign-off plus reference doc filing at `lore-master/luclin-non-vt-additions.md`. Full Q&A summary in architecture doc Addenda section. Highlights:
+
+- **Q1 Emperor mechanic CANONICAL.** Snake/golem add wave: 8 aggro-linked snakes (4 mez + 4 offtank, 2 non-mez heal-debuffers), respawn every 2-2.5min. Golem death → Emperor spawn 3-6min. Cold-only slow + Ssra bane weapons required. Shissar wraiths drop Planes Rift from loot tables. Phase 5a HP cut safe.
+
+- **Q2 Vyzh`dra zone ALL ssratemple.** Cycle trigger: 7 Taskmasters + 1 Warden Mekuzh + 2 Rhozths killed within 1 hour → Glyph Serpent → Exiled → Cursed. Recovery chain: Rune Serpent + Banished. **Decision #50 resolved Option A (INCLUDE) — joint architect+lore-master recommendation.**
+
+- **Q3 Touch of Vinitras DELETE APPROVED.** No lore objection. Cursed list 197 verified clean. **CRITICAL CROSS-CHECK:** spell 2859 also appears in list 179 (Shei Vinitras REAL). Per Q15: PRESERVE Shei's DT — it's her signature. Phase 5a DELETE correctly scoped to list 196 only.
+
+- **Q4 Seru/Katta:** HP scaling safe; faction war preserved. No add-spawn mechanic on Lord Seru. Bella/Heracus correctly excluded.
+
+- **Q5 Ring of the Shissar:** Phase 5a scope confirmed. Pre-Emperor named (Insignia drops) IN; Commanders/Mekuzh OUT.
+
+- **Q6 VT key Planes Rift:** No HP condition; drops from wraith loot tables.
+
+- **Q7 Akheva chain:** Spirit of Akelha`Ra Decision #57 confirmed.
+
+- **Q8 Grieg's End:** OOE 163051/52 confirmed. 5 key-drop named OUT of scope.
+
+- **Q9 Grimling War event:** OUT of Phase 5a (matches architect default).
+
+- **Q10 Doomshade:** Phase 5a scope confirmed. Dark Masters (176042) raid_target=0 elite-trash, NOT scope.
+
+- **Q11 Thought Horror:** Feeblemind + Thought Drain signature. List 204 preserved.
+
+- **Q12 Khati Sha:** Acrylia confirmed. No Beastlord 1.0 epic dependency. Architect script audit confirmed 2-phase event uses only elite-trash adds (5-9.5k HP) — no lua-expert needed.
+
+- **Q13 Epic 1.0:** ZERO conflicts (matches Velious finding).
+
+- **Q14 Respawn exceptions:** None. Emperor + Vyzh`dra cycle script-spawned (no spawn2 update). Grieg standard 24h.
+
+- **Q15 Signature mechanics:** comprehensive list across all 13 named bosses — all preserved by Phase 5a SQL-only approach.
+
+- **Q16 Lord Seru MR=800:** PRESERVE confirmed.
+
+- **Q17 LORE SIGN-OFF APPROVED.** Phase 5a scope confirmed with notes. Era-compliant. Scripted encounters verified SQL-safe.
+
+**Architect-discovered additional finding (cross-check during lore-master review):**
+- A_Spiritual_Arcanist 154153 (L68, 150k HP, raid_target=1, acrylia, script-spawned, no spawn2). Audit-missed. Architect adds Decision #59 (default INCLUDE in Phase 5a, HP target 45k pending user confirmation).
+
+**Outcome:** Architect incorporated 5 adjustments into `architect/luclin-a-architecture.md` (Addenda section + Decision #59 surfaced). Status.md updated to reflect Decision #50 RESOLVED + Decision #59 OPEN.
+

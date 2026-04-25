@@ -922,3 +922,142 @@ Config-expert confirmed pattern carryover. Summary:
 - Vyzh\`dra trio scaling boundary
 - Akheva Sacrificed Remains chain interaction
 the architecture doc will receive an addendum incorporating the corrections. **Default architect recommendations stand pending.**
+
+### 2026-04-25 — Lore-master Phase 5a consultation (CONFIRMED — APPROVED with notes)
+
+Lore-master delivered comprehensive Phase 5a sign-off. Full transcript logged in `agent-conversations.md`. Reference doc filed at `lore-master/luclin-non-vt-additions.md`. Summary by question:
+
+**Q1. Emperor Ssraeshza add-wave mechanic — CONFIRMED canonical.**
+The mechanic in `#EmpCycle.pl` and `#Emperor_Ssraeshza_.pl` matches live-era sources:
+- Blood/Blood Golem trigger → `qglobals.Emperor` state machine → BloodCoolDown → 30-min engage timer / 40-min combat timer → 5× shissar wraith on death
+- **Snake/golem add wave:** 8 aggro-linked snakes (4 mezzable, 4 offtank; 2 non-mezzable cast 75% heal debuff, curse-removable). Snakes respawn every 2-2.5 min if killed — must be maintained throughout. Golem triggers Emperor 3-6 min after death.
+- **Emperor: cold-only slow, Ssra bane weapons required for non-casters.**
+- **Shissar wraiths drop Planes Rift from their loot tables** (not script-created items) — HP scaling on Emperor does not break Planes Rift availability.
+- Preservation: snake respawn + bane weapon requirement are core encounter identity. **Phase 5a does NOT touch these (special_abilities CSV untouched, npc_spells_entries untouched for Emperor list 227, scripts untouched).**
+
+**Q2. Vyzh\`dra zone split — RESOLVED: ALL Vyzh\`dra-related NPCs are in ssratemple.**
+Confirmed via Allakhazam zone page + community guides. Zone = ssratemple for all 5 IDs:
+- 162253 Glyph-Covered Serpent (cycle Stage 1) — **Phase 5a scope**
+- 162232 Vyzh\`dra the Exiled (cycle Stage 2) — Phase 5a scope
+- 162206 Vyzh\`dra the Cursed (cycle Stage 3, final boss) — Phase 5a scope
+- 162261 Rune-Covered Serpent (recovery chain) — **Phase 5a scope**
+- 162214 Vyzh\`dra the Banished (recovery chain, no loot) — Phase 5a scope
+
+**Cycle trigger:** kill 7 Taskmasters + 1 Warden Mekuzh + 2 Rhozths within 1 hour → Glyph Serpent spawns → kill → Exiled spawns → kill → Cursed spawns. If Exiled killed but Cursed not: Rune Serpent + Banished spawn (recovery, no loot).
+
+**Decision #50 RESOLVED — joint architect+lore-master recommendation: Option A INCLUDE.** 162253 + 162261 are raid_target=1 cycle-gate NPCs. Both must be scaled. They are progression blockers if unkillable. Architecture's existing default INCLUDE is endorsed.
+
+**Cycle trigger preservation note:** Phase 5a leaves Taskmasters (50.2k HP elite-trash), Warden Mekuzh (33k HP elite-named), and Rhozth pair (105k/119k HP) — wait, **Phase 5a DOES scale Rhozth Ssrakezh 162258 (119k→40k) and Rhozth Ssravizh 162089 (105k→38k)**. Lore-master Q5 confirms Rhozths are in the 10-mob trigger. Architect verifies: HP cuts on Rhozths do NOT affect cycle trigger logic — trigger fires on KILL count (entity_list death events), not HP thresholds. Cycle trigger preserved.
+
+**Q3. Touch of Vinitras DT deletion — APPROVED.**
+No lore objection. Vyzh\`dra the Exiled/Banished identity comes from cycle mechanic (timed 10-mob → serpent → chain), not from DT. Phase 2 Decision #16 / PoSky Decision #13 precedent applies exactly.
+
+**Lore-master also asked for re-audit of Vyzh\`dra Cursed (162206) list 197 for any DT spell.** Architect confirmed: list 197 contains only Mass Insanity (effect 16 = mez) and Caustic Mist (effect 10). **No DT in list 197.** ✅
+
+**HOWEVER — CRITICAL CROSS-CHECK FINDING (architect 2026-04-25):**
+Re-running the Touch of Vinitras (spell 2859) usage query revealed **spell 2859 also appears in list 179 (Shei Vinitras REAL boss 179032).** Per lore-master Q15: "Shei Vinitras: DT on initial aggro + every 2 minutes" — this 120s recast matches spell 2859's recast_time = 120000ms exactly. **Touch of Vinitras IS Shei Vinitras's signature mechanic.** Lore-master Q15 explicitly says "DO NOT modify fake-pull script or remove DT from Shei."
+
+**Architect resolution:** Phase 5a `npc_spells_entries` DELETE is **scoped strictly to (npc_spells_id = 196 AND spellid = 2859)** — Vyzh\`dra Exiled/Banished only. The Shei Vinitras list 179 instance is **PRESERVED per Decision #11 + lore-master Q15.** This is correct in the existing Phase 5a SQL plan; no change needed, but the boundary now has a documented lore reason. Smoke test must verify list 179 row for spell 2859 STILL EXISTS post-DELETE.
+
+**Q4. Seru/Katta faction-war scaling — CONFIRMED safe.**
+HP scaling does not touch faction states. Faction war preserved. Pro-Seru fights Lcea Katta; pro-Katta fights Lord Inquisitor Seru. On 1-player server, user manages factions between attempts.
+
+**Lord Seru "Inquisition" add mechanic:** No public source confirms a "spawn-additional-inquisitors-on-pull" mechanic. Architect's script grep returned zero `quest::spawn2` / `eq.spawn2` calls in `#Lord_Inquisitor_Seru.pl` / `#Lord_Inquisitor_Seru_.pl` for combat-time adds. **No add-spawn mechanic to preserve beyond what's already in special_abilities.** Standard boss encounter.
+
+**Bella Helsin (160177) + Heracus Helsin (160178):** confirmed event-control NPCs (Katta rebellion-event triggers). Excluded from Phase 5a per architect's existing event-control NPC list.
+
+**Q5. Ring of the Shissar Phase 5a scope — CONFIRMED architect's existing scoping.**
+- Commanders Zazuzh/Zherozsh (9k HP each): OUT of Phase 5a — already scaled-named tier. ✅
+- Warden Mekuzh (33k HP): OUT of Phase 5a — elite-named tier. ✅
+- **Pre-Emperor named (Advisor Zekuzh / Arbiter Korazhk / General Kizuhx):** IN Phase 5a — drop Ssraeshzian Insignia (Ring of the Shissar). HP cuts to 45-60k preserve quest function (Insignia is standard loot-table drop). ✅
+
+**Q6. VT key Planes Rift — CONFIRMED no HP condition.**
+Planes Rift drops from Shissar wraith loot tables (event-spawned wraiths from Emperor's `EVENT_DEATH_COMPLETE` per architect's read of `#Emperor_Ssraeshza_.pl`). HP scaling on Emperor is safe for VT key Phase 3 progression.
+
+**Q7. Akheva Sacrificed Remains chain — CONFIRMED architect's existing scope.**
+Sacrificed Remains: regular akheva mob, not raid-tier, not Phase 5a scope. Spirit of Akelha\`Ra (179144): turn-in NPC, not kill target — **excluded per Decision #57 (Decision #30 precedent / Jaled Dar's Shade pattern).** No Akheva raid boss is part of VT key Scepter Frame chain.
+
+**Q8. Grieg's End — CONFIRMED architect's existing scope.**
+- 5 key-drop named (Amnarra/Deoreo/Hyraja/Khemot/Prast): elite-named tier, NOT Phase 5a. ✅
+- Servitor + Grieg: no scripted sequence. Standard kill order (typically Servitor first, easier).
+- 163051/163052 OOE confirmed (LoN anniversary).
+
+**Q9. Grimling War event Phase 5a scope — CONFIRMED OUT of Phase 5a.**
+Wave-event treatment matches Phase 4a Coldain Ring 10 posture. Out of Phase 5a SQL scope. Spiritist Kama Resan (154052) not scope.
+
+**Architect-flagged Acrylia inner raids (Ring of Fire + Vah Shir Captive):** lore-master has no confirmed PEQ NPC IDs. Architect's own DB query returned no raid_target=1 NPCs in acrylia beyond 154142 (evolved burrower) + 154145 (Khati Sha) + **154153 A_Spiritual_Arcanist (L68, 150k HP, raid_target=1, no spawn2 — script-spawned).** This is a NEW audit-missed find — see Decision #59 below.
+
+**Q10. Doomshade — CONFIRMED Phase 5a.**
+ID 176088, L66, 350k HP, umbral, **event-spawned (4 Dark Masters killed → Doomshade spawns).** Per lore-master + architect DB query: Dark Masters (176042 A_Dark_Master) are L60, 32.6k HP, **raid_target=0** — **NOT scope (elite-trash per Decision #2).** Doomshade has no Epic 1.0 dependency. 350k → 70k HP target preserved. Architect's existing Phase 5a scope confirmed.
+
+**Q11. Thought Horror Overfiend signature — Feeblemind + Thought Drain.**
+Psychic-predator signature mechanics. Preserved per Decision #11. Phase 5a only touches `npc_types.hp` — list 204 (Thought Horror's spell list) untouched.
+
+**Q12. Khati Sha zone lore — CONFIRMED Acrylia Caverns.**
+Vah Shir general Tashakhi, transformed by Shissar. **No Beastlord 1.0 epic dependency** (epic uses different Khati Sha NPCs in Shar Vahl as turn-in NPCs).
+
+**Architect script audit (2026-04-25):** `Khati_Sha_the_Twisted.lua` is a **2-phase scripted event** (Phase 1: combat-engage → 4× Defiled Minion 154054 spawn; Phase 2: player crosses y=-545 → Khati Sha depops/respawns inside chamber + 4× a_diseased_grimling 154129; 2-hour kill timer). **Add NPCs (Defiled Minion 154054 5k HP, diseased grimling 154129 9.5k HP) are elite-trash — NOT in Phase 5a scope per Decision #2.** Khati Sha HP cut (475k → 90k) is **safe** — script doesn't read HP thresholds. **No lua-expert needed for Phase 5a Khati Sha event preservation.**
+
+**Q13. Epic 1.0 dependency on Phase 5a bosses — CONFIRMED ZERO.**
+Same finding as Velious. All 14 epics complete in Classic+Kunark. Decision #14 preserved.
+
+**Q14. Respawn tier exceptions — CONFIRMED no exceptions.**
+- Emperor (162227): event-gated via BloodCoolDown qglobal in script. No standing spawn2 row to update. **Phase 5a HP-only on Emperor** — architect's existing plan confirmed.
+- Vyzh\`dra cycle: event-spawned via 10-mob trigger. No spawn2 respawntime updates appropriate.
+- Grieg (163075): no lore reason for extended respawn. 24h endgame per Decision #8.
+
+**Q15. Signature mechanics per boss (PRESERVE ALL per Decision #11) — comprehensive list:**
+
+| Boss | Signature | Phase 5a touches? |
+|---|---|---|
+| Emperor Ssraeshza | snake respawn + bane weapons + cold-only slow + 95% deaggro/4000DD debuff proc + BloodCoolDown state machine | NO — only HP cut |
+| High Priest of Ssraeshza | unslowable + permarooted + Ssraeshza's Command (targeted AE 9s stun + 100DD) + 12 room adds (healing Priests, kill first) + LoS pillar | NO — only HP cut. spell list 202 untouched (Ssraeshza's Command 2048 preserved). |
+| Xerkizh the Creator | **Balance of Zebuxoruk** (PBAE 75% heal reduction, unresistable, curse-curable 9 counters) — signature; healers must decurse rapidly. Plus Weakening Spray PBAE debuff. Slowable. | NO — list 203 untouched (Weakening Spray 2045 preserved). Balance of Zebuxoruk may be event-triggered, not in list 203 by ID — verify if game-tester reports issue. |
+| Arch Lich Rhag\`Zadune | Cycle stage 3 (script-triggered by Rhag\`Mozdezh death — `#Rhag-Mozdezh.pl`) | NO — script untouched |
+| Lord Inquisitor Seru | **MR=800** + bane weapons + cold/disease-only slow + Stunning Strike (20s stun) + Torturing Winds + Enchanter charm advantage | NO — MR preserved. spell list 228 untouched. |
+| Lcea Katta | **Dictate charm** — unresistable, affects L58- only (L59+ immune) — DO NOT REMOVE | NO — list 581 untouched. Dictate may be ability-driven, not spell-list — preserved either way. |
+| Vyzh\`dra Cursed | Cycle spawn (script — `#cursed_controller.pl`) | NO — script untouched. List 197 clean. |
+| Vyzh\`dra Exiled / Banished | Cycle stage forms — Touch of Vinitras (-20k DT) DELETED per Decision #54 | DT removed; cycle script untouched |
+| Shar Vinitras | 1010 max dmg + summon + triple attack | YES — damage cap 600 (Phase 5a target). HP cut. |
+| **Shei Vinitras (REAL 179032)** | **Touch of Vinitras DT (spell 2859 in list 179)** — on initial aggro + every 2 minutes — INTEGRAL identity. **PRESERVE.** Plus fake-pull trigger (script-spawned by Shei merchant 179157 death) + Thought Vortex (PBAE -350 mana) + Storm Tremor (PBAE stun) + permarooted. | HP cut only. **List 179 NOT touched** — DT preserved. Script untouched. |
+| Grieg Veneficus | Summon + quad + mez/charm/normal/dispel immune + flee-disabled (SQMCNDWf) | NO — only HP cut |
+| Khati Sha the Twisted | 2-phase scripted event (chamber boundary trigger + add waves) + rampages + fire/cold/magic resist | NO — script untouched. HP cut only. |
+| Thought Horror Overfiend | Feeblemind PBAE + Thought Drain + permarooted | NO — list 204 untouched. HP cut only. |
+| Doomshade | Hits 550+ + flurries + cannot be slowed + no spell casting + event-spawned by 4 Dark Masters | NO — only HP cut. Dark Masters elite-trash, not scope. |
+
+**Q16. Lord Inquisitor Seru MR=800 — CONFIRMED PRESERVE.**
+Lore: Seru commands the Combine Empire's magical forces; magic immunity is narratively appropriate. Identical pattern to Vyemm in Phase 4b. Cold/disease slow only. Non-casters need Seru bane weapons. Decision #11 applies.
+
+**Faction-gate flags (lore-master Q4 + Q16):** No structural-wall faction gates. Two prep-cost grinds for the user:
+1. Seru faction grinding for evil-race chars before Sanctus Seru
+2. Arx Key chain (4 Praesertum kills + turn-in in Katta Castellum) for easy access to Lord Seru's tower
+
+Neither prevents Phase 5a HP scaling from working. Player-prep requirements only.
+
+**Q17. Lore sign-off — APPROVED with notes.**
+
+Era compliance: All Phase 5a bosses are Luclin (expansion 3). No post-Luclin content. OOE items correctly excluded. Event-control NPCs correctly excluded.
+
+**Scripted encounters investigated and verified safe for SQL-only Phase 5a:**
+- Khati Sha: 2-phase scripted event verified — wave mobs are elite-trash (5-9.5k HP), not scope. **No lua-expert needed.**
+- Vyzh\`dra cycle: 10-mob trigger logic verified HP-independent. Phase 5a HP cuts on Rhozths (cycle trigger participants) safe — trigger fires on kill count, not HP threshold.
+- Rhag cycle: Rhag\`Zhezum death → spawn Rhag\`Mozdezh; Rhag\`Mozdezh death → spawn Rhag\`Zadune (architect read scripts). HP-independent.
+- Shei Vinitras dual-form spawn-swap: 179157 merchant death → spawn 179032 real. **DT (Touch of Vinitras) in list 179 is signature — DO NOT remove.**
+- Emperor cycle: HP-independent state machine + qglobal-driven BloodCoolDown.
+
+**LORE SIGN-OFF:** Phase 5a scope APPROVED. Decision #50 resolves to Option A (joint architect+lore-master recommendation) — INCLUDE rune/glyph serpents. Architect's plan is dispatch-ready.
+
+### 2026-04-25 — Architect incorporations of lore-master Phase 5a findings
+
+Five adjustments made based on lore-master review:
+
+1. **Decision #50 RESOLVED** — Joint architect+lore-master recommendation: INCLUDE rune/glyph serpents (162253 + 162261). Decision Log entry updated.
+
+2. **Touch of Vinitras DELETE scope CONFIRMED list 196 only** — Cross-check revealed spell 2859 also appears in list 179 (Shei Vinitras REAL). Per lore-master Q15: Shei's Touch of Vinitras IS her signature mechanic — PRESERVE. Phase 5a DELETE statement in Data Model already correctly scoped to `(npc_spells_id = 196 AND spellid = 2859)`. **Validation Plan §"No npc_spells_entries changes" expanded** to verify list 179 row for spell 2859 STILL EXISTS post-DELETE.
+
+3. **A_Spiritual_Arcanist 154153 (L68, 150k HP, raid_target=1, acrylia, script-spawned) audit-missed — Decision #59 added.** Architect default INCLUDE in Phase 5a scope (HP target 45k — between Khati Sha 90k and Defiled Minion 5k). Pending user confirmation.
+
+4. **Khati Sha 2-phase event verified SQL-safe** — script audit confirmed wave mobs are elite-trash (Defiled Minion 5k, diseased grimling 9.5k). Lore-master's "may need lua-expert conditional for wave mob HP" caveat resolved as NOT NEEDED.
+
+5. **Vyzh\`dra cycle trigger verified HP-independent** — 10-mob kill count trigger doesn't read HP thresholds. Phase 5a HP cuts on Rhozth pair (cycle participants) confirmed safe.
+
