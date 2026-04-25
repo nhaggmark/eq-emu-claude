@@ -76,34 +76,44 @@ No socialization required. Task 9 is a standard server restart using the documen
 
 ## Stage 4: Build
 
-### Implementation Log — Task L-restart (2026-04-22)
+### Implementation Log — Task L-restart attempt 1 (2026-04-22, pre-smoke)
 
-**Trigger:** Unconditional for Phase 5a Luclin non-VT. Full-stack restart required because `npc_spells_entries` DELETE (spell 2859 from list 196) requires zone process restart to flush in-memory spell caches.
+**Note:** This restart ran before config-expert completed smoke verification. It established a clean process state but was superseded by the definitive restart below.
+
+**Step 1 — Docker containers:** SUCCESS
+**Step 2 — EQ server processes:** all started (shared_memory, loginserver, world, 8 zones)
+**DB spot-check (initial — FALSE ALARM):** Query ran during MariaDB reconnect window post-restart; appeared to show spell 2859 in list 196 but data-expert confirmed DELETE was already applied. Same reconnect-window issue affected config-expert earlier in the phase.
+
+---
+
+### Implementation Log — Task L-restart (definitive, 2026-04-22, post-smoke)
+
+**Trigger:** Config-expert L-smoke PASS (71 checks). Required to flush akheva zone process in-memory spell list cache after npc_spells_entries DELETE (spell 2859 from list 196). Same pattern as Phase 2 Cazic Touch / Decision #16. `#reloadworld` does NOT flush zone spell-list cache.
 
 **Step 1 — Docker containers:**
 - `cd /mnt/d/Dev/eq/akk-stack && make restart` — SUCCESS
 - All containers up: mariadb, eqemu-server, phpmyadmin, peq-editor, npc-llm, ftp-quests
-- Note: `akk-stack-fail2ban-mysqld-1` shows Restarting(255) — pre-existing, not related to this restart
 
-**Step 2 — EQ server processes (inside akk-stack-eqemu-server-1):**
-- `shared_memory` — completed successfully (first attempt failed: MariaDB not ready yet; retried after `mysqladmin ping --wait=30` confirmed ready)
-- `loginserver` — started, PID 427
-- `world` — started, PID 523
-- 8 zone processes (dynamic_01–08) — all started successfully
+**Step 2 — EQ server processes (inside akk-stack-eqemu-server-1, from /home/eqemu/server/):**
+- Waited for MariaDB ready (`mysqladmin ping --wait=30`)
+- `shared_memory` — completed successfully
+- `loginserver` — started
+- `world` — started (waited 8s)
+- 8 zone processes (dynamic_01–08) — all started
 
 **Verification:**
-- Zone count: 8 confirmed (`ps aux | grep 'zone dynamic' | grep -v grep | wc -l` = 8)
-- World log: clean — 8 zones registered in sequence, no crash/restart loop
+- Zone count: 8 (`ps aux | grep 'zone dynamic' | grep -v grep | wc -l` = 8)
+- World log: clean — all 8 zones registered, no crash/restart loop
 - Containers: all core containers healthy
 
-**DB spot-check result (initial — FALSE ALARM):**
+**DB spot-check (post-5s settle — CLEAN):**
+```sql
+SELECT npc_spells_id, spellid FROM npc_spells_entries WHERE spellid=2859 AND npc_spells_id IN (179, 196);
+npc_spells_id  spellid
+179            2859      ← Shei Vinitras, preserved per Decision #60
+                         ← list 196: zero rows (Touch of Vinitras DELETE confirmed)
 ```
-SELECT npc_spells_id, spellid, type FROM npc_spells_entries WHERE spellid=2859 AND npc_spells_id IN (179, 196);
-npc_spells_id  spellid  type
-179            2859     1
-196            2859     1     ← appeared present, but this was a false alarm
-```
-This query ran during the brief MariaDB reconnect window post-container-restart, returning stale data. Data-expert confirmed on re-query that list 196 returns zero rows — the DELETE was already applied. Same reconnect-window issue affected config-expert earlier in the phase. No second restart required.
+Zone processes now boot with clean spell list from DB. Spell 2859 cannot be loaded into akheva zone cache from list 196.
 
 ### Files Modified (final)
 
@@ -113,10 +123,10 @@ _None — full-stack restart is an operational procedure, not a file change._
 
 ## Open Items
 
-- [x] Task L-restart — COMPLETE (2026-04-22). Restart was correctly timed; DB spot-check false alarm resolved.
+- [x] Task L-restart — COMPLETE (2026-04-22, definitive restart post-smoke). DB spot-check clean.
 
 ---
 
 ## Context for Next Agent
 
-Task L-restart is complete. Full-stack restart executed 2026-04-22. The spot-check showing spell 2859 in list 196 was a false alarm caused by querying during the MariaDB reconnect window post-restart — data-expert confirmed the DELETE was already applied. List 196 is clean. Smoke verification (config-expert) is the next step.
+Task L-restart is complete. Definitive full-stack restart executed 2026-04-22 after config-expert L-smoke PASS (71 checks). Zone spell caches are now loaded from clean DB state — list 196 has zero rows for spell 2859. Server is ready for game-tester validation.
