@@ -1627,3 +1627,25 @@ Lore-master delivered comprehensive 17-question Phase 5a sign-off plus reference
 
 **Outcome:** Architect incorporated 5 adjustments into `architect/luclin-a-architecture.md` (Addenda section + Decision #59 surfaced). Status.md updated to reflect Decision #50 RESOLVED + Decision #59 OPEN.
 
+
+### 2026-04-25 — lore-master → architect (Decision #59 refinement: Spiritual Arcanist 154153 = Khati Sha Phase 2 wrong-choice penalty)
+
+Lore-master clarified A_Spiritual_Arcanist 154153 is **NOT** one of the three outer Acrylia raids (Ring of Fire / Vah Shir Captive / Burrower remain separate). She is the **Khati Sha event Phase 2 "wrong choice penalty" combat target**:
+
+- Phase 2 of Khati Sha event presents two arcanists: 154151 V1 + 154152 V2 (both 75k HP, raid_target=0)
+- Player uses `/tar a_spiritual_arcanist00` to pick correct rescue target
+- **Save correct V1** → 4 deathguards spawn → killing them opens final seal to Khati Sha (Phase 3)
+- **Save wrong V2** → 4 deathguards spawn + forces fight against 154153 (raid_target=1 penalty boss)
+
+**Architect script audit confirms** (`#Raidman.lua`):
+- spawns 154151 (V1, 75k) + 154152 (V2, 75k) + 8× a_diseased_grimling (154129)
+- 154129.lua signals 154151 (signal 9) on grimling death — succeed path
+- 154159.lua signals 154152 (signal 8) on death — fail path
+- 154153 is the wrong-choice combat fight via separate trigger
+
+Spell list 956 (used by 154153): Grip of Mortal Reality (-500 dmg), Grip of Mental Reality (-500 mana). No DT.
+
+**Joint architect+lore-master recommendation:** Phase 5a INCLUDE 154153 with HP target **150k → 40k** (per lore-master "reasonable wrong-choice penalty"). 154151 + 154152 OUT of scope (raid_target=0 quest NPCs).
+
+**Decision #59 refined.** Architect updated architecture doc and status.md accordingly. Lore sign-off acknowledged on architect adjustments 1-5; no lore objections to any of Decisions #50/#59/#60/#61/#62.
+
