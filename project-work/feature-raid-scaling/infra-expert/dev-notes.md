@@ -113,15 +113,14 @@ _None — full-stack restart is an operational procedure, not a file change._
 
 ## Open Items
 
-- [x] Task L-restart complete — full-stack restart executed 2026-04-22
-- [ ] DB spot-check ALERT: spell 2859 still present in npc_spells_id=196 — data-expert to confirm DELETE was applied
+- [x] Task L-restart (first, premature) — executed 2026-04-22 before Phase 5a SQL was applied; established clean container/process state but spell cache flush was not meaningful yet
+- [ ] Task L-restart (second, definitive) — PENDING. Wait for:
+  1. data-expert: apply Phase 5a SQL (DELETE spell 2859 from npc_spells_id=196)
+  2. config-expert: run #reloadworld + smoke verify
+  3. Then repeat full-stack restart to flush zone in-memory spell-list caches
 
 ---
 
 ## Context for Next Agent
 
-Task 9 is a conditional full-stack restart. It runs only if config-expert reports that `#reloadworld` (Task 7) failed to propagate `npc_spells_entries` changes into running zone processes after data-expert's SQL was applied.
-
-Data-expert Tasks 1-6 and 10 are all Complete as of 2026-04-22. SQL has been applied to the `peq` DB. Config-expert is waiting to execute Task 7 (`#reloadworld`) and Task 8 (smoke verification).
-
-If triggered, follow the startup sequence in Stage 1 Implementation Plan above. Do NOT use `eqlaunch zone` alongside manually-started zones. After restart, notify config-expert to re-run smoke verification.
+The first restart ran cleanly but was premature — data-expert had not yet applied the Phase 5a SQL DELETE for spell 2859 from list 196. A second restart is required after that SQL runs and config-expert completes smoke verification. Follow the same startup sequence in Stage 1 Implementation Plan. Do NOT use `eqlaunch zone` alongside manually-started zones. After the second restart, notify config-expert + team-lead.
