@@ -871,3 +871,75 @@ Identical to all prior phases:
 5. No `npc_spells_entries` changes — no zone-restart caveat.
 
 **Special note for architect:** Many SSra and Akheva headline bosses (Emperor Ssraeshza, Arch Lich, Vyzh`dra trio, Shei Vinitras primary, Spirit of Akelha`Ra) have ZERO standing spawn2 rows. Their HP cuts will apply via `npc_types` UPDATE and will propagate with `#reloadworld`. Respawn timer changes are not applicable for those NPCs. The `npc_types` HP change will take effect on the next time those NPCs are spawned (event trigger). No separate spawn2 concern.
+
+---
+
+## Phase 5a (Luclin Non-VT) — Implementation Tasks L-reload / L-smoke
+
+> **Stage 4: Build Log — 2026-04-22**
+> Dispatched by team-lead after perl-expert confirmed L13 complete.
+
+### Task Assignment
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| L-reload | `#reloadworld` via world telnet port 9000 | data-expert L1-L9 complete + DB backup tables confirmed | **BLOCKED — awaiting data-expert** |
+| L-smoke | Smoke verification (per team-lead brief + architecture doc) | L-reload | **BLOCKED — awaiting L-reload** |
+
+### Pre-reload DB Gate Check (2026-04-22)
+
+Dependency gate check run before issuing `#reloadworld`. Results:
+
+**GATE FAILED — data-expert SQL not applied:**
+
+- `npc_types_backup_raid_scaling_luclin_a` — DOES NOT EXIST
+- `spawn2_backup_raid_scaling_luclin_a` — DOES NOT EXIST
+- `npc_spells_entries_backup_raid_scaling_luclin_a` — DOES NOT EXIST
+- Emperor Ssraeshza (162227) HP = 1,250,500 — PEQ default, unscaled (expected 120,000 post-L2)
+- Lord Inquisitor Seru (159691) HP = 1,201,500 — PEQ default, unscaled (expected 120,000 post-L5)
+- Vyzh`dra the Cursed (162206) HP = 900,000 — unscaled (expected 90,000 post-L3)
+- Khati Sha the Twisted (154145) HP = 475,000 — unscaled (expected 90,000 post-L6)
+- Spirit of Akelha`Ra (179144) HP = 1,000,000 — UNCHANGED per Decision #57/30 (correct; should NOT be scaled)
+
+**Context:** Docker stack was restarting when config-expert first connected (containers briefly down). All prior phase backup tables (velious_a, velious_b, kunark, classic) are present and intact — only Phase 5a tables are absent, confirming this is not a DB wipe.
+
+**Good news — perl-expert L13 CONFIRMED COMPLETE:**
+`akk-stack/server/quests/ssratemple/#EmpCycle.pl:3` reads:
+`$EmpRepopTime = int(rand(7200)) + 79200; #Respawn time for Emp after success (22-24h endgame tier per Decision #52 user override)`
+L13 is done.
+
+**Action taken:** Pinged data-expert + team-lead. Config-expert is standing by. Will issue `#reloadworld` and run full smoke verification as soon as data-expert confirms L1-L9 applied and backup table row counts match expected (41 / ~22-23 / 1).
+
+### L-reload Plan (PENDING)
+
+Same mechanism as Phases 2/3/4a/4b. World telnet console on port 9000 inside the EQEmu container:
+
+```
+docker exec akk-stack-eqemu-server-1 bash -c "(echo 'reloadworld'; sleep 3) | telnet 127.0.0.1 9000"
+```
+
+Expected response: `Reloading World...`
+
+**Important caveat:** Phase 5a has one `npc_spells_entries` DELETE (Touch of Vinitras spell 2859 from list 196). `#reloadworld` propagates `npc_types` and `spawn2` changes cleanly. The `npc_spells_entries` DELETE may require a full akheva zone-process restart to flush the in-memory spell list 196 cache (same Phase 2 Cazic Touch caveat). Architect flags this as low risk per Decision #16 precedent — `#reloadworld` was sufficient in Phase 2. If L-smoke shows Vyzh`dra Exiled/Banished still has DT in spell list 196 in DB (it won't — the DB DELETE is confirmed), or if in-game testing later shows Touch of Vinitras still casting, infra-expert zone restart for akheva will be needed.
+
+### L-smoke Plan (PENDING)
+
+Will verify all items from team-lead brief:
+
+| Target | What to Check | Expected |
+|--------|---------------|----------|
+| Emperor Ssraeshza 162227 | hp, maxdmg | hp=120,000 maxdmg=620 |
+| `#EmpCycle.pl:3` | `$EmpRepopTime` value | `int(rand(7200)) + 79200` (22-24h) |
+| Lord Seru 159691 | hp, maxdmg, MR | hp=120,000 maxdmg=620 MR=800 |
+| Khati Sha the Twisted 154145 | hp, maxdmg | hp=90,000 maxdmg=750 |
+| Shei Vinitras (real) 179032 | hp, maxdmg | hp=85,000 maxdmg=600 |
+| Doomshade 176088 | hp | hp=70,000 |
+| Q51 Akheva elite-named override | Sheleric Vis 179133 hp/maxdmg | hp=35,000 maxdmg=550 |
+| Rune Serpent 162253 | hp | hp=60,000 |
+| Glyph Serpent 162261 | hp | hp=70,000 |
+| A_Spiritual_Arcanist 154153 | hp | hp=40,000 |
+| Spirit of Akelha`Ra 179144 | hp (UNCHANGED) | hp=1,000,000 |
+| Spell 2859 in list 196 | row count | 0 (DELETE confirmed) |
+| Spell 2859 in list 179 | row count | row retained (list 179 = Vyzh`dra Cursed, clean) |
+| spawn2 respawntime for Lord Seru 159691 | respawntime | 86,400 |
+| spawn2 respawntime for High Priest 162076 | respawntime | 86,400 |

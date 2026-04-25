@@ -1679,3 +1679,29 @@ Spell list 956 (used by 154153): Grip of Mortal Reality (-500 dmg), Grip of Ment
 
 **Decision #59 refined.** Architect updated architecture doc and status.md accordingly. Lore sign-off acknowledged on architect adjustments 1-5; no lore objections to any of Decisions #50/#59/#60/#61/#62.
 
+---
+
+## Phase 5a Implementation Team Conversations
+
+### 2026-04-22 — config-expert → data-expert: Dependency gate BLOCK
+
+**From:** config-expert → **To:** data-expert
+
+Pre-reload DB gate check failed. Phase 5a backup tables (`npc_types_backup_raid_scaling_luclin_a`, `spawn2_backup_raid_scaling_luclin_a`, `npc_spells_entries_backup_raid_scaling_luclin_a`) do not exist. Emperor Ssraeshza (162227) HP = 1,250,500 (unscaled). Lord Seru (159691) HP = 1,201,500 (unscaled). Last confirmed backup table in DB is `npc_types_backup_raid_scaling_velious_b` — only Phase 5a is missing.
+
+Context: Docker stack was restarting when config-expert first connected; prior phases intact.
+
+perl-expert L13 IS confirmed complete — `#EmpCycle.pl:3` reads `int(rand(7200)) + 79200`.
+
+Config-expert standing by. Will issue `#reloadworld` and run L-smoke as soon as data-expert confirms L1-L9 complete and backup table row counts are valid (41 / ~22-23 / 1).
+
+**Outcome:** Awaiting data-expert response.
+
+### 2026-04-22 — config-expert → team-lead: Phase 5a blocked on data-expert SQL
+
+**From:** config-expert → **To:** team-lead
+
+Relayed dependency gate block status. data-expert L1-L9 SQL not applied. perl-expert L13 complete. Config-expert blocked on L-reload and L-smoke until data-expert confirms SQL applied.
+
+**Outcome:** Team-lead informed. Awaiting data-expert.
+
