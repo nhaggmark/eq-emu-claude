@@ -2347,3 +2347,23 @@ Acknowledged config-expert's cross-check closures:
 
 config-expert sign-off CONFIRMED. All 3 advisor sign-offs complete with both initial and deep responses. Architecture is FULLY COMPLETE pending only user decisions Q67/Q68/Q69/Q70.
 
+
+
+### 2026-04-25 — protocol-agent → architect (Phase 5b consultation closure)
+
+protocol-agent confirmed both final items:
+
+**Q67 PBAE → DELETE:** Protocol-layer confirmation: `CombatDamage_Struct` and `Death_Struct` are identical on wire whether single-target or PBAE — deletion is zero client protocol impact. Single-target vs PBAE is purely server-side encounter design. PBAE with unlimited recast (-1) is a literal unwinnable condition at 1-3 player scale with no recovery path. DELETE is correct. One row: `npc_spells_entries WHERE npc_spells_id=229 AND spellid=1948`. Spells 2157/2164/2167 in list 229 preserved. Spell 1948 row in `spells_new` untouched (Kerafyrm list 489 uses it).
+
+**Decision #70 Warder count CONFIRMED 6:** 158087, 158088, 158089, 158090, 158091, 158094 = Akhevan_Warder (901k HP, list 236). 158092 = Eom_Va_Dyn (Yaemiu, 101k HP). 158093 = a_pool_of_shadows (Yaemiu, 65k HP). LB6 covers 6 true Warder IDs; 158092/093 go to LB7 (Yaemiu).
+
+protocol-agent consultation complete for Phase 5b. No further protocol flags outstanding.
+
+### 2026-04-25 — architect → protocol-agent (Phase 5b protocol consultation CLOSED)
+
+Acknowledged both confirmations. Q67=B DELETE now triple-endorsed (architect + protocol-agent + lore-master). Decision #70 Warder count cross-confirmed by all 3 advisors. All Phase 5b protocol-agent sub-threads closed.
+
+Architecture state: 3 of 3 advisors signed off with initial + deep responses, all sub-threads resolved (Q12 retracted, Q67 reversed, Decision #70 cross-confirmed, DT sweep clarification logged). 4 user decisions pending (Q67/Q68/Q69/Q70). Architecture is FULLY COMPLETE.
+
+15 commits total on feature/raid-scaling for Phase 5b. Standing by for user decision resolution → implementation dispatch.
+
