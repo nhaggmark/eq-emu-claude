@@ -52,7 +52,7 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase 3 — Kunark | Trakanon, Veeshan's Peak + Kunark epic steps | **Complete 2026-04-23** |
 | Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | **Complete 2026-04-23** (BUG-001 Tunare fixed; user accepted DB-verified state) |
 | Phase 4b — Velious ToV+Sleeper+Vulak+AoW | Temple of Veeshan proper (16 lords + 16 NToV mid-tier + 4 Defenders), Sleeper's Tomb (5 Ancients + 4 Warders + Progenitor + Final Arbiter + MotG + Milas), AoW, Vulak = 51 NPCs. Kerafyrm trio untouched per Decision #12. | **Complete 2026-04-23** (server-side PASS 127 checks; user accepted) |
-| Phase 5a — Luclin non-VT | ssratemple (13 + 2 cycle serpents per Q50=A), akheva (8 primary + 3 elite-named per Q51=B), sseru/katta (7), griegsend (3), acrylia (2 + 1 Spiritual Arcanist per Q59=A), thedeep (1), umbral (3) = **41 NPCs**. Touch of Vinitras DT removal list 196 only (list 179 preserved per Decision #60). Q52=B perl edit `#EmpCycle.pl:3` softens Emperor cycle 3-5d → 22-24h. | **Architecture Complete 2026-04-25** — all advisors APPROVED + all 4 user decisions RESOLVED |
+| Phase 5a — Luclin non-VT | ssratemple (13 + 2 cycle serpents per Q50=A), akheva (8 primary + 3 elite-named per Q51=B), sseru/katta (7), griegsend (3), acrylia (2 + 1 Spiritual Arcanist per Q59=A), thedeep (1), umbral (3) = **41 NPCs**. Touch of Vinitras DT removal list 196 only (list 179 preserved per Decision #60). Q52=B perl edit `#EmpCycle.pl:3` softens Emperor cycle 3-5d → 22-24h. | **Server-Side Validation PASS 2026-04-22** — 117 checks; all DB values confirmed; Perl edit verified; in-game testing guide ready |
 | Phase 5b — Luclin VT+shards | Vex Thal proper, VT key shard rework | Not Started |
 
 ---
@@ -465,6 +465,26 @@ _Populated by the architect for Phase 5a (Luclin non-VT). Awaiting user decision
 | L13 | **Q52=B USER OVERRIDE — REQUIRED.** perl-expert edits `akk-stack/server/quests/ssratemple/#EmpCycle.pl:3` to change `$EmpRepopTime = int(rand(2880)) + 4320;` (3-5d) to `$EmpRepopTime = int(rand(7200)) + 79200;` (22-24h endgame tier). Verify Perl syntax (`perl -c #EmpCycle.pl`). Commit on akk-stack repo `feature/raid-scaling`. **DO NOT edit** `$BloodCoolDownTime` (3-4h failure cooldown preserved). | perl-expert | **Complete 2026-04-22** | Commit 2155bc1 on akk-stack feature/raid-scaling pushed. File force-added (server/ is gitignored — matches prior quest script commit pattern). perl -c syntax OK. |
 
 **Required implementation agents (post-user-decisions 2026-04-25):** data-expert + config-expert + **perl-expert (L13 REQUIRED per Q52=B)** + **infra-expert (L10b CONTINGENT — single zone-process restart for akheva if `#reloadworld` doesn't flush spell list 196 cache)**.
+
+### game-tester → user (Phase 5a Luclin non-VT server-side validation complete — in-game testing pending)
+- **Date:** 2026-04-22
+- **Server-side result:** PASS (117 checks)
+- **Deliverables:**
+  - `game-tester/luclin-a-server-validation.md` — 117-check validation report; all DB values confirmed
+  - `game-tester/luclin-a-in-game-testing-guide.md` — 10 sessions in priority order (Touch of Vinitras cache flush → Emperor → Lord Seru → Vyzh`dra chain → Khati Sha → Shei Vinitras → Akheva elite-named → Umbral cluster → The Deep → Grieg's End)
+- **Key notes:**
+  - All 41 npc_types UPDATEs (45 in backup — 4 additional safety captures) confirmed in DB at architecture target values
+  - All 21 spawn2 respawn timers confirmed at 86,400s (24h) for endgame content
+  - CRITICAL safety confirmed: Spirit of Akelha`Ra (179144) at 1,000,000 HP unchanged; Emperor placeholder (162065) at 6,516 HP unchanged; all event-control NPCs unchanged; all vexthal NPCs (Phase 5b scope) unchanged
+  - Touch of Vinitras DELETE confirmed: spell 2859 = 0 rows in list 196. List 179 (Shei Vinitras REAL) preserved with 1 row of spell 2859 per Decision #60
+  - Emperor special_abilities `32,1,290` (Leash 290) preserved; Lord Seru MR=800 preserved
+  - Perl edit L13 confirmed: `#EmpCycle.pl:3` reads `$EmpRepopTime = int(rand(7200)) + 79200;` (22-24h). Perl syntax OK
+  - All preserved respawn timers intact: pre-Emperor 1080s, Rhozth pair 5400s/21600s, Shar Vinitras 10800s, Akheva elite-named (Q51) 5400s
+  - Phase 2/3/4a/4b regressions clean: Nagafen 14,400, Vox 14,400, Trakanon 16,000, AoW 120,000, Vulak 150,000, Kerafyrm 3,500,000
+  - Cazic Touch (spell 982) absent from all Phase 5a boss spell lists; 12 remaining instances are non-Phase-5a NPCs
+  - No Phase 5a-related errors in server logs
+  - Session 1 (Touch of Vinitras cache flush) MUST be done first — validates full-stack restart actually flushed spell list 196 from zone memory
+- **Handoff to:** user for in-game testing execution (10 sessions)
 
 ### game-tester → user (Phase 4b server-side validation complete — in-game testing pending)
 - **Date:** 2026-04-22
