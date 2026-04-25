@@ -929,4 +929,25 @@ After Phase 5b validation passes, the raid-scaling project is **COMPLETE**.
 ### 2026-04-25 — Architect Phase 5b initial scope confirmation (DRAFT)
 
 Architecture doc finalized as DRAFT pending three open advisor consults (lore-master, protocol-agent, config-expert; sent 2026-04-25) and three open user decisions (Q67-Q69). Default architect recommendations stand.
+### 2026-04-25 — Config-expert Phase 5b consultation (CONFIRMED)
+
+Config-expert delivered Phase 5b configuration sweep with zero new rules + zero config changes. Full transcript in `agent-conversations.md`. Summary:
+
+1. **rule_values count = 1,112** (zero drift across all phases of the project — final tally).
+2. **vexthal zone clean standard:** ruleset=1, instancetype=0, expansion=3, min_status=0. Zero `spawn_condition_values` rows. No condition-gated variants.
+3. **No DZ / expedition configuration** for vexthal on this PEQ schema (consistent with all Phase 5a zones).
+4. **No Vex Thal-specific rules.** `Zone:ZoneShardQuestMenuOnly = false` is a UI access gate, not a scaling parameter — no action.
+5. **127 raid_target=1 NPCs in 158000-158200** matches architect's 130 total (3 are trigger NPCs raid_target=0).
+6. **#reloadworld sufficient** — no zone-restart caveat by default. Q67=B alternative path may need vexthal restart for spell list 229 cache flush (low risk per Phase 2/5a precedent).
+7. **MobHealth percentage** at 1.9M HP confirmed bigint(20) safe — no overflow on Titanium.
+8. **Two flagged questions resolved by architect:**
+   - **Q1 Akhevan Warders** (HP=901k, maxdmg=4) ARE combat targets. They're 0-base-damage casters relying on spell list 236 (Black Winds PBAE root, Silence PBAE silence, Lure tash, Fling knockback, Shadow Warding 5 self-buff). Add-wave summons by 6 specific Diabo/Thall scripts. 45 simultaneous Warders zone-wide at peak. Phase 5b LB6 cuts 901k → 80k each. Architecture's existing scope confirmed.
+   - **Q1b Warder count CORRECTION:** config-expert's "8 NPCs (158087-158094)" included 158092 (Eom_Va_Dyn = Yaemiu) and 158093 (a_pool_of_shadows = Yaemiu) which are NOT Akhevan Warders. **Actual Warder count = 6** (158087/088/089/090/091/094). Captured in Decision #70.
+   - **Q2 Thall Va Xakra respawn:** Both 158016 + 158125 get the same 24h endgame cut (140,616s → 86,400s) per Decision #8 tier-consistency. LB10 confirmed.
+9. **Aten cycle respawn preservation:** Architect default = PRESERVE native 108-120 min cycle in `#Aten_Ha_Ra.pl/#Aten_Ha_Ra_.pl` (Decision #11 + #45 precedent). No perl-expert task added.
+10. **DT sweep gap flagged:** Config-expert's filter at `base_value < -5000` did not surface spell 1948 "Destroy" (-100,000) in list 229 (which sits well below -5000 but should have been included in `<` predicate); architect's broader sweep found it independently. Q67 user decision surfaces — same spell ID as Phase 4b Kerafyrm list 489 (Decision #12 PRESERVED). Asked config-expert to re-verify.
+
+**Verdict: Phase 5b is 100% SQL-only by default. Zero rule changes. Zero config changes. SQL-only pattern holds across the entire raid-scaling project (Phases 2-5b cumulative).**
+
+
 
