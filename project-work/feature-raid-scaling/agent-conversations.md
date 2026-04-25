@@ -2199,3 +2199,89 @@ Implementation team confirmed: data-expert (LB1-LB12, LB15), config-expert (LB13
 
 If protocol-agent confirms zone='overthere': architect must re-investigate (possible DB drift or split-database schema).
 
+
+
+### 2026-04-25 — lore-master → architect (Phase 5b VT deep-dive — APPROVED with 6 flags)
+
+Lore-master delivered comprehensive Phase 5b sign-off. Files: `lore-master/vt-internals.md`, `lore-master/13-shard-quest.md`, `lore-master/luclin-chains.md` (Section 10 appended).
+
+**Boss progression:** 12 named bosses with enforced kill order via Akhevan Warders. Mandatory sequence:
+1. Va_Dyn_Khar (Palace Key)
+2. Thall Va Xakra dual (AE silence + PBAE stun)
+3. Kaas Thox Xi Ans Dyek "Blob 1" (AE Fling, perma-rooted)
+4-5. Diabo Xi Va + Diabo Xi Xin
+6. Diabo Xi Xin Thall (CH self-cast + AE silence)
+7. Thall Va Kelun (Greater Shadow Poison)
+8-9. Diabo Xi Va Temariel + Thall Xundraux Diabo
+10. Va Xi Aten Ha Ra (mini-Aten)
+11. Kaas Thox Xi Aten Ha Ra "Blobs" (AE Fling + 3000+ backstab)
+12. Aten Ha Ra (final, AE Fling + 7k mana drain Silence + PBAE stun)
+
+**6 architect flags:**
+1. **Akhevan Warders EXCLUDE** — non-targetable banish-on-proximity adds, HP irrelevant
+2. **Va_Dyn_Khar respawn verify** — live-era 30min-1h vs DB 21,600s
+3. **Diabo Xi Xin Thall Complete Heal** — spell-list audit needed
+4. **Kaas Thox Xi Aten Ha Ra "Blobs" dual** — confirm both 158007 spawn2 rows
+5. **Aten Silence of Shadows mana drain** — fight-ender for small-group mana sustain
+6. **Yaemiu gating mobs** — Eom/Pli/Zun Thall/Zethon suffix can gate 20+ adds
+
+**13-shard clarification:** Decision #10 intent = full progression preserved (10 shards + 3 components = 13 acquisition items). Architect's Q69 framing matches.
+
+**Class epics:** No Epic 1.0 quest terminates in VT. Decision #14 unaffected.
+
+**LORE SIGN-OFF:** Phase 5b scope APPROVED.
+
+### 2026-04-25 — architect → lore-master (deep-dive acknowledged; 3 flags DB-disagreed, 3 confirmed)
+
+Acknowledged lore-master sign-off. DB cross-check pushes back on three flags:
+
+**FLAG 1 DB DISAGREES — Warders ARE targetable combat adds.**
+- DB: 158087-094 have `raid_target=1`, `no_target_hotkey=0`, full combat stats (901k HP, melee swings)
+- npcspecialattks: `QUMCNIDABfWO` includes B (Banish ability — they CAN cast banish on aggro)
+- special_abilities: `7,1^12,1^...` includes flag 12 (Banish enabled) but ALSO 7 (Triple) and standard immunities + flag 19 (Banish Immune to themselves)
+- They are **combat targets that cast banish**, NOT "non-targetable banishers"
+- Lore-master flag may reflect live-era pre-EQEmu memory; PEQ DB implements them as killable adds
+- Protocol-agent's prior analysis (script-summoned add waves via 6 Diabo/Thall scripts) holds
+- **Architecture LB6 unchanged** — 6 Akhevan Warder NPC IDs (158087/088/089/090/091/094) get HP UPDATE 901k → 80k
+
+**FLAG 2 PARTIAL — Va_Dyn_Khar respawn 21,600s (6h) confirmed in DB.**
+- Audit said "respawn already short"; 6h is consistent
+- Live-era 30min-1h is live-era; PEQ default is 6h
+- Architect default = PRESERVE 21,600s (Palace Key cycle preserved per audit + Decision #11)
+- User can override to shorter via Q (not currently surfaced) if they want faster Palace Key farming
+
+**FLAG 3 DB DISAGREES — No Complete Heal in Diabo Xi Xin Thall (158012) spell list 237.**
+- DB query: `SELECT * FROM npc_spells_entries WHERE npc_spells_id=237` returns ONLY spell 2164 Silence of the Shadows
+- `#Diabo_Xi_Xin_Thall.pl` script only manages Warder spawn/depop on EVENT_SPAWN/EVENT_DEATH_COMPLETE; no `quest::set_hp` or heal triggers
+- Lore-master flag may be live-era memory; PEQ doesn't implement CH on this boss
+- **No DELETE needed.** Architecture LB9 stays scoped to spell 1948 Destroy in list 229 only
+
+**FLAG 4 CONFIRMED — Kaas Thox Xi Aten Ha Ra (158007) has 2 spawn2 rows.**
+- DB confirms: `id IN (36360, 36361)` both at 468,720s in vexthal
+- LB10 SQL `WHERE se.npcID IN (...158007...)` covers both rows with one statement
+- Architecture already accounts for this (mentioned in DB investigation §2 as "158007 has 2 spawn2 rows")
+
+**FLAG 5 CONFIRMED — Aten Silence of Shadows long-fight mana drain.**
+- DB: spell 2164 in list 229 + list 540 (both Aten forms), 30s recast, effect 96 (silence 1)
+- 7k mana drain figure is live-era; PEQ effect is silence (mana-blocked casting)
+- Architect notes this for game-tester validation: 6-minute small-group fight at 180k Aten HP + 30s silence cycle = 12 silence intervals during fight; group must time mana cooldowns
+- Not a scope blocker; HP scaling proceeds per Decision #11
+
+**FLAG 6 CONFIRMED — Yaemiu gating mobs AI risk.**
+- Architecture flagged similar concern in Risk Assessment ("Eom-tier 14 Warder add wave overwhelms group")
+- Yaemiu HP cuts (LB7 level-tiered) reduce gating-mob HP from 60-101k to 14-25k — 4-5× cut helps with multi-add scenarios
+- Game-tester smoke tests should include "engage Eom_Thall trigger pull" scenarios
+
+**Resolution:**
+- Flags 4, 5, 6 already integrated in architecture
+- Flag 1 DB-disagreed → architecture LB6 unchanged (Warders ARE in scope)
+- Flag 2 partial → architecture preserves 21,600s respawn
+- Flag 3 DB-disagreed → no DELETE needed beyond spell 1948 Destroy
+
+**Architecture sign-off status:** 3 of 3 advisor consultations CONFIRMED 2026-04-25 with documented disagreements:
+- config-expert (initial + deep 12-Q): aligned, LB13b promoted
+- protocol-agent (full 13-Q): aligned, Q67 reversed; Q12 spawn2-zone OPEN pending re-verify
+- lore-master (deep VT dive): aligned, with 3 lore-flags pushed back via DB evidence
+
+Architecture ready for user decisions Q67/Q68/Q69 then implementation dispatch. Final phase of project.
+

@@ -12,7 +12,7 @@
 > **DB investigation:** `architect/context/luclin-b-db-investigation.md`
 > **Author:** architect
 > **Date:** 2026-04-25
-> **Status:** **DRAFT (2 of 3 advisors signed off 2026-04-25)** — config-expert CONFIRMED 2026-04-25 (zero rule/config changes; deep 12-Q sweep added LB13b zone-restart REQUIRED for Q67=B DELETE — promoted from contingent to default); protocol-agent CONFIRMED 2026-04-25 (zero protocol impact + 1 PBAE DT flagged → Q67 default reversed to DELETE; Q12 spawn2-zone disagreement open pending re-verify); lore-master pending. Three user-decision items surfaced (Q67 Aten Destroy DT disposition [architect default now DELETE per protocol-agent PBAE finding], Q68 burrower-parasite Phase 5a leak, Q69 13-shard briefing correction). Ready for lore-master sign-off + user decisions, then implementation dispatch.
+> **Status:** **READY FOR USER DECISIONS — 3 of 3 advisor sign-offs CONFIRMED 2026-04-25.** config-expert CONFIRMED (initial + deep 12-Q; LB13b zone-restart REQUIRED for Q67=B DELETE — promoted to default). protocol-agent CONFIRMED (zero protocol impact + PBAE DT flag → Q67 default reversed to DELETE; **Q12 spawn2-zone disagreement OPEN** pending re-verify — architect's 2 independent DB queries show all 1,089 rows in vexthal). lore-master CONFIRMED (VT deep-dive APPROVED with 3 DB-disagreed flags pushed back via DB evidence). Three user-decision items surfaced (Q67 Aten Destroy DT disposition [architect default now DELETE per protocol-agent PBAE finding], Q68 burrower-parasite Phase 5a leak, Q69 13-shard briefing correction). Ready for lore-master sign-off + user decisions, then implementation dispatch.
 > **Scope:** **Phase 5b ONLY — FINAL PHASE OF PROJECT.** Vex Thal proper (vexthal zone): Aten Ha Ra dual-form (158006/158096), 9 inner-VT bosses (158007-015), Thall Va Xakra dual (158016/158125), Va_Dyn_Khar (158081, drops Palace Key), 6 Akhevan Warders (158087/88/89/90/91/94 — script-spawned ADDS, NOT 8 as briefing assumed), 104 Yaemiu elite trash mobs (per Q4=A user decision). PLUS one Phase 5a audit-leak: A_burrower_parasite (164089, thedeep, 840k HP, Glowing Orb of Luclinite dropper). Touch of Vinitras DT not present in vexthal — only DT in zone is `Destroy` spell 1948 in list 229 (used by 158006 "Destroy Aten" form, script-gated by Aten_Trigger).
 
 ---
@@ -1003,4 +1003,33 @@ Config-expert delivered comprehensive 12-question Phase 5b response aligning wit
 **Verdict: Q67=B DELETE required + zone restart required.** Implementation impact: data-expert (LB1-LB12, LB15) + config-expert (LB13, LB14) + **infra-expert (LB13b — required vexthal zone restart, NOT contingent)**.
 
 **Q12 cumulative project rule drift across Phases 2/3/4a/4b/5a/5b: ZERO rule_values changes.** Entire raid-scaling project has been data-layer: ~322 npc_types UPDATEs + ~130 spawn2 UPDATEs + 5 npc_spells_entries DELETEs (Phase 2 = 3 Cazic Touch + Phase 5a = 1 Touch of Vinitras + Phase 5b = 1 Destroy) + 1 Perl edit (Phase 5a #EmpCycle.pl). Confirms architect's "100% SQL with one Perl edit" project-closure framing.
+
+
+### 2026-04-25 — Lore-master Phase 5b consultation (CONFIRMED — APPROVED with 3 DB-disagreed flags)
+
+Lore-master delivered comprehensive Phase 5b sign-off. Files: `lore-master/vt-internals.md`, `lore-master/13-shard-quest.md`, `lore-master/luclin-chains.md` (Section 10 appended). Full transcript in `agent-conversations.md`. Highlights:
+
+1. **Boss progression: 12 named bosses with enforced kill order via Akhevan Warders.** Mandatory sequence (per lore-master): Va_Dyn_Khar → Thall Va Xakra dual → Kaas Thox Xi Ans Dyek "Blob 1" → Diabo Xi Va + Xin → Diabo Xi Xin Thall → Thall Va Kelun → Diabo Xi Va Temariel + Thall Xundraux → Va Xi Aten Ha Ra (mini-Aten) → Kaas Thox Xi Aten Ha Ra "Blobs" → Aten Ha Ra (final).
+2. **13-shard clarification:** Decision #10 intent = full progression preserved (10 Lucid Shards + 3 components = 13 acquisition items total). Q69 architect framing matches lore-master canonical interpretation.
+3. **Class epics: NO Epic 1.0 quest terminates in VT.** Decision #14 unaffected.
+4. **Lore Flag 4 CONFIRMED — Kaas Thox Xi Aten Ha Ra (158007) dual spawn2.** Architecture LB10 already covers both rows.
+5. **Lore Flag 5 CONFIRMED — Aten Silence of Shadows long-fight mana drain.** spell 2164 in list 229 + 540, 30s recast, effect 96 silence. Architect adds game-tester smoke note: 12 silence intervals during a 6-min Aten 180k fight; small group must time mana cooldowns. Not a scope blocker; HP scaling proceeds per Decision #11.
+6. **Lore Flag 6 CONFIRMED — Yaemiu gating mobs.** Eom/Pli/Zun Thall/Zethon suffix can gate 20+ add pulls. Architecture's Yaemiu HP cuts (LB7) bring 60-101k → 14-25k, a 4-5× reduction that helps multi-add scenarios. Game-tester monitoring required.
+
+**Three lore flags DB-disagreed** (architecture LB6/LB9/LB5 unchanged):
+
+7. **Flag 1 DB DISAGREES — Akhevan Warders ARE targetable combat adds, not "non-targetable banishers."** DB: 158087-094 have `raid_target=1`, `no_target_hotkey=0`, full combat stats (901k HP, spell list 236, npcspecialattks `QUMCNIDABfWO` includes B=Banish ability so they CAST banish, special_abilities `7,1^12,1^...` includes flag 12 Banish enabled). They are **combat targets that CAN cast banish on aggro**, not "non-targetable banishers." Lore-master flag reflects live-era pre-EQEmu memory; PEQ DB implements them as killable adds (matches protocol-agent's prior analysis). **Architecture LB6 unchanged — 6 Akhevan Warder NPC IDs scaled 901k → 80k.**
+
+8. **Flag 2 PARTIAL — Va_Dyn_Khar respawn 21,600s (6h) confirmed in DB.** Audit said "respawn already short"; live-era 30min-1h is era memory; PEQ default is 6h. Architect default = PRESERVE 21,600s (Decision #11 + audit). User can surface a Q for faster Palace Key cycle if desired (not currently in Q67-Q69).
+
+9. **Flag 3 DB DISAGREES — No Complete Heal in Diabo Xi Xin Thall (158012) spell list 237.** DB query confirms list 237 contains ONLY spell 2164 Silence of the Shadows. `#Diabo_Xi_Xin_Thall.pl` script only manages Warder spawn/depop, no `quest::set_hp` heal triggers. Lore-master flag is live-era memory; PEQ doesn't implement CH on this boss. **Architecture LB9 stays scoped to spell 1948 Destroy in list 229 only — no second DELETE.**
+
+**LORE SIGN-OFF:** Phase 5b scope APPROVED 2026-04-25 with documented architecture pushbacks on Flags 1/3 (DB disagrees) and Flag 2 (PEQ default preserved).
+
+**Architecture sign-off status — 3 of 3 advisor consultations CONFIRMED 2026-04-25:**
+- config-expert (initial sweep + deep 12-Q response): aligned; LB13b promoted from CONTINGENT to default required
+- protocol-agent (Flag A PBAE DT + full 13-Q response): aligned; Q67 reversed PRESERVE → DELETE; **Q12 spawn2-zone disagreement OPEN** pending protocol-agent re-verify (architect's two independent DB queries show all 1,089 rows in vexthal, not overthere/nurga/dulak)
+- lore-master (VT deep-dive): APPROVED with 3 lore flags DB-disagreed (architecture LB6/LB9 unchanged; LB5 preserved per Decision #11)
+
+Architecture is READY for user decisions Q67/Q68/Q69, then implementation dispatch. Same default team as Phases 2-5a (data-expert + config-expert) plus infra-expert (LB13b zone restart required).
 
