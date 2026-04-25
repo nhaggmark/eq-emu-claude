@@ -96,14 +96,14 @@ No socialization required. Task 9 is a standard server restart using the documen
 - World log: clean — 8 zones registered in sequence, no crash/restart loop
 - Containers: all core containers healthy
 
-**DB spot-check result:**
+**DB spot-check result (initial — FALSE ALARM):**
 ```
 SELECT npc_spells_id, spellid, type FROM npc_spells_entries WHERE spellid=2859 AND npc_spells_id IN (179, 196);
 npc_spells_id  spellid  type
 179            2859     1
-196            2859     1     ← STILL PRESENT
+196            2859     1     ← appeared present, but this was a false alarm
 ```
-Spell 2859 is present in BOTH list 179 (Shei Vinitras, expected) AND list 196 (should be deleted per Phase 5a plan). This DELETE may not yet have been applied by data-expert. Flagged to data-expert for confirmation.
+This query ran during the brief MariaDB reconnect window post-container-restart, returning stale data. Data-expert confirmed on re-query that list 196 returns zero rows — the DELETE was already applied. Same reconnect-window issue affected config-expert earlier in the phase. No second restart required.
 
 ### Files Modified (final)
 
@@ -113,14 +113,10 @@ _None — full-stack restart is an operational procedure, not a file change._
 
 ## Open Items
 
-- [x] Task L-restart (first, premature) — executed 2026-04-22 before Phase 5a SQL was applied; established clean container/process state but spell cache flush was not meaningful yet
-- [ ] Task L-restart (second, definitive) — PENDING. Wait for:
-  1. data-expert: apply Phase 5a SQL (DELETE spell 2859 from npc_spells_id=196)
-  2. config-expert: run #reloadworld + smoke verify
-  3. Then repeat full-stack restart to flush zone in-memory spell-list caches
+- [x] Task L-restart — COMPLETE (2026-04-22). Restart was correctly timed; DB spot-check false alarm resolved.
 
 ---
 
 ## Context for Next Agent
 
-The first restart ran cleanly but was premature — data-expert had not yet applied the Phase 5a SQL DELETE for spell 2859 from list 196. A second restart is required after that SQL runs and config-expert completes smoke verification. Follow the same startup sequence in Stage 1 Implementation Plan. Do NOT use `eqlaunch zone` alongside manually-started zones. After the second restart, notify config-expert + team-lead.
+Task L-restart is complete. Full-stack restart executed 2026-04-22. The spot-check showing spell 2859 in list 196 was a false alarm caused by querying during the MariaDB reconnect window post-restart — data-expert confirmed the DELETE was already applied. List 196 is clean. Smoke verification (config-expert) is the next step.
