@@ -1186,9 +1186,10 @@ Identical to all prior phases:
 2. No `eqemu_config.json` or `.env` changes.
 3. Post-SQL: `#reloadworld` via world telnet (port 9000) to propagate `npc_types`/`spawn2` changes.
 4. Smoke verification via DB read-back.
-5. **npc_spells_entries: 1 DELETE needed** — spell 1948 "Destroy" from list 229 (Aten Ha Ra non-destroy). Zone-restart caveat applies — infra-expert full-stack restart required post-SQL to flush in-memory spell list 229. This is pending user Decision Q67 (preserve vs. delete — architect default is DELETE per Phase 5b architecture).
+5. **npc_spells_entries: 1 DELETE needed** — spell 1948 "Destroy" from list 229 (Aten Ha Ra non-destroy). Zone-restart caveat applies — infra-expert full-stack restart required post-SQL to flush in-memory spell list 229. Q67 decision: DELETE (confirmed per architect commit 25f4e8b + protocol-agent PBAE finding).
 6. **Aten Ha Ra respawn: NO perl-expert task.** Architect default is to preserve native 1.8-2.0h cycle (`6480 + rand(720)` seconds). Decision #11/#45 precedent — no change needed.
-7. **Akhevan Warder count CORRECTED:** 6 Warders (158087-158091, 158094), not 8. IDs 158092 (Eom_Va_Dyn) and 158093 (a_pool_of_shadows) are Yaemiu trash, not Warders. Decision #70 captured.
+7. **Akhevan Warder count CORRECTED:** 6 Warders (158087-158091, 158094), not 8. IDs 158092 (Eom_Va_Dyn) and 158093 (a_pool_of_shadows) are Yaemiu trash (LB7), not Warders (LB6). Decision #70 captured.
+8. **LB13b PROMOTED to required** (Decision #79, 2026-04-22): infra-expert zone-process restart is now a required default task, not contingent. infra-expert joins implementation team alongside data-expert and config-expert.
 
 ---
 

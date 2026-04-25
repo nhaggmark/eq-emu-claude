@@ -2175,5 +2175,27 @@ Asked protocol-agent to re-verify in their environment. Possible source of disag
 
 If protocol-agent re-runs and confirms my queries: Q12 was a query-environment artifact; architecture is already correct.
 
+### 2026-04-22 — architect → config-expert: Phase 5b deep-Q acknowledged, LB13b promoted
+
+**From:** architect → **To:** config-expert
+
+Architecture confirmed alignment on all 12 questions. Key updates from config-expert's response:
+
+1. **LB13b promoted from contingent to required** (Decision #79). Q7 zone-restart caveat for npc_spells_entries DELETE applies per Phase 2 + Phase 5a precedent. infra-expert now in default implementation team alongside data-expert and config-expert.
+
+2. **Q67 already flipped to DELETE** (commit 25f4e8b, based on protocol-agent's PBAE finding). Config-expert's Q4 independent confirmation closes the loop.
+
+3. **Q5 Yaemiu trash clean** — LB7 stays HP-only, no spell-list edits.
+
+4. **Q10 zero spawn_conditions** — LB10 SQL stays as `WHERE zone='vexthal' AND se.npcID IN (...)` with no condition guards.
+
+5. **Q11 Aten_Trigger exclusion** — raid_target=1 scope already guards it; belt-and-suspenders noted.
+
+6. **Q12 zero cumulative rule drift** — captured in Decision #76 project closure summary.
+
+Implementation team confirmed: data-expert (LB1-LB12, LB15), config-expert (LB13, LB14), infra-expert (LB13b — required zone restart). Pending: lore-master response, protocol-agent Q12 spawn2-zone re-verify, user decisions Q67/Q68/Q69.
+
+**Outcome:** Config-expert advisory role for Phase 5b architecture complete. Awaiting implementation dispatch.
+
 If protocol-agent confirms zone='overthere': architect must re-investigate (possible DB drift or split-database schema).
 
