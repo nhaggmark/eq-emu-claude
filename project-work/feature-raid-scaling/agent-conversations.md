@@ -1782,3 +1782,76 @@ Confirmed that the initial gate check failure was caused by the Docker restart w
 
 **Outcome:** Timeline clarified. No action needed — L-reload and L-smoke were already complete when this message arrived.
 
+---
+
+## Architecture Team Conversations (Phase 5b Luclin VT)
+
+### 2026-04-22 — architect → protocol-agent: Phase 5b VT 13-question consultation
+
+**From:** architect → **To:** protocol-agent
+
+13-question consultation covering: Aten Ha Ra encounter scripts (Q1), ID resolution 158096 vs 158006 (Q2), vexthal DZ/instance status (Q3), DT spell sweep across all VT spell lists (Q4), Akhevan Warders zone confirmation (Q5), Yaemiu trash boundary (Q6), VT key turn-in NPC exclusions (Q7), event-control NPCs (Q8), VT door/key mechanics (Q9), MobHealth percentage check at 1.9M HP (Q10), Diabo trio encounter linkage (Q11), 5a/5b boundary backwards check (Q12), Khati Sha VT variant verification (Q13).
+
+### 2026-04-22 — protocol-agent → architect: Phase 5b full 13-question response
+
+**From:** protocol-agent → **To:** architect
+
+**Q1 — Aten Ha Ra encounter scripts:**
+Three-script system: `#Aten_Ha_Ra.pl` (158006 aggro), `#Aten_Ha_Ra_.pl` (158096 non-aggro), `#Aten_Trigger.pl` (controller). Aten_Trigger polls entity list every 60s: if all 9 inner bosses (158007–158015) absent AND qglobal "aten" not set → spawns non-aggro form 158096 (with 48h depop timer). If inner bosses present AND aggro Aten not up → spawns aggro form 158006 (1s qglobal check timer on spawn, depops if qglobal set). On kill of either form: `quest::setglobal("aten",1,3,"M$spawntime")` with ~1.8h variance. Architecture comparison to Emperor cycle: similar qglobal + entity-check pattern, but simpler — no EmpCycle equivalent, no Blood gate. This is closest to the Phase 4b Vulak/Thylex chain (entity-presence controller + script-spawned boss). No add-waves. No post-mortem spawns. No combat-timer bomb.
+
+**Q2 — Aten Ha Ra ID resolution (158006 vs 158096):**
+Both are live kill targets, NOT placeholder vs real. The Aten_Trigger chooses which form to spawn based on whether inner bosses are up:
+- 158006 (#Aten_Ha_Ra) = the DESTROY form — spawns when inner bosses are still alive and players have made it to the boss room while the wing is active. Has DT spell 1948 "Destroy" in list 229. `#Aten_Ha_Ra.pl` script.
+- 158096 (#Aten_Ha_Ra_) = the non-aggro form — spawns when inner bosses are all dead. Has 48h depop timer. Uses list 540 (clean, no DT). `#Aten_Ha_Ra_.pl` script.
+Both have 1,901,500 HP. This is NOT the same as Shei Vinitras (179032 fight vs 179157 merchant) — in VT, BOTH forms are kill-target bosses that spawn under different encounter conditions. Both need HP scaling. Note: 158096 has NO spawn2 rows (script-only via Aten_Trigger quest::spawn2). 158006 has a spawn2 row in `overthere` at 640s — but this is a PEQ DB artifact (see Q12 finding below).
+
+**Q3 — vexthal DZ/instance status:**
+Confirmed standard static zone. `vexthal/player.lua` is 3 lines (illegal-bind guard only). Zero DZ/expedition API in any vexthal script. `dynamic_zones` table has 0 rows per Phase 5a config-expert confirmation. Entry via standard `ZoneChange_Struct` → `ZoneServerInfo_Struct` flow.
+
+**Q4 — DT spell sweep across all VT spell lists:**
+CONFIRMED: Spell 1948 "Destroy" in npc_spells_id=229 (NPC 158006 #Aten_Ha_Ra). PBAE DT: mana=0, cast_time=0, recast_delay=-1 (unlimited), effectid1=0 (SE_CurrentHP), effect_base_value1=-100,000, targettype=4 (PBAE — hits multiple targets). List 540 (158096) is clean — no spell 1948. Fling (spell 2167, effectid1=0, value=-1, targettype=2 PBAE) appears in lists 229, 230, 231, 234, 540 — this is a proximity knockback, NOT a DT (1 HP loss). Shadow Warding 5 (spell 2144) in list 236 (Akhevan Warders) — effectid1=83 (spell mitigation buff), not a DT. No other DT-profile spells found across any VT list including all Yaemiu spell lists (8, 9, 1, 2, 448, 1472, 1473, 1353, 237, 238, 239, 233). Complete DT sweep: one hit, list 229 only.
+
+**Q5 — Akhevan Warders zone confirmation:**
+Confirmed vexthal-zoned. Warders 158087–94 have NO spawn2 rows at all (DB query returns NULL respawntime). They are script-only spawns via boss EVENT_SPAWN `quest::spawn2` calls and `quest::depopall` on boss death. HP UPDATE on `npc_types.hp` for all 8 IDs is valid and safe. No `spawn2.respawntime` UPDATE needed or possible.
+
+**Q6 — Yaemiu trash spawn boundary — IMPORTANT FINDING:**
+Yaemiu mobs (158000–158086 range) have NO vexthal spawn2 rows. DB query shows their spawn2 entries are in `nurga` (76 distinct NPCs) and `overthere` (76 distinct NPCs) — not vexthal. They exist in vexthal exclusively via script-spawning: (a) `akhevan_trigger.lua` proximity traps spawn random Yaemiu from a pool of 30 IDs, (b) boss scripts (Thall Va Xakra 158016/158125) pull nearby Yaemiu to assist via MoveTo(). This has a critical implication: since Yaemiu have spawn2 rows in `nurga` and `overthere` as well as vexthal-script-only, a SQL UPDATE on `npc_types.hp` will affect ALL instances of the NPC wherever it spawns, including nurga/overthere. This is actually correct behavior — same logic as Velious outdoor-dragon HP cuts affecting both outdoor zones. The `spawn2.respawntime` UPDATE should target ONLY vexthal-specific rows — but since there are no vexthal spawn2 rows for Yaemiu, the only tunable respawn path is via changes to the akhevan_trigger script's depop timer (Lua-only, not SQL). Current akhevan_trigger depop is 30 minutes per spawned Yaemiu — no respawn row exists.
+
+**Q7 — VT key turn-in NPCs INSIDE vexthal:**
+No VT key turn-in NPCs inside vexthal. The shard assembly quest is handled entirely outside vexthal: Spirit of Akelha`Ra (179144) in akheva (excluded per Decision #30/57, untouched at 1M HP). The completed VT key item (item 8010 "Palace Key") is the keyitem for a single door in vexthal (doorid=45, VTDOOR302). No turn-in NPC inside vexthal itself. HP scaling on any VT boss does not break the door-key mechanic.
+
+**Q8 — Event-control NPCs in vexthal:**
+Three non-fight NPCs confirmed:
+- 158095 `#Aten_Trigger` — L90, 50,000,000 HP, raid_target=0. Event controller — EXCLUDE. Note: its only spawn2 row is in `dulak` zone (respawntime=400s), not vexthal. It populates vexthal via some other mechanism (likely static spawn or script). Untouchable.
+- 158128 `shade_trigger` — L55, 1,913 HP, raid_target=0. Proximity trap trigger — EXCLUDE.
+- 158129 `akhevan_trigger` — L55, 1,913 HP, raid_target=0. Proximity trap trigger (the one running `akhevan_trigger.lua`) — EXCLUDE.
+
+**Q9 — VT door/key mechanics:**
+DB query of `doors WHERE zone='vexthal'` returns 39 doors total. Only ONE has keyitem != 0: doorid=45, name=VTDOOR302, keyitem=8010 ("Palace Key"), lockpick=-1 (unpickable). All other 38 VT doors have keyitem=0 (no key required). The Palace Key (item 8010) is dropped by bosses/looted in VT and is NOT summoned/given by any NPC that will be scaled. HP scaling on VT bosses does not alter door-key mechanics — items drop from loottables, which are unchanged per Decision #3.
+
+**Q10 — MobHealth percentage at 1,901,500 HP:**
+No issue. MobHealth uses `(int)GetHPRatio()` — a 0-100 integer percentage regardless of absolute HP. The uint8 field handles any HP value from 1 to bigint(20) max identically. 1,901,500 HP renders identically to 90,000 HP on the wire — both send a uint8 percentage. Confirmed safe per Phase 2 analysis (the MobHealth uint8 percentage pattern is the same for all phases).
+
+**Q11 — Diabo trio encounter linkage:**
+No scripted sequential dependency between Diabo NPCs. Confirmed by examining all boss scripts — each script only manages its own warder guards (spawn on EVENT_SPAWN, depopall on EVENT_DEATH_COMPLETE). No inter-boss signaling. No "all three must die" entity check. The "Diabo trio" terminology refers to the three 1st-floor boss rooms (158014 #Diabo_Xi_Va + warders 158088; 158015 #Diabo_Xi_Xin + warders 158088; 158012 #Diabo_Xi_Xin_Thall + warders 158089). No sequential dependency. Same independent-boss pattern as VP outer dragons (Phase 3). All scalable independently.
+Special abilities of note:
+- 158013 (#Kaas_Thox_Xi_Ans_Dyek): `42,1` — CounterAvoidDamage + `31,1` — PacifyImmunity. No protocol impact.
+- 158011 (#Thall_Xundraux_Diabo): `5,1,20` — Flurry 20%. Server-side AI only.
+- 158012 (#Diabo_Xi_Xin_Thall): `3,1,20` — Rampage 20%, `6,1` — TripleAttack.
+- 158016/158125 (#Thall_Va_Xakra): `3,1,30` — Rampage 30%. All server-side.
+
+**Q12 — Phase 5a/5b boundary backwards check:**
+IMPORTANT FINDING: All inner VT bosses (158006–158016, 158125) have their spawn2 rows in `overthere` zone (respawntime=640s), NOT vexthal. The Yaemiu trash (158000–158086) have spawn2 rows in `nurga` and `overthere`. Va_Dyn_Khar (158081) has a spawn2 row in `nurga` at 960s. `#Aten_Trigger` (158095) has its spawn2 row in `dulak` at 400s. ZERO vexthal spawn2 rows exist for any 158xxx NPC. This means:
+1. `spawn2.respawntime` UPDATE for VT inner bosses must target `overthere` zone rows, not vexthal. Architect's SQL for spawn2 updates needs `WHERE zone='overthere'` scoped to these NPC IDs.
+2. Va_Dyn_Khar `spawn2.respawntime` UPDATE targets `nurga` zone row.
+3. Yaemiu trash have no respawntime UPDATE path via spawn2 (no vexthal spawn2 rows); depop timers in akhevan_trigger.lua (Lua-only) control how long trap-spawned Yaemiu persist.
+4. No 158xxx NPCs were overlooked between Phase 5a and 5b — the Phase 5a boundary was correctly set (Phase 5a explicitly excluded all 158xxx per confirmation notes).
+
+**Q13 — Khati Sha VT variant verification:**
+Confirmed NO 158xxx Khati Sha variant. DB query for `name LIKE '%khati%sha%'` returns: 154145 (Khati_Sha_the_Twisted, the acrylia Phase 5a boss — now at 90k HP per Phase 5a), 154161 (Fabled variant, excluded by max_expansion filter), 155219/155223/155236/155242 (Khati_Sha_Marook/Guraat/Mylia/Jaarin — Vah Shir trainers L45-50, not raid targets). Zero 158xxx results. Decision #55 confirmed correct.
+
+**Phase 5b Protocol Summary — all 13 questions answered:**
+Phase 5b is 100% server-side. Zero opcode changes. One DT DELETE (spell 1948, list 229). Critical spawn2 zone correction: VT boss respawn rows are in `overthere`, not `vexthal` — SQL must scope correctly.
+
+**Outcome:** Architect unblocked for Phase 5b architecture doc.
+
