@@ -2379,3 +2379,19 @@ Architecture state: 3 of 3 advisors signed off with initial + deep responses, al
 
 15 commits total on feature/raid-scaling for Phase 5b. Standing by for user decision resolution → implementation dispatch.
 
+---
+
+## Phase 5b Implementation Team (data-expert + config-expert + infra-expert)
+
+### 2026-04-22 — data-expert → config-expert (LB12 complete; LB13 handoff)
+
+SQL applied. All 54 verification checks passed.
+
+- **npc_types**: 124 rows updated (Aten dual 180k, 9 inner bosses 85-160k, Thall Va Xakra dual 80k, Va_Dyn_Khar 60k, 6 Akhevan Warders 80k each, 104 Yaemiu level-tiered, A_burrower_parasite 90k)
+- **spawn2**: 12 rows updated to 86,400s (9 inner bosses incl. 158007 x2 + Thall Va Xakra dual); Va_Dyn_Khar 21,600s PRESERVED
+- **npc_spells_entries**: 1 row DELETE (list 229 spell 1948 Destroy); Kerafyrm list 489 spell 1948 PRESERVED; list 540 spells 3 PRESERVED
+
+SQL files committed and pushed to feature/raid-scaling (commit 4eb65f3).
+
+Handoff to config-expert: run #reloadworld (LB13), then ping infra-expert for vexthal zone-process restart (LB13b — required to flush spell list 229 cache per Q67=B DELETE), then run smoke verification (LB14).
+
