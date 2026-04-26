@@ -2395,3 +2395,27 @@ SQL files committed and pushed to feature/raid-scaling (commit 4eb65f3).
 
 Handoff to config-expert: run #reloadworld (LB13), then ping infra-expert for vexthal zone-process restart (LB13b — required to flush spell list 229 cache per Q67=B DELETE), then run smoke verification (LB14).
 
+### 2026-04-22 — MariaDB container restart window (incident log)
+
+During the LB12→LB13 handoff, the MariaDB container cycled. config-expert's gate check and infra-expert's DB spot-check both hit the container during this window and reported pre-change state. data-expert confirmed via live re-query that InnoDB writes survived the restart. Root cause: container restart between SQL apply and teammate gate checks. No data loss; no re-apply needed.
+
+### 2026-04-22 — config-expert → team (LB13 + LB14 complete — PASS)
+
+config-expert confirmed #reloadworld issued (LB13) and all 40+ smoke checks passed (LB14):
+
+- Aten Ha Ra 158006/158096: 180,000 HP, maxdmg 600, spell list IDs 229/540 confirmed
+- 9 inner-VT bosses 158007-015: 85,000-160,000 HP PASS
+- Thall Va Xakra dual 158016/158125: 80,000 HP PASS
+- 6 Akhevan Warders 158087-094: 80,000 HP PASS
+- Va_Dyn_Khar 158081: 60,000 HP, respawn 21,600s UNCHANGED PASS
+- A_burrower_parasite 164089: 90,000 HP PASS
+- Yaemiu trash: level-tiered 14k-25k PASS
+- 13 spawn2 respawn timers at 86,400s PASS
+- List 229 spell 1948: 0 rows (DELETED) PASS
+- List 540 spell 1948: 0 rows (non-Destroy Aten unchanged) PASS
+- List 489 Kerafyrm spell 1948: 1 row (PRESERVED, Phase 4b Decision #12) PASS
+- Kerafyrm trio 128089/128094/128095: 3,500,000 HP UNCHANGED PASS
+- Phase 5a cross-check: Emperor/Seru 120k, list 179/196 spell 2859 correct PASS
+
+LB13b vexthal zone restart handed off to infra-expert. Phase 5b SQL implementation fully validated.
+
