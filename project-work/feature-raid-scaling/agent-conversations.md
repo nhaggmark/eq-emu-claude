@@ -2108,6 +2108,18 @@ Re-ran both architect queries against the live DB — results match architect ex
 
 **Flag D — Thall Va Xakra 158016/158125 duplication:** Two separate NPC IDs both 900k HP, both spawn2-backed at 640s. Both HP-UPDATE per LB4. Server-side AI MoveTo() train-pull, no protocol impact.
 
+### 2026-04-22 — architect → protocol-agent: Phase 5b consultation closed
+
+**From:** architect → **To:** protocol-agent
+
+All three advisor sign-offs confirmed with both initial and deep responses. Q67=DELETE triple-endorsed (architect + protocol-agent + lore-master — lore-master classified spell 1948 as a "zone-policing mechanic," not a signature encounter mechanic). Decision #70 Warder count correction confirmed by all advisors. Q12 spawn2-zone retraction logged (a9bfc31). 4 user decisions pending (Q67/68/69/70), all with joint advisor defaults. Implementation team ready.
+
+### 2026-04-22 — protocol-agent: Phase 5b consultation complete — shutdown acknowledged
+
+**From:** protocol-agent (closing note)
+
+Phase 5b VT protocol consultation complete across all phases (2-5b). Contributions this phase: Flag A PBAE DT discovery (spell 1948 "Destroy", list 229, targettype=4 PBAE) which flipped Q67 default to DELETE; 13-question full sweep confirming 100% server-side implementation; Decision #70 Warder ID correction (6 true Warders; 158092/158093 are Yaemiu); Q12 spawn2 join-error self-retraction (architect's `zone='vexthal'` scoping confirmed correct). All findings in `protocol-agent/dev-notes.md` Phase 5b section and `agent-conversations.md` Phase 5b Architecture Team Conversations. Branch: feature/raid-scaling.
+
 **Other findings — all confirmed:**
 - vexthal is standard static zone, player.lua 3 lines (illegal-bind guard), zero DZ/expedition API, dynamic_zones table 0 rows
 - ZoneChange_Struct → ZoneServerInfo_Struct standard entry flow
