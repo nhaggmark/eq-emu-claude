@@ -180,7 +180,37 @@ npc_spells_id  spellid  priority
 
 ### Open Items — LB13b
 
-- [x] Full-stack restart executed — server running clean (2026-04-22)
-- [ ] DB spot-check AWAITING data-expert Phase 5b SQL application — spell 1948 still in list 229
-- [ ] Post-SQL #reloadworld by config-expert required to propagate cache
-- [ ] Final DB spot-check needed after data-expert applies DELETE (expect list 229 = 0 rows for 1948; list 489 = present; list 540 = absent)
+- [x] Full-stack restart #1 — executed pre-SQL (stale cache, superseded)
+- [x] Full-stack restart #2 (definitive) — executed post-SQL DELETE (2026-04-22)
+- [x] DB spot-check PASS — list 229: 0 rows; list 489: 1 row (Kerafyrm preserved); list 540: 0 rows
+- [x] LB13b COMPLETE — zone processes booted from clean DB; ready for config-expert LB14 smoke verify
+
+---
+
+### Implementation Log — LB13b Restart #2 (definitive, 2026-04-22, post-SQL)
+
+**Trigger:** data-expert confirmed Phase 5b DELETE applied (commit 4eb65f3). Restart #1 ran before SQL was in DB so zone caches held stale list 229. Restart #2 is the definitive cache flush.
+
+**Step 1 — Docker containers:** `make restart` — SUCCESS, all containers up
+
+**Step 2 — EQ server processes (from /home/eqemu/server/):**
+- `shared_memory` — completed (Luclin expansion, 1048 rules, 618 zones)
+- `loginserver` — started (PID 453)
+- `world` — started (PID 550, waited 8s)
+- 8 zone processes (dynamic_01–08) — all started, count confirmed = 8
+
+**Verification:**
+- Process list: loginserver (453) + world (550) + 8 zones confirmed
+- World log: clean — all 8 zones registered on ports 7000–7007, no crash/restart loop
+
+**DB spot-check (post-restart #2, PASS):**
+```sql
+SELECT npc_spells_id, spellid, priority FROM npc_spells_entries
+WHERE spellid=1948 AND npc_spells_id IN (229, 489, 540) ORDER BY npc_spells_id;
+
+npc_spells_id  spellid  priority
+489            1948     0         ← Kerafyrm list 489 preserved (correct)
+                                  ← list 229: 0 rows (DELETE confirmed)
+                                  ← list 540: 0 rows (Aten 158096 never had this spell)
+```
+Zone processes booted from clean DB state. Spell 1948 cannot load into vexthal zone cache from list 229.
