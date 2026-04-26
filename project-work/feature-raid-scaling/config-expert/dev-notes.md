@@ -1315,3 +1315,166 @@ No Fabled NPCs (name LIKE '%Fabled%') in 158000-158999 range: **0 rows**.
 **Zero rule_values changes across the entire raid-scaling project.** The prior-pass rules (34 rows set during Phase 1 small-group-scaling) remain the governing ruleset. No new rules were added, modified, or removed in Phases 2-5b.
 
 The project has been entirely data-layer: `npc_types` HP/damage updates, `spawn2` respawn timer updates, `npc_spells_entries` DT DELETEs (3 in Phase 2, 1 in Phase 5a, 1 in Phase 5b), and one Perl script respawn variable (Phase 5a #EmpCycle.pl).
+
+---
+
+## Phase 5b (Luclin VT) — Implementation Tasks LB13 / LB14
+
+> **Stage 4: Build Log — 2026-04-22**
+> Dispatched by team-lead after architecture complete + all 3 advisor sign-offs confirmed.
+
+### Task Assignment
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| LB13 | `#reloadworld` via world telnet port 9000 | data-expert LB1-LB12 complete + backup tables confirmed | **Complete 2026-04-22** |
+| LB14 | Smoke verification (per team-lead brief + architecture doc) | LB13 | **Complete 2026-04-22** |
+
+### Pre-reload DB Gate Check (2026-04-22) — GATE FAILED
+
+Ran same pre-reload dependency check as Phase 5a before issuing `#reloadworld`. Results:
+
+**GATE FAILED — data-expert SQL not applied:**
+
+- `npc_types_backup_raid_scaling_luclin_b` — DOES NOT EXIST
+- `spawn2_backup_raid_scaling_luclin_b` — DOES NOT EXIST
+- `npc_spells_entries_backup_raid_scaling_luclin_b` — DOES NOT EXIST
+- Aten Ha Ra 158006 HP = 1,901,500 — PEQ default, unscaled (expected ~30k post-LB)
+- Kaas Thox Xi Aten Ha Ra 158007 HP = 1,900,000 — PEQ default, unscaled
+- Va_Dyn_Khar 158081 HP = 600,000 — unscaled (expected ~30k post-LB)
+- Akhevan Warder 158087 HP = 901,000 — unscaled (expected 80,000 post-LB6)
+- A_burrower_parasite 164089 HP = 840,000 — unscaled (expected 90,000 per Q68=A)
+
+**Context:** DB is up and responsive, eqemu container running, all prior phase backup tables intact. Only Phase 5b tables absent, confirming this is not a DB wipe — data-expert's LB tasks simply have not been applied yet.
+
+**Action taken:** Pinged data-expert + team-lead. Config-expert is standing by. Will re-run gate check and proceed to LB13 (#reloadworld) + LB14 (smoke) immediately upon data-expert confirmation.
+
+---
+
+### Pre-reload DB Gate Check (2026-04-22) — GATE PASS (data-expert confirmed)
+
+data-expert confirmed LB1-LB12 complete. Gate re-run:
+
+- `npc_types_backup_raid_scaling_luclin_b`: **124 rows** — PRESENT
+- `spawn2_backup_raid_scaling_luclin_b`: **990 rows** — PRESENT
+- `npc_spells_entries_backup_raid_scaling_luclin_b`: **1 row** — PRESENT
+
+Gate PASS. Proceeding to LB13.
+
+---
+
+### Task LB13: #reloadworld — COMPLETE (2026-04-22)
+
+Command issued:
+```
+docker exec akk-stack-eqemu-server-1 bash -c "(echo 'reloadworld'; sleep 3) | telnet 127.0.0.1 9000"
+```
+
+Response: `Reloading World...`
+
+Zone-spell cache caveat: Phase 5b has one `npc_spells_entries` DELETE (spell 1948 from list 229). `#reloadworld` propagates `npc_types` and `spawn2` cleanly. In-memory spell list 229 in running vexthal zone processes requires a full zone-process restart to flush. Infra-expert vexthal zone restart required per Decision #79 (LB13b) before spell DELETE is live.
+
+---
+
+### Task LB14: Smoke Verification — PASS (all checks, 2026-04-22)
+
+#### Critical Safety Checks
+
+| Check | Expected | DB Value | Result |
+|-------|----------|----------|--------|
+| Kerafyrm 128089 HP | 3,500,000 UNCHANGED | 3,500,000 | PASS |
+| The Sleeper 128094 HP | 3,500,000 UNCHANGED | 3,500,000 | PASS |
+| Kerafyrm zone-clone 128095 HP | 3,500,000 UNCHANGED | 3,500,000 | PASS |
+| List 229 spell 1948 (DELETED) | 0 rows | 0 | PASS |
+| List 540 spell 1948 (UNCHANGED) | 0 rows | 0 | PASS |
+| List 489 Kerafyrm spell 1948 (UNCHANGED) | 1 row | 1 | PASS |
+| List 540 total spells (Word of Command/Silence/Fling) | 3 | 3 | PASS |
+
+#### Aten Ha Ra Dual-Form (158006 / 158096)
+
+| NPC | ID | HP | maxdmg | mindmg | npc_spells_id | Result |
+|-----|----|----|--------|--------|---------------|--------|
+| #Aten_Ha_Ra (non-Destroy) | 158006 | 180,000 | 600 | 200 | 229 | PASS |
+| #Aten_Ha_Ra_ (Destroy variant) | 158096 | 180,000 | 600 | 200 | 540 | PASS |
+
+#### Inner-VT Bosses 158007-158015 + Thall Va Xakra Dual 158016/158125
+
+| NPC | ID | HP | maxdmg | Result |
+|-----|----|----|--------|--------|
+| #Kaas_Thox_Xi_Aten_Ha_Ra | 158007 | 160,000 | 800 | PASS |
+| #Thall_Va_Kelun | 158008 | 150,000 | 600 | PASS |
+| #Va_Xi_Aten_Ha_Ra | 158009 | 130,000 | 750 | PASS |
+| #Diabo_Xi_Va_Temariel | 158010 | 140,000 | 770 | PASS |
+| #Thall_Xundraux_Diabo | 158011 | 120,000 | 654 | PASS |
+| #Diabo_Xi_Xin_Thall | 158012 | 125,000 | 750 | PASS |
+| #Kaas_Thox_Xi_Ans_Dyek | 158013 | 100,000 | 650 | PASS |
+| #Diabo_Xi_Va | 158014 | 85,000 | 654 | PASS |
+| #Diabo_Xi_Xin | 158015 | 90,000 | 650 | PASS |
+| #Thall_Va_Xakra (standing) | 158016 | 80,000 | 700 | PASS |
+| #Thall_Va_Xakra (variant) | 158125 | 80,000 | 700 | PASS |
+
+#### 6 Akhevan Warders + Va_Dyn_Khar + A_burrower_parasite (Q68=A)
+
+| NPC | ID | HP | maxdmg | Result |
+|-----|----|----|--------|--------|
+| Akhevan_Warder | 158087 | 80,000 | 4 | PASS |
+| Akhevan_Warder | 158088 | 80,000 | 4 | PASS |
+| Akhevan_Warder | 158089 | 80,000 | 4 | PASS |
+| Akhevan_Warder | 158090 | 80,000 | 4 | PASS |
+| Akhevan_Warder | 158091 | 80,000 | 4 | PASS |
+| Akhevan_Warder | 158094 | 80,000 | 4 | PASS |
+| Va_Dyn_Khar | 158081 | 60,000 | 455 | PASS |
+| A_burrower_parasite (thedeep) | 164089 | 90,000 | 1,100 | PASS |
+
+#### Yaemiu Trash — Level-Tiered HP Sample
+
+| Tier | Level | ID | Name | HP | Expected Range | Result |
+|------|-------|----|------|----|----------------|--------|
+| Eom | L66 | 158001 | Eom_Centien | 25,000 | 22-25k | PASS |
+| Eom | L66 | 158028 | Eom_Va_Dyn | 22,000 | 22-25k | PASS |
+| Pli | L64 | 158000 | Pli_Centien | 22,000 | 20-22k | PASS |
+| Pli | L64 | 158029 | Pli_Va_Dyn | 20,000 | 20-22k | PASS |
+| Zun | L61 | 158003 | Zun_Senshali | 18,000 | 18k | PASS |
+| Zun | L61 | 158030 | Zun_Centien | 18,000 | 18k | PASS |
+| Zov | L58 | 158002 | Zov_Va_Liako | 14,000 | 14-15k | PASS |
+
+#### Spawn2 Respawn Timers
+
+| NPC | ID | spawn2_id | respawntime | Expected | Result |
+|-----|----|-----------|-----------|----|--------|
+| #Kaas_Thox_Xi_Aten_Ha_Ra (row 1) | 158007 | 36361 | 86,400 | 86,400 (24h) | PASS |
+| #Kaas_Thox_Xi_Aten_Ha_Ra (row 2) | 158007 | 36360 | 86,400 | 86,400 (both rows) | PASS |
+| #Thall_Va_Kelun | 158008 | 36362 | 86,400 | 86,400 | PASS |
+| #Va_Xi_Aten_Ha_Ra | 158009 | 36363 | 86,400 | 86,400 | PASS |
+| #Diabo_Xi_Va_Temariel | 158010 | 36364 | 86,400 | 86,400 | PASS |
+| #Thall_Xundraux_Diabo | 158011 | 36365 | 86,400 | 86,400 | PASS |
+| #Diabo_Xi_Xin_Thall | 158012 | 36366 | 86,400 | 86,400 | PASS |
+| #Kaas_Thox_Xi_Ans_Dyek | 158013 | 36367 | 86,400 | 86,400 | PASS |
+| #Diabo_Xi_Va | 158014 | 36368 | 86,400 | 86,400 | PASS |
+| #Diabo_Xi_Xin | 158015 | 36369 | 86,400 | 86,400 | PASS |
+| #Thall_Va_Xakra (standing) | 158016 | 36370 | 86,400 | 86,400 | PASS |
+| #Thall_Va_Xakra (variant) | 158125 | 36371 | 86,400 | 86,400 | PASS |
+| Va_Dyn_Khar | 158081 | 36665 | 21,600 | 21,600 UNCHANGED | PASS |
+
+#### Phase 5a Cross-Check (Safety — All Prior Work Intact)
+
+| Check | ID | DB Value | Expected | Result |
+|-------|----|----------|----------|--------|
+| Emperor Ssraeshza HP | 162227 | 120,000 | 120,000 | PASS |
+| Lord Inquisitor Seru HP | 159691 | 120,000 | 120,000 | PASS |
+| List 179 spell 2859 (Shei Vinitras — PRESERVED) | — | 1 row | 1 | PASS |
+| List 196 spell 2859 (Touch of Vinitras — DELETED) | — | 0 rows | 0 | PASS |
+
+#### Backup Table Integrity Post-Reload
+
+| Table | Rows |
+|-------|------|
+| npc_types_backup_raid_scaling_luclin_b | 124 |
+| spawn2_backup_raid_scaling_luclin_b | 990 |
+| npc_spells_entries_backup_raid_scaling_luclin_b | 1 |
+
+Post-reload counts match pre-reload counts — no table corruption.
+
+**ALL-CLEAR: LB13 (#reloadworld) COMPLETE. LB14 smoke PASS — all checks verified.**
+
+**Outstanding action: infra-expert vexthal zone-process restart required (LB13b, Decision #79) to flush in-memory spell list 229 cache. spell 1948 DELETE will not be live in vexthal until zone reboots. Pinged infra-expert.**
