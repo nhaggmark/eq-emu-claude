@@ -130,3 +130,57 @@ _None — full-stack restart is an operational procedure, not a file change._
 ## Context for Next Agent
 
 Task L-restart is complete. Definitive full-stack restart executed 2026-04-22 after config-expert L-smoke PASS (71 checks). Zone spell caches are now loaded from clean DB state — list 196 has zero rows for spell 2859. Server is ready for game-tester validation.
+
+---
+
+## Phase 5b — Task LB13b: VT Zone-Process Cache Flush Restart
+
+> **Task:** LB13b (REQUIRED — not conditional)
+> **Trigger:** config-expert #reloadworld + smoke verify LB13+LB14 complete
+> **Date:** 2026-04-22
+> **Dependency status:** data-expert Phase 5b SQL (spell 1948 DELETE from list 229) — STATUS UNKNOWN at time of restart (see DB spot-check below)
+
+### Stage 4: Implementation Log — Task LB13b
+
+**Step 1 — Docker containers:**
+- `cd /mnt/d/Dev/eq/akk-stack && make restart` — SUCCESS
+- All containers up: mariadb, eqemu-server, phpmyadmin, peq-editor, npc-llm, ftp-quests, fail2ban-server, fail2ban-mysqld, peq-editor-proxy, phpmyadmin-proxy
+
+**Step 2 — MariaDB ready check:**
+- `mysqladmin ping --wait=30` — `mysqld is alive`
+
+**Step 3 — EQ server processes (inside akk-stack-eqemu-server-1, from /home/eqemu/server/):**
+- `shared_memory` — completed successfully (loaded 1048 rules, Luclin expansion, 618 zones)
+- `loginserver` — started (PID 430)
+- `world` — started (PID 579, waited 8s)
+- 8 zone processes (dynamic_01–08) — all started
+
+**Verification:**
+- Zone count: 8 (`ps aux | grep 'zone dynamic' | grep -v grep | wc -l` = 8)
+- Process list: 1 loginserver + 1 world + 8 zones confirmed
+- World log: clean — all 8 zones registered with auto port assignment (7000-7007), no crash/restart loop, no STARTED/STOPPED churn
+- Containers: all core containers healthy
+
+**DB spot-check (post-restart):**
+```sql
+SELECT npc_spells_id, spellid, priority FROM npc_spells_entries
+WHERE spellid=1948 AND npc_spells_id IN (229, 489, 540) ORDER BY npc_spells_id;
+
+npc_spells_id  spellid  priority
+229            1948     35        ← STILL PRESENT — data-expert Phase 5b SQL not yet applied
+489            1948     0         ← Kerafyrm list 489 present (expected)
+540            (absent)           ← List 540 (Aten 158096) — no row found
+```
+
+**IMPORTANT — DB spot-check FAIL flag:** Spell 1948 is still present in list 229. This means data-expert has NOT yet applied the Phase 5b DELETE (`npc_spells_entries WHERE npc_spells_id=229 AND spellid=1948`). The server restart was executed as dispatched — the clean restart state is established — but the zone processes will NOT have a clean spell cache for list 229 until data-expert applies the DELETE and a subsequent `#reloadworld` (or another restart) propagates the change.
+
+**Also note:** List 540 (Aten Ha Ra 158096) showed no row for spell 1948, which matches the expected pre-implementation state (spell 1948 is Kerafyrm's DT — it should NOT be in list 540 per the Phase 5b architecture).
+
+**Server state:** Running, healthy, all 8 zones up. Ready for data-expert SQL application + config-expert #reloadworld.
+
+### Open Items — LB13b
+
+- [x] Full-stack restart executed — server running clean (2026-04-22)
+- [ ] DB spot-check AWAITING data-expert Phase 5b SQL application — spell 1948 still in list 229
+- [ ] Post-SQL #reloadworld by config-expert required to propagate cache
+- [ ] Final DB spot-check needed after data-expert applies DELETE (expect list 229 = 0 rows for 1948; list 489 = present; list 540 = absent)
