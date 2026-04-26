@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/raid-scaling`
 > **Created:** 2026-04-21
-> **Last updated:** 2026-04-22 (Phase 4b server-side validation PASS — 127 checks; in-game testing guide ready for user)
+> **Last updated:** 2026-04-22 (Phase 5b server-side validation PASS WITH NOTES — 67 checks; in-game testing guide ready for user; project completion summary written)
 
 ---
 
@@ -14,10 +14,15 @@
 | Design | game-designer + lore-master | Complete 2026-04-21. Classic epics canonically authored by lore-master 2026-04-22; Kunark/Velious/Luclin quest-chain re-review still pending for Phase 4 prep | 2026-04-21 | 2026-04-21 |
 | Architecture | architect + protocol-agent + config-expert + lore-master | Phase 2-4b: all Complete 2026-04-23. **Phase 5a Luclin non-VT: Complete 2026-04-25.** **Phase 5b Luclin VT (FINAL): Complete 2026-04-25** — 3 of 3 advisor sign-offs CONFIRMED (lore-master VT deep-dive APPROVED + 3 DB-disagreed flags pushed back; protocol-agent zero-protocol-impact + Q12 spawn2-zone retracted; config-expert zero rule/config changes + LB13b zone-restart promoted to required). **3 user decisions surfaced (Q67-Q69):** Q67 Aten Destroy DT disposition (architect default Option B DELETE per protocol-agent PBAE finding 2026-04-25 reversal), Q68 burrower-parasite Phase 5a leak (architect default A INCLUDE), Q69 13-shard briefing correction (architect default A acknowledge — lore-master confirmed). **~125 npc_types UPDATEs** + 1 npc_spells_entries DELETE (Q67=B default) + ~12 spawn2 UPDATEs. Implementation team: data-expert + config-expert + infra-expert (default path; LB13b zone-restart required for spell list 229 cache flush). Ready for user decisions then dispatch. | 2026-04-22 | 2026-04-25 |
 | Implementation | data-expert + config-expert + perl-expert + infra-expert | Phases 2/3/4a/4b/5a all Complete. Phase 5a included 1 Perl edit (`#EmpCycle.pl:3` for Q52 user override) + cross-repo akk-stack commit. | 2026-04-22 | 2026-04-25 |
-| Validation | game-tester + user | Phases 2-5a: all server-side validations PASS. Phase 5a: 117 checks PASS (Touch of Vinitras DELETE confirmed list 196 cleared / list 179 preserved, Spirit of Akelha`Ra unchanged, Phase 5b reservations clean, all prior phases clean). | 2026-04-22 | 2026-04-25 |
-| Completion | _user_ | Phases 2, 3, 4a, 4b, 5a all Complete — proceeding to Phase 5b Luclin VT (final phase) | 2026-04-23 | 2026-04-25 |
+| Validation | game-tester + user | Phases 2-5a: all server-side validations PASS. Phase 5a: 117 checks PASS. **Phase 5b: 67 checks PASS WITH NOTES** (4 orphaned Yaemiu IDs at pre-scaled HP but not in spawnentry/scripts — inaccessible to players, non-blocking). Aten Destroy spell 1948 confirmed absent from list 229 (Q67=B DELETE landed). Kerafyrm list 489 preserved. All prior-phase regressions clean. | 2026-04-22 | 2026-04-22 |
+| Completion | _user_ | Phases 2, 3, 4a, 4b, 5a all Complete. **Phase 5b server-side PASS — pending user in-game testing + project-completion confirmation + branch merge.** | 2026-04-23 | — |
 
-**Current phase:** Phase 5b (Luclin VT — FINAL PHASE) Architecture COMPLETE 2026-04-25. **FINAL PHASE OF PROJECT.** All 3 advisor sign-offs CONFIRMED (lore-master + protocol-agent + config-expert). 3 user decisions awaiting resolution: Q67 Aten Destroy DT disposition (architect default Option B DELETE), Q68 burrower-parasite Phase 5a leak (architect default Option A INCLUDE), Q69 13-shard briefing correction (architect default Option A acknowledge — confirmed by lore-master). Once user decides, implementation team dispatches: data-expert + config-expert + infra-expert.
+**Current phase: VALIDATION COMPLETE — PENDING USER IN-GAME TESTING**
+**Phase 5b Luclin VT server-side: PASS WITH NOTES** (67 checks; non-blocking WARN on 4 orphaned Yaemiu IDs with no spawn presence).
+**RAID SCALING PROJECT COMPLETE (server-side)** — pending user in-game spot-test for Phase 5b + user project-completion confirmation + `feature/raid-scaling` merge to main.
+
+**In-game testing guide:** `game-tester/luclin-b-in-game-testing-guide.md` (7 sessions; Session 1 = Aten Destroy cache flush = CRITICAL gate test)
+**Project completion summary:** `game-tester/raid-scaling-project-summary.md` (cumulative totals: 321 npc_types UPDATEs, ~134 spawn2 UPDATEs, 5 spell DELETEs, 1 Perl edit, 1 bug filed)
 
 ---
 
@@ -53,7 +58,7 @@ phases (Classic, Kunark, Velious, Luclin) into separate projects.
 | Phase 4a — Velious non-ToV | Outdoor Velious dragons, Kael (non-AoW), Western Wastes, Siren's Grotto, Skyshrine, Plane of Growth/Mischief, Velious epic steps, Coldain Ring War (Q8) | **Complete 2026-04-23** (BUG-001 Tunare fixed; user accepted DB-verified state) |
 | Phase 4b — Velious ToV+Sleeper+Vulak+AoW | Temple of Veeshan proper (16 lords + 16 NToV mid-tier + 4 Defenders), Sleeper's Tomb (5 Ancients + 4 Warders + Progenitor + Final Arbiter + MotG + Milas), AoW, Vulak = 51 NPCs. Kerafyrm trio untouched per Decision #12. | **Complete 2026-04-23** (server-side PASS 127 checks; user accepted) |
 | Phase 5a — Luclin non-VT | ssratemple (13 + 2 cycle serpents per Q50=A), akheva (8 primary + 3 elite-named per Q51=B), sseru/katta (7), griegsend (3), acrylia (2 + 1 Spiritual Arcanist per Q59=A), thedeep (1), umbral (3) = **41 NPCs**. Touch of Vinitras DT removal list 196 only (list 179 preserved per Decision #60). Q52=B perl edit `#EmpCycle.pl:3` softens Emperor cycle 3-5d → 22-24h. | **Complete 2026-04-25** (server-side PASS 117 checks; user accepted) |
-| Phase 5b — Luclin VT+shards (FINAL) | Vex Thal proper (Aten Ha Ra dual-form 158006/158096, 9 inner-VT bosses 158007-015, Thall Va Xakra dual 158016/158125), Va_Dyn_Khar 158081 (Palace Key dropper), 6 Akhevan Warders 158087/88/89/90/91/094 (NOT 8 per Decision #70 correction), 104 Yaemiu raid_target=1 trash, +1 Phase 5a audit-leak A_burrower_parasite 164089 (Q68=A default). VT key Phase 1 (10 Lucid Shards, NOT 13 per Decision #69) requires no scaling — non-raid sources accessible already. | **Architecture COMPLETE 2026-04-25** — all 3 advisors signed off; pending user decisions Q67/Q68/Q69 |
+| Phase 5b — Luclin VT+shards (FINAL) | Vex Thal proper (Aten Ha Ra dual-form 158006/158096, 9 inner-VT bosses 158007-015, Thall Va Xakra dual 158016/158125), Va_Dyn_Khar 158081 (Palace Key dropper), 6 Akhevan Warders 158087/88/89/90/91/094 (NOT 8 per Decision #70 correction), 104 Yaemiu raid_target=1 trash, +1 Phase 5a audit-leak A_burrower_parasite 164089 (Q68=A default). VT key Phase 1 (10 Lucid Shards, NOT 13 per Decision #69) requires no scaling — non-raid sources accessible already. | **Server-side PASS WITH NOTES 2026-04-22** (67 checks; non-blocking WARN on 4 orphaned Yaemiu IDs). Pending user in-game testing (7 sessions). **RAID SCALING PROJECT COMPLETE pending user acceptance** |
 
 ---
 
@@ -494,6 +499,25 @@ _Populated by the architect for Phase 5b (Luclin VT — FINAL PHASE). Awaiting u
 
 **Agents NOT needed (default path):** c-expert, lua-expert, perl-expert, protocol-agent (already advised pending response).
 
+
+### game-tester → user (Phase 5b Luclin VT server-side validation complete — FINAL PHASE — in-game testing pending)
+- **Date:** 2026-04-22
+- **Server-side result:** PASS WITH NOTES (67 checks)
+- **Deliverables:**
+  - `game-tester/luclin-b-server-validation.md` — 67-check validation report; all DB values confirmed
+  - `game-tester/luclin-b-in-game-testing-guide.md` — 7 sessions in priority order (Aten Destroy cache flush → Aten full kill → inner-VT boss sample → Warder add wave → Va_Dyn_Khar Palace Key → Yaemiu trash sample → A_burrower_parasite)
+  - `game-tester/raid-scaling-project-summary.md` — cumulative project totals (321 npc_types UPDATEs, ~134 spawn2 UPDATEs, 5 spell DELETEs, 1 Perl edit, 1 bug filed) + completion checklist
+- **Key notes:**
+  - All 124 npc_types UPDATEs confirmed in DB at architecture target values (architecture estimated 125; 4 orphaned Yaemiu IDs with no spawnentry coverage — WARN, non-blocking)
+  - All 12 spawn2 respawn timers at 86,400s (24h) for inner-VT bosses + Thall Va Xakra dual; Va_Dyn_Khar 21,600s preserved per Decision #74
+  - CRITICAL: Destroy spell 1948 confirmed ABSENT from list 229 (Q67=B DELETE landed); Kerafyrm list 489 spell 1948 PRESERVED (Decision #12); list 540 (non-Destroy Aten) intact with Word of Command/Silence/Fling
+  - CRITICAL: Kerafyrm trio (128089/94/95) at 3,500,000 HP unchanged; Aten_Trigger (158095) at 50,000,000 HP unchanged
+  - All Phase 5a/4b/4a/3/2 regressions clean
+  - rule_values count = 1,112 (zero drift)
+  - No Phase 5b-related errors in server logs
+  - Session 1 (Aten Destroy cache flush) MUST be done first — validates vexthal zone restart actually flushed spell list 229 from zone memory
+  - WARN: 4 orphaned Yaemiu IDs (158112/113/114/123) at pre-scaled HP; zero spawnentry rows; inaccessible to players; not a bug
+- **Handoff to:** user for in-game testing execution (7 sessions) → then project-completion confirmation → branch merge
 
 ### game-tester → user (Phase 5a Luclin non-VT server-side validation complete — in-game testing pending)
 - **Date:** 2026-04-22
