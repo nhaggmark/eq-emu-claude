@@ -2,90 +2,97 @@
 
 > **Feature branch:** `feature/xp-retune`
 > **Agent:** config-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task(s):** Validate architecture plan — rule name, SQL syntax, reload command, rollback SQL
+> **Date started:** 2026-04-27
+> **Current stage:** Socialize (validation complete, messaging architect)
 
 ---
 
 ## Task Assignment
 
-_Copy your assigned task(s) from the architecture doc's Implementation Sequence._
-
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| | | | |
+| 1 | Validate rule name, current value, SQL syntax, reload command, rollback | Architecture plan from architect | Complete |
 
 ---
 
 ## Stage 1: Plan
 
-_What you learned from reading source code and your proposed approach. NO CODE
-is written during this stage._
-
-### Files Examined
-
-| File | Lines | What You Found |
-|------|-------|----------------|
-| | | |
-
 ### Key Findings
 
-_Summarize what you learned about the existing system that informs your approach._
+Queried live DB (ruleset_id=1) and verified rule_values. Cross-referenced
+`#reload` commands against C++ source (`zone/gm_commands/rules.cpp` and
+`common/database/database_update_manifest.h` command_settings table).
 
 ### Implementation Plan
 
-_Your proposed approach. Be specific enough that a fresh agent after context
-compaction could execute this plan without additional exploration._
-
-**Files to create or modify:**
-
-| File | Action | What Changes |
-|------|--------|-------------|
-| | Create / Modify | |
-
-**Change sequence:**
-1.
-2.
-3.
-
-**What to test:**
--
+Validation only — no changes in this phase.
 
 ---
 
 ## Stage 2: Research
 
-_Context7 and documentation verification. Every API, function, and syntax in
-your plan must be verified against current docs before proceeding._
-
 ### Documentation Consulted
 
 | API / Function / Syntax | Source | Verified? | Notes |
 |------------------------|--------|-----------|-------|
-| | Context7 / WebFetch / Source | Yes / No | |
+| `Character:ExpMultiplier` rule name | Live DB query | Yes | Exact spelling confirmed |
+| Current value ruleset_id=1 | Live DB query | Yes | Value is `3.0` |
+| `Character:AAExpMultiplier` current value | Live DB query | Yes | Value is `3.0`, stays unchanged |
+| `#reloadallrules` command | `command_settings` table + `rules.cpp` | Yes | Correct command for zone-scoped reload |
+| `#reloadrulesworld` command | `command_settings` table | Yes | Propagates reload to ALL running zones |
+| `#reloadrules` | Source search | NO — does not exist | See critical finding below |
 
-### Plan Amendments
+### Plan Amendments — Critical Finding
 
-_What changed in your plan based on documentation research? If nothing, state
-"Plan confirmed — no amendments needed."_
+**`#reloadrules` does NOT exist.** The architect's plan likely names the
+wrong command. The correct reload commands are:
+
+- `#reloadallrules` — reloads the active ruleset in the **current zone only**
+  (calls `RuleManager::Instance()->LoadRules(...)` in `rules.cpp:91`)
+- `#reloadrulesworld` — sends reload signal to **all running zone processes**
+- `#rules reload` — also zone-scoped, same effect as `#reloadallrules`
+
+For an XP rule change affecting all zones, `#reloadrulesworld` is the
+correct command to use so all zone processes pick up the new value immediately
+without requiring individual zone visits.
 
 ### Verified Plan
 
-_Final plan after research. This is the version you socialize. If no amendments
-were needed, write "See Implementation Plan above — confirmed by research."_
+Rule name: `Character:ExpMultiplier`
+Current value in ruleset_id=1: `3.0`
+Target value: `2.0`
+
+Forward SQL:
+```sql
+UPDATE rule_values
+SET rule_value = '2.0'
+WHERE ruleset_id = 1
+  AND rule_name = 'Character:ExpMultiplier';
+```
+
+Rollback SQL (symmetric and safe — restores exact original value):
+```sql
+UPDATE rule_values
+SET rule_value = '3.0'
+WHERE ruleset_id = 1
+  AND rule_name = 'Character:ExpMultiplier';
+```
+
+Reload command (apply live without restart):
+```
+#reloadrulesworld
+```
 
 ---
 
 ## Stage 3: Socialize
 
-_Share your plan with relevant teammates. Get confirmation before writing code._
-
 ### Messages Sent
 
 | To | Subject | Key Question |
 |----|---------|-------------|
-| | | |
+| architect | Validation result | Confirm `#reloadrules` does not exist; correct command is `#reloadrulesworld` |
 
 ### Feedback Received
 
@@ -95,65 +102,38 @@ _Share your plan with relevant teammates. Get confirmation before writing code._
 
 ### Consensus Plan
 
-_Final plan incorporating teammate feedback. This is what you build from.
-Write it self-contained — a fresh agent should be able to execute this section
-alone after context compaction._
-
-**Agreed approach:**
-
-**Files to create or modify:**
-
-| File | Action | What Changes |
-|------|--------|-------------|
-| | Create / Modify | |
-
-**Change sequence (final):**
-1.
-2.
-3.
+Pending architect acknowledgment. Plan is otherwise confirmed.
 
 ---
 
 ## Stage 4: Build
 
-_Execute the consensus plan. Log every change._
+Not applicable — this phase is validation only. DB changes happen in
+implementation phase.
 
-### Implementation Log
+---
 
-_Chronological record of what you did. Each entry should have enough detail
-that a fresh agent could understand the change without reading the diff._
+## Operational Notes
 
-#### [Date] — [Brief description]
-
-**What:** _What you changed_
-**Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the consensus plan_
-**Notes:** _Edge cases, gotchas, things the next agent should know_
-
-### Problems & Solutions
-
-| Problem | Root Cause | Solution |
-|---------|-----------|----------|
-| | | |
-
-### Files Modified (final)
-
-| File | Action | Description |
-|------|--------|-------------|
-| | Created / Modified | |
+- Rule reload via `#reloadrulesworld` affects all currently-loaded zones simultaneously.
+  New XP rate takes effect on the **next kill** after reload in any zone.
+- Ruleset_id=10 also has `Character:ExpMultiplier = 3.0` — this is a separate
+  ruleset (not the active one). The active ruleset for the server is **ruleset_id=1**.
+  Do NOT modify ruleset_id=10.
+- The `Character:AAExpMultiplier` stays at `3.0` — confirmed, no change needed.
+- No server restart required. `#reloadrulesworld` is sufficient.
 
 ---
 
 ## Open Items
 
-_Anything unfinished, deferred, or flagged for attention._
-
-- [ ]
+- [ ] Architect to confirm they will update `#reloadrules` to `#reloadrulesworld` in architecture plan
 
 ---
 
 ## Context for Next Agent
 
-_If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context.
-Reference the Consensus Plan section above._
+Rule `Character:ExpMultiplier` in `rule_values` WHERE `ruleset_id=1` currently
+has value `3.0`. The implementation task is a single UPDATE setting it to `2.0`,
+followed by `#reloadrulesworld` in-game. Rollback is the symmetric UPDATE back
+to `3.0`. Do NOT touch ruleset_id=10.
