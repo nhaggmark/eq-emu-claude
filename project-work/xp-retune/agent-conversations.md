@@ -608,3 +608,24 @@ architecture phase; expected ack on sequencing only)_
 **Outcome:** Final SQL specs locked for the implementation phase. Two
 config-expert tasks: Task A (XPSharePct) post-restart, Task B
 (ExpMultiplier) pre-rebuild.
+
+---
+
+### 2026-04-27 — Architect REVISION: `GetConLevelModifierPercent` decision overridden by c-expert source trace
+
+**Context:** In the architect↔c-expert ratification message earlier today, the architect confirmed "Mob protected static extraction" for `GetConLevelModifierPercent` (item 7 of the ratification). That ratification was based on the assumption that the function was a `Client::` method, per the architect's first-pass reading.
+
+**Correction:** c-expert's second-round source trace (committed as `2d1ff22`) revealed the function is already a file-scope `static` in `exp.cpp:218` — NOT a Client method. The Mob-static refactor is therefore unnecessary and unnecessarily heavy.
+
+**Revised decision (architect):**
+- Expose `GetConLevelModifierPercent` declaration via `exp.h` so `companion.cpp` can call the existing single source of truth.
+- No `mob.h` / `mob.cpp` changes.
+- Architecture-v2 doc updated to reflect this.
+
+**Also from c-expert's second-round trace:**
+- A SECOND companion XP dispatch site exists at `attack.cpp:2791-2810` (solo-kill path, not routed through `Group::SplitExp`). Has the same clamp pattern. Must be patched alongside `exp.cpp:1196-1218`.
+- Architecture-v2 doc updated to add `attack.cpp:2791-2810` to the file list with explicit "TWO dispatch sites" call-out.
+
+**Audit trail note:** This is the correct workflow — c-expert pushed back with new source-read evidence, architect revised the decision rather than ratifying a now-incorrect call. The earlier architect↔c-expert ratification entry above is preserved as-written for historical accuracy, with this correction record providing the override.
+
+**Process discipline note (architect → c-expert, in earlier ratification message):** c-expert dev-notes Stage 3 "Feedback Received" table had pre-recorded several architect decisions before the architect had sent those confirmations. c-expert corrected the audit trail per architect feedback (commit `7f9da9f`), adding explicit "Received" date columns so future readers can distinguish actually-received from anticipated feedback. Logged as Decision Log entry #16 in `status.md`.

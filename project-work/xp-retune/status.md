@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/xp-retune`
 > **Created:** 2026-04-27
-> **Last updated:** 2026-04-27 (v2 — companion XP parity scope added)
+> **Last updated:** 2026-04-27 (v2 architecture plan complete — pending user review)
 
 ---
 
@@ -14,12 +14,12 @@
 | Design v1 | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
 | Architecture v1 | architect + protocol-agent + config-expert | Complete (superseded by v2 scope expansion) | 2026-04-27 | 2026-04-27 |
 | Design v2 (companion XP parity) | game-designer + lore-master (team `xp-retune-design-v2`) | Complete | 2026-04-27 | 2026-04-27 |
-| Architecture v2 (re-triage) | _architecture team_ | Not Started — required to plan companion XP parity refactor + AA-friendly seams | | |
+| Architecture v2 (re-triage) | architect + c-expert + config-expert (team `xp-retune-architecture-v2`) | Complete — pending user review | 2026-04-27 | 2026-04-27 |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Architecture v2 (re-triage for companion XP parity scope)
+**Current phase:** Architecture v2 — complete, pending user review of `architect/architecture.md` v2 plan before Implementation phase begins
 
 ---
 
@@ -132,6 +132,43 @@ _Record each handoff between agents with context and any notes._
   a future feature can plug in without churn. The PRD does not
   prescribe — architect's call.
 
+### architect → implementation team (v2)
+- **Date:** 2026-04-27
+- **Notes:** Architecture v2 plan finalized at `architect/architecture.md`.
+  v1 plan preserved as appendix for revert reference. Architecture team
+  consultations (architect ↔ c-expert, architect ↔ config-expert) logged
+  in `agent-conversations.md` under "Architecture Team Conversations".
+
+  **Approach:** Mirror Pipeline. New `Companion::CalculateExp` mirrors
+  `Client::CalculateExp` minus AA/race-class/leadership concerns. Called
+  from `Companion::AddExperience(uint32 xp, uint8 conlevel = 0xFF)` which
+  also applies `Companions:XPSharePct` as a post-multiplier scalar (default
+  100 = parity, clamp retained). `GetConLevelModifierPercent` extracted to
+  `Mob` protected static. AA-extensibility seam: future feature adds
+  `uint32& add_aaxp` out-parameter to `Companion::CalculateExp` exactly
+  mirroring `Client::CalculateExp`.
+
+  **All 4 review passes complete** — feasibility, simplicity, antagonistic,
+  integration. Documented in architecture.md.
+
+  **Implementation team to spawn (Phase 4):** c-expert, config-expert,
+  infra-expert. game-tester comes solo in Phase 5. Do NOT spawn
+  lua-expert, perl-expert, data-expert, or protocol-agent.
+
+  **Five tasks (A–E)** in dependency order:
+  - A: config-expert applies `Character:ExpMultiplier` 3.0→2.0 + reload
+  - B: c-expert implements C++ refactor across 7 files
+  - C: infra-expert rebuilds + restarts full server stack
+  - D: config-expert applies `Companions:XPSharePct` 50→100 + reload
+  - E: game-tester validates 15 PRD cases server-side
+
+  **Critical sequencing constraint:** Task D MUST run after Task C
+  (post-restart). Pre-restart, the new C++ is not live and Task D would
+  apply the rule under old semantics.
+
+  **The user will REVIEW this v2 architecture plan before any code is
+  written.** Implementation phase does not begin until user approval.
+
 ---
 
 ## Implementation Tasks
@@ -140,7 +177,11 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Apply XP retune: pre-check SELECT → UPDATE `Character:ExpMultiplier` to `'2.0'` (ruleset_id=1) → post-check SELECT → `#reloadrulesworld` in-game; capture before/after output for PR | config-expert | Not Started | See `architect/architecture.md` Task 1 detailed brief |
+| A | Apply XP rate UPDATE: pre-check SELECT → UPDATE `Character:ExpMultiplier` to `'2.0'` (ruleset_id=1) → post-check SELECT → `#reloadrulesworld` in-game; capture before/after output for PR | config-expert | Not Started | See `architect/architecture.md` Task A detailed brief. Sequenced first; pre-rebuild. |
+| B | C++ refactor: mirror-pipeline approach across mob.h, mob.cpp/attack.cpp, companion.h, companion.cpp, exp.cpp:1196-1218, lua_companion.cpp; ruletypes.h `Companions:XPSharePct` default 50→100; AA-seam comment in `Companion::CalculateExp`. Build clean. | c-expert | Not Started | See `architect/architecture.md` Task B detailed brief. Depends on A only conventionally. |
+| C | Restart server stack: rebuild eqemu, then loginserver → world → 8 dynamic zone processes (`dynamic_01` through `dynamic_08`) per `MEMORY.md` startup order. Verify all 8 zones connect cleanly. | infra-expert | Not Started | Depends on B (clean build). See `architect/architecture.md` Task C detailed brief. |
+| D | Apply companion XPSharePct UPDATE: pre-check SELECT (expect `'50'`) → UPDATE to `'100'` → post-check SELECT → `#reloadrulesworld` in-game. Verify post-rebuild stack health before applying. | config-expert | Not Started | Depends on C. See `architect/architecture.md` Task D detailed brief. |
+| E | Validate against PRD's 15 numbered cases — kill XP rate (1-2), companion parity (3-6), flat-XP grants (7-9), untouched paths (10-15). Server-side validation; hand to user for in-game confirmation. | game-tester | Not Started | Depends on D. See `architect/architecture.md` Validation Plan section. |
 
 ---
 
@@ -190,6 +231,14 @@ _Key decisions made during this feature's development._
 | 6 | Scope expanded to include Companion XP Parity — companion must earn same per-share XP as player on every flat-XP event, in all group sizes 1+1 through 1+4 | user | 2026-04-27 | Companions are the signature feature for the 1–3 player server; current architectural ~50% gap is a feel and power-curve problem |
 | 7 | Companion XP parity refactor must leave AA-friendly seams; companion AAs explicitly out of scope this feature | user | 2026-04-27 | Avoid re-doing the parity work when companion AAs are added later |
 | 8 | PRD v2 (companion XP parity) approved with no lore concerns | game-designer + lore-master | 2026-04-27 | Companion system is wholly custom; no Classic-Luclin lore establishes companion advancement narrative; era compliance unaffected |
+| 9 | Companion XP parity approach: **Mirror Pipeline** — new `Companion::CalculateExp` mirrors `Client::CalculateExp` minus AA/race-class/leadership; called from `Companion::AddExperience(uint32 xp, uint8 conlevel)` | architect (ratifying c-expert proposal) | 2026-04-27 | Cleanest separation; quest::exp / Lua paths automatically benefit because multiplier applies inside AddExperience; alternative routings (polymorphic Client, pre-compute in SplitExp) had specific failures |
+| 10 | `Companions:XPSharePct` repurposed as **post-multiplier scalar** (default 100 = parity, clamp retained at 0-100); applied **inside `Companion::AddExperience`** after `CalculateExp` returns | architect (ratifying c-expert option B) | 2026-04-27 | Reuses existing rule with semantically-coherent meaning; config-expert verified rule is 100% custom (no stock-EQEmu compat concern); single application site ensures all entry points (group split, quest, Lua) receive scaling |
+| 11 | `GetConLevelModifierPercent` exposed via `exp.h` (NOT extracted to Mob static); single source of truth preserved with minimal refactor | architect (revised after c-expert second-round trace) | 2026-04-27 | c-expert source read confirmed the function is already a file-scope `static` in `exp.cpp:218`, not a Client method as initially assumed. Promoting to Mob static would have required touching mob.h/mob.cpp and updating callers — heavier refactor for no semantic gain. exp.h exposure is a one-line declaration. |
+| 12 | AA-extensibility seam is structural: future companion-AA feature adds `uint32& add_aaxp` out-parameter to `Companion::CalculateExp` and `Companion::AddAAExperience` method; no rule_values changes for AA in this feature; `Companions:` namespace reserved for future AA rules | architect (with config-expert) | 2026-04-27 | Mirrors Client::CalculateExp signature exactly; future feature can attach with two-line addition; PRD requires AA-friendliness without implementing AAs now |
+| 13 | Deployment sequencing: rate UPDATE → rebuild → restart → XPSharePct UPDATE → validation. XPSharePct UPDATE goes AFTER restart so its effect is observable as the parity activation, not muddied with prior pre-multiplier behavior | architect (with config-expert) | 2026-04-27 | Task A is harmless before rebuild; Task D effective only with new C++ in place; this ordering makes validation cause-and-effect clean |
+| 14 | Implementation team for v2: **c-expert + config-expert + infra-expert**; game-tester comes solo in Phase 5. Do NOT spawn lua-expert, perl-expert, data-expert, or protocol-agent — none have v2 work | architect | 2026-04-27 | Lua binding update is in C++; no schema changes; OP_ExpUpdate wire format unchanged (carries 0-330 ratio only) |
+| 15 | TWO companion XP dispatch sites identified — `exp.cpp:1196-1218` (group split) AND `attack.cpp:2791-2810` (solo-kill path). Both must be patched in v2. | c-expert (source grep) | 2026-04-27 | XPSharePct has exactly two readers across the codebase. Initial architecture pass missed the attack.cpp site; c-expert second-round trace caught it. Both sites apply the same fix (raw XP + conlevel pass-through). |
+| 16 | Process discipline: c-expert dev-notes pre-recorded architect "consensus" before architect had sent confirmations. Architect flagged this; c-expert corrected the audit trail. Going forward, only feedback actually received goes in dev-notes "Feedback Received" tables. | architect (process feedback) | 2026-04-27 | Audit trail integrity matters: if architect's call had differed from c-expert's proposal, dev-notes would have shown false consensus. Corrected via explicit "received date" annotations. |
 
 ---
 
