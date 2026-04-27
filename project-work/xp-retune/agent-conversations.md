@@ -52,9 +52,54 @@ _game-designer + lore-master exchanges during Phase 2._
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-_(Phase not yet started.)_
+### 2026-04-27 — Architect → config-expert: SQL + reload command verification
+
+**From:** architect → **To:** config-expert
+
+> Asked config-expert to confirm three points before freezing the architecture doc:
+> 1. The exact UPDATE statement (`UPDATE rule_values SET rule_value = '2' WHERE
+>    ruleset_id=1 AND rule_name='Character:ExpMultiplier'`) hits exactly one
+>    row, and the current row reads `'3'`.
+> 2. `Character:AAExpMultiplier` is also currently `'3'` for ruleset 1 (so the
+>    PRD's "AA stays at 3.0x" statement matches the live DB) and is **not**
+>    going to be touched by this change.
+> 3. `#reloadrules` is the correct GM command and propagates to all running
+>    zones (or whether `#reloadworld` is needed).
+>
+> Bonus: confirm `Character:ExpMultiplier` is not consumed by any quest XP path
+> (`quest::exp()`, task rewards) that would surprise the rollback criteria.
+
+**Response from** config-expert:
+
+> Validation complete:
+> - **Rule name and current values CONFIRMED** — `Character:ExpMultiplier` =
+>   `3.0` and `Character:AAExpMultiplier` = `3.0` on ruleset_id=1 (string
+>   format `'3.0'`, not `'3'`).
+> - **SQL syntax CONFIRMED** — forward UPDATE sets `'2.0'`, rollback sets
+>   `'3.0'`, both with the same scoped WHERE clause.
+> - **CORRECTION on reload command** — `#reloadrules` does **not** exist.
+>   Verified against `command_settings` and `zone/gm_commands/rules.cpp`. The
+>   actual commands are `#reloadallrules` (zone-local) and
+>   `#reloadrulesworld` (broadcast to all running zone processes). For an
+>   XP rule change across 8 dynamic zones we want `#reloadrulesworld`.
+> - **Inactive ruleset note** — ruleset_id=10 also has
+>   `Character:ExpMultiplier = 3.0` but is not loaded by any zone; the
+>   WHERE `ruleset_id = 1` is correctly scoped.
+> - **Quest XP path confirmation** — `Character:ExpMultiplier` is consumed
+>   only on the kill-XP path; quest grants and task rewards do not route
+>   through it. Companion XP rules are independent custom rules.
+
+**Outcome:** Two corrections incorporated into architecture.md:
+1. Reload command upgraded from `#reloadrules` (nonexistent) to
+   `#reloadrulesworld` (correct broadcast variant).
+2. Rule values quoted as `'2.0'` / `'3.0'` to match the existing string
+   format rather than `'2'` / `'3'`.
+
+Architecture phase plan finalized. Single implementation task assigned to
+config-expert.
 
 ---
+
 
 ## Implementation Team Conversations
 
@@ -72,6 +117,7 @@ This table is the quick-reference for anyone catching up._
 | # | Decision | Agents Involved | Date | Context |
 |---|----------|----------------|------|---------|
 | 1 | PRD approved with no lore changes; pure numerical rule tune confirmed era-safe | game-designer, lore-master | 2026-04-27 | Design phase sign-off |
+| 2 | Reload command corrected from `#reloadrules` to `#reloadrulesworld`; rule_value format aligned to `'2.0'`/`'3.0'` | architect, config-expert | 2026-04-27 | Architecture phase verification against live DB and `zone/gm_commands/rules.cpp` |
 
 ---
 
