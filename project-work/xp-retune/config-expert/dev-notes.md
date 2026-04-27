@@ -440,3 +440,44 @@ The architect's sequencing rationale states: "Setting the rule to 100 BEFORE the
 This is still safe — no data corruption, no crash risk, no semantic inversion. The architect's "either order works for safety" conclusion is correct. Post-restart sequencing is the cleaner approach regardless, because the behavior change is unambiguous (parity via the new code) and the verification step is clean. Flagging the rationale error only so the architecture doc doesn't contain a misleading explanation that would confuse future readers.
 
 No change to the implementation plan. Task A still runs post-restart as specified.
+
+---
+
+## Stage 4: Build — Implementation Log
+
+### Task A: Character:ExpMultiplier 3.0 → 2.0 (2026-04-27)
+
+**Status:** Complete
+
+**Pre-check output (2026-04-27):**
+```
+ruleset_id  rule_name                   rule_value
+1           Character:AAExpMultiplier   3.0
+1           Character:ExpMultiplier     3.0
+```
+
+**UPDATE executed:**
+```sql
+UPDATE rule_values SET rule_value = '2.0'
+WHERE ruleset_id = 1 AND rule_name = 'Character:ExpMultiplier';
+```
+No error. 1 row affected.
+
+**Post-check output (2026-04-27):**
+```
+ruleset_id  rule_name                   rule_value
+1           Character:AAExpMultiplier   3.0
+1           Character:ExpMultiplier     2.0
+```
+
+Guard confirmed: `Character:AAExpMultiplier` unchanged at `3.0`.
+
+**Live reload:** `#reloadrulesworld` must be run in-game by a GM (or is applied automatically on next server start). Task A is committed; reload is a separate operational step.
+
+**Migration artifact:** `config-expert/context/task-a-migration.sql`
+
+---
+
+### Task D: Companions:XPSharePct 50 → 100 (PENDING — awaiting infra-expert Task C completion)
+
+**Status:** Not Started — blocked on infra-expert confirming new binary is running

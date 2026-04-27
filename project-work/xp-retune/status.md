@@ -15,7 +15,7 @@
 | Architecture v1 | architect + protocol-agent + config-expert | Complete (superseded by v2 scope expansion) | 2026-04-27 | 2026-04-27 |
 | Design v2 (companion XP parity) | game-designer + lore-master (team `xp-retune-design-v2`) | Complete | 2026-04-27 | 2026-04-27 |
 | Architecture v2 (re-triage) | architect + c-expert + config-expert (team `xp-retune-architecture-v2`) | Complete — pending user review | 2026-04-27 | 2026-04-27 |
-| Implementation | _implementation team_ | Not Started | | |
+| Implementation | _implementation team_ | In Progress | 2026-04-27 | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -177,7 +177,7 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| A | Apply XP rate UPDATE: pre-check SELECT → UPDATE `Character:ExpMultiplier` to `'2.0'` (ruleset_id=1) → post-check SELECT → `#reloadrulesworld` in-game; capture before/after output for PR | config-expert | Not Started | See `architect/architecture.md` Task A detailed brief. Sequenced first; pre-rebuild. |
+| A | Apply XP rate UPDATE: pre-check SELECT → UPDATE `Character:ExpMultiplier` to `'2.0'` (ruleset_id=1) → post-check SELECT → `#reloadrulesworld` in-game; capture before/after output for PR | config-expert | Complete (2026-04-27) | Pre-check: `'3.0'`; UPDATE confirmed 1 row; Post-check: `'2.0'`. AAExpMultiplier guard: `'3.0'` unchanged. Reload needed in-game. Migration artifact at `config-expert/context/task-a-migration.sql`. |
 | B | C++ refactor: mirror-pipeline approach across mob.h, mob.cpp/attack.cpp, companion.h, companion.cpp, exp.cpp:1196-1218, lua_companion.cpp; ruletypes.h `Companions:XPSharePct` default 50→100; AA-seam comment in `Companion::CalculateExp`. Build clean. | c-expert | Not Started | See `architect/architecture.md` Task B detailed brief. Depends on A only conventionally. |
 | C | Restart server stack: rebuild eqemu, then loginserver → world → 8 dynamic zone processes (`dynamic_01` through `dynamic_08`) per `MEMORY.md` startup order. Verify all 8 zones connect cleanly. | infra-expert | Not Started | Depends on B (clean build). See `architect/architecture.md` Task C detailed brief. |
 | D | Apply companion XPSharePct UPDATE: pre-check SELECT (expect `'50'`) → UPDATE to `'100'` → post-check SELECT → `#reloadrulesworld` in-game. Verify post-rebuild stack health before applying. | config-expert | Not Started | Depends on C. See `architect/architecture.md` Task D detailed brief. |
