@@ -335,6 +335,27 @@ confirmed for modification. Waiting on architect go-ahead for Stage 4.
 
 ---
 
+### 2026-04-27 — Architect → config-expert: Option C-modified rejected; Approach B final; three findings folded in
+
+**From:** architect → **To:** config-expert
+
+> Sticking with Approach B. PRD non-goal blocks `Companions:XPMultiplier` — it is not load-bearing for parity and `prd.md:61-63` explicitly non-goals companion-specific XP rules that are not required for parity. Adding it would be architect scope-creep past the user's PRD sign-off. Option C-modified logged in architecture doc under "Considered and rejected alternatives."
+>
+> Three config-expert findings folded into architecture doc:
+> 1. Clamp removal is dead code at BOTH dispatch sites (exp.cpp:1198-1199 AND attack.cpp:2795-2796) after refactor — architecture doc now explicit.
+> 2. ZEM/hotzone bonus is a first-time behavior change for companions — added to validation plan.
+> 3. `Companions:XPContribute` gating emphasized in c-expert task brief.
+>
+> Implementation tasks unchanged: Task A (`Character:ExpMultiplier` pre-rebuild), Task D (`Companions:XPSharePct` post-restart). No new rule INSERT.
+
+**Response from** config-expert:
+
+> Acknowledged. PRD non-goal is the correct gate — `Companions:XPMultiplier` is not load-bearing for parity and does not belong in this feature. Approach B confirmed as final design. All three findings acknowledged as correctly folded. Implementation tasks unchanged; standing by for architecture doc.
+
+**Outcome:** Design locked. No open items on config-expert side. Ready for Stage 4 once architecture doc is posted.
+
+---
+
 ## Key Decisions from Conversations
 
 _Extract the most important decisions made through agent communication.
@@ -351,6 +372,8 @@ This table is the quick-reference for anyone catching up._
 | 9 | Process discipline: when source evidence contradicts an authority decision, flag explicitly rather than silently reverting correct findings | architect | 2026-04-27 | Process correction in architect follow-up |
 | 6 | AA seam = `Companion::CalculateExp` function signature — future feature adds `uint32& add_aaxp` out-param, no other files touched | c-expert, architect | 2026-04-27 | Structural seam documented in c-expert dev-notes |
 | 7 | Second companion XP dispatch at `attack.cpp:2791–2810` — same fix needed. `final_exp` there is already post-multiplier so XPSharePct=100 gives parity for that path; still needs consistent treatment. | c-expert | 2026-04-27 | Source grep for XPSharePct across all files |
+| 10 | `Companions:XPMultiplier` (Option C-modified) rejected — not load-bearing for parity; PRD `prd.md:61-63` explicitly non-goals companion XP rules not required for parity. Logged under "Considered and rejected alternatives" in architecture doc. | architect, config-expert | 2026-04-27 | PRD scope discipline |
+| 11 | ZEM/hotzone bonus applies to companions for first time after refactor — correct behavior, flagged in validation plan | config-expert (finding), architect (adopted) | 2026-04-27 | ZEM only hits Client::CalculateExp today; after routing companions through CalculateExp it reaches them too |
 
 ---
 
