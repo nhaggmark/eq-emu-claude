@@ -263,3 +263,89 @@ The architecture approach is the architect's call. Config-expert's job is:
    (INSERT or UPDATE, with exact values to be provided by architect)
 
 No rule_values changes are made until Stage 4 (implementation phase).
+
+---
+
+## Stage 2–3 (v2 Round 2): Architect Deep-Dive — Full Q&A Findings
+
+> **Triggered by:** Architect detailed questions on all six topics.
+> **Date:** 2026-04-27
+> **Sources:** Live DB query, grep ruletypes.h, grep zone/attack.cpp, zone/exp.cpp, zone/companion.cpp
+
+### Q1: Companions:XPSharePct — complete current state
+
+- **Current value (ruleset_id=1):** `50` (string `'50'` in DB, integer at runtime via `RuleI`)
+- **ruletypes.h definition:** `RULE_INT(Companions, XPSharePct, 50, "Percentage of a companion's XP share that actually goes to the companion (remainder to player pool)")` — type INT, default 50, no explicit bounds documented in the macro
+- **C++ consumers — TWO, not one:**
+  1. `eqemu/zone/exp.cpp:1197` — group XP path (`Group::SplitExp`)
+  2. `eqemu/zone/attack.cpp:2794` — solo kill XP path (solo companion receives from killer's final_exp)
+  Both sites have identical clamp logic: `if (xp_share_pct < 0) { xp_share_pct = 0; } if (xp_share_pct > 100) { xp_share_pct = 100; }`
+  The cap must be removed or raised in BOTH files for any value above 100 to take effect.
+- **ruleset_id=10 (inactive "EQEmu_Default"):** No `Companions:*` rules at all. Zero rows. This is a fully custom rule category — no stock baseline to worry about.
+- **database_update_manifest.h:** Rule was seeded via the manifest as `'50'` with the same notes text. This confirms it was always custom.
+
+### Q2: Cap-vs-repurpose-vs-new-rule recommendation
+
+**Option A (delete clamp, leave rule alone):** Requires updating BOTH exp.cpp:1197-1199 and attack.cpp:2794-2796. Semantics become "0–N% scaler" with no upper bound — surprising and hard to reason about at values >100.
+
+**Option B (repurpose XPSharePct as post-multiplier, default 100):** The notes say "remainder to player pool" — that framing breaks if the rule becomes a post-multiplier scaler instead of a pre-multiplier percentage. Reinterpreting a rule with existing semantics is confusing. The live value is `50`; an operator who set this intentionally would see their companion XP double on next reload without touching anything.
+
+**Option C (introduce Companions:XPMultiplier, keep XPSharePct as-is at 100 for parity):** Cleanest. `XPSharePct` stays semantically coherent ("what % of the split goes to the companion") but is set to `100` so the full per-member share reaches the companion. `XPMultiplier` (RULE_REAL, default 1.0) is a post-`CalculateExp` scaler that can go above 1.0 if a future operator wants companions to earn more than players. The two rules are orthogonal — one gates the split, one scales after the multiplier pipeline.
+
+**Config-expert recommendation: Option C, with a modification.**
+The cleanest long-term design is:
+- Set `Companions:XPSharePct` to `100` in rule_values (operator-visible: "companions get their full share")
+- Remove the cap in exp.cpp and attack.cpp (both sites)
+- Add `RULE_REAL(Companions, XPMultiplier, 1.0, ...)` in ruletypes.h as a post-CalculateExp scaler, INSERT into rule_values
+- The parity refactor routes companions through `CalculateExp` (c-expert's job); `XPMultiplier` is the knob for any future deviation from parity without a code change
+
+This also means no operator confusion: `XPSharePct=100` means "full share" (its natural maximum), and `XPMultiplier=1.0` means "no extra scaling" (neutral default). Both are self-documenting.
+
+**Sole risk to flag:** Adding a new rule to `ruletypes.h` requires a C++ rebuild (confirmed below in Q5). The INSERT for `Companions:XPMultiplier` into rule_values ships in the same rebuild+restart window.
+
+### Q3: AA-seam rule reservations (document, do NOT add now)
+
+Suggested names that fit the existing `Companions:` convention:
+
+| Rule | Type | Default | Purpose |
+|------|------|---------|---------|
+| `Companions:AAExpEnabled` | RULE_BOOL | false | Master toggle: when true, route a fraction of companion XP into AA accrual |
+| `Companions:AAExpPct` | RULE_INT | 0 | Percentage of companion XP that becomes AA XP (0 = all regular XP; analogous to how live EQ splits XP at player's chosen ratio) |
+
+Naming notes:
+- `AAExpPct` over `AAExpSharePct` — keeps it parallel to `XPDeathPenaltyPct` (single-word noun + Pct suffix)
+- Avoid `AAExpMultiplier` — that implies scaling above the parity amount; the future feature probably wants a split ratio, not a multiplier
+- The attach point in `companion.cpp` is `Companion::AddExperience` — a future feature wraps or replaces this call with the AA split logic when `AAExpEnabled` is true
+
+These names are not reserved in code today — the future feature inserts them into `ruletypes.h` at implementation time. Document them in the architecture plan so the name is stable.
+
+### Q4: Other Companions:* rules that might overlap
+
+Full XP-adjacent rule inventory (from ruletypes.h):
+- `Companions:XPContribute` (BOOL, true) — gates whether companions are counted in group split at all. If false, they're excluded from `Group::SplitExp` entirely. The parity refactor must still gate on this rule.
+- `Companions:XPSharePct` (INT, 50) — the rule being changed
+- `Companions:XPDeathPenaltyPct` (INT, 10) — death penalty only; unrelated to parity
+
+No per-zone or per-character overrides affect companion XP. The `zone_exp_multiplier` (ZEM) is applied inside `Client::CalculateExp` (exp.cpp:433-434) on the player path — it does NOT reach the companion path currently. This is part of the parity gap the refactor fixes: after routing companions through `CalculateExp`, the ZEM will apply to them too. That is the correct behavior (companions should benefit from hotzone bonuses just as players do) and is consistent with the PRD.
+
+### Q5: Does #reloadrulesworld pick up a new rule without rebuild?
+
+**No. Adding a rule to ruletypes.h requires a C++ rebuild.**
+
+Rules are defined via X-macros in `common/ruletypes.h`. The `RuleManager` expands these macros at compile time to build the rule registry. `#reloadrulesworld` only re-reads `rule_values` from the DB into the already-compiled registry — it cannot add new rule slots that don't exist in the binary. If `Companions:XPMultiplier` is added to `ruletypes.h` but the binary isn't rebuilt, the rule is simply absent from the registry and `RuleR(Companions, XPMultiplier)` would return the default (1.0) regardless of what's in `rule_values`.
+
+**Sequencing implication:** For Option C, the INSERT for `Companions:XPMultiplier` into `rule_values` must happen in the same maintenance window as the rebuild+restart — or after. Inserting it before the rebuild is harmless (the row sits unused in the DB) but serves no purpose. Recommend: INSERT as part of the rebuild+restart window so the rule is live immediately when zones start.
+
+### Q6: v1 rate-change task sequencing
+
+**Yes, v1 Task 1 is still valid.** The `Character:ExpMultiplier` 3.0→2.0 UPDATE is independent of the C++ refactor.
+
+**Recommended order (single maintenance window):**
+1. Apply `Character:ExpMultiplier` UPDATE + `#reloadrulesworld` (no downtime — can do this while building)
+2. C++ build completes
+3. Restart server processes (loginserver → world → 8 zones)
+4. Zones come up with new binary + new rule in registry + already-live rate change
+
+There is no reason to reverse this order. The parity refactor does not depend on the rate change, and the rate change does not depend on the refactor. Doing the rule UPDATE first means the player immediately sees 2x kill XP as soon as `#reloadrulesworld` runs, even before the restart. The companion parity improvement lands at restart. This is the cleanest UX — no window where the player has 3x AND the companion is broken.
+
+**If shipping in separate windows:** Rule UPDATE can land any time via `#reloadrulesworld`. Companion parity requires rebuild + full restart. Note in the architecture plan that game-tester must validate companion parity AFTER the restart, not after the rule reload.

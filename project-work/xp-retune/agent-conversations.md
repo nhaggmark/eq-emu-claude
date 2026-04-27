@@ -153,6 +153,40 @@ work from.
 
 ---
 
+### 2026-04-27 — Architect → config-expert: Six-question deep dive on rule strategy
+
+**From:** architect → **To:** config-expert
+
+> Detailed questions on six topics:
+> 1. `Companions:XPSharePct` current state — value, C++ consumers, ruletypes.h definition, ruleset_id=10 presence
+> 2. Option A/B/C recommendation for cap-vs-repurpose-vs-new-rule decision
+> 3. AA-seam rule names to reserve for documentation (not to add now)
+> 4. Other `Companions:*` rules that might inadvertently overlap
+> 5. Whether `#reloadrulesworld` picks up a new rule without a rebuild
+> 6. Whether v1 Task 1 is still valid and preferred sequencing
+
+**Response from** config-expert:
+
+> **Q1 — XPSharePct complete state:**
+> Current value ruleset_id=1: `50`. ruletypes.h: `RULE_INT(Companions, XPSharePct, 50, ...)` — type INT, default 50, no explicit bounds in macro. TWO C++ consumers (not one): `exp.cpp:1197` (group path `Group::SplitExp`) AND `attack.cpp:2794` (solo kill path). Both have identical `< 0 → 0` and `> 100 → 100` clamps. Cap must be removed in BOTH files. ruleset_id=10: zero `Companions:*` rows — fully custom category, no stock baseline.
+>
+> **Q2 — Recommendation: Option C (modified).**
+> Option B reinterprets an existing rule whose notes say "remainder to player pool" — any operator who tuned `XPSharePct` would see companion XP double on next reload. Option A leaves semantics unbounded and confusing above 100. Recommended: (1) set `XPSharePct` to `100` in rule_values (its natural maximum — "full share"), (2) remove cap in both exp.cpp and attack.cpp, (3) add `RULE_REAL(Companions, XPMultiplier, 1.0, ...)` in ruletypes.h and INSERT into rule_values. Two rules become orthogonal: `XPSharePct` gates the split (100 = parity), `XPMultiplier` scales post-pipeline (1.0 = no extra scale). Both self-documenting.
+>
+> **Q3 — AA-seam rule names to reserve (document only, do not add now):**
+> `Companions:AAExpEnabled` (RULE_BOOL, false) as master toggle, `Companions:AAExpPct` (RULE_INT, 0) as ratio of companion XP that becomes AA XP. Attach point: `Companion::AddExperience` (companion.cpp:3341).
+>
+> **Q4 — Other overlapping rules:**
+> `Companions:XPContribute` (BOOL, true) gates companion inclusion in group split — parity refactor must still gate on this. ZEM (`zone_exp_multiplier`) currently only hits `Client::CalculateExp` — does NOT reach companion path. After routing companions through `CalculateExp`, ZEM applies to companions too; that is correct behavior (hotzone bonuses for companions).
+>
+> **Q5 — New rule requires rebuild.** `#reloadrulesworld` only re-reads `rule_values` into the already-compiled registry. New rule in ruletypes.h needs C++ rebuild. INSERT for `Companions:XPMultiplier` ships in the rebuild+restart window.
+>
+> **Q6 — v1 Task 1 still valid.** Recommended single-window order: (1) `Character:ExpMultiplier` UPDATE + `#reloadrulesworld` while building, (2) build completes, (3) restart processes. Rate is live immediately; parity lands at restart.
+
+**Outcome:** All six questions answered from live DB + source grep. Config-expert recommendation is Option C (modified): `XPSharePct` → 100 in rule_values, cap removed in both exp.cpp:1197-1199 and attack.cpp:2794-2796, new `Companions:XPMultiplier` RULE_REAL(1.0) added to ruletypes.h and inserted into rule_values in the rebuild+restart window. AA-seam names documented. Sequencing confirmed. Dev-notes updated and committed.
+
+---
+
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._
