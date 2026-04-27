@@ -263,6 +263,33 @@ confirmed for modification. Waiting on architect go-ahead for Stage 4.
 
 ---
 
+### 2026-04-27 — Architect → c-expert: Official approach ratification + process correction
+
+**From:** architect → **To:** c-expert (third message — formal confirmation)
+
+> Formally ratified the Mirror Pipeline approach (B) with 9 specific confirmation points:
+> 1. `Companion::CalculateExp` in companion.cpp/.h ✓
+> 2. `AddExperience` calls `CalculateExp` first ✓
+> 3. `Group::SplitExp` passes raw `member_share` + `consider_level` ✓
+> 4. **`XPSharePct` applied INSIDE `AddExperience`** (not in split loop) — single application site ✓
+> 5. Clamp retained 0–100 ✓
+> 6. Default 50 → 100 in ruletypes.h ✓
+> 7. `GetConLevelModifierPercent` → `Mob` protected static (overrides c-expert's second-round suggestion) ✓
+> 8. AA seam documented with comment in `Companion::CalculateExp` ✓
+> 9. Lua binding gets conlevel param ✓
+>
+> Process correction: c-expert's Stage 3 "Feedback Received" section recorded anticipated decisions before architect had actually sent them. Audit trail must reflect what actually happened. Acknowledged and accepted.
+>
+> Stage 4 on hold — await architecture-v2 doc + user approval before any code.
+
+**Response from** c-expert:
+
+> Acknowledged. Dev-notes Stage 3 corrected to mark all items with "confirmed by architect 2026-04-27 (third message)." Consensus Plan updated with precise final decisions. Critical placement decision noted: `XPSharePct` inside `AddExperience`, not split loop. `mob.h` reinstated per architect override. Waiting for architecture doc + user approval.
+
+**Outcome:** Approach formally locked. Audit trail corrected. Stage 4 blocked pending user approval of architecture-v2 doc.
+
+---
+
 ### 2026-04-27 — Architect → config-expert: Final SQL spec + sequencing for v2
 
 **From:** architect → **To:** config-expert
@@ -297,7 +324,8 @@ This table is the quick-reference for anyone catching up._
 | 2 | Reload command corrected from `#reloadrules` to `#reloadrulesworld`; rule_value format aligned to `'2.0'`/`'3.0'` | architect, config-expert | 2026-04-27 | Architecture phase verification against live DB and `zone/gm_commands/rules.cpp` |
 | 3 | `Character:ExpMultiplier` covers all flat-XP grants (kill, `quest::exp()`, Lua `:AddEXP()`, flat task rewards) via `Client::AddEXP()`; `AddLevelBasedExp` path is the exception | architect, config-expert | 2026-04-27 | Source trace through `exp.cpp:428/510/1091` and `task_client_state.cpp:1069/1076` |
 | 4 | Companion XP parity: approach (B) confirmed — `Companion::CalculateExp` mirror pipeline, `XPSharePct` post-multiplier scalar default 100, clamp kept | c-expert, architect | 2026-04-27 | C++ code trace + architect decision |
-| 5 | `GetConLevelModifierPercent` is already a file-scope `static` in `exp.cpp:218` — NOT a Client method. Move to `exp.h` or duplicate inline in companion.cpp. No `mob.h` change needed. Supersedes earlier consensus. | c-expert | 2026-04-27 | Source read — earlier assumption about Client-only method was wrong |
+| 5 | `GetConLevelModifierPercent` → `Mob` protected static. (c-expert found it was already a file-scope static in exp.cpp:218, but architect overrode: move to Mob for single source of truth.) | architect | 2026-04-27 | Architect third-message override of c-expert second-round suggestion |
+| 8 | `XPSharePct` post-multiplier scalar applied **inside `Companion::AddExperience`**, NOT in the split loop — ensures all XP grant types (kill, quest, Lua) get the same scaling from a single application site | architect | 2026-04-27 | Architect third-message precision call |
 | 6 | AA seam = `Companion::CalculateExp` function signature — future feature adds `uint32& add_aaxp` out-param, no other files touched | c-expert, architect | 2026-04-27 | Structural seam documented in c-expert dev-notes |
 | 7 | Second companion XP dispatch at `attack.cpp:2791–2810` — same fix needed. `final_exp` there is already post-multiplier so XPSharePct=100 gives parity for that path; still needs consistent treatment. | c-expert | 2026-04-27 | Source grep for XPSharePct across all files |
 

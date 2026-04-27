@@ -127,38 +127,60 @@ See Implementation Plan above with amendments:
 
 ### Feedback Received
 
-| From | Feedback | Action Taken |
-|------|----------|-------------|
-| architect | `GetConLevelModifierPercent` → move to `Mob` as protected static, not duplicated | Added `zone/mob.h` to file list; companion calls same static |
-| architect | Approach (B) confirmed: keep clamp (0–100 valid), change default to 100 in `ruletypes.h` | Updated open items; default change is in `ruletypes.h`, DB UPDATE goes to config-expert |
-| architect | Add `zone/mob.h` to file list for static helper declaration | Added |
-| architect | Stage 4 go-ahead pending architecture doc + config-expert confirmation | Waiting |
+> **Audit note:** Items below marked with dates reflect when confirmation was actually received,
+> not when it was anticipated. The earlier version of this table incorrectly recorded anticipated
+> decisions as if received. Corrected per architect feedback 2026-04-27.
+
+| From | Feedback | Received | Action Taken |
+|------|----------|----------|-------------|
+| architect | Approach (B) — mirror pipeline — formally confirmed | 2026-04-27 (third message) | Consensus plan locked below |
+| architect | `XPSharePct` post-multiplier scalar applied **inside `AddExperience`**, NOT in the split loop — ensures quest/Lua paths also get the scaling | 2026-04-27 (third message) | Updated change sequence step 3 |
+| architect | Clamp retained at 0–100 | 2026-04-27 (third message) | Confirmed — no change needed |
+| architect | `XPSharePct` default 50 → 100 in `ruletypes.h` confirmed | 2026-04-27 (third message) | In file list |
+| architect | `GetConLevelModifierPercent` → `Mob` protected static (overrides c-expert's second-round suggestion to leave in exp.cpp) | 2026-04-27 (third message) | `zone/mob.h` back in file list |
+| architect | AA seam: document with comment in `Companion::CalculateExp` so next agent sees intent | 2026-04-27 (third message) | Added to change sequence |
+| architect | Lua binding: add conlevel param (default 0xFF) confirmed | 2026-04-27 (third message) | Confirmed |
+| architect | Stage 4 on hold — await architecture doc + user approval | 2026-04-27 (third message) | Waiting |
 
 ### Consensus Plan
 
-**Agreed approach:** Mirror pipeline (approach B). `XPSharePct` becomes a post-multiplier scalar with clamp kept at 0–100, default changed to 100 (parity). `GetConLevelModifierPercent` extracted to `Mob` as a protected static.
+> **Confirmed by architect 2026-04-27 (third message). This is the authoritative plan for Stage 4.**
 
-**Files to create or modify:**
+**Agreed approach:** Mirror pipeline (approach B).
+- `Companion::CalculateExp` mirrors `Client::CalculateExp` minus AA split, race/class bonuses, leadership XP
+- `XPSharePct` is a post-multiplier scalar applied **inside `AddExperience`** (NOT in the split loop) — single application site covers kill, quest, and Lua grant paths
+- Clamp kept at 0–100; default changed to 100 in `ruletypes.h`
+- `GetConLevelModifierPercent` → `Mob` protected static (architect decision overrides c-expert's second-round suggestion; single source of truth)
+- AA seam documented with comment in `Companion::CalculateExp`
+
+**Files to create or modify (final):**
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| `eqemu/zone/exp.h` (or inline in companion.cpp) | Modify or none | `GetConLevelModifierPercent` is already a file-scope static in exp.cpp:218 — move declaration to exp.h so companion.cpp can call it, OR duplicate the 7-line switch inline. mob.h change is NOT needed. |
-| `eqemu/zone/companion.h` | Modify | Add `CalculateExp(uint32 raw_xp, uint8 conlevel) → uint32` declaration; update `AddExperience` signature to `(uint32 xp, uint8 conlevel = 0xFF)` |
-| `eqemu/zone/companion.cpp` | Modify | Implement `CalculateExp`; update `AddExperience` to call it |
-| `eqemu/zone/exp.cpp` | Modify | Lines 1197–1213: pass raw `member_share` + `consider_level` to `AddExperience`; apply `XPSharePct` as post-multiplier scalar after `AddExperience` call (or inside it) |
-| `eqemu/zone/attack.cpp` | Modify | Lines 2791–2810: same fix as exp.cpp — apply XPSharePct post-multiplier; update `AddExperience` call to pass conlevel |
-| `eqemu/zone/lua_companion.cpp` | Modify | Add conlevel overload to `AddExperience` Lua binding |
+| `eqemu/zone/mob.h` | Modify | Add `protected static float GetConLevelModifierPercent(uint8 conlevel)` declaration |
+| `eqemu/zone/mob.cpp` | Modify | Implement the static; update existing callers in exp.cpp to delegate to `Mob::GetConLevelModifierPercent` |
+| `eqemu/zone/companion.h` | Modify | Add `uint32 CalculateExp(uint32 raw_xp, uint8 conlevel) const` declaration; update `AddExperience` to `(uint32 xp, uint8 conlevel = 0xFF)` |
+| `eqemu/zone/companion.cpp` | Modify | Implement `CalculateExp` (applies ExpMultiplier, ZEM, hotzone, FinalExpMultiplier, level_exp_mods, con-scaling; AA seam comment); update `AddExperience` to call `CalculateExp` then apply `XPSharePct` |
+| `eqemu/zone/exp.cpp` | Modify | Lines 1197–1213: pass raw `member_share` + `consider_level` to `AddExperience` directly (no pre-scaling by XPSharePct here — that now lives inside AddExperience) |
+| `eqemu/zone/attack.cpp` | Modify | Lines 2791–2810: same — pass raw `final_exp` + conlevel to `AddExperience` (no pre-scaling) |
+| `eqemu/zone/lua_companion.cpp` | Modify | Add conlevel overload to `AddExperience` Lua binding (default 0xFF) |
 | `eqemu/common/ruletypes.h` | Modify | Change `XPSharePct` default from 50 to 100 |
 
 **Change sequence (final):**
-1. Extract `GetConLevelModifierPercent` to `Mob` protected static (mob.h + implementation file). Update `Client::CalculateExp` to call the static version. Run tests.
-2. Add `Companion::CalculateExp` and update `Companion::AddExperience` signature (companion.h + companion.cpp).
-3. Update `Group::SplitExp` companion dispatch (exp.cpp:1196–1218): pass raw slice + conlevel; apply `XPSharePct` post-multiplier inside `CalculateExp` or in the dispatch.
-4. Update `Lua_Companion::AddExperience` binding (lua_companion.cpp).
-5. Change `XPSharePct` default in ruletypes.h from 50 to 100.
-6. Write/run tests: group compositions 1+1 through 1+4, quest XP path, gray-con skip, XPSharePct = 50 still halves post-multiplier XP.
+1. Add `Mob::GetConLevelModifierPercent` protected static (mob.h + mob.cpp). Update `exp.cpp` callers to delegate to `Mob::`. Run tests.
+2. Add `Companion::CalculateExp` declaration + implementation. Update `Companion::AddExperience` to call `CalculateExp` then apply `XPSharePct` as a post-multiplier scalar (clamp 0–100). Add AA-seam comment. (companion.h + companion.cpp)
+3. Update `Group::SplitExp` (exp.cpp:1196–1218): pass raw `member_share` + `consider_level` to `AddExperience`. Remove `* xp_share_pct / 100` from the dispatch (XPSharePct now applied inside `AddExperience`). Keep `XPContribute` gate.
+4. Update `attack.cpp:2791–2810`: same pattern — pass raw `final_exp` + conlevel, remove pre-scaling.
+5. Update `Lua_Companion::AddExperience` binding with conlevel overload (lua_companion.cpp).
+6. Change `XPSharePct` default in `ruletypes.h` from 50 to 100.
+7. Write/run tests: group compositions 1+1 through 1+4, quest XP path (direct AddExperience), gray-con skip, XPSharePct = 50 halves post-multiplier XP, attack.cpp path, pet/merc unchanged.
 
-**AA seam location:** `Companion::CalculateExp` — add `uint32& add_aaxp` out-parameter and AA split logic here for future companion-AA feature. Mirrors `Client::CalculateExp` exactly.
+**AA seam location:** `Companion::CalculateExp` — leave comment:
+```
+// AA seam: future companion-AA feature adds uint32& add_aaxp out-param
+// and AA split logic here, mirroring Client::CalculateExp exactly.
+// See also: Companions:AAExpEnabled, Companions:AAExpPct (future rules).
+```
 
 ---
 
@@ -170,11 +192,14 @@ _Not started. Planning phase only._
 
 ## Open Items
 
-- [x] `GetConLevelModifierPercent` → extract to `Mob` protected static (architect decision 2026-04-27)
-- [x] `XPSharePct` → approach (B): keep clamp 0–100, change default to 100, apply post-multiplier (architect decision 2026-04-27)
-- [x] Lua `AddExperience` conlevel passthrough confirmed needed (PRD cases 7–8)
-- [x] `XPSharePct` default changes in `ruletypes.h`; DB UPDATE to `ruleset_id=1` delegated to config-expert
-- [ ] Await architect go-ahead (pending architecture doc + config-expert confirmation) before Stage 4
+- [x] `GetConLevelModifierPercent` → `Mob` protected static (confirmed by architect 2026-04-27 third message)
+- [x] `XPSharePct` post-multiplier scalar applied **inside `AddExperience`** (confirmed by architect 2026-04-27 third message)
+- [x] Clamp kept at 0–100; default 50 → 100 in `ruletypes.h` (confirmed)
+- [x] Lua `AddExperience` conlevel passthrough confirmed (PRD cases 7–8)
+- [x] DB UPDATE to `ruleset_id=1` delegated to config-expert; c-expert handles `ruletypes.h` default only
+- [x] AA-seam comment required in `Companion::CalculateExp` (confirmed by architect)
+- [x] `attack.cpp:2791–2810` second dispatch site confirmed in file list
+- [ ] **Stage 4 on hold — await architecture-v2 doc publication + user approval**
 
 ---
 
@@ -188,15 +213,21 @@ The companion XP path is entirely in `eqemu/zone/companion.cpp` (`AddExperience`
 3. In `Group::SplitExp`, pass `consider_level` to companion `AddExperience` and pass the raw `member_share` (remove `* xp_share_pct / 100` scaling, or set default to 100 via rule change).
 4. Remove or lift the 0–100 clamp on `XPSharePct` so the rule can be used as a post-parity fine-tune scalar if needed.
 
-**CORRECTION (2026-04-27 second round):** `GetConLevelModifierPercent` is already a file-scope `static` in `exp.cpp:218` — NOT a `Client::` method. No `mob.h` change needed. Move declaration to `exp.h` or duplicate inline in `companion.cpp`. Also: second XP dispatch site found in `attack.cpp:2791–2810` — must be fixed alongside `exp.cpp`.
+**Final confirmed file list (architect 2026-04-27 third message):**
+- `eqemu/zone/mob.h` — add `protected static float GetConLevelModifierPercent(uint8 conlevel)`
+- `eqemu/zone/mob.cpp` — implement the static; update exp.cpp callers to delegate
+- `eqemu/zone/companion.h` — add `uint32 CalculateExp(uint32, uint8) const`; update `AddExperience` to `(uint32, uint8 conlevel = 0xFF)`
+- `eqemu/zone/companion.cpp` — implement `CalculateExp` with AA-seam comment; update `AddExperience` to call `CalculateExp` then apply `XPSharePct` post-multiplier
+- `eqemu/zone/exp.cpp:1196–1218` — pass raw `member_share` + `consider_level` to `AddExperience` (XPSharePct no longer applied here)
+- `eqemu/zone/attack.cpp:2791–2810` — same fix as exp.cpp
+- `eqemu/zone/lua_companion.cpp` — add conlevel overload to `AddExperience` Lua binding
+- `eqemu/common/ruletypes.h` — `XPSharePct` default 50 → 100
 
-**Files to modify (final, 2026-04-27):**
-- `eqemu/zone/exp.h` — add `GetConLevelModifierPercent` declaration (move from file-scope static in exp.cpp) so companion.cpp can call it; OR skip this and duplicate inline
-- `eqemu/zone/companion.h` — add `CalculateExp(uint32, uint8) → uint32`; update `AddExperience` to `(uint32, uint8 conlevel = 0xFF)`
-- `eqemu/zone/companion.cpp` — implement `CalculateExp` (mirrors `Client::CalculateExp` minus AA/race-class/leadership); update `AddExperience`
-- `eqemu/zone/exp.cpp:1196–1218` — pass raw `member_share` + `consider_level`; `XPSharePct` applied post-multiplier (as scalar after `CalculateExp` runs inside `AddExperience`); clamp kept at 0–100
-- `eqemu/zone/attack.cpp:2791–2810` — second companion XP dispatch site; same fix pattern
-- `eqemu/zone/lua_companion.cpp` — add conlevel overload to `AddExperience` binding
-- `eqemu/common/ruletypes.h` — change `XPSharePct` default from 50 to 100
+**CRITICAL: `XPSharePct` is applied inside `AddExperience`, NOT in the split loops.** This is the key difference from earlier drafts. Applying it inside `AddExperience` ensures quest/Lua direct-grant paths also get the scaling.
 
-**AA seam location:** `Companion::CalculateExp` — future companion-AA feature adds `uint32& add_aaxp` out-parameter and AA split logic here, exactly parallel to `Client::CalculateExp`. No other files need touching for the AA seam.
+**AA seam location:** `Companion::CalculateExp` — add comment there for future companion-AA feature:
+```cpp
+// AA seam: future companion-AA feature adds uint32& add_aaxp out-param
+// and AA split logic here, mirroring Client::CalculateExp exactly.
+// See also: Companions:AAExpEnabled, Companions:AAExpPct (future rules).
+```
