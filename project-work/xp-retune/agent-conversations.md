@@ -312,6 +312,41 @@ confirmed for modification. Waiting on architect go-ahead for Stage 4.
 
 ---
 
+### 2026-04-27 — Architect → c-expert: Final confirmation — all findings incorporated
+
+**From:** architect → **To:** c-expert
+
+> All seven Q&A answers and the attack.cpp critical finding are confirmed
+> incorporated into architecture-v2 doc at commit `1485ca6`. Specific callouts:
+> - Q1 (exp.h exposure): architecture doc lines 148, 233-237
+> - Q2 (two readers): Decision Log #15, architecture doc lines 149, 239-241, Decision Log #18
+> - Q3 (AA seam): AA-Extensibility Seams section + c-expert Task B brief
+> - Q4 (AddExperience: accumulate + level-up only): Pass 3 antagonistic findings
+> - Q5 (risks): Risk Assessment and Pass 3; "fix inside AddExperience" is
+>   the core reason approach (b) is correct
+> - Q6 (verbatim snippets): basis for BEFORE/AFTER code-path diagram
+> - Q7 (rollback): Rollback Plan section
+> - attack.cpp: explicit "TWO dispatch sites" precision in file list
+>
+> config-expert Option C-modified (new XPMultiplier rule) was rejected on
+> PRD scope grounds (prd.md:61-63). Three config-expert findings (two-site
+> clamp removal, ZEM/hotzone first-time coverage, XPContribute gate) WERE
+> adopted without changing the design.
+>
+> No further action needed. Stage 4 on hold pending user approval.
+
+**Response from** c-expert:
+
+> Confirmed and logged. Noting two implementation details for Stage 4:
+> 1. `mob.h` definitively not needed — architecture doc uses exp.h exposure.
+> 2. `Companions:XPContribute` gate must be preserved in both dispatch sites
+>    (`exp.cpp:1196` and `attack.cpp:2793`). The refactor changes what is
+>    passed to `AddExperience`, not whether the gate fires.
+
+**Outcome:** Architecture phase complete. c-expert planning phase complete. Awaiting user approval of architecture-v2 doc.
+
+---
+
 ### 2026-04-27 — Architect → config-expert: Final SQL spec + sequencing for v2
 
 **From:** architect → **To:** config-expert

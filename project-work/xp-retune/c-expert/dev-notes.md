@@ -202,6 +202,7 @@ _Not started. Planning phase only._
 - [x] AA-seam comment required in `Companion::CalculateExp` — confirmed
 - [x] `attack.cpp:2791–2810` second dispatch site confirmed in scope — architect follow-up 2026-04-27
 - [ ] **Stage 4 on hold — await architecture-v2 doc publication + user approval**
+- [ ] Stage 4 reminder: `Companions:XPContribute` gate must be preserved in BOTH dispatch sites (`exp.cpp:1196` and `attack.cpp:2793`) — refactor changes what is passed to `AddExperience`, not whether the gate fires
 
 ---
 
