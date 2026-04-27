@@ -235,6 +235,34 @@ confirmed for modification. Waiting on architect go-ahead for Stage 4.
 
 ---
 
+### 2026-04-27 — Architect → c-expert: Full 7-question feasibility deep-dive
+
+**From:** architect → **To:** c-expert (second round — architect asked for load-bearing code details)
+
+> Seven detailed questions about: approach ranking (1a/1b/1c), XPSharePct readers and side effects, "no AAs" comment nature and AA seam location, AddExperience behavior beyond accumulation, full risk surface (pets/mercs/group bonuses/quest path/solo), verbatim code snippets of exp.cpp:1180–1213, rollback feasibility.
+
+**Response from** c-expert (this message):
+
+> **Q1 — Approach (b) is cleanest.** `GetConLevelModifierPercent` is ALREADY a file-scope `static` in `exp.cpp:218` — not a Client method. All other modifiers use `RuleR()`/`zone->` globals with no `this` dependency. `Companion::CalculateExp` can apply the full stack directly. Option (c) blocked by per-character state (`perAA`, `XPRate`). Option (a) requires wrong-inheritance coupling. Mob static is NOT needed — earlier consensus decision #5 is superseded: move declaration to `exp.h` or duplicate inline.
+>
+> **Q2 — XPSharePct has exactly two readers:** `exp.cpp:1197` AND `attack.cpp:2794`. Both have the same 0–100 clamp. No other readers, no writes anywhere. Pure read, safe to repurpose.
+>
+> **Q3 — "no AAs" comments are documentation of intentional omissions**, not stubs. AA seam is `Companion::CalculateExp` (add `uint32& add_aaxp` out-param). Future rule names: `Companions:AAExpEnabled` (bool), `Companions:AAExpPct` (int).
+>
+> **Q4 — `AddExperience` does: accumulate + CheckForLevelUp loop (stats rescale, spell reload, HP/mana restore, Save).** No quest hooks, no events. Refactor leaves this untouched.
+>
+> **Q5 — Risk surface fully clear:** pets/mercs not in members[] or not IsCompanion() — zero risk. Group bonus 100% pre-split — confirmed in exp.cpp:1149–1161. quest::exp hits Client::AddEXP directly — bypasses SplitExp — PRD parity for quest XP requires fix inside Companion::AddExperience itself. Solo+companion ALWAYS forms a 2-member group (companion.cpp:2659–2660) — SplitExp path always taken.
+>
+> **Q6 — Verbatim snippets** provided (GetConLevelModifierPercent, exp.cpp:1196–1218 dispatch block, companion.cpp:3341–3360 AddExperience).
+>
+> **Q7 — Rollback is clean git revert.** m_companion_xp is an accumulator — reverting multiplier logic doesn't corrupt values. XPSharePct default reverts with code. DB UPDATE requires manual SQL rollback (already in PRD rollback plan).
+>
+> **CRITICAL NEW FINDING: second XP dispatch site at attack.cpp:2791–2810.** Solo-kill companion XP path. Same clamp pattern. `final_exp` there is already post-CalculateExp (so XPSharePct=100 gives parity for that path if clamp removed), but it still needs updating for consistency. attack.cpp must be added to the file list.
+
+**Outcome:** File list updated — mob.h removed (not needed), attack.cpp added. Consensus decisions #5 revised: no Mob static needed. All seven questions answered from direct source reads. Dev-notes updated and committed.
+
+---
+
 ### 2026-04-27 — Architect → config-expert: Final SQL spec + sequencing for v2
 
 **From:** architect → **To:** config-expert
@@ -269,8 +297,9 @@ This table is the quick-reference for anyone catching up._
 | 2 | Reload command corrected from `#reloadrules` to `#reloadrulesworld`; rule_value format aligned to `'2.0'`/`'3.0'` | architect, config-expert | 2026-04-27 | Architecture phase verification against live DB and `zone/gm_commands/rules.cpp` |
 | 3 | `Character:ExpMultiplier` covers all flat-XP grants (kill, `quest::exp()`, Lua `:AddEXP()`, flat task rewards) via `Client::AddEXP()`; `AddLevelBasedExp` path is the exception | architect, config-expert | 2026-04-27 | Source trace through `exp.cpp:428/510/1091` and `task_client_state.cpp:1069/1076` |
 | 4 | Companion XP parity: approach (B) confirmed — `Companion::CalculateExp` mirror pipeline, `XPSharePct` post-multiplier scalar default 100, clamp kept | c-expert, architect | 2026-04-27 | C++ code trace + architect decision |
-| 5 | `GetConLevelModifierPercent` → extract to `Mob` protected static; both `Client` and `Companion` delegate to it | architect | 2026-04-27 | Architect decision to keep formula in one place |
+| 5 | `GetConLevelModifierPercent` is already a file-scope `static` in `exp.cpp:218` — NOT a Client method. Move to `exp.h` or duplicate inline in companion.cpp. No `mob.h` change needed. Supersedes earlier consensus. | c-expert | 2026-04-27 | Source read — earlier assumption about Client-only method was wrong |
 | 6 | AA seam = `Companion::CalculateExp` function signature — future feature adds `uint32& add_aaxp` out-param, no other files touched | c-expert, architect | 2026-04-27 | Structural seam documented in c-expert dev-notes |
+| 7 | Second companion XP dispatch at `attack.cpp:2791–2810` — same fix needed. `final_exp` there is already post-multiplier so XPSharePct=100 gives parity for that path; still needs consistent treatment. | c-expert | 2026-04-27 | Source grep for XPSharePct across all files |
 
 ---
 

@@ -33,6 +33,8 @@
 | `eqemu/zone/groups.h` | 178 | `Mob* members[MAX_GROUP_MEMBERS]` — array holds both `Client*` and `Companion*` pointers polymorphically. |
 | `eqemu/common/ruletypes.h` | 1191–1208 | `Companions:XPContribute` (bool), `Companions:XPSharePct` (int, default 50). No `XPMultiplier`-style rule exists for companions yet. |
 | `eqemu/zone/lua_companion.cpp` | 129, 309 | `Lua_Companion::AddExperience(uint32)` — thin wrapper; calls `Companion::AddExperience` directly. Same bypass problem for Lua-driven grants. |
+| `eqemu/zone/attack.cpp` | 2791–2810 | **Second XP dispatch site** — solo-kill companion XP grant for companions owned by the killing player. Same clamp + `AddExperience(final_exp * xp_share_pct / 100)` pattern. `final_exp` here IS already post-CalculateExp, so `XPSharePct = 100` gives parity. Still needs fix for consistency. |
+| `eqemu/zone/exp.cpp` | 218–243 | `GetConLevelModifierPercent` is a **file-scope static**, NOT a `Client::` method. Accesses only `RuleI(Character, *Modifier)`. `Companion::CalculateExp` can call it directly — no `Mob` static needed if we move the declaration to `exp.h`. |
 
 ### Key Findings
 
@@ -52,6 +54,12 @@ The `ExpMultiplier` applied in `CalculateExp` is what needs to reach the compani
 
 **quest::exp and Lua :AddEXP also bypass CalculateExp for companions.**
 `questmgr.cpp:1217` calls `initiator->AddEXP(...)` — only fires for Clients. `lua_companion.cpp:129` calls `self->AddExperience(xp)` directly — same raw accumulation. The PRD's requirement that "flat quest::exp(N) reaches companions at parity" means the fix must also apply to `Companion::AddExperience` itself, not just the split loop.
+
+**Second XP dispatch site: attack.cpp:2791–2810 (CRITICAL).**
+There is a solo-kill companion XP path in `attack.cpp` that applies `XPSharePct` against `final_exp` (which IS already post-CalculateExp). Same clamp pattern. This fires for companions whose owner makes a kill. Since companions always join a group with the owner at spawn (`companion.cpp:2659-2660`), this path may only cover edge cases (e.g., companion spawned but group not yet formed). Regardless, it needs the same treatment.
+
+**`GetConLevelModifierPercent` is already a file-scope static in exp.cpp:218.**
+It only reads `RuleI(Character, *Modifier)` — no `this` dependency. Moving to `Mob` static is unnecessary overhead; it can be moved to `exp.h` or duplicated inline in companion.cpp.
 
 ### Implementation Plan
 
@@ -134,11 +142,11 @@ See Implementation Plan above with amendments:
 
 | File | Action | What Changes |
 |------|--------|-------------|
-| `eqemu/zone/mob.h` | Modify | Add `protected static` declaration for `GetConLevelModifierPercent` |
-| `eqemu/zone/mob.cpp` (or `attack.cpp`) | Modify | Extract `GetConLevelModifierPercent` logic to static, keep existing `Client::` call delegating to it |
+| `eqemu/zone/exp.h` (or inline in companion.cpp) | Modify or none | `GetConLevelModifierPercent` is already a file-scope static in exp.cpp:218 — move declaration to exp.h so companion.cpp can call it, OR duplicate the 7-line switch inline. mob.h change is NOT needed. |
 | `eqemu/zone/companion.h` | Modify | Add `CalculateExp(uint32 raw_xp, uint8 conlevel) → uint32` declaration; update `AddExperience` signature to `(uint32 xp, uint8 conlevel = 0xFF)` |
 | `eqemu/zone/companion.cpp` | Modify | Implement `CalculateExp`; update `AddExperience` to call it |
 | `eqemu/zone/exp.cpp` | Modify | Lines 1197–1213: pass raw `member_share` + `consider_level` to `AddExperience`; apply `XPSharePct` as post-multiplier scalar after `AddExperience` call (or inside it) |
+| `eqemu/zone/attack.cpp` | Modify | Lines 2791–2810: same fix as exp.cpp — apply XPSharePct post-multiplier; update `AddExperience` call to pass conlevel |
 | `eqemu/zone/lua_companion.cpp` | Modify | Add conlevel overload to `AddExperience` Lua binding |
 | `eqemu/common/ruletypes.h` | Modify | Change `XPSharePct` default from 50 to 100 |
 
@@ -180,12 +188,14 @@ The companion XP path is entirely in `eqemu/zone/companion.cpp` (`AddExperience`
 3. In `Group::SplitExp`, pass `consider_level` to companion `AddExperience` and pass the raw `member_share` (remove `* xp_share_pct / 100` scaling, or set default to 100 via rule change).
 4. Remove or lift the 0–100 clamp on `XPSharePct` so the rule can be used as a post-parity fine-tune scalar if needed.
 
-**Files to modify (consensus, 2026-04-27):**
-- `eqemu/zone/mob.h` — add `protected static` for `GetConLevelModifierPercent`
-- `eqemu/zone/mob.cpp` or `attack.cpp` — extract static impl; update `Client::` call to delegate
+**CORRECTION (2026-04-27 second round):** `GetConLevelModifierPercent` is already a file-scope `static` in `exp.cpp:218` — NOT a `Client::` method. No `mob.h` change needed. Move declaration to `exp.h` or duplicate inline in `companion.cpp`. Also: second XP dispatch site found in `attack.cpp:2791–2810` — must be fixed alongside `exp.cpp`.
+
+**Files to modify (final, 2026-04-27):**
+- `eqemu/zone/exp.h` — add `GetConLevelModifierPercent` declaration (move from file-scope static in exp.cpp) so companion.cpp can call it; OR skip this and duplicate inline
 - `eqemu/zone/companion.h` — add `CalculateExp(uint32, uint8) → uint32`; update `AddExperience` to `(uint32, uint8 conlevel = 0xFF)`
 - `eqemu/zone/companion.cpp` — implement `CalculateExp` (mirrors `Client::CalculateExp` minus AA/race-class/leadership); update `AddExperience`
 - `eqemu/zone/exp.cpp:1196–1218` — pass raw `member_share` + `consider_level`; `XPSharePct` applied post-multiplier (as scalar after `CalculateExp` runs inside `AddExperience`); clamp kept at 0–100
+- `eqemu/zone/attack.cpp:2791–2810` — second companion XP dispatch site; same fix pattern
 - `eqemu/zone/lua_companion.cpp` — add conlevel overload to `AddExperience` binding
 - `eqemu/common/ruletypes.h` — change `XPSharePct` default from 50 to 100
 
