@@ -4,15 +4,16 @@
 > **Agent:** config-expert
 > **Task(s):** Validate architecture plan — rule name, SQL syntax, reload command, rollback SQL
 > **Date started:** 2026-04-27
-> **Current stage:** Socialize (validation complete, messaging architect)
+> **Current stage:** Stage 3 Consensus — awaiting architecture doc, then Stage 4
 
 ---
 
-## Task Assignment
+## Task Assignment (v2 Final — Approach B confirmed by architect 2026-04-27)
 
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| 1 | Validate rule name, current value, SQL syntax, reload command, rollback | Architecture plan from architect | Complete |
+| 1 (v1 carry-over) | Pre-check → UPDATE `Character:ExpMultiplier` `'3.0'`→`'2.0'` (ruleset_id=1) → post-check → `#reloadrulesworld` | None (can run while build is in progress) | Not Started |
+| 2 (v2 new) | Pre-check → UPDATE `Companions:XPSharePct` `'50'`→`'100'` (ruleset_id=1) → post-check → `#reloadrulesworld` | C++ rebuild + server process restart MUST complete first; verify new binary is running before applying | Not Started |
 
 ---
 
@@ -349,3 +350,93 @@ Rules are defined via X-macros in `common/ruletypes.h`. The `RuleManager` expand
 There is no reason to reverse this order. The parity refactor does not depend on the rate change, and the rate change does not depend on the refactor. Doing the rule UPDATE first means the player immediately sees 2x kill XP as soon as `#reloadrulesworld` runs, even before the restart. The companion parity improvement lands at restart. This is the cleanest UX — no window where the player has 3x AND the companion is broken.
 
 **If shipping in separate windows:** Rule UPDATE can land any time via `#reloadrulesworld`. Companion parity requires rebuild + full restart. Note in the architecture plan that game-tester must validate companion parity AFTER the restart, not after the rule reload.
+
+---
+
+## Stage 3 Consensus (v2 Final): Architect Design Decision — Approach B
+
+> **Date:** 2026-04-27
+> **Architect message:** Final SQL spec received. Approach B confirmed.
+
+### Decision Summary
+
+Architect chose **Approach B**: keep `> 100` clamp, repurpose `Companions:XPSharePct` as a post-multiplier scalar with default changed in `ruletypes.h` from 50 → 100 (c-expert task). The existing ruleset_id=1 row has the explicit value `'50'` and must be UPDATEd to `'100'` — the `ruletypes.h` default change does not automatically update existing DB rows.
+
+No new rule INSERT. No AA-seam rules in this feature.
+
+### Final Implementation Tasks
+
+**Task 1 (v1 carry-over): Character:ExpMultiplier rate change**
+
+Timing: Pre-rebuild, can run while C++ build is in progress.
+
+```sql
+-- Pre-check (expect '3.0')
+SELECT ruleset_id, rule_name, rule_value
+  FROM rule_values
+ WHERE ruleset_id = 1
+   AND rule_name  = 'Character:ExpMultiplier';
+
+-- Forward
+UPDATE rule_values
+   SET rule_value = '2.0'
+ WHERE ruleset_id = 1
+   AND rule_name  = 'Character:ExpMultiplier';
+
+-- Post-check (expect '2.0')
+SELECT ruleset_id, rule_name, rule_value
+  FROM rule_values
+ WHERE ruleset_id = 1
+   AND rule_name  = 'Character:ExpMultiplier';
+
+-- Rollback (if needed)
+UPDATE rule_values
+   SET rule_value = '3.0'
+ WHERE ruleset_id = 1
+   AND rule_name  = 'Character:ExpMultiplier';
+```
+
+After forward UPDATE: `#reloadrulesworld` in-game.
+
+**Task 2 (v2 new): Companions:XPSharePct parity activation**
+
+Timing: POST-rebuild + POST-restart only. Verify new binary is running before applying.
+Verification step: confirm c-expert's `Companion::AddExperience` refactor is in the running binary (log line check or process timestamp) before running this UPDATE.
+
+```sql
+-- Pre-check (expect '50')
+SELECT ruleset_id, rule_name, rule_value
+  FROM rule_values
+ WHERE ruleset_id = 1
+   AND rule_name  = 'Companions:XPSharePct';
+
+-- Forward
+UPDATE rule_values
+   SET rule_value = '100'
+ WHERE ruleset_id = 1
+   AND rule_name  = 'Companions:XPSharePct';
+
+-- Post-check (expect '100')
+SELECT ruleset_id, rule_name, rule_value
+  FROM rule_values
+ WHERE ruleset_id = 1
+   AND rule_name  = 'Companions:XPSharePct';
+
+-- Rollback (if needed)
+UPDATE rule_values
+   SET rule_value = '50'
+ WHERE ruleset_id = 1
+   AND rule_name  = 'Companions:XPSharePct';
+```
+
+After forward UPDATE: `#reloadrulesworld` in-game.
+
+### Concern Flagged to Architect (2026-04-27)
+
+The architect's sequencing rationale states: "Setting the rule to 100 BEFORE the rebuild would change companion behavior in the OLD code: companions would get 100% of pre-multiplier slice (current behavior at clamp ceiling), still no multipliers — meaning they'd still be at the same ~50% gap relative to player."
+
+**This is not quite right.** In the OLD code, `XPSharePct=100` with the `> 100 → 100` clamp still present means companions receive `member_share * 100 / 100 = member_share` — i.e., the full pre-multiplier slice, NOT 50% of it. That is actually BETTER than the current 50% parity gap, not equivalent to it. So applying Task A before the rebuild would give companions a temporary improvement (full pre-multiplier share) while the refactor is built, then the correct post-multiplier behavior kicks in at restart.
+
+This is still safe — no data corruption, no crash risk, no semantic inversion. The architect's "either order works for safety" conclusion is correct. Post-restart sequencing is the cleaner approach regardless, because the behavior change is unambiguous (parity via the new code) and the verification step is clean. Flagging the rationale error only so the architecture doc doesn't contain a misleading explanation that would confuse future readers.
+
+No change to the implementation plan. Task A still runs post-restart as specified.

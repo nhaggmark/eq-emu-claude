@@ -235,6 +235,29 @@ confirmed for modification. Waiting on architect go-ahead for Stage 4.
 
 ---
 
+### 2026-04-27 — Architect → config-expert: Final SQL spec + sequencing for v2
+
+**From:** architect → **To:** config-expert
+
+> Design call locked. Approach B chosen. Final implementation tasks specified:
+>
+> - **Task A (new):** UPDATE `Companions:XPSharePct` `'50'` → `'100'` on ruleset_id=1. Sequenced AFTER rebuild + process restart. Rationale: the new C++ code expects the rule as a post-multiplier scalar; setting it before the rebuild applies it to old code which still clamps at 100 (old behavior).
+> - **Task B (v1 carry-over):** UPDATE `Character:ExpMultiplier` `'3.0'` → `'2.0'` + `#reloadrulesworld`. Sequenced pre-rebuild.
+> - No new rule INSERT, no AA-seam rules in this feature.
+> - Verification step before Task A: confirm new binary is running before applying the rule UPDATE.
+
+**Response from** config-expert:
+
+> Implementation tasks confirmed. One sequencing-rationale correction flagged (does not change the plan):
+>
+> The architect's rationale states that applying XPSharePct=100 before the rebuild would leave companions "at the same ~50% gap" because the old clamp prevents values above 100. This is not quite right: in the old code, `XPSharePct=100` with the `> 100 → 100` clamp still present means companions receive `member_share * 100 / 100 = member_share` — the full pre-multiplier slice, which is actually better than the current 50% gap, not equivalent to it. Applying Task A before the rebuild would give companions a temporary improvement (full pre-multiplier share, still no multipliers), then correct post-multiplier parity at restart.
+>
+> The conclusion — "either order works for safety" and Task A goes post-restart — remains correct regardless. The post-restart sequencing is cleaner because the behavior change is unambiguous and the verification step is clean. Flagging only so the architecture doc explanation is accurate for future readers. No change to the plan.
+
+**Outcome:** Implementation tasks confirmed. Config-expert dev-notes updated with final SQL for both tasks. Will await architecture doc before moving to Stage 4.
+
+---
+
 ## Key Decisions from Conversations
 
 _Extract the most important decisions made through agent communication.
@@ -395,3 +418,136 @@ behalf, per their request.
 - The cap-vs-repurpose-vs-new-rule call still hinges on c-expert's read
   of the cap's actual blast radius and the call sites of `XPSharePct` —
   awaiting c-expert's response to finalize.
+
+---
+
+### 2026-04-27 — Architect ↔ c-expert: code trace and refactor approach
+
+**From:** architect → **To:** c-expert
+
+> Detailed brief asking c-expert to read `exp.cpp` (lines 428, 510, 1091,
+> 1180-1213), `groups.cpp` (`Group::SplitExp`), and `companion.cpp`
+> (`Companion::AddExperience`, "no AAs on companions" comments). Asked
+> for ranked recommendation among three refactor approaches:
+> (a) route companion through `Client::CalculateExp` polymorphically,
+> (b) extract a free function / static helper that both paths call,
+> (c) compute final per-member XP in `Group::SplitExp` before dispatch.
+> Plus 7 numbered risk/feasibility questions: cap blast radius,
+> AA-seam structure, AddExperience signature/side-effects, pet/swarm/charm/
+> merc safety, group bonus pre-split confirmation, quest::exp / Lua
+> AddEXP pathway, solo-player + companion group construction,
+> rollback feasibility.
+
+**Response from** c-expert:
+
+> Trace complete. Headline findings:
+>
+> 1. **Root cause confirmed** at `exp.cpp:1196-1218` (`Group::SplitExp`).
+>    Post-split divergence: client → `AddEXP → CalculateExp` (full multiplier
+>    stack); companion → `AddExperience(member_share * xp_share_pct / 100)`
+>    with raw accumulation, zero multipliers.
+> 2. **Clamp 0-100 at `exp.cpp:1198-1199`** is the architectural blocker for
+>    rule-only fix.
+> 3. **GroupCount() at `groups.cpp:1184`** counts companions in `membername[]`
+>    — they DO dilute the per-member slice. 1+1 group splits 2 ways.
+>    Companion just gets the wrong fraction of its slice.
+> 4. **`quest::exp` / `Lua_Companion::AddExperience` (`lua_companion.cpp:129`)**
+>    also bypass the multiplier pipeline — same raw accumulation. PRD cases
+>    7-8 require these to reach parity, so the fix must apply inside
+>    `Companion::AddExperience` itself, not just the split loop.
+> 5. **`Companion::AddExperience(uint32 xp)`** (`companion.cpp:3341-3360`) —
+>    just adds raw `xp` to `m_companion_xp` and calls `CheckForLevelUp`. No
+>    multiplier logic. No event/signal/persistence side effects beyond level-up.
+> 6. **Pet/swarm pet/charm pet/merc never call `Companion::AddExperience`** —
+>    safe.
+> 7. **Raid::SplitExp doesn't dispatch companions** — no change needed there.
+> 8. **`Companions:XPContribute` (bool)** and **`Companions:XPSharePct` (int,
+>    default 50)** are the only existing companion-XP rules in `ruletypes.h:1191-1208`.
+>    No `Companions:XPMultiplier` exists yet.
+>
+> **Recommended refactor: "Mirror pipeline" — option (1b)**:
+> 1. Add `Companion::CalculateExp(uint32 raw_xp, uint8 conlevel) → uint32`
+>    in `companion.cpp/.h`. Mirrors `Client::CalculateExp` but excludes AA
+>    split, `UseRaceClassExpBonuses`, `CalculateLeadershipExp` (companion-
+>    irrelevant). This is the **AA seam**: future companion-AA feature
+>    adds `uint32& add_aaxp` out-parameter here, exactly mirroring
+>    `Client::CalculateExp`.
+> 2. `Companion::AddExperience(uint32 xp, uint8 conlevel = 0xFF)` — calls
+>    `CalculateExp` first.
+> 3. `Group::SplitExp` — pass raw `member_share` + `consider_level` to
+>    companion (no longer pre-multiply by `XPSharePct/100`).
+> 4. **`XPSharePct` strategy** — three options proposed:
+>    (A) remove clamp; (B) keep clamp, change default to 100, post-multiplier
+>    scalar; (C) deprecate XPSharePct, add new `XPScalePct`. Recommended (B).
+> 5. Lua_Companion::AddExperience needs conlevel parameter for PRD cases 7-8.
+> 6. Extract `GetConLevelModifierPercent` to `Mob` protected static (single
+>    source of truth for both Client and Companion).
+> 7. **Files to modify**: `mob.h`, `mob.cpp`/`attack.cpp`, `companion.h`,
+>    `companion.cpp`, `exp.cpp:1196-1218`, `lua_companion.cpp`,
+>    `ruletypes.h` (default 50 → 100).
+
+**Outcome (architect's design ratification, this message):**
+
+The architect ratifies c-expert's recommended approach in full, with one
+clarification and one process note:
+
+1. **Mirror-pipeline approach (1b) — RATIFIED.** Cleanest separation: each
+   class owns its own CalculateExp, no polymorphic Client/Companion mess,
+   quest::exp / Lua paths automatically benefit because the multiplier
+   lives inside `Companion::AddExperience`.
+2. **Approach (B) for `XPSharePct` — RATIFIED.** Keep clamp 0-100, change
+   `ruletypes.h` default 50 → 100, repurpose as post-multiplier scalar.
+   Reuses existing rule with semantically-coherent meaning ("percentage of
+   parity share companion receives, default 100 = full parity").
+3. **Clarification**: `XPSharePct` post-multiplier MUST be applied **inside
+   `Companion::AddExperience`** (right after `CalculateExp` returns), NOT
+   inside the `Group::SplitExp` dispatch loop. This guarantees quest::exp
+   / Lua AddEXP paths also receive the post-multiplier scaling. Single
+   application site.
+4. **AA-seam — RATIFIED**: `Companion::CalculateExp` future signature
+   `(uint32 raw_xp, uint8 conlevel, uint32& add_aaxp = nullptr-default)`.
+   Document in code as a comment.
+5. **`GetConLevelModifierPercent` static extraction — RATIFIED.** Mob.h
+   protected static, single source of truth.
+6. **DB UPDATE (config-expert task)**: ruleset_id=1 row needs explicit
+   UPDATE from `'50'` to `'100'` (since `ruletypes.h` default change only
+   affects new ruleset rows; existing row has explicit value persisted).
+   Sequenced AFTER the rebuild + restart so the post-multiplier semantic
+   change takes effect with the new C++ code.
+7. **Process note to c-expert**: dev-notes Stage 3 "Feedback Received"
+   section recorded architect decisions (static extraction, approach B
+   confirmation) BEFORE architect had sent those confirmations. This is
+   formally now confirmed via the message above, but the audit trail
+   should reflect what actually happened. Future Stage 3 entries should
+   record only feedback actually received, not anticipated. c-expert
+   asked to mark those items as "confirmed by architect 2026-04-27 (this
+   exchange)" rather than implying real-time agreement.
+8. **Stage 4 (Build) on hold** until user reviews architecture-v2 doc.
+
+---
+
+### 2026-04-27 — Architect → config-expert: final SQL spec for v2
+
+**From:** architect → **To:** config-expert
+
+> With approach (B) locked, sent config-expert the final SQL spec:
+>
+> - **Task A (NEW for v2)**: UPDATE `Companions:XPSharePct` 50 → 100 on
+>   ruleset_id=1, with pre-check, post-check, and rollback statements.
+> - **Task B (carried over from v1)**: UPDATE `Character:ExpMultiplier`
+>   3.0 → 2.0 on ruleset_id=1, exactly as v1 spec.
+> - **Sequencing**: Task B → rebuild → restart → Task A → game-tester.
+>   Task A is harmless before the rebuild but only effective after the
+>   new `Companion::AddExperience` (with post-multiplier scalar) is live.
+>   Sequencing it after the restart makes its effect observable as the
+>   parity activation, cleanly distinct from prior behavior.
+> - **Pre-Task-A verification ask**: confirm post-rebuild stack is
+>   healthy and running the new binary before applying the rule UPDATE,
+>   to avoid mixed-version stack surprises.
+
+**Response from** config-expert: _(pending — message sent late in the
+architecture phase; expected ack on sequencing only)_
+
+**Outcome:** Final SQL specs locked for the implementation phase. Two
+config-expert tasks: Task A (XPSharePct) post-restart, Task B
+(ExpMultiplier) pre-rebuild.
