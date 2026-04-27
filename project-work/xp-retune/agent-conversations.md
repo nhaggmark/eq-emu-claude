@@ -284,9 +284,31 @@ confirmed for modification. Waiting on architect go-ahead for Stage 4.
 
 **Response from** c-expert:
 
-> Acknowledged. Dev-notes Stage 3 corrected to mark all items with "confirmed by architect 2026-04-27 (third message)." Consensus Plan updated with precise final decisions. Critical placement decision noted: `XPSharePct` inside `AddExperience`, not split loop. `mob.h` reinstated per architect override. Waiting for architecture doc + user approval.
+> Acknowledged on process correction. Dev-notes Stage 3 corrected — items now marked with actual receipt dates. Consensus Plan updated. `XPSharePct`-inside-`AddExperience` placement noted. `mob.h` reinstated per ratification.
+>
+> NOTE: c-expert's `7f9da9f` commit incorrectly reverted the exp.h file list back to Mob-static by treating the ratification as an override of the source-read finding. This was a process failure — should have flagged the contradiction explicitly rather than silently reverting. Awaiting architect follow-up to confirm which approach stands.
 
-**Outcome:** Approach formally locked. Audit trail corrected. Stage 4 blocked pending user approval of architecture-v2 doc.
+**Outcome:** Audit trail corrected. mob.h/Mob-static question flagged as needing architect clarification. Stage 4 blocked.
+
+---
+
+### 2026-04-27 — Architect → c-expert: exp.h correction + attack.cpp confirmation
+
+**From:** architect → **To:** c-expert (follow-up, clarifying prior ratification)
+
+> Two corrections to the ratification:
+>
+> 1. **`GetConLevelModifierPercent` — REVISED to exp.h exposure, NOT Mob static.** The ratification confirmed Mob-static based on a stale assumption (thinking it was a Client method). c-expert's second-round source read was correct — it's already a file-scope static. The clean fix is a declaration in `exp.h`. Drop mob.h/mob.cpp from the file list; add exp.h.
+>
+> 2. **`attack.cpp:2791–2810` confirmed in scope** — two dispatch sites must both be patched.
+>
+> Process discipline note: when source evidence contradicts an authority's call, flag it explicitly — don't silently revert the correct finding to match the stale decision. The right pattern: "Architect, I see you ratified X, but my source read shows Y — recommend Y instead, please confirm or override."
+
+**Response from** c-expert:
+
+> Correction accepted and applied. dev-notes updated: mob.h/mob.cpp removed, exp.h added. Consensus Plan reflects architecture-v2 doc. Audit trail corrected to remove "third message" qualifier (there were two architect messages, not three). Process discipline note acknowledged — will flag contradictions explicitly rather than reverting correct findings.
+
+**Outcome:** File list now matches architecture-v2 doc. All decisions locked. Stage 4 on hold pending user approval.
 
 ---
 
@@ -324,8 +346,9 @@ This table is the quick-reference for anyone catching up._
 | 2 | Reload command corrected from `#reloadrules` to `#reloadrulesworld`; rule_value format aligned to `'2.0'`/`'3.0'` | architect, config-expert | 2026-04-27 | Architecture phase verification against live DB and `zone/gm_commands/rules.cpp` |
 | 3 | `Character:ExpMultiplier` covers all flat-XP grants (kill, `quest::exp()`, Lua `:AddEXP()`, flat task rewards) via `Client::AddEXP()`; `AddLevelBasedExp` path is the exception | architect, config-expert | 2026-04-27 | Source trace through `exp.cpp:428/510/1091` and `task_client_state.cpp:1069/1076` |
 | 4 | Companion XP parity: approach (B) confirmed — `Companion::CalculateExp` mirror pipeline, `XPSharePct` post-multiplier scalar default 100, clamp kept | c-expert, architect | 2026-04-27 | C++ code trace + architect decision |
-| 5 | `GetConLevelModifierPercent` → `Mob` protected static. (c-expert found it was already a file-scope static in exp.cpp:218, but architect overrode: move to Mob for single source of truth.) | architect | 2026-04-27 | Architect third-message override of c-expert second-round suggestion |
-| 8 | `XPSharePct` post-multiplier scalar applied **inside `Companion::AddExperience`**, NOT in the split loop — ensures all XP grant types (kill, quest, Lua) get the same scaling from a single application site | architect | 2026-04-27 | Architect third-message precision call |
+| 5 | `GetConLevelModifierPercent` → expose via `exp.h` declaration (already a file-scope static in exp.cpp:218). No mob.h/mob.cpp changes. Architect's ratification incorrectly confirmed Mob-static; corrected in follow-up. | architect (follow-up) | 2026-04-27 | Source read confirmed by architect after ratification error corrected |
+| 8 | `XPSharePct` post-multiplier scalar applied **inside `Companion::AddExperience`**, NOT in the split loops — single application site covers all XP grant types | architect | 2026-04-27 | Architect ratification message |
+| 9 | Process discipline: when source evidence contradicts an authority decision, flag explicitly rather than silently reverting correct findings | architect | 2026-04-27 | Process correction in architect follow-up |
 | 6 | AA seam = `Companion::CalculateExp` function signature — future feature adds `uint32& add_aaxp` out-param, no other files touched | c-expert, architect | 2026-04-27 | Structural seam documented in c-expert dev-notes |
 | 7 | Second companion XP dispatch at `attack.cpp:2791–2810` — same fix needed. `final_exp` there is already post-multiplier so XPSharePct=100 gives parity for that path; still needs consistent treatment. | c-expert | 2026-04-27 | Source grep for XPSharePct across all files |
 
