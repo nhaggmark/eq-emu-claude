@@ -478,6 +478,34 @@ Guard confirmed: `Character:AAExpMultiplier` unchanged at `3.0`.
 
 ---
 
-### Task D: Companions:XPSharePct 50 → 100 (PENDING — awaiting infra-expert Task C completion)
+### Task D: Companions:XPSharePct 50 → 100 (2026-04-27)
 
-**Status:** Not Started — blocked on infra-expert confirming new binary is running
+**Status:** Complete
+
+**Gate check (from infra-expert Task C completion message):**
+- Zone binary timestamped Apr 27 18:03; `Companion::CalculateExp(uint32, uint8)` symbol confirmed present (`_ZN9Companion12CalculateExpEjh`).
+- shared_memory loaded 1,048 rules including `Character:ExpMultiplier='2.0'` from Task A.
+- 8 zone processes running (dynamic_01–dynamic_08). world.log and zone logs clean.
+
+**Pre-check output (2026-04-27):**
+```
+ruleset_id  rule_name               rule_value
+1           Companions:XPSharePct   50
+```
+
+**UPDATE executed:**
+```sql
+UPDATE rule_values SET rule_value = '100'
+WHERE ruleset_id = 1 AND rule_name = 'Companions:XPSharePct';
+```
+No error. 1 row affected.
+
+**Post-check output (2026-04-27):**
+```
+ruleset_id  rule_name               rule_value
+1           Companions:XPSharePct   100
+```
+
+**Live reload:** `#reloadrulesworld` must be run in-game by a GM to propagate the parity activation to all 8 running zones.
+
+**Migration artifact:** `config-expert/context/task-d-migration.sql`

@@ -207,6 +207,38 @@ _Expert-to-expert exchanges during Phase 4._
 > Waiting for infra-expert confirmation that new C++ binary is live before
 > running Task D.
 
+**Outcome:** Task A logged as complete. Task D remains blocked on Task C.
+
+---
+
+### 2026-04-27 — infra-expert → config-expert: Task C complete, proceed with Task D
+
+**From:** infra-expert → **To:** config-expert
+
+> Task C complete. Full server stack healthy and running the new binary.
+> Zone binary timestamped Apr 27 18:03. Companion::CalculateExp(uint32, uint8)
+> symbol confirmed present (_ZN9Companion12CalculateExpEjh). make restart clean.
+> shared_memory ran to completion — 1,048 rules loaded from ruleset_id=1
+> (including Character:ExpMultiplier='2.0' from Task A). loginserver PID 394,
+> world PID 506. Zone count: 8 (dynamic_01–dynamic_08, ports 7001-7008).
+> world.log and zone_dynamic_01.log both clean, no exceptions in companion
+> or exp paths. Clear to proceed with Task D.
+
+**Response from** config-expert:
+
+> Task D executed immediately on receipt of green signal.
+> Pre-check: Companions:XPSharePct = 50 (confirmed). UPDATE applied,
+> no error. Post-check: Companions:XPSharePct = 100 (confirmed).
+> #reloadrulesworld still needed in-game by a GM to propagate to all 8 zones.
+
+**Outcome:** Task D complete. Both config-expert tasks (A and D) done.
+All rule_values acceptance criteria from architecture.md now satisfied:
+- Character:ExpMultiplier ruleset_id=1 = '2.0' ✓
+- Character:AAExpMultiplier ruleset_id=1 = '3.0' (guard) ✓
+- Companions:XPSharePct ruleset_id=1 = '100' ✓
+
+---
+
 **Outcome:** Task A logged as complete. Task D remains blocked on Task C (infra-expert).
 
 ---
