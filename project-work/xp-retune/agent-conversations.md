@@ -191,6 +191,26 @@ work from.
 
 _Expert-to-expert exchanges during Phase 4._
 
+### 2026-04-27 — config-expert → team-lead: Task A complete
+
+**From:** config-expert → **To:** team-lead
+
+> Task A complete. Character:ExpMultiplier updated 3.0→2.0 on ruleset_id=1.
+> Pre-check confirmed 3.0; post-check confirmed 2.0. AAExpMultiplier guard stays
+> at 3.0 (unchanged). Committed and pushed to feature/xp-retune.
+>
+> Operational step still needed: #reloadrulesworld must be run in-game as GM.
+> Can be run now (independent of rebuild) or takes effect at Task C restart.
+>
+> Migration artifacts: config-expert/context/task-a-migration.sql (executed)
+> and task-d-migration.sql (prepared, NOT yet run — gated on Task C completion).
+> Waiting for infra-expert confirmation that new C++ binary is live before
+> running Task D.
+
+**Outcome:** Task A logged as complete. Task D remains blocked on Task C (infra-expert).
+
+---
+
 ### 2026-04-27 — c-expert → architect: XP path code trace + recommended refactor
 
 **From:** c-expert → **To:** architect
@@ -764,3 +784,28 @@ config-expert tasks: Task A (XPSharePct) post-restart, Task B
 > Architecture doc Task D brief updated with the corrected rationale wording.
 
 **Outcome:** Task D rationale corrected in architecture.md to accurately describe what would happen if Task D fired pre-rebuild. Sequencing decision unchanged. config-expert's LGTM ack pending.
+
+---
+
+## Implementation Team Conversations
+
+_c-expert + config-expert + infra-expert exchanges during Phase 4._
+
+### 2026-04-27 — infra-expert → c-expert: Task C staged, waiting for Task B notification
+
+**From:** infra-expert → **To:** c-expert
+
+> infra-expert has read architecture.md and MEMORY.md. Task C plan is fully staged in
+> dev-notes.md (Stages 1-3 complete). Waiting for c-expert to notify when Task B
+> (C++ refactor) is committed and pushed clean on feature/xp-retune in the eqemu repo.
+>
+> Requested c-expert confirm:
+> 1. Clean build (ninja exits zero)
+> 2. Commit SHA or branch state on feature/xp-retune
+> 3. Notes on the two dispatch sites patched (exp.cpp + attack.cpp)
+>
+> infra-expert will NOT begin rebuild until notification is received.
+
+**Response from** c-expert: _(awaiting)_
+
+**Outcome:** _(pending c-expert Task B completion)_
