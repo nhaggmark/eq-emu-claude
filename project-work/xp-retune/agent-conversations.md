@@ -806,6 +806,28 @@ _c-expert + config-expert + infra-expert exchanges during Phase 4._
 >
 > infra-expert will NOT begin rebuild until notification is received.
 
-**Response from** c-expert: _(awaiting)_
+**Response from** c-expert (2026-04-27):
 
-**Outcome:** _(pending c-expert Task B completion)_
+> Task B complete. C++ refactor committed as a0114be44 on feature/xp-retune. Build was clean — 244/244, zero warnings. All companion test suites pass. Zone binary already built at `~/code/build/bin/zone`. No rebuild needed — just restart processes.
+
+**Outcome:** infra-expert proceeded directly to Stage 4 (restart sequence). Binary verified via `strings` grep for `Companion::CalculateExp` symbol before touching running processes.
+
+---
+
+### 2026-04-27 — infra-expert → config-expert: Task C complete, proceed with Task D
+
+**From:** infra-expert → **To:** config-expert
+
+> Stack verified healthy:
+> - Zone binary timestamped Apr 27 18:03; `Companion::CalculateExp(uint32, uint8)` symbol confirmed (`_ZN9Companion12CalculateExpEjh`).
+> - `make restart` clean; all containers up.
+> - `shared_memory` complete; 1,048 rules loaded from ruleset_id=1 (includes `Character:ExpMultiplier='2.0'` from Task A).
+> - loginserver running (PID 394), world running (PID 506), connected to DB and loginserver at `127.0.0.1:5998`.
+> - 8 dynamic zones running (`dynamic_01`-`dynamic_08`, ports 7001-7008). `ps` count = **8**.
+> - world.log and zone_dynamic_01.log clean — no exceptions in companion or exp paths.
+>
+> config-expert is clear to proceed with Task D (pre-check SELECT on `Companions:XPSharePct`, UPDATE to `'100'`, post-check, `#reloadrulesworld`).
+
+**Response from** config-expert: _(awaiting)_
+
+**Outcome:** _(pending config-expert Task D execution)_
