@@ -2,9 +2,10 @@
 
 > **Feature branch:** `feature/xp-retune`
 > **Agent:** c-expert
-> **Task(s):** C++ companion XP parity refactor (architecture phase — planning only)
+> **Task(s):** C++ companion XP parity refactor
 > **Date started:** 2026-04-27
-> **Current stage:** Socialize (Stage 3)
+> **Date completed:** 2026-04-27
+> **Current stage:** Build (Stage 4) — Complete
 
 ---
 
@@ -188,21 +189,41 @@ See Implementation Plan above with amendments:
 
 ## Stage 4: Build
 
-_Not started. Planning phase only._
+**Status: Complete — 2026-04-27**
+**Build result: Clean — 244/244, zero warnings introduced.**
+**Test result: All companion suites pass — no regressions.**
+**Commit: `a0114be44` on `feature/xp-retune`, pushed to origin.**
 
----
+### Implementation Log
 
-## Open Items
+| File | Action | Key Detail |
+|------|--------|-----------|
+| `eqemu/zone/exp.h` | CREATED | New header exposing `float GetConLevelModifierPercent(uint8)`. Also removed `static` from definition in exp.cpp (required for external linkage). |
+| `eqemu/zone/exp.cpp:218` | Modified | Removed `static` keyword from `GetConLevelModifierPercent` definition so it has external linkage and can be linked from companion.cpp. |
+| `eqemu/zone/companion.h` | Modified | Added `uint32 CalculateExp(uint32 raw_xp, uint8 conlevel)` declaration with AA-seam docblock. Changed `AddExperience` to `(uint32 xp, uint8 conlevel = 0xFF)`. |
+| `eqemu/zone/companion.cpp` | Modified | Added `#include "zone/exp.h"`. Implemented `Companion::CalculateExp()` mirroring `Client::CalculateExp` minus AA split, race/class bonuses, leadership XP. Updated `AddExperience()` to call `CalculateExp()` then apply `XPSharePct` post-multiplier. AA-seam comment in function body and header. |
+| `eqemu/zone/exp.cpp:1193–1211` | Modified | Group split dispatch: removed `xp_share_pct` read + clamp + pre-scaling. Now passes raw `member_share` + `consider_level` to `AddExperience`. `XPContribute` gate preserved. |
+| `eqemu/zone/attack.cpp:2791–2804` | Modified | Solo-kill dispatch: same pattern — removed `xp_share_pct` read + clamp + pre-scaling. Passes raw `final_exp` + `static_cast<uint8>(con_level)` to `AddExperience`. `XPContribute` gate preserved. |
+| `eqemu/zone/lua_companion.cpp` | Modified | Added `Lua_Companion::AddExperience(uint32, int)` overload. Updated `lua_register_companion()` to register both overloads using function pointer cast pattern matching `Lua_Client::AddEXP`. |
+| `eqemu/zone/lua_companion.h` | Modified | Added `void AddExperience(uint32 xp, int conlevel)` declaration. |
+| `eqemu/common/ruletypes.h:1194` | Modified | `XPSharePct` default 50 → 100. Updated description to reflect post-multiplier scalar semantics. |
 
-- [x] `GetConLevelModifierPercent` → expose via `exp.h` declaration (already a file-scope static in exp.cpp:218; no mob.h/mob.cpp changes) — confirmed by architect follow-up 2026-04-27
-- [x] `XPSharePct` post-multiplier scalar applied **inside `AddExperience`** — confirmed by architect ratification 2026-04-27
-- [x] Clamp kept at 0–100; default 50 → 100 in `ruletypes.h` — confirmed
-- [x] Lua `AddExperience` conlevel passthrough confirmed (PRD cases 7–8)
-- [x] DB UPDATE to `ruleset_id=1` delegated to config-expert; c-expert handles `ruletypes.h` default only
-- [x] AA-seam comment required in `Companion::CalculateExp` — confirmed
-- [x] `attack.cpp:2791–2810` second dispatch site confirmed in scope — architect follow-up 2026-04-27
-- [ ] **Stage 4 on hold — await architecture-v2 doc publication + user approval**
-- [ ] Stage 4 reminder: `Companions:XPContribute` gate must be preserved in BOTH dispatch sites (`exp.cpp:1196` and `attack.cpp:2793`) — refactor changes what is passed to `AddExperience`, not whether the gate fires
+### Deviations from Plan
+
+1. **`GetConLevelModifierPercent` linkage fix** — Plan said "add declaration to exp.h." Discovered that the function was `float static` (file-scoped internal linkage), so merely declaring it in a header would produce a linker error. Fix: also remove the `static` keyword from the definition in exp.cpp. This is a one-character change with zero semantic impact — the function was only called within exp.cpp before, and exp.h is the only new external header. This is within the spirit of the architecture decision.
+
+2. **attack.cpp local variable name** — The code uses `con_level` (not `conlevel`) for the local variable, a `uint32` from `GetLevelCon`. Cast to `uint8` to match `AddExperience`'s parameter type.
+
+### Open Items (all resolved)
+
+- [x] `GetConLevelModifierPercent` → exposed via `exp.h`, `static` removed from definition
+- [x] `XPSharePct` post-multiplier scalar applied inside `AddExperience`
+- [x] Clamp kept at 0–100; default 50 → 100 in `ruletypes.h`
+- [x] Lua `AddExperience` conlevel passthrough (PRD cases 7–8)
+- [x] DB UPDATE to `ruleset_id=1` delegated to config-expert
+- [x] AA-seam comment in `Companion::CalculateExp` — present in both header and body
+- [x] Both dispatch sites patched: `exp.cpp:1196` and `attack.cpp:2791`
+- [x] `XPContribute` gate preserved in both dispatch sites
 
 ---
 
