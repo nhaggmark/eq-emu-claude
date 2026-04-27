@@ -24,9 +24,25 @@ The server reads server-wide tunables from the `rule_values` table at
 boot and caches them in the `RuleManager` singleton (`common/rulesys.h` /
 `common/ruletypes.h`). Each zone process loads the active ruleset
 (`zone.ruleset` column, default = ruleset_id = 1) and exposes individual
-values via macros: `RuleI`, `RuleR`, `RuleB`, `RuleS`. The kill-XP path
-in `zone/exp.cpp` consults `RuleR(Character, ExpMultiplier)` and
-`RuleR(Character, AAExpMultiplier)` to scale the awarded XP/AA-XP per kill.
+values via macros: `RuleI`, `RuleR`, `RuleB`, `RuleS`.
+
+`Character:ExpMultiplier` is consumed inside `Client::CalculateExp()`
+(`zone/exp.cpp:428`), which is invoked by `Client::AddEXP()` (`exp.cpp:510`).
+**`AddEXP()` is the single funnel for ALL flat-XP grants** — it covers kill
+XP (via `Group::SplitExp` / `Raid::SplitExp`), `quest::exp()` Perl grants,
+Lua `:AddEXP()` calls, and flat task-reward XP. Every one of those paths
+gets multiplied by `Character:ExpMultiplier`.
+
+**One exception**: `Client::AddLevelBasedExp()` (`exp.cpp:1091`) is a
+parallel XP path used by percentage-based rewards (e.g.
+`quest::addlevelbasedexp()` and percentage-typed task rewards at
+`task_client_state.cpp:1076`). It does **not** apply
+`Character:ExpMultiplier` — it uses `FinalExpMultiplier` and
+`LevelBasedEXPMods` instead. Percentage-based grants are unaffected by
+this retune.
+
+`Character:AAExpMultiplier` is read independently on the AA-XP awarding
+path and is unchanged by this feature.
 
 Live values (verified against the running PEQ DB by config-expert):
 
@@ -197,16 +213,36 @@ other layer is touched.
 
 ### Compatibility Risks
 
-`Character:ExpMultiplier` is consumed only on the kill-XP path in
-`zone/exp.cpp` (per config-expert's pre-audit) and is independent from:
+`Character:ExpMultiplier` is consumed on **every flat-XP grant** that
+funnels through `Client::AddEXP()` — kill XP, `quest::exp()` Perl grants,
+Lua `:AddEXP()` calls, and flat task XP rewards. All of those will scale
+from 3.0x to 2.0x in lockstep. This is a wider blast radius than the
+PRD's "kill XP only" framing implies.
+
+**Quest reward implications:**
+- Quest scripts that call `quest::exp(value)` or `client:AddEXP(value)`
+  will award `value × 2.0` instead of `value × 3.0`. This is consistent
+  with the PRD's intent to slow leveling tempo: the player still earns
+  meaningful boosted XP, just less of it. **Not a regression**, but
+  worth flagging — quest authors who hand-tuned grants against the 3.0x
+  rate will see their grants drop by ~33%.
+- Quest scripts that use the percentage-based path
+  (`quest::addlevelbasedexp(percent)` or task rewards typed as
+  percentage) are **not affected** — they go through
+  `Client::AddLevelBasedExp()` which does not apply
+  `Character:ExpMultiplier`.
+
+`Character:ExpMultiplier` is independent from the following XP-related
+rules and tables, all of which remain at their current values:
 - group/raid bonus rules
 - HotZone bonus
-- `level_exp_mods` per-level curve (levels 66-70 brake)
+- `level_exp_mods` per-level curve (levels 66–70 brake)
 - death XP-loss rule
 - companion XP rules (custom, separate)
 
-No regression in those paths is expected. The PRD explicitly requires
-the game-tester to spot-check each of those paths to confirm.
+These paths apply on top of (or alongside) the global multiplier and are
+not touched by this change. The game-tester validation plan covers each
+of them as a regression check.
 
 ### Performance Risks
 
@@ -264,10 +300,16 @@ What could go wrong?
   player racing to level before the reload still earns 3.0x for the seconds
   it takes to apply the UPDATE; this is harmless and stops the moment the
   reload broadcasts.
-- **Hidden quest XP path that multiplies by `Character:ExpMultiplier`** —
-  config-expert confirmed `quest::exp()` and task rewards do **not** route
-  through this rule; they award flat XP and are governed by separate
-  quest-XP modifiers. PRD rollback criteria already cover this case.
+- **Quest/task XP grants are multiplied by `Character:ExpMultiplier`** —
+  config-expert traced the path: `quest::exp()`, Lua `:AddEXP()`, and flat
+  task rewards all funnel through `Client::AddEXP()`, which applies the
+  multiplier. So a `quest::exp(1000)` reward will award 2,000 XP after
+  this change instead of 3,000. The PRD's rollback criteria explicitly
+  cover "unintended downstream issues (e.g. quest XP grants … reference
+  `Character:ExpMultiplier`)" — game-tester should sanity-check at least
+  one quest grant. The percentage-based path
+  (`quest::addlevelbasedexp()` / `Client::AddLevelBasedExp()`) is **not**
+  affected and provides an unaffected control for comparison.
 - **Companion XP rules accidentally affected** — companion XP uses custom
   rules unrelated to `Character:ExpMultiplier` (per game-designer's
   pre-audit). Verified out-of-scope.
@@ -318,6 +360,15 @@ What game-tester should verify after config-expert applies the change:
       type (e.g., a snake in qeynos2 hills) for a reproducible baseline.
 - [ ] In-game spot check at max level: kill the same controlled mob and
       confirm AA-XP gained per kill matches pre-change rate exactly.
+- [ ] Quest XP spot check: complete a quest with a known flat
+      `quest::exp()` or `client:AddEXP()` reward and confirm awarded XP
+      drops to ~2/3 of the pre-change amount (proves the multiplier
+      reaches the quest path as expected).
+- [ ] Percentage-quest-XP control check: complete a quest using
+      `quest::addlevelbasedexp()` (percentage path) and confirm the
+      awarded XP is **unchanged** from before the retune. This is the
+      negative control — it proves the change did not bleed into the
+      `AddLevelBasedExp` path.
 - [ ] Group XP bonus regression check: a 2-player group kill of the same
       mob still applies the group bonus on top of the new 2.0x base.
 - [ ] HotZone bonus regression check: in a hotzone, the +0.75x bonus

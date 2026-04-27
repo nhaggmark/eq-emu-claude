@@ -142,6 +142,7 @@ _Key decisions made during this feature's development._
 | 2 | Pure rule_values UPDATE; no C++ rebuild | user | 2026-04-27 | No code change needed; #reloadrules applies live |
 | 3 | PRD approved with no lore concerns | game-designer + lore-master | 2026-04-27 | Pure numerical tune, no content references, era compliance unaffected |
 | 4 | Reload command is `#reloadrulesworld` (broadcast), not `#reloadrules` (does not exist); rule_value format `'2.0'`/`'3.0'` | architect + config-expert | 2026-04-27 | Verified against `command_settings`, `zone/gm_commands/rules.cpp`, and live `rule_values` rows |
+| 5 | `Character:ExpMultiplier` scope is broader than PRD framing — covers flat XP from `quest::exp()`, Lua `:AddEXP()`, and flat task rewards via `Client::AddEXP()`; only `AddLevelBasedExp` (percentage path) is unaffected | architect + config-expert | 2026-04-27 | Source trace; architecture.md updated with quest-XP and percentage-control validation checks |
 
 ---
 

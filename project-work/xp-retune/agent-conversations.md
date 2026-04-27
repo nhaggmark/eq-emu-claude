@@ -101,6 +101,58 @@ config-expert.
 ---
 
 
+### 2026-04-27 — Architect ← config-expert: full deep-dive findings
+
+**From:** config-expert → **To:** architect (follow-up to first response)
+
+> Full validation report against live DB and source. Headline findings:
+>
+> 1. **UPDATE statement** — confirmed single-row match on PK
+>    `(ruleset_id, rule_name)`; current value is the string `'3.0'` (not
+>    `'3'`). No triggers on `rule_values`. Forward UPDATE → `'2.0'`,
+>    rollback → `'3.0'`.
+> 2. **Reload command** — `#reloadrules` does NOT exist. Use
+>    `#reloadrulesworld` (broadcast) for the no-restart live apply.
+>    `#reloadallrules` is zone-local and would leave 7 of 8 zones stale.
+> 3. **Inactive ruleset 10** — also has `Character:ExpMultiplier = 3.0`
+>    but is not loaded by any zone; WHERE `ruleset_id = 1` is correctly
+>    scoped.
+> 4. **Quest XP path — IMPORTANT CORRECTION vs the first response.**
+>    `Character:ExpMultiplier` IS applied to `quest::exp()`, Lua
+>    `:AddEXP()`, and flat task-reward XP because they all funnel
+>    through `Client::AddEXP()` (`exp.cpp:510`) which calls
+>    `CalculateExp()` (`exp.cpp:428`) where the multiplier is applied.
+>    The exception is `Client::AddLevelBasedExp()` (`exp.cpp:1091`),
+>    used by `quest::addlevelbasedexp()` and percentage-typed task
+>    rewards — that path uses `FinalExpMultiplier` and `LevelBasedEXPMods`
+>    instead and does NOT apply `Character:ExpMultiplier`.
+
+**Outcome:** Three corrections folded into architecture.md:
+1. **Existing System Analysis → Current State** rewritten to describe
+   `AddEXP()` as the single funnel for flat-XP grants, with
+   `AddLevelBasedExp()` called out as the exception.
+2. **Compatibility Risks** rewritten — quest grants and flat task
+   rewards WILL scale 3.0x → 2.0x; that is consistent with the PRD's
+   intent to slow leveling tempo, not a regression. Percentage-based
+   grants are unaffected.
+3. **Pass 3 Antagonistic** — replaced the erroneous "quest XP doesn't
+   route through this rule" bullet with the correct funnel description
+   plus a worked example (`quest::exp(1000)` → 2,000 XP after change).
+4. **Validation Plan** — added two new checks:
+   - Quest XP spot check on a flat `quest::exp()` / `:AddEXP()` reward
+     (must drop to ~2/3 of the prior amount).
+   - Percentage-quest-XP control check on a `quest::addlevelbasedexp()`
+     reward (must be **unchanged** — proves the change did not bleed
+     into the `AddLevelBasedExp` path).
+
+This deeper trace is meaningful: the original architecture doc said
+`Character:ExpMultiplier` is "consumed only on the kill-XP path." That
+was wrong — it covers all flat-XP grants. The corrected version is now
+in the doc and is what the implementation team and game-tester should
+work from.
+
+---
+
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._
@@ -118,6 +170,7 @@ This table is the quick-reference for anyone catching up._
 |---|----------|----------------|------|---------|
 | 1 | PRD approved with no lore changes; pure numerical rule tune confirmed era-safe | game-designer, lore-master | 2026-04-27 | Design phase sign-off |
 | 2 | Reload command corrected from `#reloadrules` to `#reloadrulesworld`; rule_value format aligned to `'2.0'`/`'3.0'` | architect, config-expert | 2026-04-27 | Architecture phase verification against live DB and `zone/gm_commands/rules.cpp` |
+| 3 | `Character:ExpMultiplier` covers all flat-XP grants (kill, `quest::exp()`, Lua `:AddEXP()`, flat task rewards) via `Client::AddEXP()`; `AddLevelBasedExp` path is the exception | architect, config-expert | 2026-04-27 | Source trace through `exp.cpp:428/510/1091` and `task_client_state.cpp:1069/1076` |
 
 ---
 
