@@ -181,3 +181,47 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
 | _(none)_ | | | |
+
+### 2026-04-27 — Lore Review v2: Companion XP Parity expanded scope
+
+**From:** game-designer → **To:** lore-master
+
+> Requested re-sign-off on PRD v2 of xp-retune. Scope expanded from v1 (pure
+> rule_values numeric tune) to add a second concern: Companion XP Parity —
+> a C++ refactor of the companion XP distribution path so a companion in a
+> group earns the same per-share XP as the player, in all group sizes (1+1
+> through 1+4) and on all flat-XP event types (kill, `quest::exp()`, Lua
+> `:AddEXP()`, flat task rewards). Also added a forward-looking design
+> constraint: the refactor must leave AA-friendly seams so a future
+> companion-AA feature can plug in without re-doing parity. Companion AAs
+> are explicitly out of scope for this feature.
+>
+> Asked lore-master to confirm APPROVED (or flag specific concerns), since
+> v1's approval predated the expanded scope.
+
+**Response from** lore-master:
+
+> APPROVED — no lore concerns.
+> - Companion narrative dynamic: companion system is wholly custom; no
+>   Classic-Luclin lore establishes a power-growth hierarchy between player
+>   and recruited NPC companion. XP parity is lore-neutral.
+> - Era-pacing concern: none. The four locked eras have no in-world
+>   narrative about companion advancement rates — this is a server
+>   mechanical concern, not a fiction surface.
+> - Quest-flavored interactions: no existing quest scripts reference
+>   companion XP accumulation or level progression as a narrative beat.
+>   Companion level appears in mechanics (follow, guarding) but not in
+>   lore dialogue or quest conditions that would conflict with parity.
+> - Issues found: none. Suggestions offered: none.
+> - Both scope components (ExpMultiplier rule change + companion XP path
+>   refactor) are lore-neutral. No constraints for architect or
+>   implementation team.
+>
+> Lore-master noted no Write tool was available in their session, so they
+> could not directly update lore-notes.md or this conversations log. They
+> requested game-designer record the sign-off on their behalf.
+
+**Outcome:** Lore sign-off recorded for v2 expanded scope. PRD unchanged
+post-review. Design phase v2 ready to close. Game-designer updated
+lore-master's lore-notes.md with the v2 sign-off entry on lore-master's
+behalf, per their request.

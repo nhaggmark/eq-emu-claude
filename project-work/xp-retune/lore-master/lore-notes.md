@@ -97,3 +97,50 @@ Not applicable. This is a server tuning adjustment with no lore dimension.
 
 No lore constraints apply. The architect may proceed without any lore-driven
 restrictions on this feature.
+
+---
+
+## PRD Section Reviews — v2 (Companion XP Parity expanded scope)
+
+### Review: Full PRD v2
+
+- **Date:** 2026-04-27
+- **Verdict:** APPROVED
+- **Scope of v2:** v1 rule_values tune (`Character:ExpMultiplier` 3.0 → 2.0)
+  PLUS a new C++ refactor scope to bring companion XP per-share into parity
+  with player XP per-share, plus a forward-looking design constraint to
+  leave AA-friendly seams for a future companion-AA feature (not in scope now).
+- **Approved items:**
+  - Companion narrative dynamic: companion system is wholly custom; no
+    Classic-Luclin lore establishes a power-growth hierarchy between player
+    and recruited NPC companion. XP parity is lore-neutral.
+  - Era-pacing concern: none. The four locked eras (Classic, Kunark, Velious,
+    Luclin) have no in-world narrative about companion advancement rates.
+    This is a server mechanical concern, not a fiction surface.
+  - Quest-flavored interactions: no existing quest scripts reference
+    companion XP accumulation or level progression as a narrative beat.
+    Companion level appears in mechanics (follow, guarding) but not in
+    lore dialogue or quest conditions that would conflict with parity.
+  - No NPC, zone, item, faction, or deity references introduced.
+  - No quest dialogue or in-world fiction added or modified.
+- **Issues found:** None
+- **Suggestions offered:** None
+- **Game-designer response:** N/A
+
+**Note on logging:** Lore-master had no Write tool in this session and
+asked game-designer to record this v2 sign-off on their behalf. Entry
+captured here per lore-master's verbatim review.
+
+---
+
+## Final Sign-Off — v2
+
+- **Date:** 2026-04-27
+- **Verdict:** APPROVED (covers v1 rule tune + v2 companion XP parity + AA seams constraint)
+- **Summary:** XP Retune v2 adds a C++ refactor of the companion XP
+  distribution path to achieve per-share parity with the player, plus a
+  forward-looking constraint to leave AA-friendly seams. Both scope
+  components are lore-neutral — no narrative surface, no era-pacing
+  concern, no quest content affected. Lore-master approves with no
+  concerns.
+- **Remaining concerns:** None.

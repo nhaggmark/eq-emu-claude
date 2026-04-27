@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/xp-retune`
 > **Created:** 2026-04-27
-> **Last updated:** 2026-04-27
+> **Last updated:** 2026-04-27 (v2 — companion XP parity scope added)
 
 ---
 
@@ -11,13 +11,15 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-27 | 2026-04-27 |
-| Design | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
-| Architecture | architect + protocol-agent + config-expert | Complete | 2026-04-27 | 2026-04-27 |
+| Design v1 | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
+| Architecture v1 | architect + protocol-agent + config-expert | Complete (superseded by v2 scope expansion) | 2026-04-27 | 2026-04-27 |
+| Design v2 (companion XP parity) | game-designer + lore-master (team `xp-retune-design-v2`) | Complete | 2026-04-27 | 2026-04-27 |
+| Architecture v2 (re-triage) | _architecture team_ | Not Started — required to plan companion XP parity refactor + AA-friendly seams | | |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Architecture v2 (re-triage for companion XP parity scope)
 
 ---
 
@@ -88,6 +90,48 @@ _Record each handoff between agents with context and any notes._
   capturing before/after output for the PR. Hand off to game-tester with
   the captured SQL output and reload log lines.
 
+### design team v2 → architect (re-triage for companion XP parity)
+- **Date:** 2026-04-27
+- **Team:** `xp-retune-design-v2` (game-designer + lore-master)
+- **Notes:** PRD scope expanded. v1 covered only the rule_values rate change
+  (`Character:ExpMultiplier` 3.0 → 2.0). v2 adds **Companion XP Parity** — a
+  C++ refactor of the companion XP distribution path so a companion in a
+  group earns the same per-share XP as the player on every flat-XP event
+  (kill, `quest::exp()`, Lua `:AddEXP()`, flat task rewards), in all group
+  sizes from 1+1 through 1+4. v2 also adds a forward-looking design
+  constraint: the refactor must leave **AA-friendly seams** so a future
+  companion-AA feature can attach without re-doing the parity work.
+  Companion AA implementation is explicitly OUT of scope for this feature.
+
+  Lore-master v2 sign-off: APPROVED. No lore concerns, no era-pacing
+  concern, no narrative surface (companion system is wholly custom; no
+  Classic-Luclin canon establishes a player/companion power-growth
+  hierarchy). Logged in `agent-conversations.md` and `lore-master/lore-notes.md`.
+
+  **Implementation Note (changed from v1):** This is no longer pure config.
+  v2 requires a C++ refactor in `eqemu/zone/` (companion XP entry point
+  `Companion::AddExperience` and the post-split divergence at
+  `Group::SplitExp` / `exp.cpp:1180-1213`), plus removal or repurposing
+  of the hardcoded max-100 cap on `Companions:XPSharePct` at
+  `exp.cpp:1199`. Build + restart cycle required. The rule_values UPDATE
+  from v1 still ships under this feature.
+
+  **For the architect:** the v1 architecture doc covers ONLY the rate
+  change. A v2 re-triage is needed to plan the companion XP parity
+  refactor. Likely experts: c-expert (XP path refactor), config-expert
+  (rule_values + any new rule introduced for parity scaling). The v1
+  config-expert task (Task 1) is still valid for the rate piece but
+  should be re-sequenced to ship together with the parity refactor on
+  `feature/xp-retune`. See PRD Appendix for the file/line landmarks
+  the team-lead has already gathered.
+
+  **Open questions for architect:** how to break the max-100 cap
+  cleanly (remove vs. repurpose `Companions:XPSharePct`); whether to
+  introduce a new rule (e.g. `Companions:XPMultiplier` or similar) for
+  the parity-scaling knob; where exactly to seam the AA accrual hook so
+  a future feature can plug in without churn. The PRD does not
+  prescribe — architect's call.
+
 ---
 
 ## Implementation Tasks
@@ -143,6 +187,9 @@ _Key decisions made during this feature's development._
 | 3 | PRD approved with no lore concerns | game-designer + lore-master | 2026-04-27 | Pure numerical tune, no content references, era compliance unaffected |
 | 4 | Reload command is `#reloadrulesworld` (broadcast), not `#reloadrules` (does not exist); rule_value format `'2.0'`/`'3.0'` | architect + config-expert | 2026-04-27 | Verified against `command_settings`, `zone/gm_commands/rules.cpp`, and live `rule_values` rows |
 | 5 | `Character:ExpMultiplier` scope is broader than PRD framing — covers flat XP from `quest::exp()`, Lua `:AddEXP()`, and flat task rewards via `Client::AddEXP()`; only `AddLevelBasedExp` (percentage path) is unaffected | architect + config-expert | 2026-04-27 | Source trace; architecture.md updated with quest-XP and percentage-control validation checks |
+| 6 | Scope expanded to include Companion XP Parity — companion must earn same per-share XP as player on every flat-XP event, in all group sizes 1+1 through 1+4 | user | 2026-04-27 | Companions are the signature feature for the 1–3 player server; current architectural ~50% gap is a feel and power-curve problem |
+| 7 | Companion XP parity refactor must leave AA-friendly seams; companion AAs explicitly out of scope this feature | user | 2026-04-27 | Avoid re-doing the parity work when companion AAs are added later |
+| 8 | PRD v2 (companion XP parity) approved with no lore concerns | game-designer + lore-master | 2026-04-27 | Companion system is wholly custom; no Classic-Luclin lore establishes companion advancement narrative; era compliance unaffected |
 
 ---
 
