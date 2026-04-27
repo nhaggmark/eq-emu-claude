@@ -22,17 +22,29 @@ rationale are never lost.
 
 _game-designer + lore-master exchanges during Phase 2._
 
-### [Date] — [Topic]
+### 2026-04-27 — Lore Review: full PRD sign-off
 
-**From:** [agent] → **To:** [agent]
+**From:** game-designer → **To:** lore-master
 
-> [Message content or summary]
+> Requested explicit lore sign-off on the finalized xp-retune PRD before closing
+> out the Design phase. Summarized the change as a pure numerical rule tune:
+> `Character:ExpMultiplier` 3.0 → 2.0, `Character:AAExpMultiplier` stays 3.0,
+> no content/NPCs/zones/factions/quest dialogue touched, single-row UPDATE on
+> `rule_values` applied live via `#reloadrules`. Asked for either APPROVED or
+> specific lore concerns. Linked PRD path:
+> `/mnt/d/Dev/eq/claude/project-work/xp-retune/game-designer/prd.md`
 
-**Response from** [agent]:
+**Response from** lore-master:
 
-> [Response content or summary]
+> APPROVED — no lore concerns. Specifically called out:
+> - Rule tune is a pure numeric knob — no NPC/zone/faction/item/dialogue references
+> - Era compliance unaffected — rule_values are server config, not content;
+>   2x kill XP fits all four locked eras (Classic/Kunark/Velious/Luclin)
+> - AA XP unchanged at 3.0x — no lore implications
+> - Quest/task XP — global multiplier applies uniformly; no narrative framing altered
+> - No issues, no suggestions, no constraints for architect or implementation team
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** Lore sign-off recorded. PRD unchanged. Design phase ready to close.
 
 ---
 
@@ -40,17 +52,7 @@ _game-designer + lore-master exchanges during Phase 2._
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+_(Phase not yet started.)_
 
 ---
 
@@ -58,17 +60,7 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 _Expert-to-expert exchanges during Phase 4._
 
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+_(Phase not yet started.)_
 
 ---
 
@@ -79,7 +71,7 @@ This table is the quick-reference for anyone catching up._
 
 | # | Decision | Agents Involved | Date | Context |
 |---|----------|----------------|------|---------|
-| | | | | |
+| 1 | PRD approved with no lore changes; pure numerical rule tune confirmed era-safe | game-designer, lore-master | 2026-04-27 | Design phase sign-off |
 
 ---
 
@@ -89,4 +81,4 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
-| | | | |
+| _(none)_ | | | |

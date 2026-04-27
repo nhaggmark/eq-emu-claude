@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-27 | 2026-04-27 |
-| Design | game-designer + lore-master | Not Started | | |
+| Design | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
 | Architecture | architect + protocol-agent + config-expert | Not Started | | |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Design
+**Current phase:** Architecture
 
 ---
 
@@ -47,6 +47,22 @@ _Record each handoff between agents with context and any notes._
   - Levels 66–70 braked via level_exp_mods (intentional era-lock pacing — keep)
   - HotZone bonus at default +0.75x (keep)
   - Companion XP rules custom but unrelated (keep)
+
+### design team → architect
+- **Date:** 2026-04-27
+- **Notes:** PRD finalized at `game-designer/prd.md`. Lore-master sign-off
+  recorded — APPROVED, no concerns, no constraints. PRD scope is a pure
+  numerical rule tune: `Character:ExpMultiplier` 3.0 → 2.0,
+  `Character:AAExpMultiplier` unchanged at 3.0. Single-row UPDATE on
+  `peq.rule_values` (ruleset_id = 1), applied live via `#reloadrules`. No
+  rebuild required. All other XP-related rules explicitly out of scope per
+  Non-Goals section. Acceptance criteria, success metrics, and rollback
+  criteria all spelled out in the PRD. No open questions remain.
+
+  **For the architect:** triage which expert(s) are needed (likely
+  data-expert only) and produce the implementation plan. The Appendix
+  section of the PRD has the exact UPDATE shape from the config-expert
+  pre-audit.
 
 ---
 
@@ -100,6 +116,7 @@ _Key decisions made during this feature's development._
 |---|----------|---------|------|-----------|
 | 1 | Kill XP reduced 3.0x → 2.0x; AA XP stays 3.0x | user | 2026-04-27 | Kill XP was leveling players too fast; AA grind should stay accelerated |
 | 2 | Pure rule_values UPDATE; no C++ rebuild | user | 2026-04-27 | No code change needed; #reloadrules applies live |
+| 3 | PRD approved with no lore concerns | game-designer + lore-master | 2026-04-27 | Pure numerical tune, no content references, era compliance unaffected |
 
 ---
 
