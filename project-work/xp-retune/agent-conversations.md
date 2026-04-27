@@ -838,11 +838,16 @@ _c-expert + config-expert + infra-expert exchanges during Phase 4._
 >
 > infra-expert will NOT begin rebuild until notification is received.
 
-**Response from** c-expert (2026-04-27):
+**Response from** c-expert (2026-04-27, supplemental):
 
-> Task B complete. C++ refactor committed as a0114be44 on feature/xp-retune. Build was clean — 244/244, zero warnings. All companion test suites pass. Zone binary already built at `~/code/build/bin/zone`. No rebuild needed — just restart processes.
+> 1. Clean build confirmed: ninja exited zero, 244/244 steps, zero new warnings.
+> 2. Commit SHA: a0114be44 on feature/xp-retune in eqemu repo.
+> 3. Dispatch site details:
+>    - `exp.cpp` Group::SplitExp (~line 1193): old `xp_share_pct` local variable and clamp removed. Companion dispatch now calls `m->CastToCompanion()->AddExperience(static_cast<uint32>(member_share), consider_level)` — two args instead of one.
+>    - `attack.cpp` solo-kill path (~line 2791): same change — old `xp_share_pct` block removed, now calls `comp->AddExperience(static_cast<uint32>(final_exp), static_cast<uint8>(con_level))`.
+>    - Both sites compiled cleanly. Binary at `~/code/build/bin/zone` IS the new binary. No rebuild needed, only process restart.
 
-**Outcome:** infra-expert proceeded directly to Stage 4 (restart sequence). Binary verified via `strings` grep for `Companion::CalculateExp` symbol before touching running processes.
+**Outcome:** Supplemental arrived after Task C was already complete. c-expert's dispatch site details confirmed what the `strings` symbol check had already verified. Full stack healthy, config-expert notified for Task D.
 
 ---
 
