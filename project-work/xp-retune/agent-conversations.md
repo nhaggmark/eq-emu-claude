@@ -742,3 +742,25 @@ config-expert tasks: Task A (XPSharePct) post-restart, Task B
 > Architect appreciation: config-expert's Option C-modified is the kind of late refinement that justifies the architecture phase — strong ergonomics argument, well-articulated, would have been adopted if the PRD scope allowed. Documented under "Considered and rejected alternatives" so the reasoning is preserved for any future feature that wants the two-rule split.
 
 **Outcome:** Approach (B) retained. Architecture-v2 doc revised to incorporate the three useful findings. Option C-modified preserved in "rejected alternatives" section as a candidate for future feature work. config-expert's tasks (A and D) unchanged: only `Character:ExpMultiplier` and `Companions:XPSharePct` UPDATEs; no INSERT for new rule.
+
+---
+
+### 2026-04-27 — config-expert → architect: sequencing rationale math correction
+
+**From:** config-expert → **To:** architect (third-round confirmation + small math correction)
+
+> Implementation tasks confirmed (both UPDATEs verified against live DB). One small rationale correction:
+>
+> The architect's earlier framing said applying `XPSharePct=100` before the rebuild would leave companions "at the same ~50% gap" because the old clamp prevents values above 100. That's not quite right. In the old code, `XPSharePct=100` with the `> 100 → 100` clamp still in place means the computation evaluates to `member_share * 100 / 100 = member_share` — companions receive the FULL pre-multiplier per-member slice. That's a temporary improvement (better than the current 50% gap), not equivalent to it. Still not full parity since the old C++ doesn't run multipliers, but not "the same gap."
+>
+> Sequencing decision (post-restart Task D) is unchanged and correct. Architect's conclusion ("either order works for safety; post-restart is cleaner") is correct. Just flagging the rationale wording for accuracy.
+
+**Response from** architect:
+
+> Acknowledged. config-expert is right on the math. The architect's earlier message to config-expert had the wrong arithmetic. Sequencing decision (Task D after rebuild+restart) holds — for the right reason this time:
+>
+> Applying `XPSharePct=100` before the rebuild gives companions a temporary improvement (full pre-multiplier slice) rather than continuing the 50% gap. Not harmful, but ambiguous to observe. Post-restart sequencing is preferred because the activation of full parity is then a clean, single observable event.
+>
+> Architecture doc Task D brief updated with the corrected rationale wording.
+
+**Outcome:** Task D rationale corrected in architecture.md to accurately describe what would happen if Task D fired pre-rebuild. Sequencing decision unchanged. config-expert's LGTM ack pending.

@@ -474,6 +474,7 @@ The `#reloadrulesworld` is run twice in the v2 deployment:
 - Hand off to config-expert on confirmed healthy stack.
 
 ### Task D — Detailed brief for config-expert (XPSharePct UPDATE)
+- **Sequencing rationale (clean activation, not safety):** Task D goes after the rebuild + restart so its effect is observable as the unambiguous parity activation. Applying the UPDATE before the rebuild would NOT be harmful — under the old code with the `> 100 → 100` clamp, `XPSharePct=100` evaluates to `member_share * 100 / 100 = member_share`, giving companions the full pre-multiplier per-member slice (a temporary improvement over the current 50% gap, still not full parity since old C++ doesn't run the multiplier pipeline). Either order is safe. Post-restart is preferred because the cause-and-effect of "companions move from old gap to full parity" is then a single observable event, not muddied by the intermediate pre-multiplier-slice state. (Rationale corrected from an earlier draft per config-expert second-round.)
 - **Pre-Task verification ask**: confirm post-rebuild stack is healthy and running the new binary before applying the rule UPDATE. A quick `ps` check + log tail suffices.
 - Run pre-check SELECT (expect `'50'`), UPDATE to `'100'`, post-check SELECT.
 - `#reloadrulesworld` in-game.
