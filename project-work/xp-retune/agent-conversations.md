@@ -157,7 +157,47 @@ work from.
 
 _Expert-to-expert exchanges during Phase 4._
 
-_(Phase not yet started.)_
+### 2026-04-27 — c-expert → architect: XP path code trace + recommended refactor
+
+**From:** c-expert → **To:** architect
+
+> Full code trace of companion XP divergence. Key findings:
+> - Divergence is in `Group::SplitExp` (`exp.cpp:1196–1218`): client path
+>   runs through `AddEXP → CalculateExp` (full multiplier stack); companion
+>   path runs `AddExperience(slice * XPSharePct / 100)` with zero multipliers.
+> - The 0–100 clamp at `exp.cpp:1198–1199` is the architectural blocker for
+>   a rule-only fix.
+> - `GroupCount()` (`groups.cpp:1184`) counts companions in `membername[]` —
+>   they dilute the per-member slice already. A 1+1 group splits 2 ways.
+> - `quest::exp` and Lua `:AddExperience` also bypass the pipeline.
+> - Raid XP path has no companion dispatch — no change needed there.
+>
+> Recommended approach (B): mirror pipeline. Add `Companion::CalculateExp`
+> mirroring `Client::CalculateExp` minus AA split, race/class bonuses,
+> leadership. Call it from `Companion::AddExperience`. `XPSharePct` becomes
+> post-multiplier scalar (default 100 = parity). One open item: `GetConLevelModifierPercent`
+> is `Client`-only — needs a static `Mob` helper or duplication.
+>
+> Flagged four files to modify: mob.h, companion.h/.cpp, exp.cpp:1196–1218,
+> lua_companion.cpp, ruletypes.h.
+
+**Response from** architect:
+
+> Confirmed approach (B). Two explicit decisions:
+> 1. `GetConLevelModifierPercent` → extract to `Mob` protected static.
+>    Client delegates to it. Companion calls the same static. Keeps formula
+>    in one place.
+> 2. `XPSharePct` default → change to 100 in `ruletypes.h`. Clamp stays
+>    (0–100 valid range for operator fine-tuning). DB UPDATE to ruleset_id=1
+>    delegated to config-expert.
+>
+> Added `zone/mob.h` to file list for static helper declaration.
+> Stage 4 go-ahead pending architecture doc + config-expert confirmation.
+
+**Outcome:** Consensus plan recorded in c-expert dev-notes.md (Stage 3 section).
+AA seam documented: `Companion::CalculateExp` is the hook point — future
+companion-AA feature adds `uint32& add_aaxp` out-parameter there. Five files
+confirmed for modification. Waiting on architect go-ahead for Stage 4.
 
 ---
 
@@ -171,6 +211,9 @@ This table is the quick-reference for anyone catching up._
 | 1 | PRD approved with no lore changes; pure numerical rule tune confirmed era-safe | game-designer, lore-master | 2026-04-27 | Design phase sign-off |
 | 2 | Reload command corrected from `#reloadrules` to `#reloadrulesworld`; rule_value format aligned to `'2.0'`/`'3.0'` | architect, config-expert | 2026-04-27 | Architecture phase verification against live DB and `zone/gm_commands/rules.cpp` |
 | 3 | `Character:ExpMultiplier` covers all flat-XP grants (kill, `quest::exp()`, Lua `:AddEXP()`, flat task rewards) via `Client::AddEXP()`; `AddLevelBasedExp` path is the exception | architect, config-expert | 2026-04-27 | Source trace through `exp.cpp:428/510/1091` and `task_client_state.cpp:1069/1076` |
+| 4 | Companion XP parity: approach (B) confirmed — `Companion::CalculateExp` mirror pipeline, `XPSharePct` post-multiplier scalar default 100, clamp kept | c-expert, architect | 2026-04-27 | C++ code trace + architect decision |
+| 5 | `GetConLevelModifierPercent` → extract to `Mob` protected static; both `Client` and `Companion` delegate to it | architect | 2026-04-27 | Architect decision to keep formula in one place |
+| 6 | AA seam = `Companion::CalculateExp` function signature — future feature adds `uint32& add_aaxp` out-param, no other files touched | c-expert, architect | 2026-04-27 | Structural seam documented in c-expert dev-notes |
 
 ---
 
@@ -225,3 +268,96 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 post-review. Design phase v2 ready to close. Game-designer updated
 lore-master's lore-notes.md with the v2 sign-off entry on lore-master's
 behalf, per their request.
+
+---
+
+### 2026-04-27 — Architect → config-expert: rule strategy for v2 companion XP parity
+
+**From:** architect → **To:** config-expert
+
+> Asked config-expert to weigh in on the rule-side strategy for v2 before
+> committing to a refactor approach. Specifically:
+>
+> 1. Current state of `Companions:XPSharePct` (value, readers in C++, default
+>    in `ruletypes.h`, presence on inactive ruleset_id=10).
+> 2. Cap-vs-repurpose-vs-new-rule decision:
+>    - **Option A**: delete the >100 clamp at `exp.cpp:1199`, leave the rule
+>      semantics alone.
+>    - **Option B**: repurpose `Companions:XPSharePct` as a post-multiplier
+>      scaler (default 100 = parity).
+>    - **Option C**: deprecate `XPSharePct`, introduce
+>      `Companions:XPMultiplier` (real-valued, default 1.0).
+> 3. AA-friendly seam rules to reserve for the future companion-AA feature
+>    (e.g. `Companions:AAExpEnabled`, `Companions:AAExpSharePct`).
+> 4. Other `Companions:*` rules I should be aware of, plus any per-zone or
+>    per-character bucket overrides.
+> 5. Whether `#reloadrulesworld` picks up newly-defined rules without a
+>    rebuild (assumed it requires rebuild because rules are defined via
+>    X-macros in C++ headers).
+> 6. Whether the v1 rate-change task is still valid as-is and the
+>    sequencing of the two pieces under the same feature branch.
+
+**Response from** config-expert:
+
+> Validated against live DB (ruleset_id=1) and source.
+>
+> 1. **`Companions:XPSharePct` is 100% custom — no backward-compat concern.**
+>    Current value: `50`. Notes: "Percentage of a companion's XP share that
+>    actually goes to the companion (remainder to player pool)." Zero
+>    `Companions:*` rules exist on ruleset_id=10 ("EQEmu_Default"). This is
+>    a private custom rule for this server — repurpose or ignore freely
+>    without diverging from a stock EQEmu baseline.
+> 2. **No `Companions:XPMultiplier` rule exists.** A new INSERT is clean — no
+>    collision. Suggested INSERT shape:
+>    ```sql
+>    INSERT INTO rule_values (ruleset_id, rule_name, rule_value, notes)
+>    VALUES (1, 'Companions:XPMultiplier', '1.0',
+>            'Post-split XP multiplier applied to companion XP share. 1.0 = parity with player. Range 0.0–2.0.');
+>    ```
+> 3. **Removing the `exp.cpp:1199` clamp has no rule-tuning side effects.**
+>    The clamp is hardcoded, not rule-derived. Removing it just lets
+>    `XPSharePct` values above 100 take effect.
+> 4. **`Character:ExpMultiplier` 3.0 → 2.0 UPDATE still ships unchanged.**
+>    Current value on ruleset_id=1 is still `'3.0'` — the v1 task is
+>    unaffected by v2 scope.
+> 5. **Operational sequencing — two pieces can ship in separate windows,
+>    with caveat.** Rule UPDATE is `#reloadrulesworld`-live (no restart).
+>    The companion XP parity refactor requires C++ rebuild + full
+>    server-process restart. Recommended single window: (1) rule UPDATE
+>    first (no downtime), (2) rebuild, (3) restart processes — rule is
+>    already live when zones come back up. If shipped in separate windows,
+>    note for game-tester that parity must be validated AFTER the restart,
+>    not after the rule reload.
+> 6. **AA-friendly seam — no rule implications for this feature.** The
+>    AA-seam requirement is purely a C++ structural concern. No new rule
+>    should be introduced for companion AAs now — the future feature will
+>    INSERT its own rule (e.g. `Companions:AAExpMultiplier`) at that time.
+>    The `rule_values` schema accommodates this without changes.
+>
+> **Summary for whichever approach the architect chooses:**
+> - **Cap removal only** → no additional rule_values work beyond the rate UPDATE.
+> - **Repurpose XPSharePct** → UPDATE `Companions:XPSharePct` to `100`
+>   (in the rebuild+restart window, since it needs the cap removed to be
+>   effective).
+> - **New rule** → INSERT `Companions:XPMultiplier = 1.0` (in the
+>   rebuild+restart window, since the rule needs its `ruletypes.h` macro
+>   to exist at runtime).
+>
+> All three are clean from a rule_values perspective. config-expert's
+> dev-notes are updated and committed to `feature/xp-retune` in the
+> claude repo.
+
+**Outcome (architect's read):**
+- The rule_values side does not constrain the design. Any of the three
+  strategies is achievable.
+- **Sequencing decision adopted:** apply rate UPDATE first (or in same
+  window), then rebuild + restart. game-tester validates parity AFTER the
+  restart, not after the reload.
+- AA-seam will be a **structural-only** concern in this feature — no rule
+  is introduced, but the C++ architecture must leave a documented hook
+  point so the next feature can INSERT `Companions:AAExpMultiplier`
+  cleanly. Architect will document the function signature / call site in
+  the architecture-v2 doc.
+- The cap-vs-repurpose-vs-new-rule call still hinges on c-expert's read
+  of the cap's actual blast radius and the call sites of `XPSharePct` —
+  awaiting c-expert's response to finalize.
