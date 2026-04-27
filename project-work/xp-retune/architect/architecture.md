@@ -161,6 +161,7 @@ as a post-multiplier scalar with default `100` = parity.
 | **Pre-compute final per-member XP in `Group::SplitExp`** | Doesn't help `quest::exp()` or `Lua_Companion::AddExperience`, which bypass `SplitExp`. Fails PRD cases 7-8. |
 | **Cap-removal-only on `XPSharePct`** (Approach A) | Leaves rule semantics surprising: name says "SharePct" but values can exceed 100. Worst readability for operators. |
 | **Deprecate `XPSharePct`, introduce `Companions:XPMultiplier`** (Approach C) | Adds rule clutter; old rule becomes vestigial. Existing operator setups that use `XPSharePct = 50` would silently lose effect. |
+| **Two orthogonal rules: `XPSharePct=100` parity gate + new `Companions:XPMultiplier=1.0` post-multiplier scalar** (Approach C-modified, recommended by config-expert second round) | Better operator ergonomics — separates "fraction of share" from "post-multiplier scaling" so the two knobs never overlap semantically. **Rejected:** PRD non-goal at lines 61-63 explicitly out-of-scopes new companion-specific XP rules that are "not load-bearing for parity." `Companions:XPMultiplier` (default 1.0) is NOT load-bearing for parity — parity works without it. Adopting it would expand scope past what the user signed off on. The two-rule split is a follow-up feature candidate if the user wants tuning ergonomics later; logged in agent-conversations.md for that future discussion. |
 
 **Approach (B) chosen for `XPSharePct`** — keep clamp 0-100, change
 default to 100, repurpose as post-multiplier scalar. Reuses existing rule
@@ -454,6 +455,8 @@ The `#reloadrulesworld` is run twice in the v2 deployment:
 - Implement the seven file changes listed under "Code changes / C++ changes" above (exp.h, attack.cpp:2791-2810, companion.h, companion.cpp, exp.cpp:1196-1218, lua_companion.cpp, ruletypes.h).
 - Apply the mirror-pipeline approach exactly as ratified in `agent-conversations.md` (2026-04-27 architect/c-expert exchange).
 - **TWO companion XP dispatch sites must be patched**: `exp.cpp:1196-1218` (group split) AND `attack.cpp:2791-2810` (solo-kill path). Both currently apply the `xp_share_pct/100` clamp inline; both must change to pass raw XP + conlevel to `AddExperience` (which now owns the post-multiplier scaling). This is the second-round finding — easy to miss if only `exp.cpp` is patched.
+- **Clamp removal at dispatch sites; clamp retention at application site.** Once the refactor lands, the dispatch sites no longer read `XPSharePct` at all — the inline `> 100 → 100` clamps at `exp.cpp:1198-1199` AND `attack.cpp:2795-2796` become dead code and must be removed. The 0-100 sanity range for `XPSharePct` is preserved by the rule's read inside `Companion::AddExperience` (where the post-multiplier is applied); negative or above-100 values from a future operator config are still gated there.
+- **`Companions:XPContribute` gate must be preserved**: the existing logic that excludes companions from `Group::SplitExp` participation when `XPContribute = false` MUST remain in place. The parity refactor changes WHAT companions receive when included; it does NOT change WHETHER they're included. Verify by code inspection that the dispatch loop still respects the `XPContribute` check before invoking the new companion dispatch.
 - **`XPSharePct` post-multiplier scalar MUST be applied inside `Companion::AddExperience`** (right after `CalculateExp` returns), NOT inside the `Group::SplitExp` dispatch. Single application site ensures quest::exp / Lua paths receive the same scaling.
 - **`GetConLevelModifierPercent` exposure via `exp.h`** — verified by c-expert as already a file-scope `static` in `exp.cpp:218`, NOT a Client method. Add the declaration to `exp.h` so `companion.cpp` can call the same single source of truth. No `mob.h`/`mob.cpp` changes.
 - **AA-seam code comment** placed on `Companion::CalculateExp` per spec above.
@@ -638,12 +641,14 @@ constraint, not added code surface.
   limitation, explicitly out of scope.**
 
 - **`Companions:XPContribute` interaction** — this rule controls whether
-  companion presence in a group affects member_count. Not changing
-  semantics. If `XPContribute = false`, companion is excluded from
-  `member_count` (player gets a full group share, companion in this
-  refactor still gets parity to that full share via `CalculateExp`). The
-  interaction is consistent with the PRD's intent ("companion gets the
-  same per-share that the player gets"). **No change needed.**
+  companion presence in a group participates in `Group::SplitExp` at all.
+  The parity refactor MUST still respect this gate: if `XPContribute = false`,
+  companions are excluded from the split entirely and the new
+  `Companion::CalculateExp` path is never reached. c-expert task B brief
+  must explicitly preserve this gate when refactoring the dispatch loop.
+  Verified semantics: this rule controls participation, not scaling — it's
+  orthogonal to `XPSharePct` and the two never fight. **No change needed
+  beyond preserving the existing gate logic.**
 
 - **Operator who set `XPSharePct < 100` deliberately** — pre-feature, this
   meant "companion gets X% of un-multiplied slice." Post-feature, it
@@ -725,6 +730,8 @@ The PRD specifies 15 numbered validation cases. game-tester verifies each:
 |-------|------|----------|---------|
 | 1 | Solo player, single kill of a known mob | Player XP gain ≈ 0.667x of pre-change amount | Task A effect |
 | 2 | Solo player, kill with full hotzone bonus | Hotzone bonus applies; total scales correctly off new 2.0x base | Task A effect, hotzone integration |
+
+> **Behavior-change flag (config-expert second-round trace):** `zone_exp_multiplier` (ZEM) and `HotZoneBonus` are currently applied ONLY inside `Client::CalculateExp` (`exp.cpp:433-449`). Companions today do NOT receive ZEM or hotzone bonuses. **After the v2 refactor, companions will benefit from ZEM and hotzone bonuses for the first time** because `Companion::CalculateExp` mirrors the player path. This is the correct intended behavior per PRD parity — companions in hotzones should benefit the same as the player — but it is an observable first-time behavior change. game-tester should specifically verify a hotzone kill with companion-in-group: companion XP should match player XP per-share, both inflated by the hotzone bonus.
 
 ### Companion XP parity (PRD cases 3-6)
 

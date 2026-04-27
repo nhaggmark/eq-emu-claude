@@ -675,3 +675,35 @@ config-expert tasks: Task A (XPSharePct) post-restart, Task B
 **Audit trail note:** This is the correct workflow — c-expert pushed back with new source-read evidence, architect revised the decision rather than ratifying a now-incorrect call. The earlier architect↔c-expert ratification entry above is preserved as-written for historical accuracy, with this correction record providing the override.
 
 **Process discipline note (architect → c-expert, in earlier ratification message):** c-expert dev-notes Stage 3 "Feedback Received" table had pre-recorded several architect decisions before the architect had sent those confirmations. c-expert corrected the audit trail per architect feedback (commit `7f9da9f`), adding explicit "Received" date columns so future readers can distinguish actually-received from anticipated feedback. Logged as Decision Log entry #16 in `status.md`.
+
+---
+
+### 2026-04-27 — config-expert → architect: Option C-modified counter-recommendation (round 2)
+
+**From:** config-expert → **To:** architect (full second-round response to the rule-strategy ask)
+
+> Six numbered answers including a strong recommendation to switch from approach (B) to **Option C-modified**: split into two orthogonal rules — keep `Companions:XPSharePct` set to 100 (parity gate, "give the companion their full per-member slice"), AND introduce a new `Companions:XPMultiplier` (RULE_REAL, default 1.0, post-multiplier scalar). Two knobs never fight: `XPSharePct=80` for sub-parity slice, `XPMultiplier=1.1` for above-parity scaling.
+>
+> Other findings:
+> - `Companions:XPSharePct` has TWO C++ readers, not one: `exp.cpp:1197` AND `attack.cpp:2794`. Both clamps must be removed.
+> - ZEM/hotzone coverage gap: companions today don't get ZEM or HotZoneBonus; the parity refactor will give them these for the first time.
+> - `Companions:XPContribute` gate must still be respected by the parity refactor.
+> - `Companions:XPMultiplier` does not exist; clean INSERT path. New rule requires rebuild because rules are X-macro-defined in C++ headers.
+> - AA-seam rule names suggested: `Companions:AAExpEnabled` (BOOL, default false), `Companions:AAExpPct` (INT, default 0). Document only — do NOT add now.
+> - v1 rate-change task still valid; recommended sequencing: rate UPDATE first (no downtime), then C++ build, then restart, then companion DB UPDATE.
+
+**Response from** architect:
+
+> Approach (B) retained. Stick with the design call already made. Option C-modified is rejected on PRD scope grounds, NOT on technical merit:
+>
+> The PRD non-goal at `prd.md:61-63` explicitly out-of-scopes "Companion-specific XP rules other than `Companions:XPSharePct` ... that uniquely target companion XP and is not load-bearing for parity." `Companions:XPMultiplier` (default 1.0) is NOT load-bearing for parity — parity works without it. Adopting C-modified would expand scope past the PRD.
+>
+> Three of config-expert's findings ARE adopted in the architecture-v2 doc:
+>
+> 1. **Two-site clamp removal** — both `exp.cpp:1198-1199` and `attack.cpp:2795-2796` clamps become dead code at the dispatch sites and must be removed. The 0-100 sanity range is preserved by the rule's read inside `Companion::AddExperience`. Doc updated to make this explicit.
+> 2. **ZEM/hotzone first-time coverage flag** — companions in hotzones will get the +0.75x bonus for the first time after this refactor. Correct intended behavior per PRD case 2. Doc updated to flag this as a notable behavior change for game-tester to verify explicitly.
+> 3. **`Companions:XPContribute` gate preservation** — refactor must NOT change the gate that excludes companions from group split when `XPContribute = false`. The c-expert Task B brief now explicitly calls this out.
+>
+> Architect appreciation: config-expert's Option C-modified is the kind of late refinement that justifies the architecture phase — strong ergonomics argument, well-articulated, would have been adopted if the PRD scope allowed. Documented under "Considered and rejected alternatives" so the reasoning is preserved for any future feature that wants the two-rule split.
+
+**Outcome:** Approach (B) retained. Architecture-v2 doc revised to incorporate the three useful findings. Option C-modified preserved in "rejected alternatives" section as a candidate for future feature work. config-expert's tasks (A and D) unchanged: only `Character:ExpMultiplier` and `Companions:XPSharePct` UPDATEs; no INSERT for new rule.
