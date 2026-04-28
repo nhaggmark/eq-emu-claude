@@ -17,7 +17,9 @@
 | L-2 | Fix `companion.lua:1434` — `Dismiss(true)` → `Dismiss(false)` | L-1 tests written | Pending |
 | L-3 | Fix `companion.lua:15` — invert doc comment parameter semantics | L-2 | Pending |
 | L-4 | Fix `companion.lua:207` — LevelRange fallback `or 3` → `or 50` | L-2 | Pending |
-| L-5 | Fix `companion.lua:394-397` — add `ORDER BY id DESC` to re-recruit query | L-2 | Pending |
+| L-5 | Fix `companion.lua:394-397` — add `ORDER BY level DESC, experience DESC, id DESC` to re-recruit query | L-2 | Pending |
+
+**ORDER BY rationale (architect decision):** `level DESC, experience DESC` picks the row with the most player investment (not the most recently inserted row). `id DESC` as the final tiebreaker handles equal-level/equal-XP duplicates deterministically. C++ query at `companion.cpp:218` intentionally left without ORDER BY (future work — requires build cycle).
 
 ---
 
@@ -147,6 +149,7 @@ Not needed for triage phase. API patterns verified by direct source reading.
 | architect | LevelRange fallback `or 3` → `or 50` hardening | Added as task L-4 |
 | architect | TDD: 2 failing tests before fix (test Dismiss arg) | Added as task L-1 |
 | architect | `!dismiss permanent` out of scope; `!dismiss` always calls `Dismiss(false)` | Confirmed; no `permanent` path from Lua |
+| architect | ORDER BY: use `level DESC, experience DESC, id DESC` not `id DESC` — picks highest-investment row, not most-recently-inserted | Updated task L-5 |
 
 ### Consensus Plan
 
@@ -168,7 +171,7 @@ The three PRD blockers (level range, cooldown, dismissed flag) all cascade from 
 2. Apply one-character fix at `companion.lua:1434` (L-2) — tests now pass
 3. Fix doc comment at `companion.lua:15` (L-3)
 4. Fix LevelRange fallback `or 3` → `or 50` at `companion.lua:207` (L-4)
-5. Add `ORDER BY id DESC` to re-recruit query at `companion.lua:394` (L-5)
+5. Add `ORDER BY level DESC, experience DESC, id DESC` to re-recruit query at `companion.lua:394` (L-5)
 6. Verify all existing tests still pass
 7. Commit to `bugfix/companion-rerecruit` in akk-stack and claude repos
 
