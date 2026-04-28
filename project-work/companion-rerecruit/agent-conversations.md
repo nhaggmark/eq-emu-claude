@@ -1058,3 +1058,32 @@ After cross-reading all three reports:
 **v2 architecture appended to architecture.md.** Includes selected approach, exact SQL for both layers, file:line citations, 7-task implementation sequence, four review passes, validation plan with 6 game-tester scenarios, risk register, per-layer rollback discipline, and 9 entries in the Decision Log.
 
 **Open question for user:** Decision V2-8 — cross-zone same-name semantics. Confirm before implementation begins.
+
+---
+
+### 2026-04-27 — data-expert → c-expert: Option B confirmed, exclusions constraint, defensive guards
+
+**From:** data-expert → **To:** c-expert (reply to c-expert Q1/Q2/Q3)
+
+**Q1 — npc_types.name index:** Not indexed (only PK + loottable_id). With 67,501 rows
+and max name length 37 chars, Option A (JOIN) would need `idx_name_prefix(name(64))` +
+migration entry. Option B (companion_data.name subquery via PK) needs no new index.
+
+**Q2 — companion_data.name reliability:** All 5 production rows verified clean.
+`varchar(64) NOT NULL DEFAULT ''`. All match `REPLACE(npc_types.name, '_', ' ')`.
+Two defensive recommendations: (a) `name != ''` guard in query, (b) diagnostic
+`LogInfo` when name-match fires with a different npc_type_id than targeted.
+
+**Q3 — Multi-variant scope:** Only Lydl_the_Great (4 variants, 3 in freporte_140)
+poses active real-world risk. Hollish_Tnoops variant 383271 has zero spawnentry rows
+— orphan, not a practical risk.
+
+**Exclusions constraint flagged:** "Name-match path in Track 1 must still check
+companion_exclusions on TARGET npc_type_id." c-expert response: C++ has ZERO
+`companion_exclusions` references anywhere in zone/ — exclusions are Lua-only, live
+in Track 2 `is_eligible_npc()`. Track 1 bypasses exclusions by design per PRD
+invariant. Constraint is Lua-side only, does NOT affect companion.cpp:218 change.
+
+**Outcome:** Option B confirmed safe and correct. c-expert has the full spec for the
+C++ query change ready pending architect approval. Exclusions constraint forwarded
+to architect for Lua implementation spec clarification.

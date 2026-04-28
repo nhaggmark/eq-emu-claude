@@ -651,3 +651,47 @@ subquery via PK) is preferable.
 **Third bug found:** The `companion_data.name` column can become stale if an NPC is renamed
 in the DB after the companion was recruited (the name is written once at recruitment via
 `GetCleanName()`). This is low severity and pre-existing — not introduced by the variant fix.
+
+---
+
+### Finding v2-12: data-expert confirmation — Option B safe (2026-04-27)
+
+**companion_data.name confirmed reliable in production:**
+All 5 rows verified. `varchar(64) NOT NULL DEFAULT ''`. All clean names match
+`REPLACE(npc_types.name, '_', ' ')` exactly. No null, no empty-string rows exist.
+
+**Option B performance confirmed:** Inner subquery is O(1) via PK. Outer comparison
+touches 5-10 rows. No schema change needed. Option A (JOIN) would need
+`idx_name_prefix (name(64))` on npc_types + migration entry in
+`database_update_manifest_custom.h` — unnecessary overhead.
+
+**Two defensive guards for C++ implementation (data-expert recommendations):**
+
+1. **Empty-name guard:** If `companion_data.name = ''`, fall back to strict npc_type_id
+   match rather than matching every row with an empty name. Add `AND name != ''` to
+   the query's WHERE clause.
+
+2. **Stale-name log:** If name-match fires with a different npc_type_id than targeted,
+   emit a `LogInfo` noting the stored vs. targeted ID mismatch. Helps diagnose any
+   future stale-name cases in server logs without changing behavior.
+
+**Exclusions constraint — C++ is not affected:** data-expert noted that "name-match
+path in Track 1 must still check companion_exclusions on the TARGET npc_type_id."
+Confirmed via grep: C++ has ZERO references to `companion_exclusions` anywhere in
+`zone/*.cpp` or `zone/*.h`. The exclusions check is Lua-only, lives in
+`is_eligible_npc()` (Track 2), and already doesn't run in Track 1 by design per
+PRD invariant. This constraint affects only the Lua implementation spec, NOT the
+C++ change at companion.cpp:218.
+
+**Confirmed Option B query for C++ implementation:**
+```
+owner_id = {char_id}
+AND name != ''
+AND name = (SELECT REPLACE(name, '_', ' ') FROM npc_types WHERE id = {source_npc_type_id})
+AND (is_dismissed = 1 OR is_suspended = 1)
+ORDER BY level DESC, experience DESC, id DESC
+LIMIT 1
+```
+The `name != ''` guard, `REPLACE` via PK subquery, and `ORDER BY` tie-breaker are all
+confirmed by data-expert. This is the exact query shape ready for implementation once
+architect approves.
