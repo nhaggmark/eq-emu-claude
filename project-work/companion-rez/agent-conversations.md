@@ -242,6 +242,43 @@ Key findings:
 
 ---
 
+### 2026-04-27 — architect → config-expert (Seven-question rule audit)
+
+**From:** architect → **To:** config-expert
+
+**Summary:** Full rule audit requested — complete Companions/Rez rule list
+from ruletypes.h, live vs. default comparison, Spells/NPC/Character rez
+rules, eqemu_config.json/.env audit, least-invasive bug analysis, tier-preference
+rule recommendation, mid-combat-rez rule recommendation.
+
+---
+
+### 2026-04-27 — config-expert → architect (Seven-question response)
+
+**From:** config-expert → **To:** architect
+
+**Verified from:** `ruletypes.h` lines 1250-1254, 1189, 55, 188-190, 253, 522, 794; live `rule_values` DB query; `eqemu_config.json`; `.env`.
+
+**Key findings:**
+
+1. **Complete Rez rule list in ruletypes.h:** Four Companions:Rez* rules at lines 1250-1254 (with `XPDeathPenaltyPct` at 1253 sitting between them — not a rez rule). `Companions:DeathDespawnS` at line 1189 is rez-adjacent. No other Rez/Resurrect rules in the Companions category. Standard rez rules in other categories: `Character:CorpseResTime` (line 55), `Character:UseResurrectionSickness` (line 188), `Character:ResurrectionSicknessSpellID` (line 190), `Mercs:ResurrectRadius` (line 253), `Spells:ResurrectionEffectBlock` (line 522), `Bots:ResurrectionSickness` (line 794).
+
+2. **Live values vs defaults:** All four Rez rules match ruletypes.h defaults exactly. No divergence. `RezEnabled=true`, `RezPostCombatDelayS=10`, `RezRange=200`, `RezWaiveReagents=true`.
+
+3. **Config-only bug verdict:** NO. The bug cannot be explained by a wrong rule value. Config is clean — `RezEnabled=true` and all values correct. Bug is definitively in C++.
+
+4. **RezPostCombatDelayS=10 (AC-1 N):** CONCUR. Keep as-is. No pushback.
+
+5. **Tier-preference rule:** CONCUR with hardcode. Optional polish only.
+
+6. **Mid-combat-rez disallow rule:** CONCUR — keep hard-coded per AC-8. No override rule needed.
+
+7. **AI timer flag:** `Spells:AI_IdleNoSpellMaxRecast=60000` ms — if the rez trigger hooks into the generic NPC idle spell timer, the 10-second `RezPostCombatDelayS` goal could be gated behind a 60-second AI recast window. Rez trigger must run on its own dedicated timer.
+
+**Outcome:** Config is clean. All rules at correct defaults. Bug is in C++. No rule changes needed for this fix.
+
+---
+
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._
