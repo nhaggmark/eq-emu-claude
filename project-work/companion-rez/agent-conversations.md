@@ -956,3 +956,43 @@ rez spells, rules pre-defined. Architect can rely on the data layer as-is.
 endorsed. Rules already in place support AC-1 (N=10), AC-3 (rezenabled),
 AC-7 (resource gates), and AC-8 (corpse window).
 
+---
+
+## v2 Architecture Team Conversations (companion-rez-architecture-v2)
+
+_Exchanges after in-game validation revealed three deeper bugs in ResurrectFromCorpse._
+
+---
+
+### 2026-04-27 — c-expert → architect: v2 production debug — three deeper bugs
+
+**From:** c-expert → **To:** architect
+
+**Summary:** Code-grounded investigation of three bugs after v1 fix landed in-game.
+
+**Bug v2-1 — `ResurrectFromCorpse` uses `AddNPC` instead of `AddCompanion`** (`companion.cpp:3647`):
+- `AddNPC` adds to `npc_list`+`mob_list` but NOT `companion_list`. Rezzed entity invisible to all companion-list queries and AI companion paths.
+- Also skips name normalization (`companion.cpp:2403-2404`) — Titanium client can't target the rezzed companion (group window click-resolution fails).
+- Also skips immunity strip (`companion.cpp:2432-2440`) — boss-NPCs re-gain invulnerability after rez.
+- Fix: route through `Spawn(owner)` instead of manual `AddNPC`+`AI_Start`. Call order: `Load()` → `Spawn(owner)` → `LoadEquipment()` → `CalcBonuses()` → `ScaleStatsToLevel()` → post-rez stats.
+- Dependency: v2-2 must be fixed first — `Spawn()` calls `CompanionJoinClientGroup()` → `AddMember()` which fails until group slot is cleared.
+
+**Bug v2-2 — Group slot NOT freed at death** (`groups.cpp:1184,277`, `companion.cpp:713-718`):
+- `MemberZoned()` clears `members[i]` (pointer) but NOT `membername[i]` (name string). `GroupCount()` counts name slots, so dead companion still counted.
+- `AddMember` fails on rez via capacity check (full group) OR name-collision check (`groups.cpp:277`) for any group size.
+- Fix: in `Companion::Death()` after `g->MemberZoned(this)`, iterate `g->membername[]` and null the slot matching `GetCleanName()`. Done in `companion.cpp`, not `groups.cpp`, to avoid breaking cross-zone living-member group tracking.
+
+**Bug v2-3 — Owner zones out while companion is dead** (`companion.cpp:4155`):
+- `SpawnCompanionsOnZone()` skips `is_suspended=1`. Dead companion never re-triggered on zone-in.
+- If corpse was `IsRezzed(true)` pre-zone-out (partial failure path), corpse is gone; companion stuck at `is_suspended=1` forever with no automatic recovery.
+- Fix options: (a) auto-revive at 10% HP on zone-in when no corpse in current zone; (b) announce and let player `!unsuspend`; (c) defer.
+- Push-back: v2-3 is outside the existing AC-10 contract; needs game-designer scope decision.
+
+**BUG-028:** Pre-existing `entity id=0` guard (`companion.cpp:669-701`) is working. No further action.
+
+**v2 TDD:** Suite 30 (new), 3 failing-first tests: 30.1 entity in companion_list, 30.2 name normalized, 30.3 group slot freed.
+
+**Dev-notes:** committed at `8a0d689` on `bugfix/companion-rez`.
+
+**Outcome:** Awaiting architect v2 architecture doc and task dispatch.
+
