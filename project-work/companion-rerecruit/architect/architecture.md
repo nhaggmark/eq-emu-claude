@@ -1066,3 +1066,88 @@ The mitigation closes the only known bypass and preserves all legitimate paths.
 | V2-12 | No `companion_exclusions` table change needed | The mitigation is a code-side check; the table remains keyed on `npc_type_id` as designed. data-expert confirmed lore-anchor list is unique-named, so no name-keyed exclusion table needed. |
 
 This update does not change the SQL shape of the primary lookup query; it adds a separate exclusion guard in both layers. Out-of-Scope items remain unchanged. The selected approach (Option D / B) remains correct.
+
+---
+
+## V2 CORRECTIONS — Q7 scope narrowed to Lua-only, SQL shape clarified (2026-04-28)
+
+c-expert delivered an Option-B confirmation report after data-expert's Q7 mitigation was added to the plan. Two parts of c-expert's report required pushback and resulted in two corrections — one to the Q7 mitigation scope, one to the SQL shape. Both are now reconciled.
+
+### Correction 1: Q7 mitigation is Lua-only, NOT both layers
+
+**Original v2 plan (Q7 update):** add target-NPC exclusion check to BOTH Lua's `is_re_recruitment_eligible()` and C++'s `CreateFromNPC` re-recruit hit path.
+
+**Corrected v2 plan:** add the exclusion check to Lua's `is_re_recruitment_eligible()` only. C++ side gets no Q7 code in v2.
+
+**Rationale:** The architect verified the C++ call graph. `Companion::CreateFromNPC` has exactly **one production caller**: `lua_client.cpp:3647` `Lua_Client::CreateCompanion(npc)` invoked by `client:CreateCompanion(npc)` from `companion.lua`'s `_on_recruitment_success`. There is no GM command, no encounter trigger, no other C++ path that calls `CreateFromNPC`. Lua's Track 1 gating is the binding gate for every real-world recruit attempt. A C++ exclusion check would be defense-in-depth for hypothetical future callers — useful but not load-bearing for v2.
+
+**Counter-point I addressed in messaging c-expert:** c-expert framed this as "Track 1 bypasses exclusions by PRD invariant." That framing was correct under v1's strict-ID semantics (Track 1 fires only when the player targets the exact ID they recruited; exclusion check on that ID is consistently applied or not). It is wrong under v2's name-match semantics (Track 1 fires on a SET of variant IDs; some excluded, some not). The Q7 mitigation is not a NEW gate; it restores the original v1 semantic in the multi-variant world.
+
+**Decision:** Lua-only Q7 mitigation for v2. C++ defense-in-depth exclusion check moves to **V2 Out-of-Scope item 11**: "Add target-NPC exclusion check to `Companion::CreateFromNPC` re-recruit hit path. Recommended if any future caller of `CreateFromNPC` is added that does not go through Lua's `is_re_recruitment_eligible()` gate."
+
+### Correction 2: SQL shape — bind `GetCleanName()` from the call site, NOT `REPLACE(name, '_', ' ')` in SQL
+
+**c-expert's proposed SQL shape (in their Option B confirmation report):**
+```sql
+AND name = (SELECT REPLACE(name, '_', ' ') FROM npc_types WHERE id = {source_npc_type_id})
+```
+
+**This is rejected.** The architecture doc explicitly forbids the `REPLACE` shape (V2 Decision V2-1, Refinement R6, Refinement R8). lua-expert's `HEX(name)` byte-level verification (R8) confirmed that `CleanMobName` strips digits AND converts `_` to space, while `REPLACE(_, ' ')` only handles underscores. For names containing digits — including runtime entity-disambiguation suffixes that `MakeNameUnique` appends (`Lydl_the_Great_001`, `Lydl_the_Great_002`) — the two produce different output.
+
+**Authoritative SQL shape (re-stated):**
+
+```sql
+-- Lua (in companion.lua check_existing_companion_record):
+SELECT id, level, experience, recruited_level, stance, name, companion_type,
+       is_dismissed, is_suspended, npc_type_id
+FROM companion_data
+WHERE owner_id = ?
+  AND name = ?                                -- bound to npc:GetCleanName()
+  AND name != ''                              -- defensive: data-expert guard
+  AND (is_dismissed = 1 OR is_suspended = 1)
+ORDER BY level DESC, experience DESC, id DESC
+LIMIT 1
+
+-- C++ (in companion.cpp CreateFromNPC):
+fmt::format(
+    "owner_id = {} AND name = '{}' AND name != '' "
+    "AND (is_dismissed = 1 OR is_suspended = 1) "
+    "ORDER BY level DESC, experience DESC, id DESC LIMIT 1",
+    owner->CharacterID(),
+    Strings::Escape(source_npc->GetCleanName())
+)
+```
+
+Bind `source_npc->GetCleanName()` (C++) and `npc:GetCleanName()` (Lua) from the call site. This produces the cleaned form via the SAME `CleanMobName()` function that wrote `companion_data.name` originally (`companion.cpp:2800`). Bit-for-bit match guaranteed.
+
+**Two defensive guards from data-expert (now codified in the SQL shape):**
+1. `AND name != ''` — prevents empty-string match if `GetCleanName()` ever returns empty for a malformed NPC.
+2. `LogInfo` (C++) / `print` (Lua) when name-match resolves to a different `npc_type_id` than the targeted spawn — diagnostic for the stale-name edge case (admin renamed `npc_types` after recruit). Pre-existing low-severity risk; logging surfaces it for ops visibility.
+
+`Strings::Escape` on the bound C++ name remains required (defense against pathological NPC display names with SQL metacharacters).
+
+### Updated implementation tasks (final v2 task list)
+
+| # | Task | Agent | Updated change vs prior version |
+|---|------|-------|---------------------------------|
+| V2-1 | Extend Lua test harness `make_db_stub` for SQL-aware dispatch + 3 failing TDD tests: (a) name-match finds row when ID differs, (b) name-mismatch falls through to Track 2, (c) Q7 — Track 1 blocked when target NPC is in `companion_exclusions` | lua-expert | unchanged |
+| V2-2 | Apply Lua fix in `companion.lua`: signature change (`check_existing_companion_record(clean_name, char_id)`), SQL predicate `name = ?` + `name != ''`, caller passes `npc:GetCleanName()`, doc comment update; AND Q7 step 6 in `is_re_recruitment_eligible()` calling `_lookup_exclusion(npc:GetNPCTypeID())` (refactor from `is_eligible_npc()` line 252); add diagnostic log when name-match resolves to a different `npc_type_id` | lua-expert | Q7 step 6 retained; diagnostic log added |
+| V2-3 | Add Suite 35 (`TestCompanionReRecruitmentVariantNameMatch`) with TWO test cases: (a) name-match finds row when ID differs, (b) name-mismatch returns empty | c-expert | reduced from 3 cases to 2 (Q7 case moved to V2-1 only) |
+| V2-4 | Apply C++ fix at `companion.cpp:218-220`: SQL with `Strings::Escape`-protected `source_npc->GetCleanName()` binding, `name != ''` guard, ORDER BY tie-breaker, comment block update; add diagnostic `LogInfo` when name-match resolves to a different `npc_type_id` than `source_npc->GetNPCTypeID()`. **NO C++ exclusion check.** Rebuild zone via ninja. | c-expert | exclusion check REMOVED; SQL shape clarified; data-expert's two guards added |
+| V2-5 | Run `./bin/zone tests:companion`; verify Suite 35 + Suite 20 (regression) + 34 prior suites | c-expert | unchanged |
+| V2-6 | Server restart (containers + EQ processes per MEMORY) | infra-expert | unchanged |
+| V2-7 | In-game validation — 6 v2 scenarios | game-tester | unchanged |
+
+### Updated Out-of-Scope (item 11 added)
+
+11. **C++ defense-in-depth exclusion check in `CreateFromNPC` re-recruit hit path** — recommended if any future caller of `CreateFromNPC` is added that does not go through Lua's `is_re_recruitment_eligible()` gate. Currently zero such callers in production. v2 mitigation is sufficient for the current code shape. Track for future implementation.
+
+### Updated Decision Log
+
+| # | Decision | Rationale |
+|---|----------|-----------|
+| V2-13 | Q7 mitigation is Lua-only for v2; C++ defense-in-depth tracked as future work | Verified by call-graph analysis: `Companion::CreateFromNPC` has exactly one production caller (`lua_client.cpp:3647`), invoked from Lua's Track 1 dispatch. Lua-side gate is binding for current code. Defense-in-depth is correct for hypothetical future callers but not load-bearing for v2. |
+| V2-14 | Reject `REPLACE(npc_types.name, '_', ' ')` SQL subquery; bind `GetCleanName()` from the call site instead | `CleanMobName` strips digits AND converts `_` to space; `REPLACE(_, ' ')` only handles underscores. Names with digits (including runtime `MakeNameUnique` suffixes) produce different output. lua-expert verified at byte level via `HEX(name)` (Refinement R8). |
+| V2-15 | Adopt data-expert's two defensive guards in the SQL: `AND name != ''` and diagnostic log on `npc_type_id` divergence | Empty-name guard closes a malformed-NPC corner case; diagnostic log surfaces stale-name cases (admin renamed `npc_types` after recruit) for ops visibility without changing behavior. |
+
+These corrections complete the v2 plan. No further architectural changes anticipated unless a new advisor finding surfaces.
