@@ -12,12 +12,12 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-27 | 2026-04-27 |
 | Design | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
-| Architecture | architect + protocol-agent + config-expert | Not Started | | |
-| Implementation | _implementation team_ | Not Started | | |
+| Architecture | architect + protocol-agent + config-expert (+ c-expert, lua-expert, data-expert as advisors) | Complete | 2026-04-27 | 2026-04-27 |
+| Implementation | c-expert + infra-expert + game-tester | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Architecture
+**Current phase:** Implementation
 
 ---
 
@@ -52,6 +52,32 @@ _Record each handoff between agents with context and any notes._
   `agent-conversations.md`. Architect inherits a clean PRD with no
   lore blockers and a clear AC-10 reliability contract.
 
+### architect → implementation team (c-expert + infra-expert + game-tester)
+- **Date:** 2026-04-27
+- **Notes:** Architecture phase complete. The auto-rez subsystem is
+  ALREADY substantially built end-to-end (post-combat trigger, AI
+  pipeline, corpse marking, `Companion::ResurrectFromCorpse` server-side
+  auto-accept handler, all rules and spell data populated).
+  **Root cause of BUG-001 is a single guard at `eqemu/zone/spells.cpp:2051`:**
+  `Mob::DetermineSpellTargets` rejects `ST_Corpse` casts whose target
+  is not `IsPlayerCorpse()`. NPC companion corpses fail this check and
+  the spell is canceled before reaching `SpellEffect::Revive` (which
+  already correctly routes companion corpses).
+  **Fix is two narrowly-scoped C++ edits + 4 failing-first tests:**
+  (1) extend the `ST_Corpse` guard to admit companion corpses
+  (`IsCompanionCorpse()`), (2) extend `Companion::FindDeadGroupMemberCorpse`
+  to ALSO discover the owner's player corpse (priority: player first),
+  (3) Suite 29 tests 29.14, 29.15, 29.16, 29.17 in
+  `eqemu/zone/cli/tests/cli_companion_tests.cpp`.
+  No Lua, no SQL, no rule, no protocol changes.
+  All 6 architect-domain open questions resolved in the architecture
+  doc with reasoning. PRD AC-9 TDD discipline maintained (failing-first
+  tests, retained on rollback). Implementation sequence: 7 tasks,
+  c-expert owns 5, infra-expert 1, game-tester 1.
+  **Spawn: c-expert, infra-expert, game-tester only. Do NOT spawn
+  lua-expert / data-expert / config-expert / protocol-agent — they had
+  no assigned tasks.**
+
 ---
 
 ## Implementation Tasks
@@ -60,7 +86,13 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| | | | | |
+| 1 | Write 4 failing-first tests in Suite 29 (29.14–29.17) of `eqemu/zone/cli/tests/cli_companion_tests.cpp` per the test table in architecture.md. Build the test binary inside the container; run via `./bin/zone tests:companion`; verify all 4 new tests FAIL today. | c-expert | Not Started | TDD discipline (AC-9): tests written before fix |
+| 2 | Implement `ST_Corpse` extension at `eqemu/zone/spells.cpp:2049-2063` per the architecture doc. Admit `IsCompanionCorpse()` alongside `IsPlayerCorpse()`. | c-expert | Not Started | Depends on 1 |
+| 3 | Implement player-corpse discovery extension at `eqemu/zone/companion_ai.cpp:1861-1876` (`FindDeadGroupMemberCorpse`). Priority 1: owner's player corpse via `EntityList::GetCorpseByOwnerWithinRange`. Priority 2: existing companion corpse path. | c-expert | Not Started | Depends on 1 |
+| 4 | Rebuild zone binary via `docker exec akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`. Re-run Suite 29 — verify all 4 new tests PASS, all 13 existing Suite 29 tests still PASS. Run full companion test suite. | c-expert | Not Started | Depends on 2, 3 |
+| 5 | Server restart: `make restart` from akk-stack/, then full server start (loginserver / world / 8 dynamic_NN zones per documented startup procedure). | infra-expert | Not Started | Depends on 4 |
+| 6 | In-game validation: 7 game-tester scenarios per Validation Plan (Scenarios 1, 2, 3, 4, 5, 6, 12 in architecture.md). User confirms. | game-tester | Not Started | Depends on 5 |
+| 7 | Commit and push all changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no changes.) | c-expert | Not Started | Depends on 4 (after game-tester PASS for safety) |
 
 ---
 
@@ -71,13 +103,13 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | What is N — post-combat delay before Cleric scans for corpses? | game-designer | architect | Open | Architect to define and document in arch plan |
-| 2 | NPC corpse rez confirmation gap: auto-accept server-side, bypass rez request, or other approach? | game-designer (BUG-001) | architect | Open | Architect investigates RezzPlayer / OP_RezzAnswer / OP_RezzRequest flow |
-| 3 | Rez tier preference policy (highest affordable vs. other) | game-designer | architect | Open | Architect picks; PRD requires policy is documented |
-| 4 | Multi-target ordering policy (player-first / tank-first / discovery-order) | game-designer | architect | Open | Architect picks |
-| 5 | Cleric OOM flavor chat line — silent or one-time line? | game-designer | lore-master | RESOLVED 2026-04-27 | Silent. Out of scope for this fix; polish pass may revisit |
-| 6 | Quest-NPC rez interaction (rezzing an NPC who is also a kill target / quest-state node) | game-designer | architect | Open | Architect-awareness flag; not a scope expansion |
-| 7 | TDD test-scope mapping (unit / integration / game-tester per scenario) | game-designer | architect | Open | Architect translates Validation Plan scenarios to test types |
+| 1 | What is N — post-combat delay before Cleric scans for corpses? | game-designer | architect | RESOLVED 2026-04-27 | N=10. Existing `RuleI(Companions, RezPostCombatDelayS)` default 10. data-expert confirmed live value=10. |
+| 2 | NPC corpse rez confirmation gap: auto-accept server-side, bypass rez request, or other approach? | game-designer (BUG-001) | architect | RESOLVED 2026-04-27 | User hypothesis CONFIRMED; bypass ALREADY in place at `spell_effects.cpp:1707-1730` → `Companion::ResurrectFromCorpse`. Real bug is upstream `ST_Corpse` validation at `spells.cpp:2051`. Fix admits companion corpses to the existing bypass path. |
+| 3 | Rez tier preference policy (highest affordable vs. other) | game-designer | architect | RESOLVED 2026-04-27 | Existing C++ policy retained: ≥50% mana → highest tier; <50% mana → cheapest. Hardcoded (no rule). |
+| 4 | Multi-target ordering policy (player-first / tank-first / discovery-order) | game-designer | architect | RESOLVED 2026-04-27 | Player corpse FIRST, then closest companion. 20s recast timer naturally sequences. Hardcoded in `FindDeadGroupMemberCorpse` extension. |
+| 5 | Cleric OOM flavor chat line — silent or one-time line? | game-designer | lore-master | RESOLVED 2026-04-27 | Silent. Out of scope for this fix; polish pass may revisit. Existing `m_rez_meditation_announced` already does this. |
+| 6 | Quest-NPC rez interaction (rezzing an NPC who is also a kill target / quest-state node) | game-designer | architect | RESOLVED 2026-04-27 | No special handling. Awareness flag only. Matches charm-pet behavior in vanilla EQ. Quest designers can add `companion_exclusions` rows in the future if needed. |
+| 7 | TDD test-scope mapping (unit / integration / game-tester per scenario) | game-designer | architect | RESOLVED 2026-04-27 | 4 required Suite 29 unit tests (29.14–29.17). 7 game-tester live scenarios. 2 optional unit tests for AC-5 tier preference. Mapping table in architecture.md "Resolved PRD Open Questions / Q7". |
 
 ---
 
@@ -98,7 +130,7 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-001 | Cleric companion attempts rez post-combat but NPC companion stays down | High | user | Investigating | architect (Phase 3) | |
+| BUG-001 | Cleric companion attempts rez post-combat but NPC companion stays down | High | user | Fix In Progress | c-expert (Phase 4) | |
 
 ---
 
@@ -116,6 +148,13 @@ _Key decisions made during this feature's development._
 | 6 | AC-10 reliability bar: every prereq-met rez attempt MUST succeed | game-designer | 2026-04-27 | Closes BUG-001 verbatim user pain ("attempting to rez but nothing happens") |
 | 7 | Mid-combat rez initiation explicitly disallowed (AC-8) | game-designer | 2026-04-27 | Rezzed targets re-die instantly; better to spend Cleric mana on heals/CC |
 | 8 | Bug Reports table — BUG-001 status updated from Open to Investigating | game-designer | 2026-04-27 | PRD locks the invariant; architect now triages root cause |
+| 9 | Root cause of BUG-001 = `eqemu/zone/spells.cpp:2051` `ST_Corpse` guard rejecting non-player-corpse targets | architect (c-expert findings) | 2026-04-27 | Verified end-to-end: cast pipeline cancels at target validation BEFORE `SpellEffect::Revive` can route to existing companion-corpse bypass |
+| 10 | Fix scope: pure-C++, two narrowly-scoped edits + 4 TDD tests | architect | 2026-04-27 | Lua/SQL/protocol/config audits all returned clean; the auto-rez subsystem is already built; only the upstream guard needs to admit companion corpses |
+| 11 | N (post-combat delay) = 10 seconds | architect | 2026-04-27 | Existing rule default; data-expert confirmed live value; satisfies AC-1 framing |
+| 12 | Tier preference policy: ≥50% mana → highest tier; <50% → cheapest | architect | 2026-04-27 | Existing implementation; sensible default; hardcoded (no rule) |
+| 13 | Multi-target ordering: player FIRST, then closest companion | architect | 2026-04-27 | Player rez higher UX impact; 20s recast naturally sequences; hardcoded |
+| 14 | No new rules, no new DB rows, no Lua changes for this fix | architect | 2026-04-27 | Verified by all five advisors; least-invasive layer is C++; YAGNI on rule expansion |
+| 15 | BUG-001 status updated from Investigating to Fix In Progress | architect | 2026-04-27 | Root cause identified; implementation tasks scheduled |
 
 ---
 
@@ -127,10 +166,12 @@ _Filled in after game-tester validation passes._
 
 - [ ] All implementation tasks marked Complete
 - [ ] No open Blockers
-- [ ] game-tester server-side validation: PASS
-- [ ] User completed in-game testing guide: PASS
-- [ ] All changes committed and pushed to feature branch in ALL repos
-- [ ] Server rebuilt (if C++ changed)
+- [ ] Suite 29 tests 29.14-29.17 PASS in `./bin/zone tests:companion`
+- [ ] Existing 13 Suite 29 tests still PASS (no regression)
+- [ ] game-tester server-side validation: PASS for all 7 scenarios
+- [ ] User completed in-game testing guide: PASS (BUG-001 resolved verbatim)
+- [ ] All changes committed and pushed to feature branch in eqemu and claude repos
+- [ ] Server rebuilt (zone binary fresh)
 - [ ] All phases marked Complete in Workflow Status table
 
 ### Merge & Cleanup (USER-INITIATED ONLY)
@@ -151,3 +192,19 @@ The orchestrator NEVER initiates merge or branch cleanup on its own._
 ## Notes
 
 _Free-form notes, observations, or context that doesn't fit above._
+
+- The auto-rez subsystem was substantially scaffolded during the
+  `companion-rerecruit` bugfix or just before it. The architecture
+  intent was "build the pipeline end-to-end and ship the fix in two
+  passes." This rez fix is the second pass, removing the upstream
+  guard that prevented the pipeline from working. This is a small,
+  surgical fix on top of significant existing infrastructure.
+- The `is_suspended=1` death-state established in `companion-rerecruit`
+  is a hard prerequisite for rez (`ResurrectFromCorpse` reads the
+  preserved `companion_data` row at `companion.cpp:3563-3567`).
+  companion-rerecruit is already merged; rez builds on it cleanly.
+- The "AC-2 player rez" extension to `FindDeadGroupMemberCorpse` is
+  a small but visible additive scope expansion beyond "fix the
+  spells.cpp guard". It's necessary to satisfy PRD AC-2; without it,
+  the cleric would still ignore player corpses. The extension is
+  trivial (one method call to an existing `EntityList` helper).
