@@ -2,9 +2,9 @@
 
 > **Feature branch:** `bugfix/companion-rerecruit`
 > **Agent:** lua-expert
-> **Task(s):** Lua-side triage (architecture phase, no implementation yet)
+> **Task(s):** Lua-side triage (architecture phase) + implementation tasks (implementation phase)
 > **Date started:** 2026-04-27
-> **Current stage:** Stage 1 — Plan (triage complete; socializing with architect)
+> **Current stage:** Stage 3 — Socialized (architecture locked; awaiting implementation phase dispatch)
 
 ---
 
@@ -13,6 +13,11 @@
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
 | Triage | Trace recruit flow in Lua; report to architect | None | Complete |
+| L-1 | Add 2 failing TDD tests to `test_companion_recruitment.lua` BEFORE fix | Arch locked | Pending |
+| L-2 | Fix `companion.lua:1434` — `Dismiss(true)` → `Dismiss(false)` | L-1 tests written | Pending |
+| L-3 | Fix `companion.lua:15` — invert doc comment parameter semantics | L-2 | Pending |
+| L-4 | Fix `companion.lua:207` — LevelRange fallback `or 3` → `or 50` | L-2 | Pending |
+| L-5 | Fix `companion.lua:394-397` — add `ORDER BY id DESC` to re-recruit query | L-2 | Pending |
 
 ---
 
@@ -129,11 +134,43 @@ Not needed for triage phase. API patterns verified by direct source reading.
 
 | To | Subject | Key Question |
 |----|---------|-------------|
-| architect | Lua triage findings | See SendMessage below |
+| architect | Initial triage: two-track bypass already correct | What sets is_suspended/is_dismissed in C++? |
+| architect | Full 7-question response + cmd_dismiss SoulWipe discovery | Is Dismiss(true) the dismiss blocker root cause? |
+| architect | Follow-up: 4 live-data questions answered | Does C++ re-find independently? Duplicate row risk? |
+| architect | Final follow-ups: test gap, Dismiss(true) only site, ORDER BY rec | All confirmed — architecture locked |
+
+### Feedback Received
+
+| From | Feedback | Action Taken |
+|------|----------|-------------|
+| architect | Root cause confirmed: `cmd_dismiss` → `Dismiss(true)` = SoulWipe | Recorded in implementation tasks |
+| architect | LevelRange fallback `or 3` → `or 50` hardening | Added as task L-4 |
+| architect | TDD: 2 failing tests before fix (test Dismiss arg) | Added as task L-1 |
+| architect | `!dismiss permanent` out of scope; `!dismiss` always calls `Dismiss(false)` | Confirmed; no `permanent` path from Lua |
 
 ### Consensus Plan
 
-Pending architect response.
+**Architecture locked 2026-04-27.**
+
+The three PRD blockers (level range, cooldown, dismissed flag) all cascade from a single root cause: `cmd_dismiss` calling `Dismiss(true)` (permanent SoulWipe) instead of `Dismiss(false)` (voluntary, preserves record). The two-track bypass system in `attempt_recruitment()` is already correct — it simply never fires because the record is deleted before re-recruitment.
+
+**Agreed approach:** Fix `cmd_dismiss` to call `Dismiss(false)`. Add TDD tests first that assert the argument value. Add belt-and-suspenders hardening for LevelRange fallback and ORDER BY determinism.
+
+**Files to create or modify:**
+
+| File | Action | What Changes |
+|------|--------|-------------|
+| `akk-stack/server/quests/tests/test_companion_recruitment.lua` | Modify | Add 2 failing TDD tests asserting `cmd_dismiss` calls `Dismiss(false)` |
+| `akk-stack/server/quests/lua_modules/companion.lua` | Modify | 4 targeted changes: line 1434 fix, line 15 doc, line 207 fallback, line 394 ORDER BY |
+
+**Change sequence (final):**
+1. Write 2 failing tests to `test_companion_recruitment.lua` (L-1) — tests must fail against current code
+2. Apply one-character fix at `companion.lua:1434` (L-2) — tests now pass
+3. Fix doc comment at `companion.lua:15` (L-3)
+4. Fix LevelRange fallback `or 3` → `or 50` at `companion.lua:207` (L-4)
+5. Add `ORDER BY id DESC` to re-recruit query at `companion.lua:394` (L-5)
+6. Verify all existing tests still pass
+7. Commit to `bugfix/companion-rerecruit` in akk-stack and claude repos
 
 ---
 
