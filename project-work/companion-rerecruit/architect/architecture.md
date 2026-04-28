@@ -231,28 +231,32 @@ New tests in `akk-stack/server/quests/tests/test_companion_recruitment.lua` (add
 
 #### Database Changes
 
-One-time targeted DELETE in `akk-stack/server/quests/scripts/cleanup-companion-rerecruit-fix.sql` (or executed manually as a named step):
+One-time targeted DELETE — run as a named step. **Targeted, not generalized:** there is exactly ONE known-bad row in production (Hollish Tnoops id=21, verified by data-expert), so the cleanup is unambiguous. A generalized dedup query would be complex and error-prone; if a future ghost row appears, handle it with another targeted DELETE.
 
 ```sql
 -- Step 1: Verify the ghost row matches expected profile
-SELECT id, owner_id, npc_type_id, name, level, experience, is_suspended, is_dismissed,
+SELECT id, owner_id, npc_type_id, name, level, experience, times_died, is_suspended, is_dismissed,
        (SELECT COUNT(*) FROM companion_inventories WHERE companion_id = companion_data.id) AS items
 FROM companion_data
 WHERE id = 21;
--- Expected: id=21, owner_id=6, npc_type_id=9144, name=Hollish Tnoops, level=14, experience=0,
---           is_suspended=1, items=0
+-- Expected: owner_id=6, npc_type_id=9144, name="Hollish Tnoops", level=14,
+--           experience=0, times_died=0, is_suspended=1, is_dismissed=0, items=0
 
 -- Step 2: Confirm the canonical row exists and is healthier
 SELECT id, owner_id, npc_type_id, name, level, experience, is_suspended,
        (SELECT COUNT(*) FROM companion_inventories WHERE companion_id = companion_data.id) AS items
 FROM companion_data
-WHERE owner_id = 6 AND npc_type_id = 9144 AND id != 21;
+WHERE owner_id = 6 AND npc_type_id = 9144 AND id <> 21;
 -- Expected: id=18, level=53, experience=18707712, is_suspended=0, items=15
 
--- Step 3: Delete the ghost
+-- Step 3: Delete inventory rows (defensive, will be 0 rows for ghost)
+DELETE FROM companion_inventories WHERE companion_id = 21;
+
+-- Step 4: Delete the ghost
 DELETE FROM companion_data WHERE id = 21;
--- companion_inventories has 0 rows for companion_id=21, so no orphans
 ```
+
+**Do NOT use generalized dedup SQL.** An earlier sketch in this doc used `ORDER BY` inside an `IN()` subquery, which does NOT filter the IN-set as intended (data-expert flagged the flaw). If a future generalized dedup is ever needed, implement it in application code (a standalone migration script with testable selection logic), not inline SQL.
 
 **No schema changes. No new tables. No migrations.**
 
@@ -500,7 +504,7 @@ Before declaring task 6 complete, lua-expert MUST:
 
 These are intentionally NOT addressed in this fix and are tracked as future work:
 
-1. **`UNIQUE (owner_id, npc_type_id)` constraint on `companion_data`** — prevents future ghost rows. Requires investigation of C++ paths that may rely on duplicates being possible.
+1. **`UNIQUE (owner_id, npc_type_id)` constraint on `companion_data`** — prevents future ghost rows. Requires (a) C++ code update to use UPSERT semantics (ON DUPLICATE KEY UPDATE or SELECT-then-INSERT/UPDATE) and (b) database_update_manifest_custom.h migration entry. Sequencing: dedup DELETE → C++ code deploy with upsert → ALTER TABLE ADD UNIQUE INDEX. Reverse-order deployment will fail second-recruit INSERTs. **Out of scope for this bugfix** because it requires C++ changes (this fix is Lua-only).
 2. **Ghost row write-path investigation** — id=21 was created LATER than id=18, suggesting a re-recruit INSERTed instead of UPDATEing. Likely fixed by the dismiss fix indirectly (most ghosts come from dismiss-then-recruit sequences), but should be confirmed.
 3. **`Companions:ReRecruitBonus` rule cleanup** — defined and overridden in DB but never read in Lua or C++. Either wire it into the persuasion roll or remove the rule. Cosmetic.
 4. **`Companions:MinFaction` C++ stub at `companion.cpp:3853-3860`** — placeholder log-and-continue. If/when fleshed out, will need its own bypass consideration for re-recruits.

@@ -576,6 +576,37 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 3. **Re-commit pending** — small additive update, not a teardown.
 4. **Lesson:** Even careful agents can introduce factual errors in synthesis. Always verify load-bearing claims by reading the actual file.
 
+### 2026-04-27 — data-expert: 4 final follow-ups + dedup SQL correction
+
+**From:** data-expert → **To:** architect
+
+> All four follow-ups answered with fresh queries:
+>
+> **A — Lydl ground-truth state:**
+> ```
+> id  owner_id  npc_type_id  name            level  is_suspended  is_dismissed  cur_hp  npc_base_level
+> 10  6         10162        Lydl the Great  53     1             0             1504    4
+> ```
+> Companion level 53 vs NPC base level 4 — confirms the architectural risk: if level check uses npc_types.level not companion_data.level, the bug would fire for any post-leveled companion at sufficiently high player level.
+>
+> **B — Dedup SQL: architect's sketch has a logic flaw.** ORDER BY inside an IN() subquery doesn't filter rows; it only orders the result set. The proposed sketch would DELETE both rows. Recommended: targeted DELETE for the single known-bad row (Hollish Tnoops id=21). If a generalized dedup is ever needed, implement in application code with testable selection logic.
+>
+> **C — companion_exclusions check:** All five user companions (10162, 9144, 22014, 2029, 2032) ABSENT from exclusions. No corner case to address.
+>
+> **D — UNIQUE INDEX recommendation:** YES, but ONLY after dedup runs and C++ is updated to UPSERT semantics. Sequencing must be dedup → C++ upsert deploy → ALTER TABLE ADD UNIQUE. Reverse-order will fail second-recruit INSERTs.
+
+**Response from** architect:
+
+> Three actions:
+> 1. **Dedup SQL corrected in architecture.md.** Replaced flawed ORDER BY/IN() pattern with data-expert's recommended targeted DELETE: SELECT-confirm ghost (owner=6, npc_type=9144, level=14, exp=0, items=0), SELECT-confirm canonical (id=18 healthier), DELETE companion_inventories WHERE companion_id=21 (defensive), DELETE companion_data WHERE id=21. Added explicit warning against generalized inline-SQL dedup.
+> 2. **UNIQUE constraint stays out-of-scope** because adding it requires C++ upsert changes, violating the "zero C++ changes" architectural decision. Strengthened the future-work entry to capture data-expert's sequencing recipe.
+> 3. **companion_exclusions clear** for all repro candidates; corner case removed from risk register.
+
+**Outcome:**
+1. **Decision locked:** Architecture.md uses targeted DELETE, not generalized dedup SQL. Engineers safer this way.
+2. **Decision locked:** UNIQUE constraint deferred to future work with explicit deployment sequencing recorded.
+3. **data-expert fully closed.** Implementation phase Task 7 is the targeted DELETE.
+
 ---
 
 ## Implementation Team Conversations
