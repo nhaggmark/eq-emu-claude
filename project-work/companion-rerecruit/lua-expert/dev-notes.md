@@ -2,158 +2,164 @@
 
 > **Feature branch:** `bugfix/companion-rerecruit`
 > **Agent:** lua-expert
-> **Task(s):** [task numbers from architecture.md]
-> **Date started:** YYYY-MM-DD
-> **Current stage:** Plan / Research / Socialize / Build / Complete
+> **Task(s):** Lua-side triage (architecture phase, no implementation yet)
+> **Date started:** 2026-04-27
+> **Current stage:** Stage 1 — Plan (triage complete; socializing with architect)
 
 ---
 
 ## Task Assignment
 
-_Copy your assigned task(s) from the architecture doc's Implementation Sequence._
-
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| | | | |
+| Triage | Trace recruit flow in Lua; report to architect | None | Complete |
 
 ---
 
 ## Stage 1: Plan
 
-_What you learned from reading source code and your proposed approach. NO CODE
-is written during this stage._
-
 ### Files Examined
 
 | File | Lines | What You Found |
 |------|-------|----------------|
-| | | |
+| `global/global_npc.lua` | ~712 | Entry point: dispatches to `companion_lib.attempt_recruitment(npc, client)` on recruitment keyword; `companion_lib.dispatch_prefix_command` for `!` commands |
+| `lua_modules/companion.lua` | ~1475 | Core: all recruitment logic including two-track system, cooldown, level check, dismiss/suspend detection |
+| `lua_modules/client_ext.lua` | ~340 | No recruitment logic; helper methods on Client class |
+| `lua_modules/llm_bridge.lua` | N/A (partial scan) | No recruitment logic; only LLM-hostile cooldowns via entity variables |
+| `tests/test_companion_recruitment.lua` | ~1001 | Comprehensive LuaJIT test suite for recruitment (38+ tests) |
+| `tests/test_companion_rerec_edge_cases.lua` | ~346 | Edge-case tests for SQL and DB-nil guards |
 
 ### Key Findings
 
-_Summarize what you learned about the existing system that informs your approach._
+#### The recruit flow — complete trace
+
+1. Player says a recruitment keyword to a non-companion NPC
+2. `global/global_npc.lua:event_say()` (line 21) calls `companion_lib.is_recruitment_keyword(e.message)` — returns true
+3. `global/global_npc.lua:event_say()` (line 22) calls `companion_lib.attempt_recruitment(e.self, e.other)` and returns
+4. `companion.lua:attempt_recruitment()` (line 454):
+   - Builds `cooldown_key = "companion_cooldown_" .. npc_type_id .. "_" .. char_id`
+   - **RE-RECRUITMENT TRACK** (line 462): calls `check_existing_companion_record(npc_type_id, char_id)` — queries `companion_data WHERE owner_id=? AND npc_type_id=? AND (is_dismissed=1 OR is_suspended=1) LIMIT 1`
+     - If record found → `is_re_recruitment_eligible(npc, client)` (minimal checks: enabled, group capacity, not-already-recruited, combat, not-a-Companion-instance) → `_on_recruitment_success(npc, client, existing_record)` → `client:CreateCompanion(npc)` (C++ call)
+     - Stale cooldown deleted via `eq.delete_data(cooldown_key)` on re-recruit success
+   - **FIRST-TIME TRACK** (line 479): checks cooldown via `eq.get_data(cooldown_key)` → full 11-check `is_eligible_npc()` including level range → persuasion roll → success or `_on_recruitment_failure` (sets cooldown)
+
+#### Three blockers — Lua layer status
+
+**Blocker 1 — Level check (Companions:LevelRange)**
+- **Location:** `companion.lua:207-213` inside `is_eligible_npc()`
+- **Rule used:** `eq.get_rule("Companions:LevelRange")` — returns string, cast to tonumber, default 3
+- **Status:** Already bypassed for re-recruitment. The level check is in `is_eligible_npc()` which is ONLY called on the first-time track. `is_re_recruitment_eligible()` (line 409) does NOT include a level check.
+- **Conclusion:** If the level blocker is firing, it means `check_existing_companion_record()` is returning nil when it should be returning a row. The Lua fix is already in place — the C++ or DB layer is the culprit.
+
+**Blocker 2 — Cooldown (data_buckets)**
+- **Location:** `companion.lua:479-482` — `eq.get_data(cooldown_key)` on first-time track only
+- **Key pattern:** `companion_cooldown_{npc_type_id}_{char_id}` — confirmed at line 457
+- **Status:** Already bypassed for re-recruitment. The cooldown check is ONLY on the first-time track. Re-recruitment track at line 464 runs before the cooldown check at line 479.
+- **MEMORY.md reference confirms:** key pattern `companion_cooldown_{npc_type_id}_{char_id}` matches current code exactly (not stale).
+- **Conclusion:** Same as Blocker 1 — if cooldown is blocking, `check_existing_companion_record()` returned nil. The Lua layer is already correct.
+
+**Blocker 3 — Dismissed flag (is_dismissed=1)**
+- **Location:** `companion.lua:390-402` — `check_existing_companion_record()` queries `is_dismissed=1 OR is_suspended=1`
+- **Status:** Already handled. The query covers both dead (is_suspended=1) and dismissed (is_dismissed=1) states. The deprecated `check_dismissed_record()` (line 371) which only checked `is_dismissed=1` is no longer called from `attempt_recruitment()`.
+- **Conclusion:** Lua layer correctly detects both dismiss states. If the flag is blocking, the problem is that the C++ `CreateCompanion` does not call `Unsuspend()` / clear flags after detecting the record, OR the DB record is not being found (query mismatch with how C++ writes the flags).
+
+#### Root cause hypothesis
+
+All three Lua-side bypasses are already correctly implemented. The two-track system (re-recruit vs. first-time) is already in the code. **The likely failure point is one of:**
+
+1. `check_existing_companion_record()` returns nil when the player re-recruits — meaning the DB query does not find the record. This routes to the first-time track which enforces all blockers.
+   - Possible cause: C++ writes flags to a different column name, or does not set `is_suspended=1` on death, or `is_dismissed` is cleared before Lua can read it.
+2. `client:CreateCompanion(npc)` silently fails or re-applies restrictions inside C++ even after the Lua two-track bypass succeeds.
+
+#### Cooldown key pattern — verified
+
+`companion.lua:457`: `"companion_cooldown_" .. npc_type_id .. "_" .. char_id`
+
+This matches MEMORY.md exactly. The key uses live values (not character_id=0). MEMORY.md note about `character_id=0` in the `data_buckets` table refers to how the EQEmu engine stores `data_buckets` rows — the character_id column is 0 but the key string encodes the real char_id. This is consistent.
+
+#### Test harness — EXISTS
+
+Location: `/mnt/d/Dev/eq/akk-stack/server/quests/tests/`
+
+Relevant files:
+- `test_companion_recruitment.lua` — 38+ tests covering both tracks, all blockers, edge cases
+- `test_companion_rerec_edge_cases.lua` — SQL edge cases and DB-nil guards
+
+Run command: `luajit tests/test_companion_recruitment.lua` from `akk-stack/server/quests/`
+
+**Blocker:** `luajit` is not installed as a system command. It exists only inside the vcpkg build tree at `eqemu/build/vcpkg_installed/x64-linux/share/luajit`. The tests need either a `luajit` symlink or to be run inside the Docker container where the server binary's embedded LuaJIT is accessible. The architect should confirm the test execution method.
+
+**TDD implication:** The existing test suite already covers the invariant. New tests for the specific bug scenarios (Lydl-style level gap, immediate post-death re-recruit) should be added to `test_companion_recruitment.lua` before implementing any fix.
+
+#### `llm_bridge.lua` — not involved
+
+Scanned for `recruit` and `cooldown` patterns. `llm_bridge.lua` only manages LLM-hostile cooldowns via NPC entity variables (`llm_cd_<char_id>`). No recruitment logic touches it.
+
+#### `client_ext.lua` — not involved
+
+Utility extensions on the `Client` class. No recruitment logic.
 
 ### Implementation Plan
 
-_Your proposed approach. Be specific enough that a fresh agent after context
-compaction could execute this plan without additional exploration._
+**No implementation in this phase.** This is triage. The current state is:
 
-**Files to create or modify:**
+- Lua layer: two-track bypass system is ALREADY implemented and correct
+- The bug is likely in the C++ `CreateCompanion` path or the DB record not being detected
+- The architect needs to verify whether C++ correctly sets `is_suspended=1` on companion death, and whether `CreateCompanion` respects the re-recruit track without re-applying level rules
 
-| File | Action | What Changes |
-|------|--------|-------------|
-| | Create / Modify | |
+**If a Lua fix IS needed** (architect determines `check_existing_companion_record()` is returning nil due to a query mismatch):
+- Fix target: `companion.lua:390-402` — the SQL query for `check_existing_companion_record()`
+- Fix would be: adjust the WHERE clause column names to match what C++ actually writes
 
-**Change sequence:**
-1.
-2.
-3.
-
-**What to test:**
--
+**If tests need additions for TDD (PRD AC-9):**
+- File: `tests/test_companion_recruitment.lua`
+- Add: test cases for Lydl scenario (level 12 companion, level 35 player), immediate post-death re-recruit, immediate post-dismiss re-recruit — these may already be covered but should be verified against the failing production scenario
 
 ---
 
 ## Stage 2: Research
 
-_Context7 and documentation verification. Every API, function, and syntax in
-your plan must be verified against current docs before proceeding._
-
-### Documentation Consulted
-
-| API / Function / Syntax | Source | Verified? | Notes |
-|------------------------|--------|-----------|-------|
-| | Context7 / WebFetch / Source | Yes / No | |
-
-### Plan Amendments
-
-_What changed in your plan based on documentation research? If nothing, state
-"Plan confirmed — no amendments needed."_
-
-### Verified Plan
-
-_Final plan after research. This is the version you socialize. If no amendments
-were needed, write "See Implementation Plan above — confirmed by research."_
+Not needed for triage phase. API patterns verified by direct source reading.
 
 ---
 
 ## Stage 3: Socialize
 
-_Share your plan with relevant teammates. Get confirmation before writing code._
-
 ### Messages Sent
 
 | To | Subject | Key Question |
 |----|---------|-------------|
-| | | |
-
-### Feedback Received
-
-| From | Feedback | Action Taken |
-|------|----------|-------------|
-| | | |
+| architect | Lua triage findings | See SendMessage below |
 
 ### Consensus Plan
 
-_Final plan incorporating teammate feedback. This is what you build from.
-Write it self-contained — a fresh agent should be able to execute this section
-alone after context compaction._
-
-**Agreed approach:**
-
-**Files to create or modify:**
-
-| File | Action | What Changes |
-|------|--------|-------------|
-| | Create / Modify | |
-
-**Change sequence (final):**
-1.
-2.
-3.
+Pending architect response.
 
 ---
 
 ## Stage 4: Build
 
-_Execute the consensus plan. Log every change._
-
-### Implementation Log
-
-_Chronological record of what you did. Each entry should have enough detail
-that a fresh agent could understand the change without reading the diff._
-
-#### [Date] — [Brief description]
-
-**What:** _What you changed_
-**Where:** _File paths and line ranges_
-**Why:** _Rationale connecting this to the consensus plan_
-**Notes:** _Edge cases, gotchas, things the next agent should know_
-
-### Problems & Solutions
-
-| Problem | Root Cause | Solution |
-|---------|-----------|----------|
-| | | |
-
-### Files Modified (final)
-
-| File | Action | Description |
-|------|--------|-------------|
-| | Created / Modified | |
+Not started — architecture phase.
 
 ---
 
 ## Open Items
 
-_Anything unfinished, deferred, or flagged for attention._
-
-- [ ]
+- [ ] Architect to confirm whether C++ sets `is_suspended=1` correctly on companion death (key question — if it does not, `check_existing_companion_record()` returns nil and routes to first-time track, firing all three blockers)
+- [ ] Architect to confirm test execution method for `luajit` (Docker exec vs. host binary vs. installed luajit)
+- [ ] If DB query is the fix target: architect to provide the exact column names C++ writes on death/dismiss
+- [ ] TDD: new tests should be written before any fix — which PRD test scenarios are not yet covered in the existing suite?
 
 ---
 
 ## Context for Next Agent
 
-_If another agent (or a future you after context compaction) needs to pick up
-this work, what do they need to know? Write as if the reader has zero context.
-Reference the Consensus Plan section above._
+The Lua re-recruitment system is a **two-track dispatch in `companion.lua:attempt_recruitment()`**.
+
+Track 1 (re-recruit): checks `companion_data WHERE owner_id=? AND npc_type_id=? AND (is_dismissed=1 OR is_suspended=1)` — if found, bypasses cooldown, level range, faction, and persuasion roll; calls `client:CreateCompanion(npc)` directly.
+
+Track 2 (first-time): if no DB record found, runs full 11-check eligibility + persuasion roll.
+
+**All three PRD blockers are already bypassed in Lua for Track 1.** The bug is almost certainly that Track 1 is not being triggered — meaning `check_existing_companion_record()` returns nil when it should return a row. Root cause is likely in C++ (companion death not setting `is_suspended=1`) or a DB schema mismatch.
+
+Test suite exists at `akk-stack/server/quests/tests/`. LuaJIT must be run inside the Docker container or via a local build.
