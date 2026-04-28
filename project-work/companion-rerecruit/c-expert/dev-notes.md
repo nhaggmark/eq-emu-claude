@@ -477,6 +477,145 @@ rather than calling `CreateFromNPC` end-to-end. This mirrors the existing Suite 
 
 Last suite before v2 work: **Suite 34** (BUG-035). Next available: **Suite 35**.
 
+### Finding v2-11: Architect Deep-Dive Audit (2026-04-27)
+
+#### 1. Complete C++ companion_data query site enumeration
+
+All sites that touch companion_data, with key used and whether variant fix is needed:
+
+| File:Line | Function | Operation | Key | Context | Needs fix? |
+|-----------|----------|-----------|-----|---------|-----------|
+| `companion.cpp:215` | `CreateFromNPC` | `GetWhere` | `owner_id + npc_type_id + flags` | Re-recruit detection — THE BUG | **YES** |
+| `companion.cpp:261` | `CreateFromNPC` | `QueryDatabase UPDATE` | `id` (PK) | Clear flags after re-recruit match | No — uses id from found row |
+| `companion.cpp:654` | `Process` safety net | `QueryDatabase UPDATE` | `m_companion_id` (PK) | Death fallback layer 1 (entity id=0 guard) | No |
+| `companion.cpp:672` | `Process` safety net | `QueryDatabase UPDATE` | `m_companion_id` (PK) | Death fallback layer 2 (already suspended guard) | No |
+| `companion.cpp:1881` | `Death` | `QueryDatabase UPDATE` | `m_companion_id` (PK) | Normal death — sets is_suspended=1 | No |
+| `companion.cpp:2827` | `Save` | `InsertOne` | n/a (INSERT) | Fresh recruitment row creation | No |
+| `companion.cpp:2838` | `Save` | `UpdateOne` | `m_companion_id` (PK) | Persist in-memory state to DB | No |
+| `companion.cpp:2849` | `Load` | `FindOne` | `companion_id` (PK) | Restore companion from DB by PK | No |
+| `companion.cpp:3540` | `ResurrectFromCorpse` | `FindOne` | `companion_id` (PK from corpse) | Rez path loads row by id stored on corpse | No |
+| `companion.cpp:3824` | `SoulWipe/SoulWipeByCompanionID` | `DeleteOne` | `companion_id` (PK) | Permanent deletion — uses m_companion_id | No |
+| `companion.cpp:4119` | `SpawnCompanionsOnZone` | `GetWhere` | `owner_id + is_dismissed` | Loads ALL active companion rows for player on zone-in | No — iterates by owner, not by npc_type_id |
+| `companion.cpp:4137` | `SpawnCompanionsOnZone` (inner loop) | `LoadNPCTypesData` | `cd.npc_type_id` | Loads NPCType from stored ID — appearance on zone-in | No — stored npc_type_id is correct for zone-in |
+
+**World/ and common/ repositories:** No companion_data access found in `world/`. The `companion_data_repository.h` provides only `FindOne` (by PK), `GetWhere` (free-form), `InsertOne`, `UpdateOne`, `DeleteOne`, `DeleteWhere` — all generic. No npc_type_id-specific logic in the repository itself.
+
+**Lua binding side (`lua_client.cpp`):**
+- `lua_client.cpp:3683` — `GetCompanionByNPCTypeID(npc_type_id)`: scans in-memory `entity_list.GetCompanionList()`, compares `companion->GetRecruitedNPCTypeID() == npc_type_id`. Uses `m_recruited_npc_type_id` (the stored original ID restored by Load). After the fix, a re-recruited Lydl via variant 10178 will have `m_recruited_npc_type_id=10162` (from Load). Scripts calling `GetCompanionByNPCTypeID(10178)` will NOT find it — they must use `GetCompanionByNPCTypeID(10162)` or the stored original ID. **Latent hazard if any Lua script passes the current NPC's variant ID to this function.**
+- `lua_client.cpp:3697` — `HasActiveCompanion(npc_type_id)`: same scan, same concern.
+
+Grep of quest scripts confirms: `HasActiveCompanion` and `GetCompanionByNPCTypeID` are only mentioned in the companion.lua module header comment — neither is called from any active production Lua script. No current hazard. Flag for future script authors.
+
+**companion_exclusions check (`companion.lua:252-258`):** Queries `companion_exclusions WHERE npc_type_id = ?` using the source NPC's variant ID. This is a first-time eligibility check (Track 2 only). If exclusion rows exist for ONE variant but not another, different variants of the same NPC could get different answers. Currently moot — exclusions use npc_type_id, and if variant 10162 is excluded, variant 10178 may not be. This is a pre-existing design gap in the exclusions system, not introduced by the variant fix. Not blocking.
+
+#### 2. Full CreateFromNPC flow — verified line numbers (current HEAD)
+
+```
+companion.cpp:188  — function entry, null/rule guards
+companion.cpp:201  — LoadNPCTypesData(source_npc->GetNPCTypeID()) → npc_type_data
+                     APPEARANCE DECISION: npc_type_data is the TARGETED VARIANT's NPCType
+companion.cpp:207  — pos = source_npc->GetPosition()
+companion.cpp:215  — CompanionDataRepository::GetWhere:
+                     "owner_id = {} AND npc_type_id = {} AND (is_dismissed = 1 OR is_suspended = 1) LIMIT 1"
+                     — strict npc_type_id match — THE BUG
+companion.cpp:224  — if (!existing.empty()) → RE-RECRUIT PATH:
+  companion.cpp:226  — new Companion(npc_type_data, ...)  ← targeted variant sets appearance/base stats
+  companion.cpp:237  — companion->Load(existing[0].id)   ← loads from stored row by PK:
+                          m_recruited_npc_type_id = cd.npc_type_id (stored original ID)
+                          ScaleStatsToLevel(cd.level)    ← uses m_base_* from constructor
+  companion.cpp:253  — SetHP(GetMaxHP()), SetMana(GetMaxMana())
+  companion.cpp:259  — m_suspended=false, m_is_dismissed=false
+  companion.cpp:261  — UPDATE companion_data SET is_dismissed=0, is_suspended=0 WHERE id={}
+  companion.cpp:272  — DataBucket::DeleteData(cooldown_key)
+  companion.cpp:281  — return companion (Spawn() called by Lua_Client::CreateCompanion)
+companion.cpp:284  — else → FRESH RECRUIT PATH:
+  companion.cpp:285  — new Companion(npc_type_data, ...)  ← targeted variant
+  companion.cpp:296  — SetRecruitedNPCTypeID(source_npc->GetNPCTypeID())  ← targeted variant ID stored
+  companion.cpp:304  — StoreBaseStats()  ← stores npc_type_data stats as m_base_*
+  companion.cpp:306  — return companion (Save() called by Lua_Client::CreateCompanion → InsertOne)
+```
+
+**On miss:** Falls through to fresh-recruit path. `SetRecruitedNPCTypeID(source_npc->GetNPCTypeID())` stores the TARGETED variant's ID as `m_recruited_npc_type_id`. When `Save()` runs → `InsertOne` → new row with `npc_type_id = targeted_variant_id`. Player now has TWO companion_data rows (original with 10162, new orphan with 10178). Both rows are for the same companion. The original row's level/XP/gear is never loaded.
+
+#### 3. Paths requiring strict ID match — none
+
+No path REQUIRES strict npc_type_id match:
+
+- **GM/admin commands:** No GM commands in `gm_commands/` query companion_data by npc_type_id. Confirmed by grep.
+- **SpawnCompanionsOnZone:** Queries by `owner_id + is_dismissed`. Uses stored `cd.npc_type_id` to load NPCType for appearance — this is the stored original ID, which is correct and unchanged by the fix.
+- **Save/Load/Persist:** Use PK (id) via `m_companion_id` or `companion_id` parameter. Completely ID-keyed.
+- **SoulWipe:** Uses `m_companion_id` (PK). Correct.
+- **ResurrectFromCorpse:** Uses `companion_id` stored on the corpse entity. Correct.
+
+#### 4. Appearance question — what spawns when the fix relaxes the lookup?
+
+The constructor `new Companion(npc_type_data, ...)` at line 226 takes the **targeted variant's** NPCType. This sets:
+- Race, gender, texture, helm texture, body type (visual appearance)
+- `m_base_str/sta/dex/agi/int/wis/cha/ac/atk/mr/fr/dr/pr/cr/hp/mana` (base combat stats)
+- `m_recruited_npc_type_id = d->npc_id` (initially set to targeted variant)
+
+Then `Load()` runs and:
+- Overwrites `m_recruited_npc_type_id = cd.npc_type_id` (stored original variant)
+- Calls `ScaleStatsToLevel(cd.level)` which recalculates stats using `m_base_*` (targeted variant's base stats) scaled to the saved level
+
+**The visual appearance (race/texture/model) comes from the targeted variant (the NPC the player is standing next to), not from the stored row's npc_type_id.** For Lydl variants 10162/10178/10181, all three have the same race, gender, and texture in npc_types (they are the same NPC at different base levels). The stat difference is trivial (level 2 vs 3 vs 4 base NPC) and entirely overridden by ScaleStatsToLevel to the saved companion level (e.g., 53).
+
+**Conclusion on appearance:** No observable difference to the player regardless of which variant they target. For any multi-variant NPC where variants genuinely differ (different race/texture), the player would see the targeted variant's appearance — which is the most natural behavior anyway (you recruited that specific version).
+
+`m_recruited_npc_type_id` after Load() holds the stored original ID (10162). This is used only by:
+1. `Save()` at line 2799 — writes back `cd.npc_type_id = m_recruited_npc_type_id` (preserves original ID in DB)
+2. `GetRecruitedNPCTypeID()` — exposed to Lua scripts; currently only used by in-memory list scans
+
+So the stored DB row continues to have `npc_type_id=10162` (original) even when recruited via variant 10178. Correct behavior.
+
+#### 5. Test infrastructure assessment
+
+**Can we add Suite 35 for multi-variant detection?**
+
+Yes. The harness gives us:
+- Real database via `database.QueryDatabase` and `CompanionDataRepository::*`
+- Sentinel `owner_id` (e.g., 99999) for test isolation — cleanup via `DELETE WHERE owner_id=99999`
+- `CompanionDataRepository::InsertOne` to seed a companion_data row with known npc_type_id
+- `CompanionDataRepository::GetWhere` to invoke the new query directly
+- Any NPC from `npc_types` can be used as the "source" variant — just need two npc_types rows with same name, different IDs
+
+**What we CAN test:**
+- Insert a row with `npc_type_id=A, is_suspended=1, owner_id=TEST_SENTINEL`
+- Execute the new name-based query with `npc_type_id=B` (different ID, same name)
+- Assert: row is found (companion_id == inserted id)
+- Assert: row is NOT found with the old strict-ID query (proving the test covers the bug)
+- Assert: cleanup leaves zero rows for TEST_SENTINEL
+
+**What we CANNOT test directly:** `CreateFromNPC` end-to-end (requires live `Client*` + `NPC*`). Mirror pattern of Suite 20: test the query logic directly.
+
+**Prerequisite:** Need two npc_types rows with the same `name` field, different `id`s. From live DB: `Lydl_the_Great` has ids 10162, 10178, 10181, 392011. The test can use any two of these.
+
+**Suite 35 is feasible and well-supported by the harness.**
+
+#### 6. Charm pets, swarm pets, mercs, bots
+
+- `pet.cpp`: No companion_data or npc_type_id companion queries — confirmed by grep. Pet system is entirely separate.
+- `merc.cpp`: Uses its own `merc_npc_type_id` column in a different table (`merc_inventory`, `merc_spells`, etc.). No shared lookup helper with Companion.
+- `bot.cpp`: No companion_data access — confirmed by grep. Bot system uses `bot_data` table.
+- No shared `CreateFromNPC`-style helper exists between Companion and any other subclass.
+
+The fix to `CreateFromNPC` is entirely isolated to the Companion class.
+
+#### 7. lua_companion.cpp:103-107 — Dismiss parameter naming (latent hazard)
+
+```cpp
+// lua_companion.cpp:103-107 (current HEAD)
+void Lua_Companion::Dismiss(bool voluntary)
+{
+    Lua_Safe_Call_Void();
+    self->Dismiss(voluntary);
+}
+```
+
+The C++ signature is `Companion::Dismiss(bool permanent)`. The binding names it `voluntary`. This is still a latent hazard — the semantics are inverted in the name. Anyone reading only the Lua binding would assume `voluntary=true → preserve record`, but `Companion::Dismiss(true)` = `permanent=true` = SoulWipe.
+
+The v1 fix at `companion.lua:1434` (`Dismiss(true)` → `Dismiss(false)`) closes the production bug. The naming mismatch in the binding remains. **It is not relevant to v2** (the v2 bug is the npc_type_id lookup, not the Dismiss path). Still deferred as future work as documented in v1 architecture decision 1b. No action needed for v2.
+
 ### Summary for Architect
 
 **Root cause:** `companion.cpp:218` uses `npc_type_id = {source_npc_type_id}` in the
