@@ -456,9 +456,68 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 > on player corpse works in production; confirm Companion rez uses same
 > path), (6) OP_RezzComplete back-channel.
 
-**Response from** protocol-agent: _(awaiting reply)_
+**Response from** protocol-agent: 2026-04-27
 
-**Outcome:** Awaiting protocol-agent verdict.
+> All 6 items validated against live source (titanium.cpp, corpse.cpp,
+> worldserver.cpp, spell_effects.cpp, companion.cpp, mob.cpp, botspellsai.cpp).
+>
+> **Item 1 — NPC corpse path: CONFIRMED SAFE.** OP_DeleteSpawn
+> (titanium.cpp:472) — pass-through, Decay=0 for instant vanish. OP_NewSpawn
+> (titanium.cpp:1292) → ENCODE(OP_ZoneSpawns) (titanium.cpp:2304) — full
+> Spawn_Struct field-by-field translation, NPC=1, fresh entity ID. OP_GroupUpdate
+> has no titanium entry → pass-through. New companion gets new entity ID;
+> corpse ID already retired from client table after OP_DeleteSpawn. No
+> collision, no Titanium crash vector. Titanium does not need any rez-specific
+> packet for NPC companion rez — DeleteSpawn + NewSpawn + GroupUpdate is
+> correct and complete.
+>
+> **Item 2 — Player corpse path with NPC caster: CONFIRMED SAFE.**
+> worldserver.RezzPlayer() (worldserver.cpp:4286) does not inspect caster
+> type — takes only EQApplicationPacket + exp + dbid + opcode. ServerOP_RezzPlayer
+> handler (worldserver.cpp:909–940) routes by your_name (player char name),
+> no caster lookup anywhere. Functionally identical for NPC or player caster.
+> rezzer_name at corpse.cpp:2359 uses caster->GetName() which returns the
+> numbered entity name (e.g., Hollish_Tnoops00). GetCleanName() (mob.cpp:5169)
+> strips the suffix. Recommend GetCleanName() for cleaner rez dialog display
+> — cosmetic only, not a correctness issue. OP_RezzRequest has no titanium_ops.h
+> entry → pass-through. Resurrect_Struct (228 bytes, eq_packet_structs.h:2968)
+> same on wire as internal. Titanium rez dialog renders regardless of whether
+> rezzer is NPC or player.
+>
+> **Item 3 — Cast pipeline with corpse target: CONFIRMED SAFE.** ENCODE(OP_Action)
+> at titanium.cpp:151 — simple field copy, no target-type filtering. OP_BeginCast
+> absent from titanium_ops.h → pass-through. DECODE(OP_CastSpell) at
+> titanium.cpp:2574 is client→server only. No NPC-casts-on-corpse filtering
+> anywhere in titanium.cpp. No Titanium crash vector for this scenario.
+>
+> **Item 4 — IsRezzed(true) before depop: CONFIRMED SAFE.** corpse->IsRezzed(true)
+> (companion.cpp:3587) is server-only in-memory — sends no packet. DepopNPCCorpse()
+> (corpse.cpp:767–772) sets m_player_corpse_depop=true; Process() returns
+> false next tick → entity removal → OP_DeleteSpawn broadcast. No window
+> where half-rezzed state is client-visible. No desync risk.
+>
+> **Item 5 — Bot precedent: PARTIALLY ALIGNED, divergence is intentional.**
+> botspellsai.cpp:203–206 guards IsPlayerCorpse() — bots only rez player
+> corpses, never companion corpses. The spell_effects.cpp:1720 companion
+> branch is the custom divergence. Both share the same SpellEffect::Revive
+> entry point. For the player-corpse subpath, Corpse::CastRezz() is identical
+> whether triggered by bot or companion AI — bot precedent is valid for that
+> subpath. NPC-casts-on-player-corpse is production-proven via bots.
+>
+> **Item 6 — OP_RezzComplete back-channel: CONFIRMED SAFE.** Handle_OP_RezzAnswer
+> (client_packet.cpp:13666) runs on PLAYER's connection only — no caster
+> reference. On accept, fires worldserver.RezzPlayer(outapp, 0, 0, OP_RezzComplete).
+> World server handles OP_RezzComplete (worldserver.cpp:942–956) by corpse name
+> lookup in zone — no caster lookup, no cross-zone concern. Companion and
+> player always in same zone. Clean.
+>
+> **Summary:** No blocking Titanium constraints on either rez path. All Rezz
+> opcodes are pass-through. NPC corpse path (DeleteSpawn+NewSpawn+GroupUpdate)
+> is standard and safe. Only cosmetic flag: GetCleanName() vs GetName() for
+> rezzer_name at corpse.cpp:2359.
+
+**Outcome:** All 6 items confirmed. No blocking Titanium constraints. One
+cosmetic recommendation: use GetCleanName() for rezzer_name at corpse.cpp:2359.
 
 ---
 
