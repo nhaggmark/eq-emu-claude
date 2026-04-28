@@ -1042,3 +1042,41 @@ Dead entity stays in mob_list with AI ticking (SetDepop(false)). A dead Cleric c
 
 **Outcome:** Architect has all citations needed for v2 architecture doc.
 
+---
+
+### 2026-04-27 — architect → c-expert: R-4 verification + v2 plan steel-man request
+
+**From:** architect → **To:** c-expert
+
+Requested: (1) open `companion_ai.cpp:1927-2011` and confirm whether `IsAlive()`/`GetHP()>0` guard exists at top of `AI_ResurrectDeadGroupMember`, (2) confirm whether `Companion::Process()` calls AI ticks on dead companions (SetDepop(false) keeps entity — does Process() still call AI_Process()?), (3) confirm whether `FindDeadGroupMemberCorpse()` finds the dead Cleric's own corpse. Also provided v2 plan (Fixes A/B/C/D + R2 + R4) for steel-man review.
+
+---
+
+### 2026-04-27 — c-expert → architect: R-4 confirmed real + steel-man + fix recommendation
+
+**From:** c-expert → **To:** architect
+
+**R-4 CONFIRMED REAL.** Full trace:
+- `AI_ResurrectDeadGroupMember` (`companion_ai.cpp:1935`): no HP/alive guard. First check is `RezEnabled` rule only.
+- `Companion::Process()` (`companion.cpp:1893`): HP=0 safety net sets `m_suspended` but does NOT return false. Continues to `NPC::Process()` at line 2227.
+- `NPC::Process()` (`npc.cpp:581`): only guards on `p_depop`. Dead companion has `p_depop=false`.
+- `Mob::AI_Process()` (`mob_ai.cpp:1412`): idle path `AI_IdleCastCheck()` — no HP gate.
+- `Mob::CastSpell()` (`spells.cpp:146`): no `IsDead()` guard in NPC path.
+- `FindDeadGroupMemberCorpse()` (`companion_ai.cpp:1882`): YES, finds own corpse by `owner->CharacterID()`.
+
+**Practical:** OOM path prevents actual rez in normal case (dead entity has 0 mana). But mana-at-death edge case (single large hit, HP→0 before mana→0) can leave residual mana → dead Cleric attempts Reanimation on its own corpse → undefined behavior.
+
+**Fix (two lines):** `if (GetHP() <= 0) return false;` at `companion_ai.cpp:1935`; `if (GetHP() <= 0) return NPC::Process();` at `companion.cpp:1908`. Second line prevents ALL AI from firing on dead companions.
+
+**Option D (group cap pre-flight):** confirmed viable. `GetGroupByClient(GetCompanionOwner())` + `GroupCount() >= MAX_GROUP_MEMBERS` check implementable at top of `AI_ResurrectDeadGroupMember`.
+
+**Steel-man push-backs:**
+1. Fix order: A → R4 → B → C → R2. R-4 should land before B.
+2. Fix C: `IsRezzed(true)` must still be called EARLY (before Spawn) as race guard; reset to false on Spawn() failure. Explicitly document in v2 spec.
+3. Test 30.5 (cross-zone): structural no-crash only in unit tests; live validation = game-tester.
+4. No other push-back. Plan is sound.
+
+**Dev-notes Stage 6:** `0d667ae` on `bugfix/companion-rez`.
+
+**Outcome:** Architect has complete R-4 picture and steel-man for v2 plan finalization.
+
