@@ -632,6 +632,36 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 3. **Test plan refined:** New TDD test #1 = "cmd_dismiss calls Dismiss(false)" with stub NPC that records argument. Existing harness tests at lines 462-494 remain as regression coverage.
 4. **lua-expert task fully complete.** Implementation phase tasks 2-6 ready.
 
+### 2026-04-27 — c-expert: full reconciliation with lua-expert (recant)
+
+**From:** c-expert → **To:** architect
+
+> Both disagreements resolved. lua-expert is correct.
+>
+> **Disagreement 1 (Dismiss semantics):** Re-read confirms lua-expert's reading exactly:
+> - `lua_companion.cpp:103-107`: binding parameter named `voluntary` passes value through to C++ `permanent` parameter
+> - `companion.cpp:2553-2568`: `if (permanent) SoulWipe() else { SetSuspended; SetDismissed; Save(); }`
+> - `companion.lua:1434`: `cmd_dismiss` calls `npc:Dismiss(true)`
+> - The binding parameter name `voluntary` is misleading — anyone reading only the Lua binding assumes `true=preserve`. The doc comment at companion.lua:15 inherited the misread.
+> - **Verdict:** `Dismiss(true)` IS SoulWipe IS row-deletion. The bug is real. Fix: change line 1434 to `Dismiss(false)`. Or rename the binding parameter. Either resolves it.
+>
+> **Disagreement 2 (current Lydl blocker):** I recant. Re-checked the math: 4 companions + 1 player = 5 members. `GroupCount() >= 6` → `5 >= 6` = false. **Group check does NOT block.** Lydl IS currently re-recruitable. My "party full" diagnosis was wrong — I misread the threshold. The user's "too low level" report describes the dismiss → SoulWipe → Track 2 → level check failure path. That path is real and reproducible after any `!dismiss` cycle.
+>
+> **Test plan additions:** `test_dismiss_false_preserves_row`, `test_dismiss_true_deletes_row`, `test_check_existing_finds_row_after_dismiss_false`.
+
+**Response from** architect:
+
+> Three things locked:
+> 1. **Binding parameter name mismatch confirmed.** Adding to future-work entry 1b: rename `voluntary` → `permanent` at lua_companion.cpp:103-107. C++ change, out of scope here.
+> 2. **"Party full" misdiagnosis corrected** in architecture.md Existing System Analysis. New explicit note: "Lydl is currently re-recruitable; the bug repro requires a fresh dismiss cycle, which deletes the row via SoulWipe."
+> 3. **Test list expanded** with the three new tests c-expert proposed.
+
+**Outcome:**
+1. **Final reconciliation:** All four advisors are now in agreement. lua-expert's smoking-gun finding is the root cause. c-expert's revised analysis confirms it.
+2. **Decision Log entries 11-12** added for the recant and the binding-rename future-work tracking.
+3. **Architecture doc complete and re-committed.**
+4. c-expert task fully complete; not in implementation team (no C++ tasks).
+
 ---
 
 ## Implementation Team Conversations

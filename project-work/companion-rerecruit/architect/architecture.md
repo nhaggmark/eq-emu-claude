@@ -103,7 +103,8 @@ client:CreateCompanion(npc)
 | Rows with `is_dismissed=1` | **0** (theoretical-only blocker per PRD) |
 | Rows with `is_suspended=1` | 2 (Lydl id=10, ghost Hollish id=21) |
 | Rows with `cur_hp=0` | 0 (death preserves cur_hp) |
-| Lydl row state | id=10, level=53, is_suspended=1, is_dismissed=0, cur_hp=1504 |
+| Lydl row state | id=10, level=53, is_suspended=1, is_dismissed=0, cur_hp=1504 (post-death; row preserved correctly) |
+| Lydl current re-recruit-ability | **Re-recruitable RIGHT NOW.** Track 1 query returns row id=10; group capacity check passes (5 members vs `>= 6` threshold). The bug repro requires a fresh `!dismiss` cycle, which deletes the row via SoulWipe. |
 | Stale cooldown rows in `data_buckets` | 0 |
 | `companion_exclusions` rows | 7,269 (none match user's repro candidates) |
 | `Companions:LevelRange` (DB) | 50 (default 3) |
@@ -230,6 +231,8 @@ New tests in `akk-stack/server/quests/tests/test_companion_recruitment.lua` (add
 3. **`test_rerecruit_after_dismiss_uses_track_1`** — dismiss, then re-recruit, then assert `is_re_recruitment_eligible()` was called and `is_eligible_npc()` was NOT called. Existing harness has a similar test (lines 462-494) that pre-bakes `is_dismissed=1` in the stub DB; that test continues to pass after the fix and serves as regression coverage.
 4. **`test_rerecruit_after_death_uses_track_1`** — regression coverage. Confirms death path remains unaffected (death writes is_suspended=1 directly via C++; no Lua change needed).
 5. **`test_first_recruit_still_gates`** — never-recruited NPC at level outside LevelRange — still rejected with level message. Confirms no regression on first-recruit gating.
+6. **`test_dismiss_true_deletes_row`** — call `Dismiss(true)` directly, assert row is removed from stub DB. Documents the permanent SoulWipe semantics for any future `!dismiss permanent` opt-in feature. Currently passes today (SoulWipe IS implemented correctly); this test guards against a regression that breaks the permanent path.
+7. **`test_check_existing_finds_row_after_dismiss_false`** — full chain integration: call `Dismiss(false)`, then call `check_existing_companion_record()` with the stubbed character/NPC ids, assert returns the row. Fails today indirectly (because production code never calls Dismiss(false)), passes after the fix.
 
 #### Database Changes
 
@@ -472,7 +475,7 @@ If a quest designer in the future wants to gate re-recruit on quest state for na
 
 5. **AC-10:** Recruit Lydl the Great in East Freeport. Activate the Lydl Mastat Freeport wizard-guild quest. Re-recruit Lydl after dismiss. Verify re-recruit succeeds. Optionally: kill the re-recruited Lydl and verify quest credit fires correctly.
 
-6. **Regression — group capacity:** With 5 active companions (cap), attempt to recruit a 6th. Verify rejection with "Your party is full." This is c-expert's "current real-world failure" diagnosis — confirmed working as designed.
+6. **Regression — group capacity:** With 5 active companions in the group (player + 5 companions = 6 members), attempt to recruit a 7th NPC. Verify rejection with "Your party is full." Confirms the >= 6 threshold gates as designed. (Note: c-expert initially diagnosed this as the current Lydl blocker but recanted on direct re-trace; with 4 companions + 1 player = 5 < 6, the group check passes.)
 
 7. **Regression — first-recruit cooldown:** Approach a never-recruited NPC, fail the persuasion roll (or simulate via test fixture), immediately re-attempt. Verify cooldown applies (15-min). Then dismiss a previously-recruited NPC and immediately re-recruit. Verify NO cooldown.
 
@@ -508,6 +511,7 @@ These are intentionally NOT addressed in this fix and are tracked as future work
 
 1. **`UNIQUE (owner_id, npc_type_id)` constraint on `companion_data`** — prevents future ghost rows. Requires (a) C++ code update to use UPSERT semantics (ON DUPLICATE KEY UPDATE or SELECT-then-INSERT/UPDATE) and (b) database_update_manifest_custom.h migration entry. Sequencing: dedup DELETE → C++ code deploy with upsert → ALTER TABLE ADD UNIQUE INDEX. Reverse-order deployment will fail second-recruit INSERTs. **Out of scope for this bugfix** because it requires C++ changes (this fix is Lua-only).
 1a. **C++ ORDER BY for defensive determinism** — `companion.cpp:218` query for re-recruit detection should mirror the Lua ORDER BY (`level DESC, experience DESC, id DESC LIMIT 1`). Currently the C++ query has only `LIMIT 1` with no ORDER BY, so duplicate-row selection is undefined. Lua-side determinism (covered in this fix) controls Track 1 vs Track 2 selection; C++ determinism only matters once Track 1 is firing and C++ is loading the row. Out of scope here because requires a build cycle.
+1b. **Rename Lua binding parameter `voluntary` → `permanent`** at `lua_companion.cpp:103-107` to match the C++ `Companion::Dismiss(bool permanent)` semantic. The current naming is a *latent hazard*: anyone reading only the Lua binding without checking C++ would assume `voluntary=true → preserve`, but C++ implements `true=permanent SoulWipe`. The Lua doc comment at companion.lua:15 inherited this misreading. The one-character fix at companion.lua:1434 closes the immediate bug, but the binding rename eliminates the underlying naming-mismatch defect. **Out of scope for this bugfix** because it requires a C++ build cycle. Tracked here for future cleanup.
 2. **Ghost row write-path investigation** — id=21 was created LATER than id=18, suggesting a re-recruit INSERTed instead of UPDATEing. Likely fixed by the dismiss fix indirectly (most ghosts come from dismiss-then-recruit sequences), but should be confirmed.
 3. **`Companions:ReRecruitBonus` rule cleanup** — defined and overridden in DB but never read in Lua or C++. Either wire it into the persuasion roll or remove the rule. Cosmetic.
 4. **`Companions:MinFaction` C++ stub at `companion.cpp:3853-3860`** — placeholder log-and-continue. If/when fleshed out, will need its own bypass consideration for re-recruits.
