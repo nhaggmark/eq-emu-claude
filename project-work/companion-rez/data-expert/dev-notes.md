@@ -217,10 +217,62 @@ Notes:
 
 ---
 
+#### 2026-04-27 — DB Audit Round 2 (architect's specific questions)
+
+Full query results saved to `context/db-audit-round2.md`.
+
+**Item 1 — npc_spells/npc_spells_entries audit:**
+All Cleric NPCs (class=2, lvl 10–65) use `npc_spells_id=1`. No rez spells in
+list 1 — confirmed zero `npc_spells_entries` rows with `effectid1=81`. The
+`npc_spells_entries.type` column uses the same SpellType bitmask enum as
+`companion_spell_sets.spell_type`. `SpellType_Resurrect = (1<<16) = 65536`
+per `common/spdat.h:648`. No type=65536 rows exist in `npc_spells_entries`
+— this is correct and by design. The companion system uses `companion_spell_sets`
+exclusively (loaded via `LoadCompanionSpells()` at companion_ai.cpp:288).
+
+**Item 2 — spells_new full row details:**
+Confirmed 5 rows loaded. effectid1=81 (SE_Revive), goodEffect=1, targettype=15
+(ST_Corpse), mana 150→700 by tier, recast 20s uniform, cast 6s uniform.
+`spells_new` has NO `min_expansion`/`max_expansion` columns on this schema.
+No inline expansion gate on spell records.
+
+**Item 3 — companion_data schema:**
+All expected columns confirmed present. Live counts: 5 total rows, 0 suspended,
+0 dismissed, 0 cur_hp=0 (no zombie rows — clean state).
+
+**Item 5 — rule_values:**
+All 7 requested rules present and correctly set. `RezEnabled=true`,
+`RezPostCombatDelayS=10`, `RezRange=200`, `RezWaiveReagents=true`,
+`XPDeathPenaltyPct=10`, `DeathDespawnS=1800`, `EquipmentPersistsThroughDeath=true`.
+No mis-set rules.
+
+**Item 6 — data_buckets:** Zero rez-related keys.
+
+**Item 7 — companion corpse:** No companion_corpse table exists. Corpses are
+entity-only (zone memory). Confirmed via SHOW TABLES.
+
+**Item 8 — expansion gates:**
+- `spells_new`: no expansion columns — no gate
+- `npc_spells_entries`: has min/max_expansion cols, all set to -1 (all eras)
+- `companion_spell_sets`: no expansion columns — no gate
+No expansion gate blocks the rez spells anywhere in the data layer.
+
+**C++/DB alignment verified:**
+`LoadCompanionSpells()` query at companion_ai.cpp:288-308 matches
+`companion_spell_sets` schema exactly. `SelectFirstSpell()` at line 1964
+uses `SpellType_Resurrect` bitmask = 65536 — exact match to DB value.
+
+**Flag for architect:** `SpellType_Resurrect` is NOT included in the
+`SPELL_TYPES_BENEFICIAL` constant at `spdat.h:899`. Architect should verify
+this doesn't cause BENEFICIAL-gate failures in AI dispatch or resist checks.
+
+---
+
 ## Open Items
 
-- [ ] Architect to confirm whether C++ reads `Companions:RezEnabled` and the other rez rules
-- [ ] Architect to investigate why rez spell `spell_type=65536` was defined but rez isn't working (C++ lookup may be broken or not implemented)
+- [x] Architect confirmed C++ reads Companions:RezEnabled — yes, via rule system
+- [x] spell_type=65536 confirmed aligned with SpellType_Resurrect — pipeline correct
+- [ ] Architect to verify SpellType_Resurrect not in SPELL_TYPES_BENEFICIAL is not a problem
 
 ---
 
