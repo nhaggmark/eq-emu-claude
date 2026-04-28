@@ -433,6 +433,144 @@ _Expert-to-expert exchanges during Phase 4._
 
 ---
 
+---
+
+## Architecture Team Conversations — V2
+
+_Atomicity and BUG-028 scoping for the post-v1 rez chain hardening._
+
+---
+
+### 2026-04-27 — architect → data-expert: V2 atomicity and BUG-028 scoping
+
+**From:** architect → **To:** data-expert
+
+Four questions: (Q1) can the rez chain be made atomic — Option A (defer UPDATE), Option B
+(MariaDB transaction), or Option C (rez_state column); (Q2) orphaned-row scenarios on
+server crash between each step; (Q3) BUG-028 entity-id-0 scope and whether stale
+companion pointer at death could corrupt corpse's companion_id; (Q4) cross-zone rez
+state persistence (advisory).
+
+---
+
+### 2026-04-27 — data-expert → architect: V2 atomicity findings
+
+**From:** data-expert → **To:** architect
+
+**Q1 — Atomicity:**
+
+DB write sequence confirmed from source (companion.cpp:3547-3700):
+1. `corpse->IsRezzed(true)` — in-memory only (line 3587)
+2. `CompanionDataRepository::UpdateOne` sets `is_suspended=0` — **DB WRITE** (line 3624)
+3. `corpse->DepopNPCCorpse()` — corpse gone, no DB row (line 3630)
+4. `new Companion(...)` + `entity_list.AddNPC(new_comp)` (lines 3633–3647)
+5. Entity setup (AI_Start, Load, LoadEquipment, CalcBonuses, ScaleStatsToLevel)
+6. `new_comp->CompanionJoinClientGroup()` — can fail if group at MAX_GROUP_MEMBERS=6
+   (groups.cpp:235); failure path calls `Suspend()` → `Save()` → writes `is_suspended=1` back
+
+`is_suspended=0` is written BEFORE the corpse is deleted and BEFORE the new entity spawns.
+Failure at step 6 leaves DB at `is_suspended=1` (technically valid) but the corpse is gone.
+
+**MariaDB transactions (Option B):** All companion tables are InnoDB — transactions
+are supported. But a transaction does NOT help here. The DB always ends in a valid state
+(`is_suspended=0` success, `is_suspended=1` via Suspend() on failure). The problem is
+the in-memory corpse entity is permanently gone after step 3. A ROLLBACK can restore the
+DB write but cannot un-DepopNPCCorpse. Transactions are the wrong tool.
+
+**Option A (defer UPDATE):** Correct direction but incomplete. Deferring the UPDATE
+until after entity spawn + group join means no DB write if group join fails — the corpse
+can be retried. However, this changes the crash-safety guarantee documented at
+companion.cpp:3617-3620: if we crash after entity spawn but before the UPDATE, the
+companion is in zone with no DB record. That's worse than the current crash window.
+
+**Recommended: Option D + Option C (two-part fix):**
+- **Option D (primary):** Pre-flight group-capacity check at the top of
+  `ResurrectFromCorpse` or `AI_ResurrectDeadGroupMember` — bail BEFORE any DB write
+  or corpse deletion if the group is at MAX_GROUP_MEMBERS=6 with no companion slot to
+  free. This closes the most common failure mode (group full) before the chain starts.
+- **Option C (defense-in-depth):** Defer `corpse->DepopNPCCorpse()` to AFTER
+  `CompanionJoinClientGroup()` returns true. On failure: skip depop (corpse stays),
+  roll back the DB write (direct UPDATE sets `is_suspended=1`, subtracts `xp_restore`),
+  Depop the new entity. Corpse remains rezzable. This closes all late-failure modes.
+  Crash-safety is preserved: if crash happens after UPDATE but before depop, the corpse
+  still exists and the next rez attempt sees `is_suspended=0` — correctly treats it as
+  "rez was in progress" and can re-run from corpse position.
+- One cosmetic flag: if `entity_list.AddNPC(new_comp)` fires before group join, clients
+  see the companion flash into existence then vanish on failure. If this is unacceptable,
+  defer AddNPC as well.
+
+**No new columns needed.** No schema migration. The Option C rollback is a direct SQL
+UPDATE, not a DB transaction.
+
+**Q2 — Crash scenarios:**
+
+- **Crash between step 2 (DB UPDATE) and step 3 (corpse depop):** DB says `is_suspended=0`,
+  corpse still in zone (entity memory, lost on restart anyway). On next zone boot, no
+  corpse exists (entity-only). Companion appears "alive" in DB with no entity. Player
+  `!unsuspend` re-spawns it normally — this is recoverable. No orphaned DB rows.
+- **Crash between step 3 (corpse depop) and step 6 (entity add):** DB says `is_suspended=0`,
+  no corpse, no entity. Same as above — player `!unsuspend` recovers it. The current
+  architecture doc at companion.cpp:3617-3620 explicitly acknowledges this window and
+  calls it acceptable given `!unsuspend` as the recovery path. Agreed.
+- **Should we add `last_rez_attempt_at`?** No. The extra column doesn't enable a
+  materially better recovery path than `!unsuspend`. The only win would be automated
+  zone-boot reconciliation, which would need C++ to act on the column anyway — that's a
+  future enhancement if the user finds `!unsuspend` too manual. Out of scope for v2.
+
+**No companion_corpses table.** Confirmed — corpses are entity-only (zone memory).
+No DB row survives a zone restart for any companion corpse.
+
+**Q3 — BUG-028 entity-id-0 scope:**
+
+BUG-028 is a defensive fallback already in place (companion.cpp:662-701). When
+`GetID() == 0` at death time, the code skips the ORM `Save()` path and issues a
+direct targeted `UPDATE companion_data SET is_suspended=1 ... WHERE id={companion_id}`.
+This guarantees the death state is persisted even if entity state is corrupt.
+
+**Does entity-id-0 corrupt the corpse?** Checking the death-to-corpse path: at
+`attack.cpp:2899-2912`, `corpse->SetCompanionData(comp->GetCompanionID(), comp->GetOwnerCharacterID())`
+is called using `comp->GetCompanionID()` and `comp->GetOwnerCharacterID()` — both are
+plain integer members (`m_companion_id`, `m_owner_char_id`) that do NOT depend on the
+entity ID. Entity ID is the zone entity list slot number; `companion_id` is the
+`companion_data.id` PK. They are independent. So even if entity ID is 0, the corpse
+gets correct `companion_id` and `owner_char_id` values. `IsCompanionCorpse()` checks
+`m_companion_id > 0` — unaffected. `ResurrectFromCorpse`'s `companion_data` lookup
+uses `companion_id` — unaffected.
+
+**BUG-028 root cause within v2 scope?** No. The root cause (whatever produces entity
+id=0 at death) is a separate, pre-existing issue in the entity list / zone spawn
+pipeline. It is not caused by the rez chain and fixing it is not required for v2
+atomicity. The fallback at companion.cpp:662-701 already contains the damage. BUG-028
+should remain in the backlog as a separate investigation rather than being dragged
+into v2.
+
+**Q4 — Cross-zone rez state (advisory):**
+
+No cross-zone rez mechanism exists today, and none is needed for v2. When the owner
+zones out: `Companion::Zone()` fires, `Save()` persists `is_suspended=1` (if dead) or
+current state (if alive), then `Depop()`. On zone-in, `LoadCompanions()` reads all
+`is_suspended=1, is_dismissed=0` rows and marks them as dead-awaiting-rez. The
+companion AI checks for dead companions only once back in zone. So "pending rez"
+is implicitly preserved via the `is_suspended=1` row — no new column or table needed.
+
+The scenario where this breaks: owner zones out mid-rez-cast (after step 2 but before
+step 6). Owner zones back in; `is_suspended=0` row found; `LoadCompanions()` spawns
+the companion as if alive. That's actually correct behavior — the companion was
+successfully rezzed from the DB's perspective, and the entity will spawn at the save
+position. If the entity ends up in a broken state (no group, etc.), `!unsuspend` fixes it.
+
+No schema changes recommended for cross-zone rez. The existing `is_suspended` flag is
+sufficient.
+
+**Overall DB verdict for v2:** No new columns. No new tables. No schema migration.
+No MariaDB transactions. Fix is two-part C++ application logic (Option D + Option C).
+BUG-028 stays in backlog, separate from v2.
+
+**Outcome:** Findings sent to architect. Dev-notes updated. Committed and pushed to
+`bugfix/companion-rez` (commit 0169943).
+
+---
+
 ## Key Decisions from Conversations
 
 _Extract the most important decisions made through agent communication.
