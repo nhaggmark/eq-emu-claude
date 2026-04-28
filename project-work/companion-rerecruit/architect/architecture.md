@@ -951,3 +951,118 @@ lua-expert flagged that cooldowns are stored per-variant (`companion_cooldown_10
 lua-expert confirmed the deprecated function still uses strict ID match and has zero callers. v2 leaves it untouched. Out-of-Scope item 9 already covers this.
 
 These refinements are documentation-only; no change to task list, SQL shape, or implementation sequence.
+
+---
+
+## V2 CRITICAL UPDATE — Exclusion Bypass Mitigation (data-expert Q7, 2026-04-28)
+
+data-expert's full audit Q7 surfaced a security/integrity issue with the v2 design that requires an additional guard.
+
+### The bypass vector
+
+Track 1's short-circuit past `is_eligible_npc()` was correct under v1 because Track 1 keyed on `npc_type_id` — the same ID the exclusion check uses. The player could only re-recruit the EXACT NPC they had recruited before, so an exclusion check on the target NPC's ID was equivalent to an exclusion check on the stored row's ID.
+
+V2 widens Track 1's match to `companion_data.name`. This widens the set of NPCs Track 1 can fire for. Concretely:
+
+- Player recruits non-excluded `Renux_Herkanor` (`npc_type_id=12032`)
+- Player approaches excluded `Renux_Herkanor` (`npc_type_id=2033`, exclusion_type=1, excluded as guildmaster class 28)
+- v2 name-match: query finds the companion_data row for char's Renux Herkanor → Track 1 fires → `is_eligible_npc()`'s exclusion check is bypassed → player recruits a guildmaster
+
+**Scope (per data-expert):**
+- 789 auto-excluded NPCs (`exclusion_type=1`) have non-excluded same-name siblings.
+- 0 lore-anchor exclusions (`exclusion_type=0` — Sir Lucan, Lord Bayle, etc.) have name-siblings; the curated list is unique-named by design.
+- Concrete examples: `Renux_Herkanor` (excluded 2033, non-excluded 12032/56172), `Grenix_Mucktail` (excluded 5133, non-excluded 15084/15093/407105), `an_elite_gnoll_guard` (excluded 17001, non-excluded 17020/17022), `Groflah_Steadirt` (excluded 8001, non-excluded 383200).
+- **Current production exposure: zero** — no companion_data row matches any excluded NPC name. Bypass is theoretical until the user recruits any of these non-excluded siblings.
+
+### Required mitigation
+
+**Track 1 must check `companion_exclusions` on the TARGET NPC's `npc_type_id` before short-circuiting.** This preserves the v2 invariant ("you can re-recruit YOUR previously-recruited NPC across any of its variants") while closing the cross-exclusion bypass ("you cannot recruit an excluded NPC by name-association with a non-excluded sibling you happened to recruit").
+
+**This applies symmetrically to both layers** — Lua's `is_re_recruitment_eligible()` AND C++ `Companion::CreateFromNPC` re-recruit hit path.
+
+### Code Changes — Q7 update
+
+#### Lua — `akk-stack/server/quests/lua_modules/companion.lua`
+
+Add exclusion check to `is_re_recruitment_eligible()` at lines 410–444. Insert as **new step 6**, after the existing 5 minimal-safety checks (rule enabled, group capacity, already-recruited, combat, IsCompanion). Use the existing exclusion query pattern from `is_eligible_npc()` at line 252 — same SQL, same handling.
+
+**Skeleton:**
+```lua
+function companion.is_re_recruitment_eligible(npc, client)
+    -- ... existing checks 1-5 ...
+
+    -- 6. Target NPC is not in companion_exclusions (v2 mitigation: prevents
+    --    name-match bypass where an excluded NPC shares a name with a
+    --    non-excluded sibling the player previously recruited).
+    local exclusion_reason = companion._lookup_exclusion(npc:GetNPCTypeID())
+    if exclusion_reason then
+        return false, exclusion_reason
+    end
+
+    return true, nil
+end
+```
+
+`_lookup_exclusion` is the existing query helper used by `is_eligible_npc()` at line 252; reuse not duplicate. If it isn't already a separate function, refactor it out as part of V2-2.
+
+#### C++ — `eqemu/zone/companion.cpp`
+
+`CreateFromNPC` re-recruit hit path (lines 224–282) must also check exclusions on `source_npc->GetNPCTypeID()` BEFORE invoking `Load()` and clearing flags. If the target is excluded, return nullptr or fall through to a graceful failure message — but do NOT load the companion.
+
+The existing first-recruit branch at line 284+ already triggers exclusion checks downstream (via `Companion::IsRecruitable` or similar). c-expert (V2-4) confirms the canonical exclusion-check helper at implementation time. The skeleton:
+
+```cpp
+if (!existing.empty()) {
+    // V2 mitigation: exclusion check on TARGET NPC, not the stored row.
+    // Without this, name-match Track 1 would bypass companion_exclusions
+    // for excluded NPCs that share names with non-excluded siblings.
+    if (CompanionExclusionsRepository::IsExcluded(database, source_npc->GetNPCTypeID())) {
+        owner->Message(Chat::Red, "%s cannot be recruited.", source_npc->GetCleanName());
+        return nullptr;
+    }
+
+    // ... existing re-recruit code ...
+}
+```
+
+Implementation detail (which repository/helper to call) is c-expert's call.
+
+### Antagonistic check
+
+| Scenario | Without Q7 mitigation | With Q7 mitigation |
+|----------|----------------------|---------------------|
+| Recruit Lydl 10162 (not excluded), re-recruit Lydl 10178 (not excluded) | Re-recruit succeeds | Re-recruit succeeds (target 10178 not excluded) |
+| Recruit Renux_Herkanor 12032 (not excluded), re-recruit excluded sibling 2033 | **EXPLOIT — guildmaster recruited** | **BLOCKED — target 2033 is excluded** |
+| Recruit excluded NPC directly (impossible — Track 2 blocks it) | n/a | n/a |
+| First-recruit of a non-excluded NPC | Track 2 fires, exclusion check passes | unchanged |
+| First-recruit of an excluded NPC | Track 2 fires, exclusion check blocks | unchanged |
+
+The mitigation closes the only known bypass and preserves all legitimate paths.
+
+### Updated implementation tasks
+
+| Task | Updated |
+|------|---------|
+| **V2-1** | Add a 3rd failing TDD test: `test_rerecruit_blocked_when_target_npc_is_excluded` — stub a companion_data row matching by name, but have the target NPC's `npc_type_id` be in `companion_exclusions` (use a real exclusion id from the DB or stub). Assert Track 1 returns false with the exclusion reason. Falls back to Track 2 which also blocks. |
+| **V2-2** | Implement Lua step 6 in `is_re_recruitment_eligible()` calling the shared `_lookup_exclusion(npc_type_id)` helper. Refactor exclusion query out of `is_eligible_npc()` if not already shared. |
+| **V2-3** | Add a 3rd test case to Suite 35: seed a companion_data row by name; insert (or use existing) `companion_exclusions` row for an `npc_type_id` matching by name; assert `CreateFromNPC` returns nullptr (or its exclusion-failure equivalent) without modifying the row. |
+| **V2-4** | Implement C++ exclusion check on `source_npc->GetNPCTypeID()` in the re-recruit hit path, BEFORE `Load()` is called. Use canonical `CompanionExclusionsRepository` helper (c-expert confirms helper name at implementation time). |
+
+### Updated risk register
+
+| Risk | Status |
+|------|--------|
+| Excluded-sibling bypass via name-match | **Mitigated by Q7 update.** Both layers gain a target-side exclusion check before Track 1 short-circuit. |
+| Current production exposure | Zero — no companion_data row matches any excluded NPC name. Mitigation is preventative. |
+| False-positive: an exclusion mistakenly applies to a row the player legitimately wants to re-recruit | Low. `companion_exclusions` is a curated list. If a legitimate companion gets excluded by content update, this is a content-team problem, not a v2 architecture problem. |
+| Performance impact | One extra DB query per recruit attempt. `companion_exclusions` is keyed on `npc_type_id` (PK or indexed). Negligible. |
+
+### Updated decision log
+
+| # | Decision | Rationale |
+|---|----------|-----------|
+| V2-10 | Add target-NPC exclusion check to Track 1 short-circuit (both Lua and C++) | data-expert Q7 found 789 auto-excluded NPCs with non-excluded same-name siblings. v2 name-match would let those exclusions be bypassed via a previously-recruited sibling. Mitigation preserves the re-recruit invariant for legitimate cases while closing the cross-exclusion bypass. |
+| V2-11 | `exclusion_type=0` (lore-anchor) curated list is unique-named — zero bypass risk | Safe by construction. Defense-in-depth from the same target-NPC check covers any future lore additions. |
+| V2-12 | No `companion_exclusions` table change needed | The mitigation is a code-side check; the table remains keyed on `npc_type_id` as designed. data-expert confirmed lore-anchor list is unique-named, so no name-keyed exclusion table needed. |
+
+This update does not change the SQL shape of the primary lookup query; it adds a separate exclusion guard in both layers. Out-of-Scope items remain unchanged. The selected approach (Option D / B) remains correct.
