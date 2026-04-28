@@ -228,9 +228,108 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 **Outcome:** Pending architect response. This directly shapes the architecture decision: is implementation work needed at all, or is the deliverable primarily test coverage?
 
+### 2026-04-27 — data-expert: deep schema dump + 7-question answers
+
+**From:** data-expert → **To:** architect
+
+> Verified answers to all 7 questions with live DB queries. Highlights:
+>
+> - **companion_data column names confirmed:** `owner_id` (NOT character_id), `npc_type_id` (NOT source_npc_type_id). Indexes: PRIMARY (id), idx_owner, idx_npc_type, idx_owner_active (owner_id, is_dismissed, is_suspended). No UNIQUE on (owner_id, npc_type_id).
+> - **6 rows total in companion_data for owner_id=6:** Lydl (id=10, level 53, **is_suspended=1**, is_dismissed=0, cur_hp=1504), Hollish active (id=18, level 53, suspended=0), Hollish stale (id=21, level 14, suspended=1, **0 inventory rows** — orphaned dup), Jimble (id=22), Jracol (id=23), Lashun (id=24).
+> - **Critical finding:** All 6 rows have `is_dismissed=0`. The "dismissed flag blocker" is theoretical — not currently active in production.
+> - **Death does NOT zero cur_hp.** Lydl is suspended with cur_hp=1504. PRD's "cur_hp=0" hint is wrong.
+> - **companion_inventories items are normalized** (one row per (companion_id, slot_id)), not blobs. UNIQUE on (companion_id, slot_id). Confirmed via join — Lydl has 14 items.
+> - **6 companion_* tables total:** companion_data (6 rows), companion_inventories (70 rows), companion_buffs (0 rows), **companion_exclusions (8,541 rows — NPC blocklist)**, companion_culture_persuasion (14 rows), companion_spell_sets (842 rows). No `character_*` companion columns.
+> - **Zero companion_cooldown rows currently in data_buckets.** Cannot verify key format from live data; structurally consistent with `soul_wipe_*` keys observed (all scope columns 0, identity in key string).
+> - **No FK constraints, no triggers, no stored procedures on any companion table.** All enforcement is application-level.
+> - **Reset script** verified with correct column names: DELETE inventories via JOIN on companion_data, DELETE buffs same pattern, DELETE companion_data, DELETE data_buckets cooldown by exact key.
+> - **Migration risk:** No is_dismissed=1 rows currently → no one-time UPDATE migration needed. Recommend dedup of stale duplicate rows as part of fix (Hollish Tnoops id=21 is dead weight).
+
+**Response from** architect:
+
+> This dump is decisive and changes the architecture again. Five consequential findings:
+>
+> 1. **Lydl's row exists with is_suspended=1.** Track 1 query (`is_dismissed=1 OR is_suspended=1`) SHOULD match it. If BUG-001 is reproducible, the Lua query is failing for some other reason — Hypothesis B (column/parameter mismatch) is now leading suspect.
+> 2. **is_dismissed blocker is theoretical-only.** No row currently has it. We may not need a dismissed-flag fix at all — the OR predicate already covers both states.
+> 3. **cur_hp preserved on death.** Death sets is_suspended=1 only; cur_hp stays at last value. Restoring cur_hp on re-recruit may be unnecessary (or even wrong if it overrides the natural healing path).
+> 4. **Lydl is level 53, NPC base level 4.** Player level 35, LevelRange=50 → delta against companion's *current* level=18 (within 50), but delta against NPC *base* level=31 (still within 50). Either way, the level check should pass. So either the check uses a different formula (e.g., min(player, npc_level) < something), or the bug is purely Track-1-not-firing.
+> 5. **Stale Hollish row id=21 is dead weight** — confirms dedup-as-part-of-fix is the right move.
+>
+> Asked data-expert four follow-ups: (a) confirm Lydl's ground-truth state with NPC base level, (b) verify dedup query logic, (c) check if any user's NPCs are in companion_exclusions, (d) recommend whether to add UNIQUE index on (owner_id, npc_type_id).
+>
+> data-expert task is essentially complete; these are clarifications.
+
+**Outcome:**
+1. **Decision locked:** Primary root-cause hypothesis is now (B) Lua query mismatch (or downstream of query in `_on_recruitment_success`/`CreateCompanion`). Secondary is C++ level check using NPC base level on Track 2 path.
+2. **Decision locked:** No "clear is_dismissed on re-recruit" fix needed (no rows currently have is_dismissed=1). Lua's OR predicate handles it.
+3. **Decision locked:** No "restore cur_hp" fix on re-recruit — death preserves it.
+4. **Decision locked:** Include one-time dedup of stale companion_data rows as part of implementation plan.
+5. **Decision pending:** Add UNIQUE index on (owner_id, npc_type_id)? — depends on whether C++ code requires duplicates anywhere.
+6. **Pending:** lua-expert to reproduce SQL against live data; c-expert to trace `Companion::Death`/`Dismiss`/`Client::CreateCompanion`.
+
+### 2026-04-27 — config-expert: CORRECTION — Lua bypass already exists
+
+**From:** config-expert → **To:** architect
+
+> Retracts and corrects earlier finding ("the fix must be in C++"). After deeper triage of `companion.lua:450-476`:
+>
+> - The two-track recruit dispatch already exists in Lua and is correct (matches lua-expert's independent finding).
+> - **`Companions:LevelRange` and `Companions:RecruitCooldownS` are Lua-only** — grepped full `eqemu/` source, no C++ reads. This eliminates an entire class of speculative C++ fixes.
+> - **`eqemu/zone/companion.cpp:3792` comment** explicitly states: "No C++ method needed here — Lua reads RuleR(Companions, ReRecruitBonus)." The recruit-decision architecture is intentionally Lua-side.
+> - The three reported PRD blockers (level cap, cooldown, dismissed flag) are all symptoms of one root cause: `is_dismissed` and/or `is_suspended` not being set correctly on `companion_data` after death/dismissal/zone-disconnect/server-restart. When the flag is missing, Track 1's `check_existing_companion_record()` returns nil, falling through to Track 2 which fires all three blockers.
+>
+> **Recommendation:** Zero config changes. No new toggle rules. Fix is entirely about ensuring drop-out paths write the suspension/dismissed flag correctly to companion_data.
+
+**Response from** architect:
+
+> Correction appreciated and locked. The "verify-then-correct" pattern is the gold standard — a half-correction would have left bad guidance in the audit trail.
+>
+> Two pieces of evidence config-expert contributed that lock the architecture:
+> 1. LevelRange/RecruitCooldownS are Lua-only (grep-verified). Eliminates "maybe C++ also enforces this" hypotheses.
+> 2. companion.cpp:3792 comment confirms intentional Lua-side architecture.
+>
+> Consequence: `companion_exclusions` (8541 rows) is also Lua-only enforcement — already bypassed on Track 1.
+>
+> **config-expert task is complete.** No rule_values changes, no eqemu_config.json changes, no toggle rules. Will be released from architecture team after architecture doc commits.
+
+**Outcome:**
+1. **Decision locked:** Zero config-layer changes for this fix.
+2. **Decision locked:** All recruit gating (LevelRange, RecruitCooldownS, exclusions, faction, persuasion) is Lua-only. Confirmed by both lua-expert (read Lua) and config-expert (grep-verified C++).
+3. **Decision locked:** Three-blocker framing in PRD is a symptom map, not a root-cause map. Single root cause: drop-out paths failing to write is_dismissed/is_suspended to companion_data.
+4. **Pending:** c-expert to identify which drop-out paths fail to write the flag.
+
 ---
 
 ## Implementation Team Conversations
+
+### 2026-04-27 — c-expert: Priority 1-6 deep trace (resolves all hypotheses)
+
+**From:** c-expert → **To:** architect
+
+> Second pass with full Death/Dismiss traces.
+>
+> **Priority 1 — Death() flag-set: CONFIRMED, three independent paths.**
+> - Normal path (`companion.cpp:660-678`): `SetSuspended(true)` + `Save()`, with direct SQL fallback if Save() fails (BUG-028 layer 2).
+> - Entity-id-0 fallback path (`companion.cpp:646-657`): direct SQL `UPDATE is_suspended=1` bypassing ORM.
+> - Process() safety net (`companion.cpp:1870-1884`): catches HP=0 without suspension on the next process tick.
+> - Death despawn timer (`companion.cpp:1888-1913`): after DeathDespawnS seconds with no rez, sets `is_dismissed=1 AND is_suspended=1` + `Save()`. **This is Lydl's path — timer fired.**
+> - **Dismiss() parameter is `permanent`, not `voluntary`:** `Dismiss(false)` = voluntary (sets both flags, Save). `Dismiss(true)` = soul-wipe (deletes row). cmd_dismiss calls `Dismiss(false)`.
+>
+> **Priority 2 — CreateFromNPC does NOT re-apply restrictions: CONFIRMED.**
+> - Queries `(is_dismissed=1 OR is_suspended=1) LIMIT 1` with no ORDER BY. Duplicate rows → non-deterministic selection.
+> - Track 1: unconditional `Load()` + `SetHP(max)` + flag clear + cooldown clear. Zero level/faction/cooldown re-validation (`companion.cpp:237-281`).
+>
+> **Priority 3 — ReRecruitBonus: unused in both C++ and Lua.** Comment at `companion.cpp:3792` says "Lua reads this" but `companion.lua` has zero calls to `eq.get_rule("Companions:ReRecruitBonus")`.
+>
+> **Priority 4 — "too low level": Lua only,** inside `is_eligible_npc()` at `companion.lua:212`. Unreachable via Track 1.
+>
+> **Priority 5 — Test infrastructure:** Zone CLI tests at `eqemu/zone/cli/tests/cli_companion_tests.cpp`, 35+ suites, no gtest. New `TestCompanionReRecruitInvariant()` follows Suite 20 pattern.
+>
+> **Priority 6 — No shared paths with charm/swarm/merc.** Companion inherits NPC only. Death() and Dismiss() are Companion-only overrides, no merc/charm-pet intersection.
+>
+> **ROOT CAUSE: All four hypotheses eliminated. Flags ARE set by all drop-out paths.** Current Lydl blocker is group capacity (4 active companions + player = 5; Lydl would be 6 = full party). The re-recruitment invariant is correctly implemented. Deliverable is test coverage, not a new code fix.
+
+**Outcome:** Pending architect response. c-expert's finding that all drop-out paths correctly write flags contradicts architect's decision locked at item 3 ("single root cause: drop-out paths failing to write is_dismissed/is_suspended"). Pushing back explicitly: the flags ARE written by every path including triple-fallback safety nets. The current production state of Lydl's DB record confirms this.
 
 ---
 
