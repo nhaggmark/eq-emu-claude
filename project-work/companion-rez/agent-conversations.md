@@ -996,3 +996,49 @@ _Exchanges after in-game validation revealed three deeper bugs in ResurrectFromC
 
 **Outcome:** Awaiting architect v2 architecture doc and task dispatch.
 
+---
+
+### 2026-04-27 — architect → c-expert: Stage 5 formal citation request (6 questions)
+
+**From:** architect → **To:** c-expert
+
+Six specific questions: (1) R-1 exact file:line for AddNPC, CompanionJoinClientGroup, name normalization, Suspend/Depop failure path, and whether dead companion occupies group slot at rez time; (2) R-2 GetCompanionOwner body, zone-out event hook, cross-zone persistence options; (3) R-3 entity id=0 sequence and whether it corrupts corpse m_companion_id; (4) Fix sites A/B/C with dependency order and subtleties; (5) Any fourth bug candidate; (6) Cross-zone resilience recommendation.
+
+---
+
+### 2026-04-27 — c-expert → architect: Stage 5 response — full citations, DB corruption detail, R-4 candidate
+
+**From:** c-expert → **To:** architect
+
+**Q1 confirmed (R-1):**
+- `companion.cpp:3647` — AddNPC (wrong list)
+- `companion.cpp:3680` — CompanionJoinClientGroup
+- `companion.cpp:2403-2404` — name normalization in Spawn() (skipped)
+- `companion.cpp:2693-2711` — existing-group AddMember failure → Suspend() at 2709
+- DB corruption confirmed: Suspend()/Save() at line 2470 overwrites the `is_suspended=0` + XP restore written by ResurrectFromCorpse at 3624. XP permanently lost.
+- Group slot confirmed occupied: MemberZoned() (`groups.cpp:596-637`) clears pointer only; GroupCount() counts name strings → still counts dead companion. AddMember fails via capacity (groups.cpp:235) OR name-collision (groups.cpp:277-280) for ALL group sizes. DelMember (which does clear name at groups.cpp:720) is never called at death because Depop() is blocked by SetDepop(false) at companion.cpp:627.
+
+**Q2 confirmed (R-2):**
+- `companion.cpp:3903-3906` — GetCompanionOwner returns entity_list.GetClientByCharID(m_owner_char_id)
+- No zone-out hook in companion system; dead companion sits until DeathDespawnS timer
+- Cross-zone fix hook: `companion.cpp:4155` in SpawnCompanionsOnZone(); recommendation: auto-unsuspend at 10% HP on zone-in for is_suspended=1 companions (no schema change needed)
+
+**Q3 confirmed (R-3):**
+- entity id=0 does NOT corrupt corpse m_companion_id — separate fields (entity list ID vs m_companion_id plain int)
+- attack.cpp:2908 uses GetCompanionID() which reads m_companion_id, not entity ID
+- R-3 is not a rez-path blocker; existing BUG-028 fallback sufficient
+
+**Q4 — Fix dependency order: Fix A → Fix B → Fix C:**
+- Fix A: `companion.cpp:713-718` — clear membername[] slot at death (companion.cpp only, no groups.cpp change)
+- Fix B: `companion.cpp:3632-3680` — route through Spawn(); don't double-call AI_Start()
+- Fix C: `companion.cpp:3616-3680` — defer DB UPDATE + DepopNPCCorpse until after Spawn() succeeds; reset IsRezzed(false) on Spawn() failure
+
+**Q5 — R-4 candidate: Dead Cleric self-rez:**
+Dead entity stays in mob_list with AI ticking (SetDepop(false)). A dead Cleric could call AI_ResurrectDeadGroupMember() which finds its own corpse. Need guard `if (GetHP() <= 0 || IsDead()) return false` at companion_ai.cpp:1927. Severity: low (Clerics rarely the dead entity when there's another rez-capable companion), but flagged for architect verification.
+
+**Q6 — Cross-zone: recommend auto-unsuspend at 10% HP in SpawnCompanionsOnZone; defer data_buckets Option B to separate pass.**
+
+**Dev-notes Stage 5:** committed at `fc63bc2` on `bugfix/companion-rez`.
+
+**Outcome:** Architect has all citations needed for v2 architecture doc.
+
