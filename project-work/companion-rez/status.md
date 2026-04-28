@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-04-27 | 2026-04-27 |
 | Design | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
 | Architecture | architect + protocol-agent + config-expert (+ c-expert, lua-expert, data-expert as advisors) | Complete | 2026-04-27 | 2026-04-27 |
-| Implementation | c-expert + infra-expert + game-tester | Not Started | | |
-| Validation | game-tester | Not Started | | |
+| Implementation | c-expert + infra-expert + game-tester | Complete | 2026-04-27 | 2026-04-28 |
+| Validation | game-tester | In Progress | 2026-04-28 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Validation
 
 ---
 
@@ -51,6 +51,17 @@ _Record each handoff between agents with context and any notes._
   recorded in `lore-master/lore-notes.md` and exchanges logged in
   `agent-conversations.md`. Architect inherits a clean PRD with no
   lore blockers and a clear AC-10 reliability contract.
+
+### game-tester → user (in-game validation pending)
+- **Date:** 2026-04-28
+- **Notes:** Server-side validation: PASS. All 35 companion test suites pass (Suite 29
+  tests 29.14-29.17 GREEN post-fix; 29.1-29.13 still passing — no regressions). DB
+  integrity clean (0 orphaned FK refs). All 5 rez rules confirmed at correct values.
+  Running binary confirmed to contain `IsCompanionCorpse` and `ResurrectFromCorpse`
+  code paths. No rez-related errors in zone or world logs. One pre-existing WARN
+  (inventory slot_id 3810-3819 for char_id=6 in The Hole/West Freeport — unrelated
+  to this fix). Full in-game test plan at `game-tester/test-plan.md`: 8 numbered
+  tests (AC-1 through AC-10) + 5 regression tests. Awaiting user in-game confirmation.
 
 ### architect → implementation team (c-expert + infra-expert + game-tester)
 - **Date:** 2026-04-27
@@ -90,8 +101,8 @@ _Populated by the architect after the architecture doc is approved._
 | 2 | Implement `ST_Corpse` extension at `eqemu/zone/spells.cpp:2049-2063` per the architecture doc. Admit `IsCompanionCorpse()` alongside `IsPlayerCorpse()`. | c-expert | Complete 2026-04-27 | Part of fix commit 83a96f655 |
 | 3 | Implement player-corpse discovery extension at `eqemu/zone/companion_ai.cpp:1861-1876` (`FindDeadGroupMemberCorpse`). Priority 1: owner's player corpse via `EntityList::GetCorpseByOwnerWithinRange`. Priority 2: existing companion corpse path. | c-expert | Complete 2026-04-27 | Part of fix commit 83a96f655. Passes rez_range*rez_range per dist_sq convention. |
 | 4 | Rebuild zone binary via `docker exec akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`. Re-run Suite 29 — verify all 4 new tests PASS, all 13 existing Suite 29 tests still PASS. Run full companion test suite. | c-expert | Complete 2026-04-27 | All 35 suites PASS. 29.14/15/17 GREEN. No regressions. Zero build warnings. |
-| 5 | Server restart: `make restart` from akk-stack/, then full server start (loginserver / world / 8 dynamic_NN zones per documented startup procedure). | infra-expert | Not Started | Depends on 4 |
-| 6 | In-game validation: 7 game-tester scenarios per Validation Plan (Scenarios 1, 2, 3, 4, 5, 6, 12 in architecture.md). User confirms. | game-tester | Not Started | Depends on 5 |
+| 5 | Server restart: `make restart` from akk-stack/, then full server start (loginserver / world / 8 dynamic_NN zones per documented startup procedure). | infra-expert | Complete 2026-04-28 | Full stack restart confirmed (dedb777). 8 zones running. |
+| 6 | In-game validation: 7 game-tester scenarios per Validation Plan (Scenarios 1, 2, 3, 4, 5, 6, 12 in architecture.md). User confirms. | game-tester | In Progress 2026-04-28 | Server-side PASS. In-game test guide at game-tester/test-plan.md. Awaiting user. |
 | 7 | Commit and push all changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no changes.) | c-expert | Complete 2026-04-27 | eqemu pushed (30f6d6ef5, 83a96f655). claude pushed after dev-notes update. |
 
 ---
@@ -166,8 +177,8 @@ _Filled in after game-tester validation passes._
 
 - [ ] All implementation tasks marked Complete
 - [ ] No open Blockers
-- [ ] Suite 29 tests 29.14-29.17 PASS in `./bin/zone tests:companion`
-- [ ] Existing 13 Suite 29 tests still PASS (no regression)
+- [x] Suite 29 tests 29.14-29.17 PASS in `./bin/zone tests:companion`
+- [x] Existing 13 Suite 29 tests still PASS (no regression)
 - [ ] game-tester server-side validation: PASS for all 7 scenarios
 - [ ] User completed in-game testing guide: PASS (BUG-001 resolved verbatim)
 - [ ] All changes committed and pushed to feature branch in eqemu and claude repos
