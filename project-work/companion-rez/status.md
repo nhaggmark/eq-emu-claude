@@ -63,6 +63,16 @@ _Record each handoff between agents with context and any notes._
   to this fix). Full in-game test plan at `game-tester/test-plan.md`: 8 numbered
   tests (AC-1 through AC-10) + 5 regression tests. Awaiting user in-game confirmation.
 
+### game-tester → user (V2 in-game validation pending)
+- **Date:** 2026-04-28
+- **Notes:** V2 server-side validation: PASS WITH ANOMALY (binary symlink mtime — benign, actual binary Apr 28 17:26).
+  All 36 companion test suites GREEN including new Suite 36 (17 V2 tests). Suite 29 V1 tests still PASS.
+  DB clean: 5 companion rows all alive (is_suspended=0), 0 stuck dead companions.
+  V2 binary confirmed: Fix A (membername[] slot clear), Fix R4 (alive guard), Fix B (Spawn routing), Fix C (atomic rez + Option D pre-flight) all present.
+  8 zone processes running. No post-restart errors beyond pre-existing inventory slot warnings.
+  V2 test plan at `game-tester/test-plan.md` (V2 section): 7 in-game scenarios (V2-1 through V2-8, V2-3 skipped per descope) + 3 regression tests.
+  Awaiting user in-game confirmation to close BUG-001 V2.
+
 ### architect → implementation team (c-expert + infra-expert + game-tester)
 - **Date:** 2026-04-27
 - **Notes:** Architecture phase complete. The auto-rez subsystem is
@@ -240,11 +250,11 @@ _Free-form notes, observations, or context that doesn't fit above._
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | V2 Architecture | architect + c-expert + data-expert advisors | Complete | 2026-04-28 | 2026-04-28 |
-| V2 Implementation | c-expert + infra-expert + game-tester | Not Started | | |
-| V2 Validation | game-tester + user | Not Started | | |
+| V2 Implementation | c-expert + infra-expert + game-tester | Complete | 2026-04-27 | All V2 tasks complete; V2 binary running |
+| V2 Validation | game-tester + user | In Progress | 2026-04-28 | Server-side PASS; awaiting user in-game confirmation |
 | V2 Completion | _user_ | Not Started | | |
 
-**Current phase:** V2 Architecture complete; awaiting user review of v2 plan before spawning implementation team.
+**Current phase:** V2 Validation — server-side PASS, awaiting user in-game confirmation.
 
 ## V2 Handoff Log
 
@@ -291,7 +301,7 @@ _Free-form notes, observations, or context that doesn't fit above._
 | ~~V2.6~~ | ~~Implement Fix R2~~ — **DEFERRED 2026-04-28 by user.** Removed from V2. Tracked as known-pending follow-up below. | — | DEFERRED | Cross-zone auto-unsuspend moved to separate future bugfix with game-designer involvement. |
 | V2.7 | Rebuild zone binary. Re-run Suite 29 + Suite 30 — verify all 17 V1 tests still PASS and all V2 tests now PASS. Run full companion test suite (35 suites). | c-expert | Not Started | Zero new compiler warnings expected. |
 | V2.8 | Server restart: `make restart` from akk-stack/, then full server start (loginserver / world / 8 dynamic_NN zones per documented startup procedure). | infra-expert | Not Started | Same pattern as V1 Task 5. |
-| V2.9 | In-game validation: 8 game-tester scenarios per V2 Validation Plan (V2-1 through V2-8). User confirms BUG-001 closed. | game-tester | Not Started | V2-1 is primary regression test; V2-7 is V1 regression check. |
+| V2.9 | In-game validation: 8 game-tester scenarios per V2 Validation Plan (V2-1 through V2-8). User confirms BUG-001 closed. | game-tester | In Progress 2026-04-28 | Server-side: PASS WITH ANOMALY (symlink mtime — benign). All 36 suites GREEN. DB clean. V2 binary confirmed. In-game test plan at game-tester/test-plan.md V2 section. Awaiting user confirmation. |
 | V2.10 | Commit and push V2 changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no V2 changes.) | c-expert | Not Started | After V2.7 confirms green; per fix or batched per c-expert preference. |
 
 ## V2 Open Questions
