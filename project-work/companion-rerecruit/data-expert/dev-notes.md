@@ -258,12 +258,128 @@ id  owner_id  npc_type_id  name                level  experience  is_suspended  
 
 ---
 
-## Open Items
+## Open Items (v1 — resolved via architecture.md)
 
-- [ ] Confirm with c-expert: when exactly is the data_buckets cooldown row written? On failed recruit? On any dismissal? On death?
-- [ ] Confirm with c-expert: does the level-range check use Companions:LevelRange directly or is there a separate re-recruit code path?
-- [ ] Architect to decide: new rule_value for re-recruit level bypass, or C++ conditional bypass?
-- [ ] Duplicate companion_data rows (same owner_id + npc_type_id): confirm with architect whether the re-recruit path targets a specific row by id or queries by owner+npc_type_id, and whether stale duplicate rows should be cleaned up as part of this fix.
+- [x] Cooldown trigger — confirmed: fires only on failed persuasion roll (Track 2), NOT on death/dismissal
+- [x] Level-range check — confirmed: only in Track 2 `is_eligible_npc()`; re-recruit uses Track 1 bypass
+- [x] Level cap fix — architect decided: no rule_value change, one-character Lua fix closes the gap
+- [x] Duplicate rows — architect decided: targeted DELETE of id=21 only; UNIQUE constraint deferred
+
+---
+
+## Stage 4 — v2 Addendum: Multi-Variant NPC Scope Investigation
+
+**Date:** 2026-04-27
+**Dispatched by:** team-lead / architect team `companion-rerecruit-architecture-v2`
+**Question:** Can we safely switch re-recruit lookup to name-based instead of npc_type_id-based?
+
+### Investigation Queries Run (all read-only)
+
+1. `spawnentry` schema confirmed: column is `spawngroupID` (not `spawngroup_id`)
+2. Lydl_the_Great in spawngroup 5765 (freporte_140): **5 entries** — npc_type_ids 10159 (Orc Centurion), 10162, 10178, 10181 (three Lydl variants), 10166 (another Orc Centurion). Three Lydl variants share the same spawngroup and same zone (freporte).
+3. Total distinct Lydl_the_Great npc_type_ids: **4** (10162, 10178, 10181, 392011). 392011 spawns in northro (different zone).
+4. `npc_types.name` is a `TEXT` column with collation `latin1_swedish_ci` (case-insensitive). **No index on `name`.**
+5. Total multi-variant names in npc_types: **9,202 names** have more than one npc_type_id.
+6. Proper-named NPC multi-variant count: **3,038 names** matching `^[A-Z][a-zA-Z]+_[A-Za-z]` have > 1 npc_type_id.
+7. Companion_data integrity: **0 stale rows** — all 5 companion_data npc_type_ids have matching npc_types rows. No orphaned companions.
+
+### Name Normalization
+
+All 5 recruitable NPC names confirmed:
+- No trailing whitespace: YES (`name = TRIM(name)` = 1 for all)
+- No mixed case quirks: standard Title_Case_With_Underscores
+- Name column is `latin1_swedish_ci` (case-insensitive comparisons)
+- No suffix patterns like `_002` observed for the recruitable NPCs
+- Underscore-as-space: EQEmu standard convention. Lua likely uses `npc:GetName()` which returns the DB value directly.
+
+### Multi-Variant Scope — Key Findings
+
+| Finding | Value |
+|---------|-------|
+| Total npc_types rows | 67,530 |
+| Total names with > 1 npc_type_id | 9,202 |
+| Proper-named NPCs with > 1 npc_type_id | 3,038 |
+| Recruitable NPCs with multi-variant issue | 2 of 5 (Lydl_the_Great: 4 variants; Hollish_Tnoops: 2 variants) |
+| Lydl variants in freporte (same zone) | **3 variants** (10162, 10178, 10181) |
+| Name + zone uniqueness for Lydl | **NOT UNIQUE** — 3 ids share freporte |
+| companion_data stale npc_type_id rows | **0** |
+
+### Recruitable NPC Name Collision Analysis
+
+**Lydl_the_Great (4 variants):**
+
+| npc_type_id | level | zone | hp | faction |
+|-------------|-------|------|----|---------|
+| 10162 | 4 | freporte, highpass | 28 | 186 |
+| 10178 | 2 | freporte | 12 | 186 |
+| 10181 | 3 | freporte | 20 | 186 |
+| 392011 | 2 | northro | unknown | 0 |
+
+Same race (1), same class (12), same loottable/spells/faction for 10162/10178/10181. 392011 has faction_id=0 (different). Three share freporte.
+
+**Hollish_Tnoops (2 variants):**
+
+| npc_type_id | level | hp | loottable_id | faction |
+|-------------|-------|----|----|---------|
+| 9144 | 14 | 168 | 12316 | 294 |
+| 383271 | 14 | 175 | 0 | 294 |
+
+383271 has **no spawnentry** (0 spawnentry rows). It is an **orphan npc_types row** — exists in the table but never spawns. Effectively not a real spawn concern. companion_data uses 9144.
+
+**Other recruitable NPCs (3 of 5 are unique):**
+- Jracol_Brestiage (2029): only 1 npc_type_id in the DB
+- Lashun_Novashine (2032): only 1 npc_type_id in the DB
+- Jimble_Woodentoe (22014): only 1 npc_type_id in the DB
+
+### Name-Based Lookup Safety Assessment
+
+**Name-based lookup is NOT safe for Lydl_the_Great without zone disambiguation.**
+
+Reason: Three npc_type_ids (10162, 10178, 10181) all have `name = 'Lydl_the_Great'` AND all spawn in `freporte`. A SELECT WHERE name='Lydl_the_Great' returns 4 rows. Even adding zone filter still returns 3 rows in freporte.
+
+**Disambiguation options considered:**
+
+1. **Name + npc_faction_id**: 10162/10178/10181 all share faction_id=186, 392011 has faction_id=0. Faction does not disambiguate within freporte.
+
+2. **Name + zone + npc_type_id tie-breaker**: Use lowest npc_type_id (10162) as canonical within each zone. Requires storing which variant was recruited OR always recruiting the lowest id.
+
+3. **Name + companion_data.npc_type_id**: companion_data already stores the exact npc_type_id that was recruited. The STORED id is the truth. The problem is only on INITIAL lookup when the spawned NPC's id doesn't match the stored id — i.e., player recruited 10162 but the zone spawned 10178 this time.
+
+4. **Keep npc_type_id with same-name fallback**: Primary lookup remains `WHERE npc_type_id=?`. If no match, secondary lookup by `WHERE name=(SELECT name FROM npc_types WHERE id=?) AND is_dismissed=1 OR is_suspended=1`. This is safer than pure name-based.
+
+### Specific Bug Scenario Confirmed
+
+If the player recruited Lydl when npc_type_id=10162 was spawned, `companion_data` stores `npc_type_id=10162`. On re-recruit attempt, the zone spawns npc_type_id=10178 (a different variant). The current lookup `WHERE npc_type_id=10178` finds nothing. Track 1 fails → Track 2 fires → all gates apply.
+
+**This is the actual v2 bug.** The v1 fix (Dismiss(false)) is still correct and necessary, but even after v1, a player could be blocked on re-recruit by variant mismatch.
+
+### Index Recommendation
+
+`npc_types.name` is `TEXT` type — an index on a `TEXT` column in MariaDB requires a prefix length specification (e.g., `INDEX(name(100))`). Without an index, any name-based lookup performs a full table scan on 67,530 rows.
+
+**Recommendation:** If name-based lookup is added to any hot path (e.g., re-recruit fallback), add a prefix index:
+```sql
+ALTER TABLE npc_types ADD INDEX idx_name_prefix (name(100));
+```
+This is a schema migration and requires a `database_update_manifest_custom.h` entry. Performance impact of the full scan is low at 67k rows, but the index should be added for correctness as the table grows.
+
+### companion_data Integrity Check
+
+All 5 current companion_data rows have valid npc_type_id FK references (no stale rows). No data cleanup needed here.
+
+### Recommendations to Architect
+
+1. **Name-only lookup is unsafe.** 9,202 names have multiple npc_type_ids. For Lydl specifically, 3 variants share the same zone (freporte). Name + zone is still not unique.
+
+2. **Safe v2 approach: keep stored npc_type_id as primary, add name-based GROUP match as secondary.** The companion_data row already knows which npc_type_id was recruited. The fix should accept any variant of the same NPC name as a valid re-recruit trigger. Logic: "if the spawned NPC's name matches the name of any of my companion_data rows with the same owner_id, treat it as a re-recruit candidate." This maps N spawned variants → 1 companion_data row by name lookup.
+
+3. **Name + npc_faction_id as disambiguation strategy.** For cases where the player has TWO different companions with the same display name but different factions (currently impossible but theoretically possible), faction can disambiguate. For Lydl, 392011 (faction=0) vs others (faction=186) provides a partial disambiguation.
+
+4. **Hollish_Tnoops 383271 is an orphan row.** No spawnentry exists. Not a real concern for name-based lookup — it will never be in the world.
+
+5. **Index needed if name-based lookup goes hot.** TEXT prefix index `idx_name_prefix(name(100))` should be added as a schema migration.
+
+6. **No companion_data cleanup required** for v2 — all rows are valid.
 
 ---
 
