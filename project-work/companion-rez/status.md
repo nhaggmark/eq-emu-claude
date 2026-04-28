@@ -219,3 +219,131 @@ _Free-form notes, observations, or context that doesn't fit above._
   spells.cpp guard". It's necessary to satisfy PRD AC-2; without it,
   the cleric would still ignore player corpses. The extension is
   trivial (one method call to an existing `EntityList` helper).
+
+---
+
+# V2 — ResurrectFromCorpse Pipeline Fix
+
+> In-game validation found the V1 fix made the spell reach the rez handler,
+> but the handler itself has multiple bugs preventing the rez from succeeding
+> end-to-end. V2 reopens the workflow at the architecture phase.
+
+## V2 Workflow Status
+
+| Phase | Agent | Status | Started | Completed |
+|-------|-------|--------|---------|-----------|
+| V2 Architecture | architect + c-expert + data-expert advisors | Complete | 2026-04-28 | 2026-04-28 |
+| V2 Implementation | c-expert + infra-expert + game-tester | Not Started | | |
+| V2 Validation | game-tester + user | Not Started | | |
+| V2 Completion | _user_ | Not Started | | |
+
+**Current phase:** V2 Architecture complete; awaiting user review of v2 plan before spawning implementation team.
+
+## V2 Handoff Log
+
+### V2: c-expert + data-expert (advisors) → architect (v2 plan)
+- **Date:** 2026-04-28
+- **Notes:** v2 architecture plan written and committed. Five C++ fixes
+  identified across `companion.cpp` and `companion_ai.cpp`:
+  - **Fix A:** Free dead companion's group `membername[]` slot at
+    `Companion::Death` (`companion.cpp:713-718`). Prerequisite for B.
+  - **Fix R4:** Add `IsAlive()` guards at `companion_ai.cpp:1935`
+    (`AI_ResurrectDeadGroupMember`) and `companion.cpp:1908`
+    (`Companion::Process`). Confirmed real (no existing guard; mana-at-death
+    edge case allows dead Cleric self-rez).
+  - **Fix B:** Route `ResurrectFromCorpse` through `Spawn(owner)` instead of
+    manual `AddNPC`+setup (`companion.cpp:3632-3680`). Fixes wrong entity
+    list, missing name normalization, missing immunity strip.
+  - **Fix C:** Atomic rez chain — defer `corpse->DepopNPCCorpse()` until
+    after `Spawn()` + `CompanionJoinClientGroup()` confirm success; pre-flight
+    group-capacity check at top of `AI_ResurrectDeadGroupMember` (Option D).
+  - **Fix R2:** Cross-zone resilience — auto-unsuspend dead companions at
+    10% HP in `SpawnCompanionsOnZone()` for `is_suspended=1, is_dismissed=0`
+    rows (`companion.cpp:4155`).
+  - Plus 5–6 new tests in a new Suite 30 of `cli_companion_tests.cpp`.
+  - **No DB schema changes. No Lua changes. No protocol changes. No new
+    rules. Engine MAX_GROUP_MEMBERS=6 cap retained.**
+  - **BUG-028 stays out of V2 scope** — corpse `m_companion_id` is independent
+    of entity ID; existing fallback at `companion.cpp:662-701` handles the
+    DB write correctly when entity id=0.
+- **Spawn for V2 implementation:** c-expert, infra-expert, game-tester
+  ONLY. Do NOT spawn lua-expert / data-expert / config-expert /
+  protocol-agent / perl-expert (no V2 implementation tasks).
+
+## V2 Implementation Tasks
+
+| # | Task | Agent | Status | Notes |
+|---|------|-------|--------|-------|
+| V2.1 | Write 5–6 failing-first tests in Suite 30 of `cli_companion_tests.cpp` per architecture.md V2 test table. Build inside container; run via `./bin/zone tests:companion`; verify all V2 tests FAIL today. | c-expert | Not Started | TDD red commit before fix. |
+| V2.2 | Implement Fix A: clear `membername[]` slot in `Companion::Death()` at `companion.cpp:713-718`. | c-expert | Not Started | Localized to companion.cpp; do not modify groups.cpp. |
+| V2.3 | Implement Fix R4: `IsAlive()` guards at `companion_ai.cpp:1935` AND `companion.cpp:1908`. | c-expert | Not Started | Two-line fix; independent of A/B/C. |
+| V2.4 | Implement Fix B: route `ResurrectFromCorpse` entity creation through `Spawn(owner)` at `companion.cpp:3632-3680`. Match `SpawnCompanionsOnZone` pattern. Don't double-call AI_Start. | c-expert | Not Started | Depends on V2.2 (Spawn calls CompanionJoinClientGroup which needs slot freed). |
+| V2.5 | Implement Fix C: atomic rez — defer DepopNPCCorpse until Spawn+group-join confirm; reset IsRezzed(false) on failure; Option D pre-flight group-capacity check at top of `AI_ResurrectDeadGroupMember`. | c-expert | Not Started | Depends on V2.4. |
+| V2.6 | Implement Fix R2: auto-unsuspend at 10% HP in `SpawnCompanionsOnZone()` at `companion.cpp:4155`. Emit one-time owner message ("X has returned from the spirit world."). | c-expert | Not Started | Independent of A/B/C/R4. |
+| V2.7 | Rebuild zone binary. Re-run Suite 29 + Suite 30 — verify all 17 V1 tests still PASS and all V2 tests now PASS. Run full companion test suite (35 suites). | c-expert | Not Started | Zero new compiler warnings expected. |
+| V2.8 | Server restart: `make restart` from akk-stack/, then full server start (loginserver / world / 8 dynamic_NN zones per documented startup procedure). | infra-expert | Not Started | Same pattern as V1 Task 5. |
+| V2.9 | In-game validation: 8 game-tester scenarios per V2 Validation Plan (V2-1 through V2-8). User confirms BUG-001 closed. | game-tester | Not Started | V2-1 is primary regression test; V2-7 is V1 regression check. |
+| V2.10 | Commit and push V2 changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no V2 changes.) | c-expert | Not Started | After V2.7 confirms green; per fix or batched per c-expert preference. |
+
+## V2 Open Questions
+
+All V2 architectural questions resolved during the architecture phase.
+
+| # | Question | Raised By | Assigned To | Status | Answer |
+|---|----------|-----------|-------------|--------|--------|
+| V2.1 | Group cap policy — keep `MAX_GROUP_MEMBERS=6` or expand for companions? | team-lead | architect | RESOLVED 2026-04-28 | Keep engine default. Touches client/server boundary if expanded. Fix A returns the leaked slot — real capacity restored. |
+| V2.2 | Cross-zone rez persistence — should pending rez state survive owner zoning? | team-lead | architect | RESOLVED 2026-04-28 | Yes, in scope. Fix R2 implements auto-unsuspend at 10% HP via `SpawnCompanionsOnZone()`. No schema change needed. data-expert confirmed `is_suspended=1` row is sufficient persistence. |
+| V2.3 | BUG-028 entity-id-0 in V2 scope or separate? | team-lead | architect | RESOLVED 2026-04-28 | Out of V2 scope. Both c-expert and data-expert verified `m_companion_id` is independent of entity id; existing fallback at `companion.cpp:662-701` is correct; BUG-028 does not corrupt corpse metadata or amplify rez bugs. |
+| V2.4 | Atomicity approach — DB transaction, defer UPDATE, or other? | architect | data-expert | RESOLVED 2026-04-28 | Option D (pre-flight group-capacity check) + Option C (defer corpse depop until after Spawn+group join). NO MariaDB transaction (cannot un-depop the corpse). NO pure Option A defer-UPDATE (creates worse crash window). Direct SQL UPDATE on rollback. |
+| V2.5 | Is R-4 dead-caster self-rez a real bug? | architect | c-expert | RESOLVED 2026-04-28 | YES. No alive guard exists in `AI_ResurrectDeadGroupMember` or upstream `Process()`/`AI_Process()`/`CastSpell()`. OOM gate prevents normal case; mana-at-death edge case allows it. Fix R4 adds two `IsAlive()` guards (~6 lines total). |
+
+## V2 Bug Reports
+
+| # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
+|---|-----|----------|-------------|--------|-------------|----------|
+| BUG-001 (V2 reopen) | Cleric companion attempts rez post-combat; rez fires (V1 fix) but rezzed companion not in same zone as group; second companion never rezzed | High | user | V2 Architecture Complete | c-expert (V2 implementation pending) | |
+
+## V2 Decision Log
+
+| # | Decision | Made By | Date | Rationale |
+|---|----------|---------|------|-----------|
+| V2-1 | Five C++ fixes (A, R4, B, C, R2) in `companion.cpp` + `companion_ai.cpp`. No DB / Lua / protocol / rule changes. | architect | 2026-04-28 | Bugs are entity-lifecycle / atomicity / cross-zone resilience — all C++ application logic. data-expert v2: no DB transactions help (corpse is in-memory). lua-expert v1: no Lua hooks in rez path. protocol-agent v1: no Titanium client packet changes needed. |
+| V2-2 | Keep `MAX_GROUP_MEMBERS=6`. Do NOT expand for companions. | architect | 2026-04-28 | Engine constant flows through dozens of code paths + Titanium client UI assumptions. Fix A returns the leaked dead slot — restoring real capacity for the 1 player + 5 companions target. |
+| V2-3 | Cross-zone rez persistence in scope via Fix R2 (auto-unsuspend at 10% HP). | architect | 2026-04-28 | User's verbatim "didn't even try to rez the second one" symptom traces directly to owner-zoned-out failure mode. Fix R2 closes it without schema change. data-expert confirmed `is_suspended=1` is sufficient persistence. |
+| V2-4 | BUG-028 out of V2 scope. | architect | 2026-04-28 | Both c-expert and data-expert verified BUG-028 does not corrupt corpse `m_companion_id` or amplify rez bugs. Existing fallback at companion.cpp:662-701 handles the DB save correctly. Stays in backlog. |
+| V2-5 | Atomicity via Option D + Option C, NOT MariaDB transaction. | architect | 2026-04-28 | data-expert v2: corpse is in-memory only (no DB row), so transactions cannot un-depop. Pure Option A (defer UPDATE) creates worse crash window. Option D (pre-flight check) prevents most common failure mode; Option C (defer depop with rollback) handles late failures. |
+| V2-6 | R-4 dead-caster self-rez confirmed real; Fix R4 (two `IsAlive()` guards) included in V2. | architect | 2026-04-28 | c-expert v2 traced full call chain; no alive guard anywhere; mana-at-death edge case allows dead Cleric to self-rez. Defense-in-depth at minimal cost (~6 lines). |
+| V2-7 | Cross-zone auto-unsuspend HP percentage hardcoded at 10% (no rule). | architect | 2026-04-28 | YAGNI on rule expansion. Reanimation-equivalent flavor matches in-era expectations. Death penalty already applied; auto-unsuspend does NOT restore XP. Tunable rule deferred to future polish if real-world play demands it. |
+
+## V2 Completion Checklist
+
+### V2 Implementation Complete (agents check these)
+
+- [ ] All V2 implementation tasks (V2.1–V2.10) marked Complete
+- [ ] Suite 30 tests V2 set PASS in `./bin/zone tests:companion`
+- [ ] Existing 17 Suite 29 tests still PASS (no V1 regression)
+- [ ] All 35 companion test suites still PASS (no broader regression)
+- [ ] game-tester V2 in-game validation: PASS for all 8 V2 scenarios
+- [ ] User completed in-game testing: PASS (BUG-001 V2 fully resolved)
+- [ ] V2 changes committed and pushed to `bugfix/companion-rez` in eqemu and claude repos
+- [ ] All V2 phases marked Complete in V2 Workflow Status
+
+### V2 Merge & Cleanup (USER-INITIATED ONLY)
+
+- [ ] User confirmed V2 fix is complete
+- [ ] (User to decide whether to also merge V1 + V2 together to main when project is fully complete)
+
+## V2 Notes
+
+- The V2 plan respects the V1 fix as load-bearing — V2 builds on top of
+  V1's `spells.cpp:2051` `ST_Corpse` extension and `FindDeadGroupMemberCorpse`
+  player-corpse extension. V2 does NOT touch those V1 changes.
+- V2 is the second pass after V1's "make the spell reach the handler" pass.
+  V2's pass is "make the handler succeed end-to-end." This separation is
+  natural: V1's signal was "nothing happens at all"; V2's signal is
+  "something happens but the result is wrong." Different layers of bug,
+  different fixes, but same architecture document.
+- The companion-rerecruit foundation (`is_suspended=1` death-state row
+  preserved) is what Fix R2 reads when auto-unsuspending on zone-in.
+  Without companion-rerecruit, V2 would have no row to recover from. V2
+  builds on companion-rerecruit cleanly.
