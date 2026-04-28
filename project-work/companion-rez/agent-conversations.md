@@ -155,6 +155,82 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 ---
 
+### 2026-04-27 — lua-expert initial triage → architect
+
+**From:** lua-expert → **To:** architect
+
+**Summary:** Completed Lua-side triage of the companion-rez space. Zero
+existing rez or post-combat Lua logic found anywhere in the companion system.
+
+**Key findings:**
+- No `event_combat` handler in global_npc.lua or any companion module
+- No post-combat scan, no rez CastSpell(), no corpse-targeting logic in Lua
+- `companion_culture.lua:484` has a "resurrection" LLM flavor hook — ready to
+  use after a rez succeeds, currently never called
+- Buff queue pattern (global_npc.lua:441-600) is the closest analogue to
+  what a Lua-based rez trigger would look like
+- `is_suspended=1` death-state semantic confirmed present and correct in companion.lua
+
+**Outcome:** Flagged two architecture options (Lua event_combat hook vs C++ primary)
+for architect decision. Noted buff queue as reusable pattern if Lua trigger is chosen.
+
+---
+
+### 2026-04-27 — architect → lua-expert (detailed 7-question audit)
+
+**From:** architect → **To:** lua-expert
+
+**Summary:** Architect requested detailed Lua audit to confirm the "Lua-untouched"
+hypothesis before finalizing architecture. Seven specific questions asked (see
+teammate-message in session).
+
+**Outcome:** See lua-expert detailed response below.
+
+---
+
+### 2026-04-27 — lua-expert detailed audit response → architect
+
+**From:** lua-expert → **To:** architect
+
+**Q1 — Lua-side rez hooks audit (file:line citations):**
+
+- `companion_culture.lua:484` — "resurrection" event_type for LLM flavor. Presentation only. Not a trigger. Nothing currently calls this path.
+- No `event_combat` handler: zero results in global_npc.lua, companion.lua, or any companion-related module.
+- No `event_death` or `event_death_complete` for companions: only `event_death_zone` (global_npc.lua:656) which tracks zone kills for LLM commentary — no rez logic.
+- No `rez`, `resurrect`, `revive`, `cleric`, `auto_rez` matches in any functional companion code.
+
+**Q2 — Global NPC handler scan:**
+
+`global_npc.lua` events: say, trade, spawn, timer, level_up, death_zone. **No `event_combat` handler.** No combat-end logic. No Perl global_npc.pl (FILE NOT FOUND — confirmed).
+
+`CompanionOfNecessity.lua` / 2/3/4.lua: these have `event_death` at line 16 casting spells 32141 / 12948. These are old PEQ boss-mechanic scripts — naming is coincidental, unrelated to companion system. **No conflict risk.**
+
+**Q3 — Companion command audit:**
+
+COMMANDS table (companion.lua:90-113): passive, balanced, aggressive, follow, guard, recall, tome, flee, equipment, equip, unequip, unequipall, equipmentupgrade, equipmentmissing, stats, status, help, hold, target, assist, buffme, buffs, dismiss. **No `!rez` command. No rez path touches anywhere.**
+
+**Q4 — Mod hook surface:**
+
+Searched all quest Lua files for lua_mod/RegisterMod/MeleeMitigation/HealDamage/CommonDamage/IsImmuneToSpell. **Zero active mod hook registrations found.** `global/script_init.lua` — no mod registrations, no encounter loads. No mod can short-circuit a rez cast.
+
+**Q5 — Lua's role in the fix:**
+
+**CONFIRMED: pure C++ fix. Zero Lua changes required for correctness.**
+
+One optional Lua addition available: `companion_culture.lua:484` "resurrection" LLM flavor hook could fire after C++ confirms rez succeeded. This is a polish item, explicitly out of scope per lore-master (PRD Q5 RESOLVED: "silent is correct").
+
+**Q6 — TDD test plumbing:**
+
+`make test-companion` (Makefile:266-273) runs via `docker exec eqemu-server luajit`. Harness pattern from `test_companion_recruitment.lua` stubs full `eq.*` API, Database(), group/client objects. Test files at `akk-stack/server/quests/tests/`. **Suitable for Lua rez tests if any Lua is added.** Since this is pure C++, C++ CLI test runner (Suite 29) is the right harness. No new Lua tests needed for this fix.
+
+**Q7 — `is_suspended=1` lifecycle continuity:**
+
+Confirmed by direct read: companion.lua lines 397, 403, 409-413, 479, 488, 559. Death-state semantic fully intact post-rerecruit-fix. `is_suspended=1` row preserved on death, Lua layer queries it correctly, C++ `Load()+Unsuspend()` path reads it on re-recruitment. C++ rez path can rely on `companion_data` row persisting through death — **confirmed**.
+
+**Final verdict: "Lua-untouched" hypothesis CONFIRMED.** Zero Lua changes needed.
+
+---
+
 ### 2026-04-27 — c-expert Triage Report → architect
 
 **From:** c-expert → **To:** architect
@@ -312,6 +388,7 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 |-------|--------|--------|-----------|
 | Lore-master initial consult (era, NPC rezzability, flavor, deity edge cases) | game-designer ↔ lore-master | RESOLVED 2026-04-27 — APPROVED with Shaman HARD STOP folded into PRD | No |
 | Full PRD review for sign-off | game-designer ↔ lore-master | RESOLVED 2026-04-27 — FINAL APPROVED, no revisions required | No |
+| Lua audit / "Lua-untouched" hypothesis | architect ↔ lua-expert | RESOLVED 2026-04-27 — CONFIRMED pure C++ fix, zero Lua changes required for correctness | No |
 
 
 ### 2026-04-27 — Architect → c-expert: Triage live rez bug
