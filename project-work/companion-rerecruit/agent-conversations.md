@@ -710,6 +710,29 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 ---
 
+### 2026-04-27 — architect: final reconciliation, c-expert released
+
+**From:** architect → **To:** c-expert
+
+> All findings reconciled. Three architecture doc updates:
+> (a) Corrected "party full" diagnosis → "Lydl is currently re-recruitable; bug requires fresh dismiss-then-rerecruit cycle"
+> (b) Added death-despawn-timer finding (sets both flags after DeathDespawnS=1800s) to drop-out paths table
+> (c) Added `lua_companion.cpp:103` binding rename as future-work item 2a (out of scope for this fix, requires build cycle)
+>
+> c-expert's load-bearing architecture contributions confirmed:
+> - Death() has 3 redundant save paths — death blocker is theoretical only
+> - CreateFromNPC Track 1 is unconditional — no re-validation in C++
+> - Group capacity not a current blocker (corrected diagnosis)
+> - Test infrastructure at `./bin/zone tests:companion`
+> - Zero merc/charm-pet regression risk
+> - Death despawn timer sets both flags — explains Lydl's is_dismissed=0 state
+>
+> **c-expert released from architecture team. No implementation tasks.**
+
+**Outcome:** Architecture phase complete for c-expert. Implementation phase has no C++ changes; only Lua fix (`Dismiss(true)` → `Dismiss(false)`) and Lua doc comment correction are in scope. The `lua_companion.cpp:103` parameter rename is deferred future work.
+
+---
+
 ## Key Decisions from Conversations
 
 _Extract the most important decisions made through agent communication.

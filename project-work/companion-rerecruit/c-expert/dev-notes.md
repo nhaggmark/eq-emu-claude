@@ -4,7 +4,7 @@
 > **Agent:** c-expert
 > **Task(s):** C++ triage — find level cap, dismissed-flag, and cooldown blockers
 > **Date started:** 2026-04-27
-> **Current stage:** Stage 1 Complete — awaiting architect dispatch for Stage 3+
+> **Current stage:** COMPLETE — released from architecture team 2026-04-27. No implementation tasks.
 
 ---
 
