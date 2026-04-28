@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-27 | 2026-04-27 |
-| Design | game-designer + lore-master | In Progress | 2026-04-27 | |
+| Design | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
 | Architecture | architect + protocol-agent + config-expert | Not Started | | |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Design
+**Current phase:** Architecture (handoff complete)
 
 ---
 
@@ -30,6 +30,41 @@ _Record each handoff between agents with context and any notes._
 - **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
   Bug report BUG-001 seeded at `bugs/BUG-001-rerecruit-level-cap/report.md`.
   Spawn both agents as teammates for the Design phase.
+
+### design team (game-designer + lore-master) → architect
+- **Date:** 2026-04-27
+- **Notes:** PRD finalized at `game-designer/prd.md` (status: APPROVED).
+  Locks the re-recruitment invariant: any previously-recruited NPC is
+  re-recruitable indefinitely, with level and gear preserved, no level
+  rules, no cooldown, no dismissed-flag persistence. All three known
+  blockers (level cap, cooldown, dismissed flag) in scope as a single
+  coordinated fix.
+  - **TDD as design constraint:** engineers write failing tests first;
+    test suite ships in repo as machine-verified evidence.
+  - **10 acceptance criteria** + **10 validation scenarios**, split
+    between engineer-side (1,2,5,8,9,10) and game-tester in-game
+    (3,4,6,7).
+  - **Lore-master sign-off:** APPROVED 2026-04-27. No lore blockers.
+    Two flavor-level edge cases folded into PRD: static-respawn
+    fiction note (Era Compliance), quest-NPC interaction (Open
+    Question #1 and new AC-10 covering Lydl Mastat-style cases).
+    "Cyrla the Healer" renamed to "Mira the Healer" in Scenario B to
+    avoid collision with real EQ NPC Cyrla Shadowstepper.
+  - **Open questions for architect:** first-recruit cooldown semantics
+    (preserve or remove?); in-memory cache flushing on bypass vs.
+    delete; "other drop-out conditions" enumeration (zone disconnect,
+    server restart, group disband); quest-state interaction on
+    re-recruit of quest-target NPCs.
+  - **Reference docs:** `eqemu/zone/lua_companion.cpp`,
+    `akk-stack/server/quests/global/global_npc.lua`,
+    `akk-stack/server/quests/lua_modules/client_ext.lua`,
+    MEMORY entries `project_companion_rerecruit_pain` and
+    `reference_companion_cooldown_clearing` (both 44 days old —
+    architect to verify against current code).
+  - **Lore-master transcription note:** lore-master lacked Write
+    tooling this session; their findings transcribed verbatim into
+    `lore-master/lore-notes.md` and SendMessage exchanges preserved
+    in `agent-conversations.md` as the canonical audit trail.
 
 ---
 
@@ -50,7 +85,10 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| | | | | | |
+| 1 | First-recruit cooldown semantics — preserve cooldown for first-recruits (anti-thrash) or remove entirely if it only ever served as a re-recruit gate? | game-designer | architect | Open | |
+| 2 | In-memory cache flushing — if cooldown is bypassed at validation layer, cache staleness is irrelevant; if deleted at DB layer, cache invalidation must be considered | game-designer | architect | Open | |
+| 3 | "Other drop-out conditions" enumeration — verify zone disconnect, server restart, group disband, etc., are all covered by the invariant | game-designer | architect | Open | |
+| 4 | Quest-state interaction on re-recruit of quest-target NPCs (e.g., Lydl Mastat) — does re-recruit logic need to consider active-quest state? Invariant still holds; this is about quest-state cleanliness, not gating | lore-master | architect | Open | |
 
 ---
 
@@ -83,6 +121,9 @@ _Key decisions made during this feature's development._
 |---|----------|---------|------|-----------|
 | 1 | Fix all three known blockers (level caps, cooldown timers, dismissed flag) as one coordinated change | user | 2026-04-27 | The re-recruitment invariant must hold completely; partial fixes leave the system broken |
 | 2 | TDD approach: engineers write tests first proving the invariant, then implement to make tests pass | user | 2026-04-27 | Ensures invariant is machine-verified, not just manually tested |
+| 3 | Lore review APPROVED — no blockers; two flavor edge cases (static-respawn fiction, quest-NPC interaction) folded into PRD as architect-awareness notes, not scope changes | game-designer + lore-master | 2026-04-27 | Companion system is a custom feature with no in-world fiction; invariant is purely mechanical |
+| 4 | Rename "Cyrla the Healer" → "Mira the Healer" in Scenario B | game-designer + lore-master | 2026-04-27 | Cyrla collides with real EQ NPC Cyrla Shadowstepper (level 61 Rogue, Highpass Hold). Generic invented name avoids noise for downstream readers |
+| 5 | Added AC-10: re-recruit of an NPC who is also a quest kill target (e.g., Lydl Mastat) still succeeds per the invariant; architect evaluates whether quest state needs special handling | game-designer + lore-master | 2026-04-27 | Lore-master flagged Lydl Mastat quest as an example of the broader edge case; invariant must hold regardless |
 
 ---
 
