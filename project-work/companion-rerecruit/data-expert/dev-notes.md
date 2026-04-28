@@ -4,7 +4,7 @@
 > **Agent:** data-expert
 > **Task(s):** Task #3 — Data layer triage for re-recruit blockers
 > **Date started:** 2026-04-27
-> **Current stage:** Stage 3 (Socialize — awaiting architect feedback)
+> **Current stage:** Stage 3 (Socialize — follow-up complete, awaiting architecture.md)
 
 ---
 
@@ -131,11 +131,48 @@ See Implementation Plan above — SQL patterns confirmed by live schema inspecti
 
 | From | Feedback | Action Taken |
 |------|----------|-------------|
-| architect | (pending) | |
+| architect | Three follow-up questions: tie-breaker rule for duplicate rows, one-time cleanup sweep decision, companion_exclusions row details | Answered with live queries 2026-04-27 |
+
+### Architect Follow-up Q&A (2026-04-27)
+
+**Q-A: Tie-breaker for duplicate (owner_id, npc_type_id) rows**
+
+Hollish Tnoops duplicate confirmed:
+- id=18: level 53, is_suspended=0, experience=18707712, 15 inventory items, recruited_at=2026-03-09 (CANONICAL)
+- id=21: level 14, is_suspended=1, experience=0, 0 inventory items, recruited_at=2026-03-11 (GHOST)
+
+"Highest id" and "most recent recruited_at" both pick the wrong row. Recommended tie-breaker:
+`ORDER BY level DESC, experience DESC LIMIT 1`
+Do NOT use is_suspended in the tie-breaker — legitimately suspended companions would be deprioritized.
+
+Ghost row id=21 was likely created by a code bug (re-recruit inserted new row instead of reusing existing). Recommend adding UNIQUE constraint on (owner_id, npc_type_id) as a schema-level fix to prevent future ghosts.
+
+**Q-B: One-time cleanup sweep**
+
+- is_dismissed=1 rows: 0 (re-confirmed)
+- cur_hp=0 rows: 0 (re-confirmed)
+- No stuck rows exist in production
+
+Recommendation: Do NOT include a broad UPDATE sweep — it would be a no-op. Do include a targeted DELETE of ghost row id=21 (Hollish Tnoops duplicate):
+```sql
+-- Verify first:
+SELECT * FROM companion_data WHERE id = 21;
+-- Then delete:
+DELETE FROM companion_data WHERE id = 21;
+```
+
+**Q-C: companion_exclusions production data**
+
+- Total rows: 7,269 (information_schema TABLE_ROWS estimate was 8,541 — always use COUNT(*) for accuracy)
+- exclusion_type=1: 7,262 rows — automated (non-sentient bodytypes, bankers, merchants, guildmasters)
+- exclusion_type=0: 7 rows — manual lore-anchor exclusions (Sir Lucan D'Lere, Lord Antonius Bayle, etc.)
+- None of the user's active companions are in the exclusion list
+
+Architecture note flagged to architect: the exclusion check should happen BEFORE the "previously recruited" bypass check in the recruit gate, so the bypass can short-circuit past exclusions for already-recruited NPCs.
 
 ### Consensus Plan
 
-(Pending architect feedback)
+(Pending architecture.md — architect has all data needed to finalize)
 
 ---
 
