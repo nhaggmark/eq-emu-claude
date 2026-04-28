@@ -906,3 +906,155 @@ _c-expert, lua-expert, data-expert working the multi-variant npc_type_id bug._
 **Outcome:** Architect has full data for Option A/B/C/D decision. Q7 critical finding establishes that any name-based Track 1 implementation MUST add an explicit exclusion check on the spawned NPC. This is a new constraint not present in the v2 team-lead briefing or c-expert's Option D recommendation.
 
 9. **C++ change is REQUIRED** — unlike v1 which was Lua-only. Rebuild cycle needed.
+
+---
+
+### 2026-04-27 — c-expert: Option A vs B — index and name reliability questions
+
+**From:** c-expert → **To:** data-expert
+
+> Evaluating Option A (JOIN npc_types on name) vs Option B (match companion_data.name directly).
+> Three questions:
+> 1. Is npc_types.name indexed? Full table scan concern for Option A.
+> 2. Is companion_data.name reliable? Option B depends on GetCleanName() being consistently written.
+> 3. Are there other recruitable NPCs with multi-variant npc_type_ids beyond Lydl and Hollish?
+
+**Response from** data-expert:
+
+> **Q1 — Index:** Confirmed no index on npc_types.name. Column is TEXT type with max observed length of 37 chars (average 16.7) across 67,501 rows. Option A = 67k row full text scan. If Option A is chosen, a prefix index `name(64)` would cover all real-world data with decent selectivity (29,437 distinct names out of 67,501). Option B does NOT need this index — inner subquery is PK lookup (O(1)), outer comparison touches only 5–10 companion_data rows for the owner.
+>
+> **Q2 — companion_data.name reliability:** All 5 production rows verified clean against live npc_types (REPLACE(npc_types.name,'_',' ') = companion_data.name for all 5). Schema: varchar(64) NOT NULL DEFAULT ''. Not nullable. Three edge cases flagged:
+> - Empty string default: if GetCleanName() ever returns '' (unnamed NPC), store would be ''. Guard: skip name-match if companion_data.name = ''.
+> - Trailing digit stripping: GetCleanName() strips trailing numbers, so `Guard01` → "Guard". Confirm no current companions have digit-suffix names (confirmed: none do).
+> - Stale name: companion_data.name is a snapshot at recruitment time. If NPC is renamed in npc_types later, Option B match would silently fail. Makes the existing "stale name" bug a match failure, not just cosmetic. Recommend diagnostic log when name-match fallback fires.
+>
+> **Q3 — Multi-variant scope for current recruitable NPCs:**
+> - Lydl_the_Great (10162): 4 variants (10162/10178/10181/392011), 3 in freporte. Active risk.
+> - Hollish_Tnoops (9144): sibling 383271 has zero spawnentry — orphan, never spawns. No practical risk.
+> - Jracol_Brestiage, Lashun_Novashine, Jimble_Woodentoe: 1 id each, no collision.
+>
+> **Bottom line: Option B is correct and safe.** No npc_types index needed. companion_data.name is reliable. Two edge case guards recommended (empty-string + stale-name log) as defensive hardening, not blockers.
+>
+> **Exclusion bypass constraint re-stated:** Name-match Track 1 must still check companion_exclusions on the TARGET npc_type_id. 789 auto-excluded NPCs have non-excluded name-siblings. Zero current production risk but must be in implementation spec.
+
+**Outcome:** c-expert has the data to commit to Option B. companion_data.name is confirmed reliable. Option A's table scan is avoidable. Empty-string guard and stale-name diagnostic log are recommended additions. Exclusion check constraint re-confirmed.
+
+### 2026-04-28 — architect: kickoff dispatch to v2 advisors
+
+**From:** architect → **To:** lua-expert / c-expert / data-expert (parallel)
+
+Three parallel kickoff messages sent:
+
+- **lua-expert:** asked for full investigation report including (1) file:line trace, (2) `GetCleanName` `_000`-suffix behavior, (3) Track 1/2 dispatch boundary if name-match adopted, (4) Option D vs B reasoning, (5) Lua-side gotchas, (6) test harness ability to stub multi-variant scenarios.
+- **c-expert:** asked for thorough audit including (1) full grep of companion_data lookups by npc_type_id, (2) line-verified `CreateFromNPC` SQL, (3) multi-variant dependency check (GM cmds, spawn-on-zone, persisted state), (4) re-spawn appearance question (which `npc_type_id` controls visuals after Load if names differ), (5) test infrastructure for multi-variant case, (6) other affected paths (charm/swarm/merc/bot), (7) `lua_companion.cpp:103` latent hazard status.
+- **data-expert:** asked for (1) world-wide multi-variant count, (2) Lydl variant confirmation, (3) name-collision risk for unrelated NPCs, (4) name normalization concerns, (5) Option C dedup feasibility, (6) `companion_data` rows-at-risk count, (7) `companion_exclusions` interaction.
+
+### 2026-04-28 — c-expert: v2 audit response
+
+**From:** c-expert → **To:** architect
+
+> ROOT CAUSE CONFIRMED at `companion.cpp:215-222`. Strict `npc_type_id` match → empty result on variant mismatch → falls through to `InsertOne` → DUPLICATE row, original orphaned.
+>
+> Same bug in Lua at `companion.lua:397` — both layers must be fixed in sync.
+>
+> Only ONE C++ site needs fixing: `companion.cpp:218`. All other companion_data accesses use PK or owner_id. Confirmed via grep of zone/gm_commands — no admin commands query by npc_type_id.
+>
+> Multi-variant scope in production: Lydl 4 variants (10162/10178/10181/392011 — adds 392011 over team-lead's 3-variant briefing); spawngroup `freporte_140` has THREE Lydl variants (60% mismatch rate). Hollish_Tnoops has 2 variants but 383271 is an orphan (zero spawnentries).
+>
+> Two SQL options:
+> - **Option A (JOIN npc_types.name):** semantically clean. Performance concern: `npc_types.name` is unindexed TEXT, 66K rows, table-scan per recruit attempt. Asked data-expert to confirm.
+> - **Option B (use `companion_data.name`):** inner subquery via PK is O(1); name comparison hits ~5-10 rows per player via idx_owner. No performance concern. Trade-off: relies on `companion_data.name` being accurate (currently always true given `GetCleanName()` in `Save()` at `companion.cpp:2800`).
+>
+> Recommend **Option B**. Architect's call.
+>
+> New Suite 35 needed for multi-variant test. Cannot call `CreateFromNPC` directly in tests (live Client*/NPC* required) — exercise the query logic directly via `CompanionDataRepository::GetWhere`, same as Suite 20.
+>
+> **C++ rebuild required.** Lua-only no longer sufficient.
+>
+> **Third bug surfaced (low severity, pre-existing):** `companion_data.name` becomes stale if NPC renamed in npc_types after recruitment. Surfacing per instructions.
+
+**Outcome:** Architect now has C++ side fully mapped. Aligns with team-lead's expectation that C++ must change. Option B preferred on performance grounds; awaiting data-expert and lua-expert before final selection.
+
+### 2026-04-28 — data-expert: v2 audit response
+
+**From:** data-expert → **To:** architect
+
+> HEADLINE: Name-only lookup is NOT safe for Lydl_the_Great in freporte (3 variants share name + zone + faction 186).
+>
+> Full DB scope:
+> - 67,530 npc_types rows total
+> - 9,202 distinct names with > 1 npc_type_id
+> - 3,038 proper-named NPCs (Title_Case pattern) with > 1 npc_type_id
+> - Pervasive pattern, not an edge case
+>
+> Lydl variants confirmed (4): 10162/10178/10181 share freporte+faction 186; 392011 in northro+faction 0. Three Lydl variants in freporte spawngroup_140 — same race/class/loottable.
+>
+> Hollish_Tnoops 383271 is an orphan (zero spawnentry rows) — not a practical concern.
+>
+> Name normalization clean: no trailing whitespace, Title_Case_With_Underscores, latin1_swedish_ci collation (case-insensitive). No `_002` suffix patterns. No backticks in recruitable NPC names.
+>
+> `npc_types.name` is unindexed TEXT (67k rows). If name-based lookup hits a hot path, recommend `ALTER TABLE npc_types ADD INDEX idx_name_prefix (name(100))` — schema migration entry needed.
+>
+> companion_data integrity clean — all 5 production rows have valid npc_types FK matches.
+>
+> Recommended safe v2: use `companion_data.name` (already cleaned) keyed off `npc:GetCleanName()` from the spawned NPC. The companion_data row stays canonical (its `npc_type_id` is unchanged); only the LOOKUP widens from ID-match to name-match. Same-name in same zone → resolves to one canonical row, which is correct (they are the same lore character).
+>
+> Antagonistic edge: cross-zone same-name (freporte Lydl vs northro Lydl 392011) — could be treated as same character or different. Faction-based disambiguation possible (186 vs 0) but adds complexity. Architect's call.
+
+**Outcome:** Architect's name-lookup approach validated against world-wide scope. Pure name-only is safe within `companion_data` because rows are scoped by `owner_id` and a player has at most ~5-10 rows. The 3,038-name systemic pattern is real and confirms a generic fix is right (not a Lydl-specific data hack). Cross-zone faction edge case raised for explicit user decision.
+
+### 2026-04-28 — lua-expert: v2 audit response
+
+**From:** lua-expert → **To:** architect
+
+> Full Lua trace confirmed:
+> 1. `global_npc.lua:21-22` event_say → `attempt_recruitment(npc, client)`
+> 2. `companion.lua:456` reads `npc:GetNPCTypeID()` (the LIVE entity's variant id, e.g. 10178)
+> 3. `companion.lua:463` calls `check_existing_companion_record(npc_type_id, char_id)` with 10178
+> 4. `companion.lua:390-403` SQL with strict `npc_type_id=10178` → MISS (player's row has 10162)
+> 5. Falls to Track 2 → level cap rejection
+>
+> Even if Lua fix lands alone:
+> - Lua name-lookup finds 10162 row → calls `client:CreateCompanion(npc_10178)`
+> - C++ `Companion::CreateFromNPC` runs ITS OWN strict-ID query → MISS again
+> - Falls through to fresh-recruit path → `InsertOne` → DUPLICATE row
+> - Player gets level-1 fresh companion; 10162 progress orphaned
+>
+> **C++ fix is required. Confirms team-lead's expectation and c-expert's audit.**
+>
+> `_000` suffix concern resolved: `CleanMobName` (called by `GetCleanName`) at `companion.cpp:2800` strips digits and converts `_`→space. So `Lydl_the_Great_001` → `Lydl the Great`. `companion_data.name` already stores the clean form.
+>
+> CRITICAL: do NOT use `REPLACE(npc_types.name, '_', ' ')` for matching — REPLACE keeps digits while CleanMobName strips them. Pass `npc:GetCleanName()` directly into the query and match against `companion_data.name`. No `npc_types` join needed. **This is what c-expert called Option B and what I'm calling Option D in my own writeup — same SQL.**
+>
+> Track 1 fail-closed for first-recruits preserved: with no row, query returns nil → falls through to Track 2 → all gates apply unchanged.
+>
+> Cross-character bleed prevented by `owner_id =` predicate.
+>
+> `npc_type_id` is also used at `companion.lua:458` for `cooldown_key` construction — keep that as-is (cooldowns are per-variant by design, Track 1 doesn't read them, ok).
+>
+> TDD harness extension: existing `make_db_stub(row)` returns same row regardless of params. v2 needs param-aware dispatch (e.g. return nil when name doesn't match, return row when it does). Two new tests:
+> - `test_rerecruit_finds_row_via_name_when_npc_type_id_differs`
+> - `test_rerecruit_falls_through_when_name_does_not_match`
+>
+> ORDER BY (level DESC, experience DESC, id DESC) carries cleanly to v2.
+>
+> **Lua side recommends Option D / B — single name-based query, no JOIN. Same shape c-expert recommends.**
+
+**Outcome:** Three independent triages converged on the same fix shape. C++ rebuild confirmed required. Architect now has full picture to write the v2 plan.
+
+### 2026-04-28 — architect: synthesis and Option D selection
+
+**From:** architect → **To:** team
+
+After cross-reading all three reports:
+
+- lua-expert and c-expert independently arrived at identical SQL shape (`companion_data.name` match, no JOIN).
+- data-expert's antagonistic finding ("name+zone not unique") concerned `npc_types` rows but resolves cleanly when scoped to `owner_id` in `companion_data` — a single player has ~5-10 rows, near-zero collision risk.
+- Cross-zone same-name (freporte Lydl 186 vs northro Lydl 0) is a real semantic decision the user should weigh. v2 default: same-name = same character (player-friendly per PRD invariant). Surfaced as Decision V2-8.
+- Stale-name risk (admin renames `npc_types`) is pre-existing, low-frequency, document-only.
+- `Strings::Escape` on the bound NPC name closes the SQL injection edge.
+- v1 boundary "zero C++ changes" cannot hold; v2 is Lua + C++ + restart.
+
+**v2 architecture appended to architecture.md.** Includes selected approach, exact SQL for both layers, file:line citations, 7-task implementation sequence, four review passes, validation plan with 6 game-tester scenarios, risk register, per-layer rollback discipline, and 9 entries in the Decision Log.
+
+**Open question for user:** Decision V2-8 — cross-zone same-name semantics. Confirm before implementation begins.
