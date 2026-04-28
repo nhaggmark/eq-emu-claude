@@ -498,7 +498,17 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 > for mid-combat-rez disallow (AC-8 contract). Asked config-expert to
 > push back on any of these.
 
-**Response from** config-expert: _(awaiting reply)_
+**Response from** config-expert: Sent 2026-04-27. Full audit verified from `ruletypes.h` and live DB.
 
-**Outcome:** Awaiting config-expert verdict.
+Key findings:
+- Q1: Four Companions:Rez* rules confirmed at lines 1250/1251/1252/1254. `XPDeathPenaltyPct` (line 1253) is co-located but not a rez rule. `DeathDespawnS` (line 1189) is rez-adjacent. No other Rez/Resurrect rules in the Companions category. Full cross-category list provided (Character:CorpseResTime, Character:UseResurrectionSickness, Mercs:ResurrectRadius, Spells:ResurrectionEffectBlock, Bots:ResurrectionSickness*).
+- Q2: All rules match ruletypes.h defaults exactly. Zero live/default divergence anywhere in the rez stack.
+- Q3: No rule gates rez spells in Spells or NPC categories. `Spells:ResurrectionEffectBlock=2` is buff-slot behavior only, not a rez blocker.
+- Q4: eqemu_config.json and .env — confirmed clean, no rez-related entries.
+- Q5 (least-invasive verdict): **NO** — wrong rule values would prevent the cast from starting. The user's repro shows the cast initiating and completing, then failing silently at effect application. Config cannot produce "cast goes off but nothing happens." Code changes required.
+- Q6: CONCUR — keep `RezPostCombatDelayS=10`, hardcode tier-preference policy. No new rule needed.
+- Q7: CONCUR — keep mid-combat-rez disallow hard-coded per AC-8. No override rule.
+- Flag: `Spells:AI_IdleNoSpellMaxRecast=60000` ms — rez trigger must run on its own dedicated timer, independent of the NPC idle spell AI loop, or the 10-second delay goal could be gated behind a 60-second AI recast window.
+
+**Outcome:** Config is definitively not the bug. All rules at correct defaults. Code changes required. No rule changes needed for this fix. Tier-preference and mid-combat-rez policies stay hard-coded. AI timer independence is an implementation constraint for c-expert.
 
