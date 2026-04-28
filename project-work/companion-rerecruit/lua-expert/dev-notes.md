@@ -2,9 +2,9 @@
 
 > **Feature branch:** `bugfix/companion-rerecruit`
 > **Agent:** lua-expert
-> **Task(s):** Lua-side triage (architecture phase) + implementation tasks (implementation phase)
+> **Task(s):** Lua-side triage (architecture phase) + implementation tasks (v1 + v2)
 > **Date started:** 2026-04-27
-> **Current stage:** Stage 3 — Socialized (architecture locked; awaiting implementation phase dispatch)
+> **Current stage:** V2 architecture socialized — awaiting V2 implementation dispatch (pending user answer to Decision V2-8)
 
 ---
 
@@ -13,13 +13,16 @@
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
 | Triage | Trace recruit flow in Lua; report to architect | None | Complete |
-| L-1 | Add 2 failing TDD tests to `test_companion_recruitment.lua` BEFORE fix | Arch locked | Pending |
-| L-2 | Fix `companion.lua:1434` — `Dismiss(true)` → `Dismiss(false)` | L-1 tests written | Pending |
-| L-3 | Fix `companion.lua:15` — invert doc comment parameter semantics | L-2 | Pending |
-| L-4 | Fix `companion.lua:207` — LevelRange fallback `or 3` → `or 50` | L-2 | Pending |
-| L-5 | Fix `companion.lua:394-397` — add `ORDER BY level DESC, experience DESC, id DESC` to re-recruit query | L-2 | Pending |
+| L-1 | Add 5 failing TDD tests to `test_companion_recruitment.lua` BEFORE fix | Arch locked | Complete (commit 76e6753) |
+| L-2 | Fix `companion.lua:1434` — `Dismiss(true)` → `Dismiss(false)` | L-1 | Complete (commit ad79630) |
+| L-3 | Fix `companion.lua:15` — doc comment parameter semantics | L-2 | Complete (commit ad79630) |
+| L-4 | Fix `companion.lua:207` — LevelRange fallback `or 3` → `or 50` | L-2 | Complete (commit ad79630) |
+| L-5 | Fix `companion.lua:394-397` — add `ORDER BY level DESC, experience DESC, id DESC` | L-2 | Complete (commit ad79630) |
+| V2-Triage | Multi-variant npc_type_id mismatch investigation | None | Complete (commit 52d7bb3) |
+| V2-1 | Extend `make_db_stub` for name-query-aware dispatch + 2 failing TDD tests | V2 arch locked | Pending |
+| V2-2 | Lua fix: rename `check_existing_companion_record(npc_type_id,char_id)` → `(clean_name,char_id)`; swap SQL to `name = ?`; caller passes `npc:GetCleanName()` | V2-1 | Pending |
 
-**ORDER BY rationale (architect decision):** `level DESC, experience DESC` picks the row with the most player investment (not the most recently inserted row). `id DESC` as the final tiebreaker handles equal-level/equal-XP duplicates deterministically. C++ query at `companion.cpp:218` intentionally left without ORDER BY (future work — requires build cycle).
+**V2 architecture decision (R6):** Single name-only query — not ID-first-then-fallback. 1 query always, smaller test surface. Pending Decision V2-8 (cross-zone same-name semantics) before dispatch.
 
 ---
 
@@ -293,27 +296,30 @@ This means **the Lua-only fix is insufficient**. Even if we fix `check_existing_
 - `REPLACE(npc_types.name, '_', ' ')` exactly matches `companion_data.name` for all current companions
 - The `_000` suffix question: `CleanMobName` strips digits, so `Name_000` → `Name` (no suffix). `REPLACE(name, '_', ' ')` would give `Name 000`. These DON'T match. A name-based lookup would need `GetCleanName()` from Lua (not `REPLACE`) to join against `npc_types`. BUT: the better approach is to store the name in `companion_data` (which we already do) and query by name rather than joining `npc_types`.
 
-**Recommended Fix (Option D — name-based lookup):**
+**Approved Fix — single name-only query (architect decision, R6):**
 
-In Lua, change `check_existing_companion_record` to accept a clean name parameter OR add a name-based fallback:
+Initial proposal was ID-first-then-name-fallback (two queries). Architect chose the simpler single-query form: 1 query always, smaller code and test surface, ORDER BY tie-breaker handles same-name collisions identically. **Do NOT implement the two-query fallback pattern.**
 
 ```lua
--- Option D-Lua: query by clean name when npc_type_id lookup returns nil
-function companion.check_existing_companion_record(npc_type_id, char_id, npc_clean_name)
-    -- Primary: strict ID match (fast, exact)
-    local row = companion._check_by_id(npc_type_id, char_id)
-    if row then return row end
-    -- Fallback: name match (handles multi-variant NPCs with same name)
-    if npc_clean_name then
-        return companion._check_by_name(npc_clean_name, char_id)
-    end
-    return nil
+-- V2 form: single query by clean name only
+function companion.check_existing_companion_record(clean_name, char_id)
+    local db = Database()
+    if not db then return nil end
+    local stmt = db:prepare(
+        "SELECT id, level, experience, recruited_level, stance, name, companion_type, " ..
+        "is_dismissed, is_suspended " ..
+        "FROM companion_data " ..
+        "WHERE owner_id = ? AND name = ? AND (is_dismissed = 1 OR is_suspended = 1) " ..
+        "ORDER BY level DESC, experience DESC, id DESC LIMIT 1"
+    )
+    stmt:execute({char_id, clean_name})
+    local row = stmt:fetch_hash()
+    db:close()
+    return row
 end
 ```
 
-`_check_by_name` would query `companion_data WHERE owner_id=? AND name=? AND (is_dismissed=1 OR is_suspended=1) ORDER BY level DESC, experience DESC, id DESC LIMIT 1`.
-
-The caller `attempt_recruitment` would pass `npc:GetCleanName()` as the third argument.
+Caller at `attempt_recruitment:463` changes to: `companion.check_existing_companion_record(npc:GetCleanName(), char_id)`.
 
 **But the C++ fix is required to complete the chain:**
 
