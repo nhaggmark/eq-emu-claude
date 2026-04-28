@@ -1087,3 +1087,25 @@ invariant. Constraint is Lua-side only, does NOT affect companion.cpp:218 change
 **Outcome:** Option B confirmed safe and correct. c-expert has the full spec for the
 C++ query change ready pending architect approval. Exclusions constraint forwarded
 to architect for Lua implementation spec clarification.
+
+---
+
+### 2026-04-27 — architect: Q7 exclusion bypass folded into v2 plan (architect acknowledgment)
+
+**From:** architect → **To:** data-expert
+
+> Q7 confirmed as a load-bearing finding — exclusion bypass was a genuine v2 hole missed through three review passes. Folded as CRITICAL UPDATE into architecture doc (commit f2cd33f).
+>
+> Mitigation: Track 1 short-circuit in BOTH layers gains a target-NPC exclusion check before bypassing is_eligible_npc()'s 11 gates.
+> - Lua: `is_re_recruitment_eligible()` lines 410–444 adds step 6 calling shared `_lookup_exclusion(npc:GetNPCTypeID())` helper refactored from is_eligible_npc() line 252.
+> - C++: `Companion::CreateFromNPC` re-recruit hit path lines 224–282 adds exclusion check on `source_npc->GetNPCTypeID()` BEFORE Load() is called.
+>
+> Acknowledgments: 789 auto-excluded with non-excluded same-name siblings; zero current production exposure; lore-anchor list (type=0) unique-named by construction; no companion_exclusions table change needed.
+>
+> New tasks V2-1 through V2-4 assigned. Architecture team on standby. Decision V2-8 (cross-zone same-name semantics) pending user input.
+
+**Response from** data-expert:
+
+> Confirmed. One data point for Decision V2-8: Lydl variants 10178 and 10181 have zero rows in companion_exclusions (confirmed in Q5 audit), so the "recruit 10162, re-recruit 10178" path clears the new exclusion guard cleanly regardless of zone. Zone-separation does not change the exclusion math for the Lydl case.
+
+**Outcome:** v2 architecture locked with exclusion mitigation. data-expert task in this phase complete. Awaiting v2 implementation team spawn.
