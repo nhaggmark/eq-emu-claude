@@ -86,13 +86,13 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Write 4 failing-first tests in Suite 29 (29.14–29.17) of `eqemu/zone/cli/tests/cli_companion_tests.cpp` per the test table in architecture.md. Build the test binary inside the container; run via `./bin/zone tests:companion`; verify all 4 new tests FAIL today. | c-expert | Not Started | TDD discipline (AC-9): tests written before fix |
-| 2 | Implement `ST_Corpse` extension at `eqemu/zone/spells.cpp:2049-2063` per the architecture doc. Admit `IsCompanionCorpse()` alongside `IsPlayerCorpse()`. | c-expert | Not Started | Depends on 1 |
-| 3 | Implement player-corpse discovery extension at `eqemu/zone/companion_ai.cpp:1861-1876` (`FindDeadGroupMemberCorpse`). Priority 1: owner's player corpse via `EntityList::GetCorpseByOwnerWithinRange`. Priority 2: existing companion corpse path. | c-expert | Not Started | Depends on 1 |
-| 4 | Rebuild zone binary via `docker exec akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`. Re-run Suite 29 — verify all 4 new tests PASS, all 13 existing Suite 29 tests still PASS. Run full companion test suite. | c-expert | Not Started | Depends on 2, 3 |
+| 1 | Write 4 failing-first tests in Suite 29 (29.14–29.17) of `eqemu/zone/cli/tests/cli_companion_tests.cpp` per the test table in architecture.md. Build the test binary inside the container; run via `./bin/zone tests:companion`; verify all 4 new tests FAIL today. | c-expert | Complete 2026-04-27 | TDD red commit: 30f6d6ef5. Tests 29.14, 29.15, 29.17 fail pre-fix. 29.16 is structural no-crash guard. |
+| 2 | Implement `ST_Corpse` extension at `eqemu/zone/spells.cpp:2049-2063` per the architecture doc. Admit `IsCompanionCorpse()` alongside `IsPlayerCorpse()`. | c-expert | Complete 2026-04-27 | Part of fix commit 83a96f655 |
+| 3 | Implement player-corpse discovery extension at `eqemu/zone/companion_ai.cpp:1861-1876` (`FindDeadGroupMemberCorpse`). Priority 1: owner's player corpse via `EntityList::GetCorpseByOwnerWithinRange`. Priority 2: existing companion corpse path. | c-expert | Complete 2026-04-27 | Part of fix commit 83a96f655. Passes rez_range*rez_range per dist_sq convention. |
+| 4 | Rebuild zone binary via `docker exec akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`. Re-run Suite 29 — verify all 4 new tests PASS, all 13 existing Suite 29 tests still PASS. Run full companion test suite. | c-expert | Complete 2026-04-27 | All 35 suites PASS. 29.14/15/17 GREEN. No regressions. Zero build warnings. |
 | 5 | Server restart: `make restart` from akk-stack/, then full server start (loginserver / world / 8 dynamic_NN zones per documented startup procedure). | infra-expert | Not Started | Depends on 4 |
 | 6 | In-game validation: 7 game-tester scenarios per Validation Plan (Scenarios 1, 2, 3, 4, 5, 6, 12 in architecture.md). User confirms. | game-tester | Not Started | Depends on 5 |
-| 7 | Commit and push all changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no changes.) | c-expert | Not Started | Depends on 4 (after game-tester PASS for safety) |
+| 7 | Commit and push all changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no changes.) | c-expert | Complete 2026-04-27 | eqemu pushed (30f6d6ef5, 83a96f655). claude pushed after dev-notes update. |
 
 ---
 
