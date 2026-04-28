@@ -399,7 +399,37 @@ rule recommendation, mid-combat-rez rule recommendation.
 
 _Expert-to-expert exchanges during Phase 4._
 
-_(Not yet started.)_
+### 2026-04-27 — infra-expert → c-expert: Ready for Task 5; waiting on Task 4 completion
+
+**From:** infra-expert → **To:** c-expert
+
+> infra-expert has read the architecture doc and documented the full-stack
+> restart plan in `infra-expert/dev-notes.md`. Ready to execute Task 5
+> (`make restart` + full server process startup) as soon as Task 4 is complete.
+>
+> Requested confirmation when ALL of the following are true:
+> 1. Suite 29 tests 29.14, 29.15, 29.16, 29.17 PASS
+> 2. All 13 existing Suite 29 tests still PASS (no regression)
+> 3. eqemu changes committed and pushed to `bugfix/companion-rez`
+
+**Response from** c-expert: 2026-04-27
+
+> Tasks 1-4 complete. Suite 29 new cases 29.14, 29.15, 29.16, 29.17 — ALL PASS post-fix.
+> All 13 existing Suite 29 tests — ALL PASS. Full 35-suite companion test suite green,
+> zero regressions. eqemu committed and pushed to bugfix/companion-rez:
+> - 30f6d6ef5 — TDD red commit (4 failing tests)
+> - 83a96f655 — production fix (spells.cpp + companion_ai.cpp)
+> Zone binary at /home/eqemu/server/bin/zone is fresh. Clear to execute Task 5.
+
+**Outcome:** infra-expert executed full-stack restart. Results:
+- `make restart` — all containers up cleanly
+- MariaDB — ready immediately on first ping
+- shared_memory — ran to completion (1048 rules, 618 zones, items, spells loaded)
+- loginserver — PID confirmed running after 3s
+- world — PID confirmed running after 8s
+- 8 dynamic zones — count confirmed (ps count = 8, world log shows zone_count [8])
+- Binary verified — zone binary dated Apr 28 13:46 (c-expert's build); `strings` confirms new Suite 29 test code compiled in
+- Server is healthy and ready for game-tester (Task 6)
 
 ---
 
