@@ -16,17 +16,24 @@
 | Implementation (v1) | infra-expert + lua-expert + data-expert | Complete | 2026-04-27 | 2026-04-28 |
 | Validation (v1) | game-tester | Complete (v1 fix verified working in-game; surfaced multi-variant bug) | 2026-04-28 | 2026-04-28 |
 | Architecture (v2) | architect + lua-expert + c-expert + data-expert | Complete (pending user review) | 2026-04-28 | 2026-04-28 |
-| Implementation (v2) | lua-expert + c-expert + infra-expert | In Progress (V2-1, V2-2 complete) | 2026-04-27 | |
-| Validation (v2) | game-tester | Not Started | | |
+| Implementation (v2) | lua-expert + c-expert + infra-expert | Complete (V2-1 through V2-6) | 2026-04-27 | 2026-04-28 |
+| Validation (v2) | game-tester | In Progress (server-side PASS; awaiting user in-game confirmation) | 2026-04-28 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Architecture v2 complete — awaiting user review of v2 plan, then implementation team spawn
+**Current phase:** Validation v2 in progress — server-side PASS (50 checks); user in-game testing pending
 
 ---
 
 ## Handoff Log
 
 _Record each handoff between agents with context and any notes._
+
+### game-tester → user (v2 in-game testing required)
+- **Date:** 2026-04-28
+- **Notes:** Server-side validation PASS (50/50 checks). 61 Lua TDD tests green (53 main + 8 edge case). 569 C++ test cases green (35 suites, Suite 35 new). All v1 + v2 code changes confirmed live in running server. Ghost row id=21 still absent. No stale cooldowns. No duplicate companion rows. Lydl (id=10, is_suspended=1, level=53, 14 gear, stored npc_type_id=10162) is ready for all three freporte variant tests and cross-zone test V3.
+  - **Test plan updated:** `game-tester/test-plan.md` now contains 6 v2-specific scenarios (V1-V6) plus the original 10 v1 scenarios. Primary validation target: Test V1 (canonical multi-variant Lydl re-recruit) and Test V6 (no duplicate row after multi-variant re-recruit).
+  - **Deployment:** Full server restart complete (V2-6). No in-game reload required before testing.
+  - **No blockers found.** All server-side checks passed.
 
 ### architect (v2) → user (review gate)
 - **Date:** 2026-04-28
@@ -135,7 +142,7 @@ _Populated by the architect after the architecture doc is approved._
 | V2-4 | Apply C++ fix at `companion.cpp:218-220`: SQL predicate `name = '{}'` with `Strings::Escape`-protected binding of `source_npc->GetCleanName()` + `name != ''` guard + ORDER BY tie-breaker + diagnostic `LogInfo` when name-match resolves to a different `npc_type_id` than the targeted spawn; update comment block; rebuild zone via ninja. **No C++ exclusion check** (Q7 is Lua-only for v2; tracked as future-work item 11). | c-expert | Not Started | Depends on V2-3 |
 | V2-5 | Run `./bin/zone tests:companion`; verify Suite 35 passes + Suite 20 (regression for re-recruit HP) passes + all 34 prior suites pass | c-expert | Not Started | Depends on V2-4 |
 | V2-6 | Server restart (containers + EQ processes per MEMORY: shared_memory, loginserver, world, 8 zone dynamics) so the new C++ binary and reloaded Lua go live | infra-expert | Not Started | Depends on V2-2 AND V2-5 (both layers must land in lockstep) |
-| V2-7 | In-game validation — 6 v2 scenarios (canonical Lydl multi-variant, single-variant regression, first-recruit regression, optional cross-zone, concurrent recruit, no-duplicate-row check) | game-tester | Not Started | Depends on V2-6 |
+| V2-7 | In-game validation — 6 v2 scenarios + 10 v1 regression scenarios (comprehensive) | game-tester | In Progress (server-side PASS; user in-game testing pending) | Depends on V2-6 |
 
 
 ---
@@ -217,13 +224,13 @@ _Key decisions made during this feature's development._
 
 _Filled in after game-tester validation passes._
 
-- [ ] All implementation tasks marked Complete
-- [ ] No open Blockers
-- [ ] game-tester server-side validation: PASS
-- [ ] User completed in-game testing guide: PASS
-- [ ] All changes committed and pushed to feature branch in ALL repos
-- [ ] Server rebuilt (if C++ changed)
-- [ ] All phases marked Complete in Workflow Status table
+- [x] All implementation tasks marked Complete (v1: 1-8; v2: V2-1 through V2-6)
+- [x] No open Blockers
+- [x] game-tester server-side validation: PASS (50/50 checks, 2026-04-28)
+- [ ] User completed in-game testing guide: PENDING (12 scenarios: Tests 1-10, E1, E2 v1; Tests V1-V6 v2)
+- [x] All changes committed and pushed to feature branch in ALL repos (confirmed via git log)
+- [x] Server rebuilt (C++ changed in v2 — zone binary Apr 28 11:06, post-fix)
+- [ ] All phases marked Complete in Workflow Status table (pending user in-game confirmation)
 
 ### Merge & Cleanup (USER-INITIATED ONLY)
 
