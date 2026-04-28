@@ -1080,3 +1080,33 @@ Requested: (1) open `companion_ai.cpp:1927-2011` and confirm whether `IsAlive()`
 
 **Outcome:** Architect has complete R-4 picture and steel-man for v2 plan finalization.
 
+---
+
+### 2026-04-27 — architect → c-expert: Final R-4 verification + v2 plan agreement check
+
+**From:** architect → **To:** c-expert
+
+Three specific verification questions: (1) does `AI_ResurrectDeadGroupMember` open with an alive guard, (2) does `Companion::Process()` gate `AI_Process()` on `!IsDead()`, (3) R-4 confirmed real? Also presented the full v2 plan (Fixes A/B/C/D/E + R-3 non-issue) for final sign-off and steel-man.
+
+---
+
+### 2026-04-27 — c-expert → architect: Final R-4 confirmed + Fix C rollback refinement
+
+**From:** c-expert → **To:** architect
+
+**All three questions answered from existing Stage 6 source reads (no re-read needed):**
+
+1. NO — `companion_ai.cpp:1935` opens with `!RuleB(Companions, RezEnabled)` only. No alive guard.
+2. NO — `companion.cpp:1893` safety net does NOT return early. Falls through to `NPC::Process()` at 2227. `NPC::Process()` only checks `p_depop`.
+3. R-4 CONFIRMED REAL.
+
+**Fix D agreed:** `if (!IsAlive()) return false;` at `companion_ai.cpp:1935`. Independent, one-liner.
+
+**One refinement on Fix C rollback:** If `Spawn()` fails and we need to roll back `is_suspended=0`+XP, do NOT go through `Suspend()/Save()` — it writes the full ORM state from a partially-constructed entity (garbage HP/mana/position). Use a direct targeted SQL UPDATE: `UPDATE companion_data SET is_suspended=1, experience=experience-xp_restore WHERE id=X`. This matches the pattern used by BUG-028 fallback and avoids clobbering clean fields with stale values.
+
+**Option D (group-cap pre-flight) confirmed viable:** `GetGroupByClient(GetCompanionOwner())` + `GroupCount() >= MAX_GROUP_MEMBERS` — add after alive guard, before `AnotherCompanionIsRezzing`.
+
+**No fifth bug identified. Plan is sound. No other push-back.**
+
+**Outcome:** Architect has final sign-off. v2 architecture doc can be written.
+
