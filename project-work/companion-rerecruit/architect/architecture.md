@@ -220,13 +220,15 @@ All changes in `akk-stack/server/quests/lua_modules/companion.lua`:
    - Current text says `true=voluntary (preserves record)`. Actual semantics: `true=permanent SoulWipe`, `false=voluntary preserve`. Fix the inversion.
 3. **Line 207** — LevelRange fallback hardening: `or 3` → `or 50`.
    - Defense against future `rule_values` reset. Matches current DB value.
+4. **Lines 394-397** — Add `ORDER BY level DESC, experience DESC, id DESC` before `LIMIT 1` in `check_existing_companion_record()`.
+   - Makes duplicate-row selection deterministic (per data-expert's tie-breaker rule). With multiple rows matching `(owner_id, npc_type_id)` AND `(is_dismissed=1 OR is_suspended=1)`, picks the row with most player investment. Currently moot in production (no two flagged rows for same pair) but defensive against future ghost-creation paths. Lua-only — does not affect C++ which independently re-queries (its ORDER BY tracked as future work).
 
 New tests in `akk-stack/server/quests/tests/test_companion_recruitment.lua` (added BEFORE the fix per PRD AC-9):
 
-1. **`test_dismiss_preserves_companion_data_row`** — dismiss companion, query companion_data — row still present. Fails today (SoulWipe deletes it), passes after fix.
-2. **`test_rerecruit_after_dismiss_uses_track_1`** — dismiss, then re-recruit, then assert `is_re_recruitment_eligible()` was called and `is_eligible_npc()` was NOT called. Fails today, passes after fix.
-3. **`test_rerecruit_after_dismiss_skips_cooldown`** — dismiss, immediately re-recruit — no "won't discuss joining you again so soon" message. Fails today, passes after fix.
-4. **`test_rerecruit_after_death_uses_track_1`** — already-passing regression coverage. Confirms death path unaffected.
+1. **`test_cmd_dismiss_calls_dismiss_false`** — stub NPC with a `Dismiss` method that records the boolean argument; call `cmd_dismiss(npc, client, "")`; assert recorded arg is `false`. **Fails today (cmd_dismiss passes true), passes after fix.** This is the most direct test of the bug.
+2. **`test_dismiss_preserves_companion_data_row`** — integration-level: dismiss companion, query companion_data — row still present. Existing harness stubs the DB layer so this is verified by inspecting which Dismiss overload is invoked (overlaps test #1; can be folded together).
+3. **`test_rerecruit_after_dismiss_uses_track_1`** — dismiss, then re-recruit, then assert `is_re_recruitment_eligible()` was called and `is_eligible_npc()` was NOT called. Existing harness has a similar test (lines 462-494) that pre-bakes `is_dismissed=1` in the stub DB; that test continues to pass after the fix and serves as regression coverage.
+4. **`test_rerecruit_after_death_uses_track_1`** — regression coverage. Confirms death path remains unaffected (death writes is_suspended=1 directly via C++; no Lua change needed).
 5. **`test_first_recruit_still_gates`** — never-recruited NPC at level outside LevelRange — still rejected with level message. Confirms no regression on first-recruit gating.
 
 #### Database Changes
@@ -505,6 +507,7 @@ Before declaring task 6 complete, lua-expert MUST:
 These are intentionally NOT addressed in this fix and are tracked as future work:
 
 1. **`UNIQUE (owner_id, npc_type_id)` constraint on `companion_data`** — prevents future ghost rows. Requires (a) C++ code update to use UPSERT semantics (ON DUPLICATE KEY UPDATE or SELECT-then-INSERT/UPDATE) and (b) database_update_manifest_custom.h migration entry. Sequencing: dedup DELETE → C++ code deploy with upsert → ALTER TABLE ADD UNIQUE INDEX. Reverse-order deployment will fail second-recruit INSERTs. **Out of scope for this bugfix** because it requires C++ changes (this fix is Lua-only).
+1a. **C++ ORDER BY for defensive determinism** — `companion.cpp:218` query for re-recruit detection should mirror the Lua ORDER BY (`level DESC, experience DESC, id DESC LIMIT 1`). Currently the C++ query has only `LIMIT 1` with no ORDER BY, so duplicate-row selection is undefined. Lua-side determinism (covered in this fix) controls Track 1 vs Track 2 selection; C++ determinism only matters once Track 1 is firing and C++ is loading the row. Out of scope here because requires a build cycle.
 2. **Ghost row write-path investigation** — id=21 was created LATER than id=18, suggesting a re-recruit INSERTed instead of UPDATEing. Likely fixed by the dismiss fix indirectly (most ghosts come from dismiss-then-recruit sequences), but should be confirmed.
 3. **`Companions:ReRecruitBonus` rule cleanup** — defined and overridden in DB but never read in Lua or C++. Either wire it into the persuasion roll or remove the rule. Cosmetic.
 4. **`Companions:MinFaction` C++ stub at `companion.cpp:3853-3860`** — placeholder log-and-continue. If/when fleshed out, will need its own bypass consideration for re-recruits.
@@ -524,7 +527,7 @@ These are intentionally NOT addressed in this fix and are tracked as future work
 | 5 | TDD tests added BEFORE the fix per PRD AC-9 | Tests must fail today and pass after — proves invariant is machine-verified |
 | 6 | LevelRange fallback hardening (`or 3` → `or 50`) | Defensive against future rule_values reset; matches DB intent |
 | 7 | Targeted DELETE of ghost row id=21 with SELECT-confirm pattern | One known-bad row; no broad UPDATE sweep needed (zero stuck rows) |
-| 8 | Duplicate row tie-breaker = `ORDER BY level DESC, experience DESC LIMIT 1` | Picks the row with most player investment; doesn't deprioritize legitimately suspended |
+| 8 | Duplicate row tie-breaker in Lua = `ORDER BY level DESC, experience DESC, id DESC LIMIT 1` | Picks the row with most player investment; `id DESC` is final tie-breaker for equally-invested rows. Applied Lua-only; C++ ORDER BY tracked as future work to preserve "zero C++ changes" boundary. |
 | 9 | Zone-disconnect, group-disband, and `UNIQUE` constraint deferred to future work | Not currently failing per bug report; out of scope for this fix |
 | 10 | Quest-state interaction (AC-10) does NOT require special handling | Invariant overrides quest gating; killing a re-recruited quest-target still triggers EVENT_DEATH on the underlying NPC |
 

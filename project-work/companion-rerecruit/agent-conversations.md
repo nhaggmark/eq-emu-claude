@@ -607,6 +607,31 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 2. **Decision locked:** UNIQUE constraint deferred to future work with explicit deployment sequencing recorded.
 3. **data-expert fully closed.** Implementation phase Task 7 is the targeted DELETE.
 
+### 2026-04-27 — lua-expert: 3-point final follow-up + ORDER BY recommendation
+
+**From:** lua-expert → **To:** architect
+
+> All three follow-ups answered:
+>
+> **a. Test harness coverage gap CONFIRMED.** Existing tests at `test_companion_recruitment.lua:462-494` stub `Database` to return pre-baked rows with `is_dismissed=1`. They never exercise `cmd_dismiss` itself. Recommended new failing tests: stub NPC with a Dismiss method that records its argument; assert `cmd_dismiss` calls `Dismiss(false)` not `Dismiss(true)`.
+>
+> **b. Lua does NOT pass existing_record.id to C++.** `client:CreateCompanion(npc)` passes only the NPC; C++ `CreateFromNPC` runs an INDEPENDENT `LIMIT 1` query (no ORDER BY). Both queries are non-deterministic with duplicates. Recommended: add `ORDER BY id DESC` to both Lua and C++ for defensive determinism.
+>
+> **c. `cmd_dismiss` is the ONLY `Dismiss(true)` call site** in companion.lua, global_npc.lua, global_player.lua. All other commands (`!flee`, `!hold`, etc.) don't call Dismiss. `trigger_soul_wipe()` is a separate C++-invoked path. One-character fix is complete.
+
+**Response from** architect:
+
+> **Synthesis decision on the ORDER BY recommendation:**
+> - Adopt the ORDER BY suggestion BUT use **data-expert's tie-breaker** (`level DESC, experience DESC`) NOT `id DESC`. Reason: `id DESC` picks the most recently inserted row, which would pick the ghost row id=21 over the canonical id=18 in the hypothetical case where both have flags set. data-expert's tie-breaker picks the row with most player investment.
+> - **Final ORDER BY:** `ORDER BY level DESC, experience DESC, id DESC LIMIT 1` (id DESC as final tie-breaker for equally-invested rows).
+> - **Apply Lua-only.** C++ ORDER BY at companion.cpp:218 stays future-work to preserve "zero C++ changes" architectural boundary. Lua-side determinism is sufficient because Lua decides Track 1 vs Track 2; C++ ORDER BY only matters once Track 1 is firing and C++ is loading the row.
+
+**Outcome:**
+1. **Decision locked:** Lua change at companion.lua:394-397 adds `ORDER BY level DESC, experience DESC, id DESC LIMIT 1`.
+2. **Decision locked:** C++ ORDER BY tracked as future work entry 1a in architecture.md.
+3. **Test plan refined:** New TDD test #1 = "cmd_dismiss calls Dismiss(false)" with stub NPC that records argument. Existing harness tests at lines 462-494 remain as regression coverage.
+4. **lua-expert task fully complete.** Implementation phase tasks 2-6 ready.
+
 ---
 
 ## Implementation Team Conversations
