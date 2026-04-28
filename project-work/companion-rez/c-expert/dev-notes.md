@@ -663,3 +663,77 @@ In `SpawnCompanionsOnZone()` at `companion.cpp:4155`, when `cd.is_suspended=1 AN
 The auto-unsuspend approach requires calling `Spawn(this)` on the companion, which is the same path as `SpawnCompanionsOnZone` already does for non-suspended companions. The difference is setting HP to 10% post-spawn instead of full HP. This is a small delta.
 
 **Architect recommendation:** Implement auto-unsuspend at 10% HP in `SpawnCompanionsOnZone()` for `is_suspended=1` companions when no corpse is found in the current zone. This is the minimum behavior to avoid the "stuck forever" case. It does not restore the rez XP (penalty remains), which is correct — the death penalty was already applied.
+
+---
+
+## Stage 6: R-4 Verification — Dead Cleric Self-Rez (architect follow-up)
+
+**Question:** Does `AI_ResurrectDeadGroupMember` have an alive/HP guard? Does `Companion::Process()` even call AI ticks for dead entities?
+
+### Verdict: R-4 is REAL. No alive guard exists anywhere in the call chain.
+
+**Step 1 — Does `AI_ResurrectDeadGroupMember` have an HP guard?**
+
+`companion_ai.cpp:1935-2020`: First check is `!RuleB(Companions, RezEnabled)` (line 1937). NO `IsAlive()`, `GetHP() > 0`, or `!IsDead()` guard before that or anywhere in the function body.
+
+**Step 2 — Does `Companion::Process()` skip AI for HP=0 entities?**
+
+`companion.cpp:1886`: `Companion::Process()` body. The HP=0 safety net at line 1893 sets `m_suspended=true` and writes a direct SQL UPDATE — but it does NOT return false. The function continues to line 2227: `bool npc_result = NPC::Process()`. NPC::Process() → Mob::AI_Process() → idle path → `AI_IdleCastCheck()` → `AI_ResurrectDeadGroupMember()` all fire for the dead entity.
+
+**Step 3 — Does `NPC::Process()` have an alive guard?**
+
+`npc.cpp:581`: only guard is `if (p_depop)`. No HP check, no suspended check. A dead companion has `p_depop=false` (explicitly reset at `companion.cpp:627` in Death()). NPC::Process() proceeds normally.
+
+**Step 4 — Does `Mob::AI_Process()` have an alive guard at the idle branch?**
+
+`mob_ai.cpp:1412`: `if (AI_IdleCastCheck())` — no HP/alive gate. The path to the idle branch only checks `!IsEngaged()`. A dead companion (HP=0, no hate list, not engaged) hits this branch.
+
+**Step 5 — Does `Mob::CastSpell()` have an alive guard?**
+
+`spells.cpp:146`: No `IsDead()` / `IsAlive()` check at the top of `Mob::CastSpell()`. The `IsDead()` checks at lines 950 and 982 are in commented-out `Client::CheckSpecializeIncrease()` code, not in the NPC cast path. A dead NPC companion can successfully initiate a cast.
+
+**Step 6 — Would `FindDeadGroupMemberCorpse()` find the dead Cleric's own corpse?**
+
+`companion_ai.cpp:1882`: calls `entity_list.GetCompanionCorpseByOwnerWithinRange(owner->CharacterID(), this, rez_range)`. The corpse's `m_companion_owner_id` is set to `owner->CharacterID()` at death. For a Cleric companion, both the dead entity and its corpse share the same `owner->CharacterID()`. **YES** — the dead Cleric finds its own corpse.
+
+### R-4 is confirmed: dead Cleric will attempt to self-rez
+
+Full failure chain when a Cleric companion dies and no other rezzer is present:
+1. Cleric entity HP=0. `Companion::Death()` runs, entity stays alive via `SetDepop(false)`.
+2. On next AI tick: `Companion::Process()` → `NPC::Process()` → `AI_IdleCastCheck()` fires (not engaged, idle path).
+3. `AI_ResurrectDeadGroupMember()` is called on the dead entity. No alive guard — proceeds.
+4. `FindDeadGroupMemberCorpse()` finds the Cleric's own corpse. Returns it.
+5. Spell selection runs (`GetManaRatio()` — dead entity has 0 mana). Falls to OOM path.
+6. Mana check at line 1997 — mana < spell_mana_cost — returns false (OOM behavior). The Cleric "sits" and announces meditation.
+7. **This fires every idle AI tick** for 30 minutes until `m_death_despawn_timer` cleans up the entity.
+
+**Practical severity:** The OOM branch prevents an actual rez from firing (dead entity has 0 mana). But: `CompanionGroupSay(this, "%s", GetRezMeditationLine(GetClass()))` at line 2001 fires once (`m_rez_meditation_announced` gate). After that, the Cleric silently tries every tick. No chat spam. No crash. No rez. The entity also `Sit()`s (line 2002) — irrelevant for a corpse.
+
+**However:** if the Cleric dies with residual mana (some mana left at the moment of death — HP hits 0 before mana does), the entity might have enough mana to attempt the cheapest rez. `AIDoSpellCast(rez_spell, own_corpse)` would then call `CastSpell()` on the dead entity targeting itself. `CastSpell()` has no alive guard. The full rez pipeline would run. Whether it completes depends on whether `SpellFinished()` has an alive caster guard — but at minimum, this is undefined behavior for a dead entity casting a spell.
+
+**Fix:** Add `if (GetHP() <= 0) return false;` at the top of `AI_ResurrectDeadGroupMember()` at `companion_ai.cpp:1935`. One line. This is the correct place — it's the function that should never run on a dead caster. Putting it here rather than in `AI_IdleCastCheck()` or `Process()` is most surgical (other idle checks like buff/heal may legitimately be skipped by the dead entity via other paths, but rez specifically must not fire from a dead caster).
+
+**Also: fix `Companion::Process()` to return early when HP=0** after the safety net block at line 1908: add `if (GetHP() <= 0) return NPC::Process();` — this lets `NPC::Process()` clean up timers and depop state correctly without calling AI. This prevents ALL AI from running on dead companions, not just rez.
+
+### Option D (pre-flight group capacity check) — verdict: needed as defense-in-depth
+
+Architect proposed: add a group-capacity pre-flight check at the top of `AI_ResurrectDeadGroupMember()`. This is valid defense-in-depth independent of Fix A (clearing name slot at death). If the group is full (e.g. Fix A hasn't landed yet, or some other path leaves a slot occupied), the pre-flight check bails early before we even select a rez spell or dequeue the corpse.
+
+Implementation: at `companion_ai.cpp:1935`, after the `RezEnabled` check and before `AnotherCompanionIsRezzing`:
+```
+Group* g = entity_list.GetGroupByClient(GetCompanionOwner());
+if (g && g->GroupCount() >= MAX_GROUP_MEMBERS) { return false; }
+```
+`GetGroup()` is accessible here. `GetCompanionOwner()` returns the owner client.
+
+**Note:** This check uses `GroupCount()` which counts name slots — after Fix A lands (name cleared at death), `GroupCount()` correctly returns the decremented value and this check always passes for normal groups. But before Fix A lands, this check would also return false (group full), preventing the broken rez attempt. It's defense-in-depth that makes the system more robust during the transition.
+
+### Steel-man of v2 plan: push-back items
+
+**Fix order concern:** The architect's plan lists Fix A → Fix B → Fix C. The R-4 fix (`if (GetHP() <= 0) return false` in `AI_ResurrectDeadGroupMember`) should also be in the list, logically between Fix A and Fix B, since it prevents the dead Cleric from polluting the rez path. Suggest: Fix A (group slot) → Fix R4 (dead caster guard) → Fix B (Spawn routing) → Fix C (atomic rez) → Fix R2 (cross-zone).
+
+**Fix C atomicity concern:** Deferring DB UPDATE until after Spawn() succeeds is correct. However, `corpse->IsRezzed(true)` should still be called BEFORE `Spawn()` (as a concurrent-cast guard), and must be reset to false on `Spawn()` failure as described. Ensure the implementation doesn't skip the `IsRezzed` early-set.
+
+**Test 30.5 (cross-zone auto-unsuspend):** In the unit test harness there is no owner-zones-out simulation. This test is best handled by game-tester live scenario. The unit test can only verify that `SpawnCompanionsOnZone()` calls the auto-unsuspend path when `is_suspended=1` (structural test, similar to 29.16's approach). Include as a structural no-crash test.
+
+**No other push-back on the v2 plan.** Fix A, B, C, R4, D (Option D pre-flight), and R2 (auto-unsuspend on zone-in) all address distinct real failure modes. None are redundant. The dependency order (A before B, B before C) is correct as stated.
