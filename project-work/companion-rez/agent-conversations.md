@@ -153,7 +153,69 @@ status.md update + commit/push. Ready for handoff to architect.
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-_(Not yet started.)_
+---
+
+### 2026-04-27 — c-expert Triage Report → architect
+
+**From:** c-expert → **To:** architect
+
+**Summary:** Root cause identified and confirmed. Verdicts on all 7 hypotheses.
+Full dev-notes at `companion-rez/c-expert/dev-notes.md`.
+
+**ROOT CAUSE: `zone/spells.cpp:2051` — `ST_Corpse` target validation rejects companion corpses.**
+
+The `SpellFinished()` function validates targets before applying any spell effects.
+The `ST_Corpse` case requires `IsPlayerCorpse()`. Companion corpses are NPC corpses
+(`IsPlayerCorpse() == false`) so the spell is canceled with `CORPSE_NOT_VALID`
+before `SpellEffect::Revive` ever fires. All other rez infrastructure is correct
+and complete — this single gate is the broken link.
+
+**Hypothesis verdicts (all 7):**
+
+| # | Hypothesis | Verdict | Evidence |
+|---|-----------|---------|---------|
+| H1 | NPC pipeline rejects corpse targets | CONFIRMED (root cause) | `spells.cpp:2051` — `ST_Corpse` case: `if(!spell_target \|\| !spell_target->IsPlayerCorpse())` → returns false |
+| H2 | `SpellType_Resurrect` not assigned to Cleric rez spells | NOT VERIFIABLE WITHOUT DB — loaded from `companion_spell_sets` table, `spell_type` column. Infrastructure to load and use the type is correct (`companion_ai.cpp:288-348`). Whether rows exist in the table is a data-expert question. |
+| H3 | `CastRezz()` hit instead of `ResurrectFromCorpse()` | REJECTED — `spell_effects.cpp:1720` correctly branches on `IsCompanionCorpse()` → `ResurrectFromCorpse()`. But this code is UNREACHABLE because `spells.cpp` kills the spell first. |
+| H4 | Companion corpse depops before rez can land | REJECTED — `attack.cpp:2911` sets corpse decay to `DeathDespawnS * 1000` (1800s = 30min). The death despawn timer in `companion.cpp:1911` fires on the LIVE ENTITY (not the corpse) and calls `return false` to remove the entity from zone, not the corpse. Two separate objects, aligned timers. |
+| H5 | `FindDeadGroupMemberCorpse` doesn't find player corpses | CONFIRMED — `entity.cpp:2052-2069`: `GetCompanionCorpseByOwnerWithinRange()` only returns companion corpses. Player corpse (AC-2) is a missing code path in `FindDeadGroupMemberCorpse()`. |
+| H6 | `AnotherCompanionIsRezzing` deadlocks single-cleric | REJECTED — with only one Cleric companion, `comp_list` iteration finds no OTHER companion casting a rez spell. Returns false (no deadlock). `companion_ai.cpp:1884-1906`. |
+| H7 | `IsValidSpellTarget` / bodytype / faction filters out corpses | REJECTED — corpse entities have `IsCorpse()==true` which exempts them from many standard mob checks. The only gate that matters is `ST_Corpse` at `spells.cpp:2051`. |
+
+**Fix:** `spells.cpp:2051` — one added OR-condition:
+```
+Before: if(!spell_target || !spell_target->IsPlayerCorpse())
+After:  if(!spell_target || (!spell_target->IsPlayerCorpse() && !spell_target->IsCompanionCorpse()))
+```
+
+**AC-2 (player corpse rez):** `FindDeadGroupMemberCorpse()` needs a second scan
+for the owner's player corpse via `entity_list.GetCorpseByOwnerWithinRange(owner, this, rez_range)`
+(`entity.cpp:2039`). When found, the existing `CastRezz()` path handles it — routes
+through world to `OP_RezzRequest` → player dialog (AC-4 preserved).
+
+**TDD:** Suite 29 exists (13 tests). Need new failing tests 29.14 (ST_Corpse companion
+rejection), 29.15 (spell_effects.cpp reachability), and a regression test.
+
+**Outcome:** Root cause confirmed. Fix is minimal and surgical. Architecture decision
+needed on: (1) implement AC-2 player rez in this pass or defer, (2) multi-target
+ordering policy, (3) whether to run Suite 29 tests in current state to establish
+baseline before fix.
+
+---
+
+### 2026-04-27 — architect → c-expert (Follow-up dispatch)
+
+**From:** architect → **To:** c-expert
+
+**Summary:** Comprehensive triage requested on all 7 hypotheses with full pipeline trace.
+
+Full message in teammate-message above — asking for: pipeline trace from
+`AI_ResurrectDeadGroupMember` to `SpellEffect::Revive`, verdict on H1-H7,
+entity_list player corpse scan verification, spell loading path, test run results,
+stuck-state analysis, and what changed between scaffolding and user repro.
+
+**Outcome:** See c-expert response above (sent before this dispatch arrived — all
+questions answered from concurrent triage).
 
 ---
 
