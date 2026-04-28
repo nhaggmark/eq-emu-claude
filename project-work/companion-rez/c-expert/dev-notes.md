@@ -431,3 +431,235 @@ Confirmed in v1 dev-notes: passes `rez_range * rez_range` because the function u
 | 30.2 | Suite 30 | After rez, new entity has normalized name (clean_name matches spawn packet name) | YES — name normalization skipped | YES |
 | 30.3 | Suite 30 | After rez, group slot for dead companion is freed (name cleared); `AddMember` succeeds for rezzed companion | YES — name slot not cleared | YES |
 | 30.4 | Suite 30 | BUG-028 regression: `entity id=0` at death guard fires correctly (existing v1 coverage sufficient; confirm still passes) | NO (existing) | YES (existing) |
+
+---
+
+## Stage 5: V2 Production Debug — Exact Citations (architect request)
+
+**Context:** Architect asked for exact file:line for all three bugs before finalizing v2
+architecture plan. This section supplements the v2 Investigation section above with
+precise call-chain citations and formal answers to each question.
+
+---
+
+### Question 1 — Bug R-1: Exact citations for AddNPC + CompanionJoinClientGroup failure chain
+
+**1a. AddNPC call in ResurrectFromCorpse:**
+`companion.cpp:3647` — `entity_list.AddNPC(new_comp);`
+
+Immediately preceding context: corpse depopped at line 3630, new Companion constructed at 3633-3635, SetCompanionID/SetOwnerCharacterID/etc at 3638-3644, then AddNPC at 3647.
+
+**1b. CompanionJoinClientGroup call in ResurrectFromCorpse:**
+`companion.cpp:3680` — `new_comp->CompanionJoinClientGroup();`
+
+Called after AI_Start(3650), Load(3651), LoadEquipment(3652), CalcBonuses(3653), ScaleStatsToLevel(3657), SetHP/SetMana/BuffFadeAll (3663-3674).
+
+**1c. Name normalization in Spawn():**
+`companion.cpp:2403-2404`:
+```cpp
+clean_name[0] = '\0';
+strcpy(name, GetCleanName());
+```
+ResurrectFromCorpse skips these lines entirely — it never calls Spawn() and never touches `name` or `clean_name` after the Companion constructor.
+
+**1d. Where AddMember failure in existing group → Suspend() → Depop():**
+`companion.cpp:2693-2711` — the existing-group branch of `CompanionJoinClientGroup()`:
+```cpp
+if (g->AddMember(this)) {          // line 2693 — returns false (see group slot issue below)
+    ...
+} else {
+    Suspend();                      // line 2709 — THIS fires on AddMember failure
+    LogInfo("Companion [{}] failed to join existing group — suspending", ...);
+}
+```
+
+`Suspend()` at `companion.cpp:2465-2481`:
+- line 2467: `SetSuspended(true)` — overwrites the `is_suspended=0` written by ResurrectFromCorpse at line 3624 (DB UPDATE already ran). This is the DB corruption: rez XP was restored, `is_suspended` was cleared, then Suspend() reverses both.
+- line 2470: `Save()` — writes `is_suspended=1` and the companion's current state back to DB, permanently losing the XP restore.
+- line 2478: `Depop()` — removes entity from zone
+
+`Depop()` at `companion.cpp:2538-2569`:
+- line 2548-2550: calls `RemoveCompanionFromGroup(this, GetGroup())`. But the new rez entity was NEVER in a group (AddMember failed), so `HasGroup()` is false and this is a no-op.
+- line 2555: `entity_list.RemoveCompanion(GetID())` — BUT: since AddNPC was used (not AddCompanion), the entity was never in `companion_list`. RemoveCompanion finds nothing to remove. The entity IS in `npc_list` and `mob_list` (via AddNPC), but RemoveCompanion only iterates `companion_list`. The entity leaks from `npc_list` and `mob_list` — it's in the zone's entity tables but marked for depop. This is a secondary memory issue but process() returning false will eventually evict it.
+- line 2569: `NPC::Depop(false)` — sets internal depop flag, entity removed on next process tick.
+
+**Net result of R-1 AddMember failure:**
+1. Corpse already depopped (line 3630) — no recovery possible.
+2. DB: `is_suspended=1` written by Suspend()/Save() — the `is_suspended=0` + XP restore from line 3624 is overwritten. Companion is back to dead state, XP penalty taken again with no restoration.
+3. new entity: leaks from npc_list/mob_list briefly, depopped next process tick.
+4. Player sees: "companion appears briefly, immediately vanishes" or simply never appears (if AddNPC→spawn packet races with Depop→DeleteSpawn).
+
+**1e. Does the dead companion still occupy its group slot at rez time?**
+
+YES. Sequence at death:
+1. `Companion::Death()` at `companion.cpp:619`: calls `NPC::Death()` first.
+2. Line 627: `SetDepop(false)` — prevents standard NPC entity removal. Entity stays alive in zone as dead mob.
+3. Lines 713-718: `g->MemberZoned(this)` — `groups.cpp:596-637` clears `members[i]` (pointer) but does NOT clear `membername[i]` (name string). Comment at line 606: "should NOT clear the name, it is used for world communication."
+
+`GroupCount()` at `groups.cpp:1184-1196` counts non-empty `membername[]` slots. Since MemberZoned only clears the pointer, the dead companion's name string persists in `membername[]`. `GroupCount()` still counts the dead companion.
+
+`AddMember()` at `groups.cpp:235`: capacity check `GroupCount() >= MAX_GROUP_MEMBERS` (6). For a group of player + 5 companions, this fires immediately. Even for smaller groups, the name-collision check at `groups.cpp:277-280` fires because `Strings::EqualFold(membername[i], new_comp->GetCleanName())` matches the dead companion's still-present name string.
+
+**Why DelMember is NOT called at death:** `DelMember` at `groups.cpp:698-798` does clear the name slot (line 720: `membername[i][0] = '\0'`). But DelMember is called by `RemoveCompanionFromGroup` → called by `Depop()`. Depop() is NOT called at death — `Companion::Death()` explicitly resets `p_depop=false` at line 627 to preserve the entity for the rez window. Depop() only runs when (a) despawn timer fires, (b) Suspend() is called, or (c) the player explicitly dismisses. None of these happen between death and rez attempt.
+
+**Root cause of R-1:** Two independent bugs that compound:
+- A: ResurrectFromCorpse uses AddNPC instead of AddCompanion (wrong entity list)
+- B: Dead companion's group slot (name string) is not freed at death, so AddMember always returns false for the rez entity
+
+Fix B must land before Fix A (routing through Spawn()) will work end-to-end, because Spawn() calls CompanionJoinClientGroup() which calls AddMember().
+
+---
+
+### Question 2 — Bug R-2: Owner zones out, pending rez state lost
+
+**2a. GetCompanionOwner() body:**
+`companion.cpp:3903-3906`:
+```cpp
+Client* Companion::GetCompanionOwner() const
+{
+    return entity_list.GetClientByCharID(m_owner_char_id);
+}
+```
+`entity_list.GetClientByCharID()` returns nullptr if the client is not currently in THIS zone's entity list. When the owner zones out, they are removed from the zone's `client_list` immediately. Any subsequent `GetCompanionOwner()` call returns nullptr.
+
+**2b. Zone-out event for the owner — does it flag pending rez state?**
+
+When a player zones, `ClientList::Process()` in world detects the zone change and routes the player. In the zone-side entity list, the Client object is delinked and eventually freed. There is NO hook in the current companion code that fires when the owner leaves the zone. No `OnOwnerZoneOut()`, no `OnOwnerDisconnect()`, no pending-rez persistence.
+
+`CompanionJoinClientGroup()` at line 2628: `GetCompanionOwner()` returns nullptr → calls `Suspend()` at line 2630. This fires on the NEXT AI tick after the owner zones (when any companion logic calls `GetCompanionOwner()`). This is correct behavior for live companions (they Suspend and persist in DB until owner zones in again). But for a dead companion, `m_companion_ai` is not running, so this path does not fire.
+
+The dead companion entity just sits in the zone. `m_death_despawn_timer` continues ticking. When it fires (30 minutes), the companion auto-dismisses (`is_dismissed=1` written). This is the only cleanup path.
+
+**2c. Cross-zone pending-rez persistence — what and where:**
+
+**What's lost:** The corpse entity is zone-memory only. When the zone unloads or the corpse's decay timer fires (30 minutes), it's gone. The Cleric companion (if alive) zones with the owner and has no pending rez flag. On zone-in in the new zone, `SpawnCompanionsOnZone()` skips `is_suspended=1` rows. No rez fires.
+
+**Where persistence would need to live:** There are two options:
+
+Option A — `companion_data` column: add a `pending_rez` boolean (or `rez_spell_id` int). `ResurrectFromCorpse` would write `pending_rez=1, rez_spell_id=X` before proceeding (so if owner is not in zone, the column is set). `SpawnCompanionsOnZone()` would check: if `is_suspended=1 AND pending_rez=1` → auto-revive at the stored rez% on zone-in. Requires a schema migration.
+
+Option B — `data_buckets`: key = `companion_pending_rez_<companion_id>`, value = `spell_id`. Written when rez fires with owner not in zone. Checked on zone-in. No schema change. data-expert confirms companion system already uses data_buckets for similar state.
+
+Option C — Auto-recover at fixed 10% HP on zone-in with no DB tracking: `SpawnCompanionsOnZone()` checks `is_suspended=1 AND is_dismissed=0` and auto-revives at minimum HP (Reanimation-equivalent) without a Cleric present. Simplest. Loses the rez-spell-quality differentiation (always 10% HP regardless of what spell was attempted). Still applies the death XP penalty already taken at death.
+
+**Architect's call on scope.** The simplest defensible fix is Option C; it closes the "stuck forever" case without requiring a schema migration or cross-zone state tracking. data_buckets (Option B) is more correct but adds complexity. I flag Option C as the TDD-safe minimal fix for this pass.
+
+---
+
+### Question 3 — Bug R-3: Entity id=0 and corpse metadata integrity
+
+**3a. Where does entity id=0 occur in Death() sequence:**
+
+`Companion::Death()` at line 619 calls `NPC::Death()` first. Inside `NPC::Death()` (in `attack.cpp`), at line 2899: `entity_list.AddCorpse(corpse, GetID())`. `GetID()` is the entity's current entity ID. If id=0 at this point, the corpse is added with npc_id=0 (the corpse's internal `npc_id` tracking field — different from `m_companion_id`).
+
+Then at `attack.cpp:2908`: `corpse->SetCompanionData(comp->GetCompanionID(), comp->GetOwnerCharacterID())`. `GetCompanionID()` is `m_companion_id` — a plain integer member of the Companion object, NOT derived from the entity list ID. It is set at construction time and by `SetCompanionID()`. **Even if entity id=0, `m_companion_id` is valid.** The corpse gets the correct `companion_id` and `owner_char_id`.
+
+**3b. Does entity id=0 corrupt the corpse m_companion_id field? NO.**
+
+`m_companion_id` and the entity list ID are completely separate. `GetID()` returns the entity list ID (slot in `npc_list` / `mob_list`). `GetCompanionID()` returns `m_companion_id`. `SetCompanionData()` uses only `GetCompanionID()` and `GetOwnerCharacterID()` — neither is the entity ID.
+
+The existing fallback at `companion.cpp:669-701` handles the DB side: if entity id=0, skip the ORM Save() and run a direct SQL UPDATE to ensure `is_suspended=1` is persisted. The fallback runs BEFORE `NPC::Death()` is called (the sequence: ApplyDeathXPPenalty at 616, then NPC::Death at 619, then the DB save block at 669). Actually re-reading: the DB save block at 669-701 is inside the `owner != nullptr` branch which comes AFTER `NPC::Death()`. Let me clarify sequence:
+
+Line 616: `ApplyDeathXPPenalty()`
+Line 619: `result = NPC::Death(...)` — corpse created with `SetCompanionData` here
+Line 627: `SetDepop(false)`
+Lines 631-645: equipment handling
+Line 649: `Client* owner = GetCompanionOwner()`
+Lines 650-704: owner notification + DB save (includes entity id=0 guard at 669-701)
+Lines 713-718: `g->MemberZoned(this)` — group pointer cleared
+
+So the entity id=0 SQL fallback fires AFTER the corpse is already created with correct companion metadata. BUG-028 does not corrupt corpse metadata. **No additional fix needed for R-3.**
+
+**3c. Does id=0 cause any other rez-path issue beyond what BUG-028 already handles?**
+
+One edge case: `entity_list.AddCorpse(corpse, GetID())` at `attack.cpp:2899` passes `GetID()=0` as the NPC's entity ID for corpse indexing. The corpse is added to `corpse_list` with its own new entity ID (assigned by `GetFreeID()` inside `AddCorpse`). The `0` argument is the NPC ID passed to the corpse constructor for `npc_id` tracking, not the corpse's entity ID. `IsCompanionCorpse()` uses `m_companion_id > 0`, not npc_id. So id=0 at death does not affect `IsCompanionCorpse()` or `ResurrectFromCorpse`. **Confirmed non-issue for the rez path.**
+
+---
+
+### Question 4 — Fix sites with exact function/file:line and dependency order
+
+**Fix A — Free the dead companion's group slot at death (prerequisite for everything)**
+
+**File:line:** `companion.cpp:713-718` — after `g->MemberZoned(this)`.
+
+**What:** After `MemberZoned()` clears the `members[i]` pointer, also null-terminate the matching `membername[i]` slot. Iterate `g->membername` matching `GetCleanName()`. This ensures `GroupCount()` decrements and the name-collision check passes for the rez entity.
+
+**Why not in groups.cpp:** The "should NOT clear the name" comment at `groups.cpp:606` applies to living members who zone out (cross-zone group tracking). Dead companions are different — they won't zone back in as the same entity; they'll come back as a brand-new entity with a new entity ID. Clearing the name for death-only is correct and safe.
+
+**Dependencies:** None. Must land first.
+
+**Subtlety:** `HasGroup()` check at line 713 ensures we don't iterate a null Group pointer. The name to match is `GetCleanName()` (not `GetName()`) — this is the value that was stored in `membername[]` by `AddMember()` at `groups.cpp:260` (`new_member_name = new_member->GetCleanName()`). Name normalization in Spawn() (Fix B below) ensures GetCleanName() is stable at death.
+
+**Fix B — Route ResurrectFromCorpse entity creation through Spawn()**
+
+**File:line:** `companion.cpp:3632-3680` — replace the manual construction block.
+
+**What:** Replace the current sequence (Companion constructor → attribute setters → AddNPC → AI_Start → Load → LoadEquipment → CalcBonuses → ScaleStatsToLevel → CompanionJoinClientGroup) with:
+1. `new Companion(npc_type_data, x, y, z, h, owner_char_id, companion_type)` — constructor
+2. `SetCompanionID()`, `SetOwnerCharacterID()`, etc. — preserve attribute init
+3. `new_comp->Load(companion_id)` — restore DB state (must be before Spawn for stance/equipment refs)
+4. `new_comp->Spawn(owner)` — normalizes name, AddCompanion, entity ID, AI_Start, immunity strip, CompanionJoinClientGroup
+5. `new_comp->LoadEquipment()`, `CalcBonuses()`, `ScaleStatsToLevel()` — after entity ID assigned
+6. Set post-rez HP/mana/BuffFadeAll — after ScaleStatsToLevel sets max HP
+
+**Dependencies:** Fix A must land first (Spawn calls CompanionJoinClientGroup which calls AddMember — will fail until group slot is freed).
+
+**Subtlety 1:** `Spawn()` calls `AI_Start()` at line 2418. Do NOT call `AI_Start()` separately. Calling it twice double-registers the AI timer and double-calls `LoadCompanionSpells()`.
+
+**Subtlety 2:** `Load()` before `Spawn()` is the pattern from `SpawnCompanionsOnZone()` (lines 4183-4201). Follow that pattern exactly.
+
+**Subtlety 3:** The corpse is already depopped at line 3630 before this block. Spawn() will call `CompanionJoinClientGroup()` which can now succeed (Fix A landed). But if Spawn() fails (entity ID not assigned — rare), we have an inconsistent state: corpse gone, DB updated, new entity not spawned. This is the "atomic transaction" question (see Fix C below).
+
+**Fix C — Handle rez failure atomically so DB state is not corrupted on Spawn() failure**
+
+**File:line:** `companion.cpp:3616-3680` — the DB UPDATE + corpse depop + entity creation sequence.
+
+**Current problem:** DB UPDATE at line 3624 (`is_suspended=0`, XP restored) runs BEFORE corpse depop and entity creation. If Spawn() then fails (entity ID=0, AddCompanion fails), the DB is in an inconsistent state: `is_suspended=0` but no entity in zone.
+
+**Proposed fix:** Defer corpse depop to AFTER Spawn() succeeds:
+1. Save corpse position.
+2. Call `new_comp->Load(companion_id)`.
+3. Call `new_comp->Spawn(owner)` — entity creation.
+4. If Spawn() returns false: `delete new_comp; return;` — corpse stays alive, DB not updated yet, rez can retry.
+5. If Spawn() succeeds: THEN run DB UPDATE (`is_suspended=0`, XP restore) and THEN `corpse->DepopNPCCorpse()`.
+
+This is a tighter invariant: either the full rez completes (entity in zone + DB updated + corpse gone) or nothing changes (entity not created + DB unchanged + corpse still present).
+
+**Dependencies:** Fix B (routing through Spawn) makes the Spawn() return value meaningful and available.
+
+**Subtlety:** The current code at line 3587 calls `corpse->IsRezzed(true)` before the DB UPDATE and before entity creation. This is a race guard (prevents concurrent rez attempts). With the new ordering, we still need `IsRezzed(true)` early (before Spawn) to block concurrent casts. But we can treat a Spawn() failure as "rez failed — reset IsRezzed to false" so the corpse becomes rezzable again. This is safe because Spawn() failure is deterministic (entity list full or similar), not a race condition.
+
+---
+
+### Question 5 — Fourth bug candidate
+
+**Potential R-4: Dead companion entity is still in mob_list and receives AI ticks**
+
+`Companion::Death()` sets `SetDepop(false)` at line 627 to keep the entity alive for the rez window. The entity stays in `mob_list` and `Companion::Process()` continues to tick. In `Companion::Process()`, the `m_death_despawn_timer` check at line ~1911 fires after 30 minutes to auto-dismiss.
+
+The risk: `Companion::AI_Process()` or `AI_IdleCastCheck()` can fire on this dead entity during the rez window. If the dead companion is a Cleric, it could try to rez itself. `AI_ResurrectDeadGroupMember()` calls `FindDeadGroupMemberCorpse()` which looks for corpses by `owner_char_id` — it would find its OWN corpse. It would then cast a rez spell targeting itself.
+
+`AI_ResurrectDeadGroupMember()` has no guard for "I am the dead companion." It only checks `AnotherCompanionIsRezzing()` (are OTHER companions currently casting rez). A dead Cleric casting rez on its own corpse would walk into `ResurrectFromCorpse` and hit the `GetCompanionOwner()` check at line 3578 (owner must be in zone) — this acts as a soft guard. But if the owner IS in zone, the dead Cleric would attempt to rez itself, which is logically absurd and may produce erratic behavior.
+
+**Severity:** Low. Clerics are usually the rezzer, not the dead. In a party where the Cleric died, another rez-capable class would need to be present anyway. And `AI_ResurrectDeadGroupMember()` is gated by `m_rez_delay_timer` (must have fired) and by `GetHP() > 0` check... actually let me verify whether there's an HP guard.
+
+I do not have `AI_ResurrectDeadGroupMember()` open right now, but the relevant guard is whether the function checks if `this` (the casting companion) is alive. If not, this is a genuine edge-case bug. I flag it as a potential R-4 for architect investigation — worth checking `companion_ai.cpp:1927-2011` for a self-rez guard.
+
+---
+
+### Question 6 — Cross-zone resilience summary
+
+**Current state (fully documented above):**
+- Corpse: zone-memory only, lost when zone unloads or timer expires.
+- Dead companion `is_suspended=1` row: persists in DB indefinitely.
+- Pending rez: nothing persists cross-zone. Cleric zones with owner but has no pending-rez flag.
+- Recovery: `!unsuspend` works (brings back at full HP, no rez XP, proper group-rejoin).
+
+**Minimum fix for this pass (no schema change):**
+In `SpawnCompanionsOnZone()` at `companion.cpp:4155`, when `cd.is_suspended=1 AND cd.is_dismissed=0`:
+- Instead of silently skipping, log a message to the player: "Your companion X was unable to be resurrected and has returned. Use `!unsuspend` to bring them back."
+- Optionally: auto-call Unsuspend with HP set to 10% of max (Reanimation-equivalent). This is Option C from the v2 Investigation section.
+
+The auto-unsuspend approach requires calling `Spawn(this)` on the companion, which is the same path as `SpawnCompanionsOnZone` already does for non-suspended companions. The difference is setting HP to 10% post-spawn instead of full HP. This is a small delta.
+
+**Architect recommendation:** Implement auto-unsuspend at 10% HP in `SpawnCompanionsOnZone()` for `is_suspended=1` companions when no corpse is found in the current zone. This is the minimum behavior to avoid the "stuck forever" case. It does not restore the rez XP (penalty remains), which is correct — the death penalty was already applied.
