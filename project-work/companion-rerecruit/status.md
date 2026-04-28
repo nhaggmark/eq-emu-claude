@@ -16,7 +16,7 @@
 | Implementation (v1) | infra-expert + lua-expert + data-expert | Complete | 2026-04-27 | 2026-04-28 |
 | Validation (v1) | game-tester | Complete (v1 fix verified working in-game; surfaced multi-variant bug) | 2026-04-28 | 2026-04-28 |
 | Architecture (v2) | architect + lua-expert + c-expert + data-expert | Complete (pending user review) | 2026-04-28 | 2026-04-28 |
-| Implementation (v2) | lua-expert + c-expert + infra-expert | Not Started | | |
+| Implementation (v2) | lua-expert + c-expert + infra-expert | In Progress (V2-1, V2-2 complete) | 2026-04-27 | |
 | Validation (v2) | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
@@ -129,8 +129,8 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| V2-1 | Extend Lua test harness `make_db_stub` for param-aware dispatch + write 3 failing TDD tests: (a) name-match finds row when ID differs, (b) regression name-mismatch falls through to Track 2, (c) Q7 mitigation — Track 1 blocked when target NPC is in `companion_exclusions` | lua-expert | Not Started | Tests must fail BEFORE V2-2 per AC-9 |
-| V2-2 | Apply Lua fix in `companion.lua` — (a) rename `check_existing_companion_record` param to `clean_name`, swap SQL predicate to `name = ?` + `name != ''` guard, change caller at line 463 to pass `npc:GetCleanName()`, update doc comment; (b) add Q7 mitigation: new exclusion check in `is_re_recruitment_eligible()` calling shared `_lookup_exclusion(npc:GetNPCTypeID())` helper (refactor from `is_eligible_npc()` if not shared); (c) add diagnostic log when name-match resolves to a different `npc_type_id` than the targeted spawn; run `make test-companion`; verify 3 new tests pass + 58 v1 tests pass | lua-expert | Not Started | Depends on V2-1 |
+| V2-1 | Extend Lua test harness `make_db_stub` for param-aware dispatch + write 3 failing TDD tests: (a) name-match finds row when ID differs, (b) regression name-mismatch falls through to Track 2, (c) Q7 mitigation — Track 1 blocked when target NPC is in `companion_exclusions` | lua-expert | Complete 2026-04-27 | akk-stack commit eb88551 — all 3 tests red pre-fix |
+| V2-2 | Apply Lua fix in `companion.lua` — (a) rename `check_existing_companion_record` param to `clean_name`, swap SQL predicate to `name = ?` + `name != ''` guard, change caller at line 463 to pass `npc:GetCleanName()`, update doc comment; (b) add Q7 mitigation: new exclusion check in `is_re_recruitment_eligible()` calling shared `_lookup_exclusion(npc:GetNPCTypeID())` helper (refactor from `is_eligible_npc()` if not shared); (c) add diagnostic log when name-match resolves to a different `npc_type_id` than the targeted spawn; run `make test-companion`; verify 3 new tests pass + 58 v1 tests pass | lua-expert | Complete 2026-04-27 | akk-stack commit 6358c48 — 61 total tests pass (53+8) |
 | V2-3 | Add Suite 35 (`TestCompanionReRecruitmentVariantNameMatch`) in `cli_companion_tests.cpp` — TWO test cases: (a) name-match finds row when ID differs, (b) name-mismatch returns empty. Q7 exclusion test is Lua-only (V2-1 owns it). | c-expert | Not Started | Tests must fail BEFORE V2-4 per AC-9 |
 | V2-4 | Apply C++ fix at `companion.cpp:218-220`: SQL predicate `name = '{}'` with `Strings::Escape`-protected binding of `source_npc->GetCleanName()` + `name != ''` guard + ORDER BY tie-breaker + diagnostic `LogInfo` when name-match resolves to a different `npc_type_id` than the targeted spawn; update comment block; rebuild zone via ninja. **No C++ exclusion check** (Q7 is Lua-only for v2; tracked as future-work item 11). | c-expert | Not Started | Depends on V2-3 |
 | V2-5 | Run `./bin/zone tests:companion`; verify Suite 35 passes + Suite 20 (regression for re-recruit HP) passes + all 34 prior suites pass | c-expert | Not Started | Depends on V2-4 |

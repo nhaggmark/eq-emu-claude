@@ -19,8 +19,8 @@
 | L-4 | Fix `companion.lua:207` — LevelRange fallback `or 3` → `or 50` | L-2 | Complete (commit ad79630) |
 | L-5 | Fix `companion.lua:394-397` — add `ORDER BY level DESC, experience DESC, id DESC` | L-2 | Complete (commit ad79630) |
 | V2-Triage | Multi-variant npc_type_id mismatch investigation | None | Complete (commit 52d7bb3) |
-| V2-1 | Extend `make_db_stub` for name-query-aware dispatch + 2 failing TDD tests | V2 arch locked | Pending |
-| V2-2 | Lua fix: rename `check_existing_companion_record(npc_type_id,char_id)` → `(clean_name,char_id)`; swap SQL to `name = ?`; caller passes `npc:GetCleanName()` | V2-1 | Pending |
+| V2-1 | Extend `make_db_stub` for name-query-aware dispatch + 3 failing TDD tests | V2 arch locked | Complete (commit eb88551) |
+| V2-2 | Lua fix: rename `check_existing_companion_record(npc_type_id,char_id)` → `(clean_name,char_id)`; swap SQL to `name = ?`; caller passes `npc:GetCleanName()`; Q7 exclusion guard; diagnostic log | V2-1 | Complete (commit 6358c48) |
 
 **V2 architecture decision (R6):** Single name-only query — not ID-first-then-fallback. 1 query always, smaller test surface. Pending Decision V2-8 (cross-zone same-name semantics) before dispatch.
 
@@ -359,6 +359,82 @@ The existing 58-test suite has no test for multi-variant re-recruitment. Need to
 2. `test_rerecruit_variant_id_mismatch_without_name_fails` — Without name fallback, asserts current broken behavior (Track 2 fires) — documents the bug before fix
 
 The test stub infrastructure (`make_db_stub`) is designed for single fixed rows. For v2, we need a two-query stub: returns nil for ID query, returns a row for name query. This requires modifying the `Database()` stub to inspect the SQL or params.
+
+---
+
+---
+
+## V2 Stage 4: Build (2026-04-27)
+
+**Status:** Complete
+
+### Step A: Failing TDD tests (Task V2-1)
+
+Pre-fix baseline: 50 main + 8 edge case = **58 tests pass, 0 fail**.
+
+Added 3 new V2 TDD tests to `test_companion_recruitment.lua`. Added `make_db_stub_multi(name_row, excl_row)` helper for tests needing two-query dispatch. Updated `make_db_stub` to return nil for `companion_exclusions` queries by default (prevents Q7 exclusion guard from false-blocking all existing re-recruitment tests).
+
+| Test | What it asserts | Why it fails pre-fix |
+|------|-----------------|----------------------|
+| V2-TDD-1 | Multi-variant re-recruit: npc_type_id=10178 targeted, row stored for 10162, same name → Track 1 fires | Current ID-based query misses the row; Track 2 fires; NPC says nothing |
+| V2-TDD-2 | Single-variant regression: npc_type_id=9144 matches stored row → backward compat intact | Current ID-based query still works when ID matches, BUT make_db_stub_multi returns nil for non-name SQL; no row found |
+| V2-TDD-3 | Q7 exclusion bypass: companion_data row found unconditionally, exclusion row for target npc_type_id=2033 → must be blocked | Current `is_re_recruitment_eligible` has no exclusion check; Track 1 fires and companion is created |
+
+Pre-fix result: **50 pass, 3 fail** (exactly the 3 new V2 tests).
+
+Committed: `akk-stack` commit `eb88551`
+Pushed to `origin/bugfix/companion-rerecruit`
+
+### Step B: Fix (Task V2-2)
+
+Five targeted changes to `akk-stack/server/quests/lua_modules/companion.lua`:
+
+1. **New `companion._lookup_exclusion(npc_type_id)` helper** — extracted from `is_eligible_npc()` exclusion check (lines 251-262). Shared by both `is_eligible_npc` (Track 2) and `is_re_recruitment_eligible` (Track 1 Q7 guard). Returns excl_row if excluded, nil if not, false if DB unavailable.
+
+2. **`is_eligible_npc()` exclusion check** — updated to call `_lookup_exclusion` instead of inline DB query. Same behavior; refactored for sharing.
+
+3. **`check_existing_companion_record` signature** — `(npc_type_id, char_id)` → `(clean_name, char_id)`. SQL predicate `WHERE npc_type_id = ?` → `WHERE name = ? AND name != ''`. Added `npc_type_id` to SELECT. Doc comment rewritten to describe name-based lookup with multi-variant rationale.
+
+4. **Caller in `attempt_recruitment`** (line ~490 post-edit) — `check_existing_companion_record(npc_type_id, char_id)` → `check_existing_companion_record(npc:GetCleanName(), char_id)`. Added diagnostic `print()` when name-match resolves to a stored row with a different `npc_type_id` than the targeted spawn.
+
+5. **`is_re_recruitment_eligible()` Q7 step 6** — new check after existing steps 1-5. Calls `_lookup_exclusion(npc:GetNPCTypeID())` on the TARGET NPC's type ID. If excluded, returns false with "cannot be recruited" reason. Closes the name-match bypass: an excluded NPC (e.g. guildmaster npc_type_id=2033) is blocked even if a non-excluded same-name sibling's row was found in companion_data.
+
+Also updated `make_db_stub` in the test harness to return nil for `companion_exclusions` queries by default — so the 50 existing re-recruitment tests are unaffected by the new Q7 exclusion step.
+
+Committed: `akk-stack` commit `6358c48`
+Pushed to `origin/bugfix/companion-rerecruit`
+
+### Step C: Post-fix verification
+
+Ran `make test-companion` after the fix:
+
+```
+=== Results: 53 passed, 0 failed ===
+All tests passed.
+--- test_companion_rerec_edge_cases.lua ---
+8 passed, 0 failed
+```
+
+Total: **61 tests pass, 0 fail.** All 3 V2 TDD tests green. All 58 prior tests still green. No regressions.
+
+### Architecture deviations
+
+None. All changes match architecture.md V2 spec exactly:
+- Name-based SQL: `WHERE name = ? AND name != ''` bound to `npc:GetCleanName()` ✓
+- `npc_type_id` added to SELECT (per spec) ✓
+- Diagnostic log when stored npc_type_id differs from targeted spawn ✓
+- `_lookup_exclusion` helper extracted from `is_eligible_npc` ✓
+- Q7 step 6 in `is_re_recruitment_eligible` calling `_lookup_exclusion(npc:GetNPCTypeID())` ✓
+- 3 TDD tests written before fix (red commit eb88551, green after 6358c48) ✓
+- V2-TDD-2 failure mode note: test passes after fix because make_db_stub_multi returns the row for name=? SQL (which the fix now generates)
+- No ID-first fallback pattern implemented (single-query per R6) ✓
+
+### Commit SHAs
+
+| Commit | Repo | Description |
+|--------|------|-------------|
+| eb88551 | akk-stack | test(companion-rerecruit): 3 failing V2 TDD tests — red commit |
+| 6358c48 | akk-stack | fix(companion-rerecruit): V2 name-based lookup + Q7 exclusion guard — green commit |
 
 ---
 
