@@ -12,18 +12,29 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-27 | 2026-04-27 |
 | Design | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
-| Architecture | architect + protocol-agent + config-expert | Not Started | | |
+| Architecture | architect + protocol-agent + config-expert | Complete | 2026-04-27 | 2026-04-27 |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Architecture (handoff complete)
+**Current phase:** Implementation (architecture handoff complete)
 
 ---
 
 ## Handoff Log
 
 _Record each handoff between agents with context and any notes._
+
+### architect → implementation team (infra-expert + lua-expert + data-expert + game-tester)
+- **Date:** 2026-04-27
+- **Notes:** Architecture finalized at `architect/architecture.md`. Full triage of all four advisor consultations resolved a major architectural pivot:
+  - **Root cause discovered:** `companion.lua:1434` — `cmd_dismiss` calls `npc:Dismiss(true)` which maps to `Companion::Dismiss(permanent=true)` → `SoulWipe()` → DELETEs the companion_data row. The Lua doc comment at line 15 has the parameter semantics inverted. Every voluntary `!dismiss` destroys the re-recruit hint.
+  - **Three named blockers reframed as one root cause + two cascading symptoms.** Death path is correct (writes is_suspended=1). Cooldown is already bypassed by Track 1. Dismissed-flag query is already correct in current code.
+  - **Fix surface area:** 1-character Lua fix at companion.lua:1434, doc comment correction at line 15, LevelRange fallback hardening at line 207, 5 new TDD tests, 1 SQL DELETE of ghost row id=21, 1 Makefile target. **Zero C++ changes. Zero schema changes. Zero rule_values changes.**
+  - **8 implementation tasks** in linear dependency order (infra → tests → fix → verify → cleanup → validate). See architecture.md "Implementation Sequence" section.
+  - **All 4 PRD open questions resolved** in architecture.md "Resolved PRD Open Questions" section.
+  - **Advisor team contributions logged** in `agent-conversations.md` Architecture Team Conversations section. config-expert (rule audit, no changes needed), data-expert (schema verification, ghost-row dedup), c-expert (C++ trace, test infrastructure), lua-expert (smoking-gun root cause, live SQL reproduction, disagreement resolution).
+  - **Spawn ONLY** these implementation agents: infra-expert (Task 1), lua-expert (Tasks 2-6), data-expert (Task 7), game-tester (Task 8). Do NOT spawn c-expert, config-expert, perl-expert, or protocol-agent — they have no assigned tasks.
 
 ### bootstrap-agent → design team (game-designer + lore-master)
 - **Date:** 2026-04-27
@@ -74,7 +85,14 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| | | | | |
+| 1 | Add `make test-companion` target to akk-stack Makefile (luajit via Docker exec) | infra-expert | Not Started | Unblocks Task 2 |
+| 2 | Write 5 new failing TDD tests in `test_companion_recruitment.lua` per architecture.md test list | lua-expert | Not Started | Depends on Task 1 |
+| 3 | One-character fix at `companion.lua:1434` (`Dismiss(true)` → `Dismiss(false)`) | lua-expert | Not Started | Depends on Task 2 |
+| 4 | Doc comment correction at `companion.lua:15` (parameter semantics) | lua-expert | Not Started | Depends on Task 3 |
+| 5 | LevelRange fallback hardening at `companion.lua:207` (`or 3` → `or 50`) | lua-expert | Not Started | Depends on Task 3 |
+| 6 | Run `make test-companion`; verify 5 new tests pass + 38 existing tests still pass | lua-expert | Not Started | Depends on Tasks 3, 4, 5 |
+| 7 | Targeted DELETE of ghost row `companion_data.id=21` (SELECT-confirm-DELETE) | data-expert | Not Started | Depends on Task 6 |
+| 8 | In-game scenario validation (AC-3, AC-4, AC-6, AC-7, AC-10 + regressions) | game-tester | Not Started | Depends on Task 7 |
 
 ---
 
@@ -85,10 +103,10 @@ person responsible for answering._
 
 | # | Question | Raised By | Assigned To | Status | Answer |
 |---|----------|-----------|-------------|--------|--------|
-| 1 | First-recruit cooldown semantics — preserve cooldown for first-recruits (anti-thrash) or remove entirely if it only ever served as a re-recruit gate? | game-designer | architect | Open | |
-| 2 | In-memory cache flushing — if cooldown is bypassed at validation layer, cache staleness is irrelevant; if deleted at DB layer, cache invalidation must be considered | game-designer | architect | Open | |
-| 3 | "Other drop-out conditions" enumeration — verify zone disconnect, server restart, group disband, etc., are all covered by the invariant | game-designer | architect | Open | |
-| 4 | Quest-state interaction on re-recruit of quest-target NPCs (e.g., Lydl Mastat) — does re-recruit logic need to consider active-quest state? Invariant still holds; this is about quest-state cleanliness, not gating | lore-master | architect | Open | |
+| 1 | First-recruit cooldown semantics | game-designer | architect | **Resolved** | Preserve. RecruitCooldownS=900 continues to apply to Track 2 only. Bypass is at dispatch level (Track 1 short-circuit), not at rule-value level. See architecture.md "Resolved PRD Open Questions" Q1. |
+| 2 | In-memory cache flushing | game-designer | architect | **Resolved** | Bypass is at the validation layer (Track 1 dispatch). Cache is irrelevant. lua-expert confirmed zero stale cooldown rows in data_buckets currently. See architecture.md Q2. |
+| 3 | Other drop-out conditions enumeration | game-designer | architect | **Resolved** | Death works correctly. Voluntary dismiss fixed by this change. Permanent dismiss N/A (no Lua path invokes it). Zone-disconnect and group-disband flagged as future work — not currently failing per bug report. See architecture.md Q3. |
+| 4 | Quest-state interaction on re-recruit of quest-target NPCs | lore-master | architect | **Resolved** | No special handling. Invariant overrides quest gating per AC-10. Killing a re-recruited quest-target still fires EVENT_DEATH on the underlying NPC. See architecture.md Q4. |
 
 ---
 
@@ -124,6 +142,11 @@ _Key decisions made during this feature's development._
 | 3 | Lore review APPROVED — no blockers; two flavor edge cases (static-respawn fiction, quest-NPC interaction) folded into PRD as architect-awareness notes, not scope changes | game-designer + lore-master | 2026-04-27 | Companion system is a custom feature with no in-world fiction; invariant is purely mechanical |
 | 4 | Rename "Cyrla the Healer" → "Mira the Healer" in Scenario B | game-designer + lore-master | 2026-04-27 | Cyrla collides with real EQ NPC Cyrla Shadowstepper (level 61 Rogue, Highpass Hold). Generic invented name avoids noise for downstream readers |
 | 5 | Added AC-10: re-recruit of an NPC who is also a quest kill target (e.g., Lydl Mastat) still succeeds per the invariant; architect evaluates whether quest state needs special handling | game-designer + lore-master | 2026-04-27 | Lore-master flagged Lydl Mastat quest as an example of the broader edge case; invariant must hold regardless |
+| 6 | Root cause of dismiss blocker is `companion.lua:1434` invoking `Dismiss(true)` (permanent SoulWipe) instead of `Dismiss(false)` (voluntary preserve). Three PRD blockers reframed as one root cause + two cascading symptoms. | architect (after lua-expert smoking-gun) | 2026-04-27 | lua-expert traced companion.cpp:2553 if(permanent) SoulWipe branch; c-expert independently confirmed the else branch sets flags + Save(). Both readings reconciled — they describe different branches of the same conditional. |
+| 7 | Architecture is Lua-only with one-time DB cleanup. Zero C++ changes, zero schema changes, zero rule_values changes. | architect | 2026-04-27 | Triage confirmed C++ side already does the right thing on re-recruit (CreateFromNPC re-detects, clears flags, restores). Death path correctly persists is_suspended=1. The bug is Lua command invoking the wrong overload. |
+| 8 | TDD tests added BEFORE the fix per PRD AC-9 — must fail today, pass after. | architect | 2026-04-27 | PRD design constraint. The test suite is the deliverable that survives in the repo as machine-verified evidence. |
+| 9 | LevelRange fallback hardened from `or 3` to `or 50` at companion.lua:207 | architect | 2026-04-27 | Defense against future rule_values reset. Matches DB intent. |
+| 10 | Targeted DELETE of ghost row companion_data.id=21 (Hollish Tnoops level=14, 0 inventory). No broad UPDATE sweep needed — zero rows currently stuck. | architect (after data-expert) | 2026-04-27 | data-expert verified live state: zero is_dismissed=1 rows, zero cur_hp=0 rows. Only single targeted DELETE warranted. |
 
 ---
 
