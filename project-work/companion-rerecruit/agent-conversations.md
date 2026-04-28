@@ -782,3 +782,33 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
 | | | | |
+
+---
+
+## Implementation Team Conversations (v2 — companion-rerecruit-architecture-v2 team)
+
+_c-expert, lua-expert, data-expert working the multi-variant npc_type_id bug._
+
+### 2026-04-27 — c-expert: v2 triage findings to architect
+
+**From:** c-expert → **To:** architect
+
+**Summary of findings:**
+
+1. **`CreateFromNPC` query site confirmed** (`companion.cpp:215-222`): strict `npc_type_id` match. When source_npc has a different variant ID than the stored row, query returns empty, falls through to fresh-recruitment path, creates duplicate `companion_data` row. The stored row is orphaned.
+
+2. **Multi-variant scope confirmed in production DB:** Lydl_the_Great has 4 variants (10162, 10178, 10181, 392011). Spawngroup `freporte_140` includes 3 of them (10162, 10178, 10181) — 2/3 chance of spawning a variant that mismatches the stored row. Hollish_Tnoops has 2 variants (9144, 383271).
+
+3. **Same bug in Lua** at `companion.lua:397` — both queries must be fixed in sync.
+
+4. **Only one C++ query site needs fixing** — `companion.cpp:218`. All other companion_data accesses use PK (id) or owner_id — they're correct regardless of npc_type_id variants. No GM admin commands query companion_data by npc_type_id.
+
+5. **Recommended fix approach:** Change the detection query from strict `npc_type_id` match to a name-based match via JOIN on `npc_types.name` (Option A) or via `companion_data.name` column (Option B). Option A is semantically cleaner; Option B avoids a full `npc_types` table scan by using PK lookup for name retrieval.
+
+6. **Performance concern:** `npc_types.name` has NO index (66K rows, text column). A JOIN on this column is a table scan. Asking data-expert to confirm whether index is warranted or whether Option B is preferable.
+
+7. **Test infrastructure:** Last suite is Suite 34. New Suite 35 needed for multi-variant detection testing.
+
+8. **Third bug found (new, low severity):** `companion_data.name` can become stale if an NPC is renamed in npc_types after recruitment. Pre-existing, not introduced by this fix. Surfacing explicitly per instructions.
+
+9. **C++ change is REQUIRED** — unlike v1 which was Lua-only. Rebuild cycle needed.
