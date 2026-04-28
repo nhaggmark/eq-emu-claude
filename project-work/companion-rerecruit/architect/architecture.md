@@ -538,3 +538,336 @@ These are intentionally NOT addressed in this fix and are tracked as future work
 ---
 
 > **Next step:** Spawn the implementation team with the four agents listed in "Required Implementation Agents" above (infra-expert, lua-expert, data-expert, game-tester). They will coordinate via SendMessage and work through the 8-task list in dependency order.
+
+---
+
+# V2: Multi-Variant NPC Lookup Fix
+
+> **Date:** 2026-04-28
+> **Trigger:** In-game validation of v1 fix surfaced a second, deeper bug.
+> **Status:** Draft — pending user review before implementation.
+> **Branch:** `bugfix/companion-rerecruit` (still active across all four repos; v1 commits land before v2).
+
+## V2 Executive Summary
+
+The v1 fix (preserve `companion_data` row on voluntary dismiss) is correct and necessary, but it is incomplete. Live testing surfaced that `Lydl_the_Great` exists in spawngroup `freporte_140` (id 5765) as **three distinct `npc_type_id` values** (10162 level 4, 10178 level 2, 10181 level 3) all sharing the same name and same wizard-guild faction (186). A fourth variant exists in northro (392011, faction 0). The user's `companion_data` row stores `npc_type_id=10162` — the variant that spawned at the time of original recruitment. When the zone re-rolls and spawns a different variant (10178 or 10181), Track 1's strict `npc_type_id` lookup misses, Track 2 fires, and the player gets the level-cap rejection again — for an NPC they have already recruited and gear/leveled up.
+
+**This is not Lydl-specific.** Per data-expert: 9,202 distinct names in `npc_types` have more than one `npc_type_id`; 3,038 of those follow the proper-name pattern that recruitable NPCs use. Per lua-expert: NPCs like `orc_centurion` (44 variants), `Priest_of_Discord` (20), `Clockwork_Merchant` (29) carry the same risk if recruited. Two of the user's five active companions are already affected (Lydl with a 60% spawn-mismatch rate; Hollish_Tnoops nominally — but its second variant 383271 is an orphan with zero spawnentries, so practically safe).
+
+**The fix is to widen the re-recruit lookup from `npc_type_id` match to `companion_data.name` match,** keyed off the spawned NPC's `GetCleanName()`. Both Lua (`companion.lua:390-403`) and C++ (`companion.cpp:215-222`) must change in lockstep — Lua's Track 1 gating doesn't help if C++'s `CreateFromNPC` independently re-queries by ID and falls through to a fresh INSERT that orphans the original row.
+
+The v1 boundary "zero C++ changes" cannot hold for v2. **C++ rebuild is required.** Lua-only would leave the fix half-broken: Track 1 finds the row, calls `client:CreateCompanion(npc)`, and C++ promptly creates a duplicate fresh-recruit row.
+
+Surface area: ~30 lines of Lua, ~25 lines of C++, two new TDD tests in each layer, no schema changes, no rule_values changes, no migrations. Build cycle required (ninja rebuild of zone).
+
+## V2 Existing System Re-Analysis
+
+### What v1 missed
+
+v1's triage ran the live SQL `SELECT ... FROM companion_data WHERE owner_id=6 AND npc_type_id=10162 ...` and confirmed the row was present and findable. That confirmation was correct *for the variant that happened to be spawned during testing*. The investigation didn't enumerate spawngroup membership, so we never caught that other variants of the same NPC could occupy the spawn slot. The PRD's "previously recruited" language treats "the NPC" as a singular thing, but PEQ's data model treats each variant as a distinct `npc_type_id`. v1's test harness `make_db_stub(row)` always returned the seeded row regardless of params — so even the TDD coverage didn't expose the variant-mismatch case.
+
+### v2 ground-truth (verified live, 2026-04-28)
+
+| Fact | Source | Value |
+|------|--------|-------|
+| Lydl variants | data-expert / `npc_types` | 4 (10162, 10178, 10181, 392011) |
+| Lydl variants in `freporte_140` spawngroup | data-expert / `spawnentry` | 3 (10162, 10178, 10181 — equal 20% weight each) |
+| Lydl spawn-mismatch rate per attempt | derived | 60% (player's row stores 10162; 2 of 3 variants miss) |
+| Multi-variant scope (proper-named NPCs) | data-expert / aggregate | 3,038 names with >1 npc_type_id |
+| Orphan variant for Hollish_Tnoops (383271) | data-expert / `spawnentry` | 0 spawnentries → never spawns → not a real risk |
+| `npc_types.name` indexing | data-expert / SHOW INDEX | TEXT column, no index, 67,530 rows |
+| `companion_data.name` content | c-expert + lua-expert / `companion.cpp:2800` | Stored via `GetCleanName()` → CleanMobName strips digits and `_`→space; e.g. `Lydl_the_Great_001` → `Lydl the Great` |
+| `Lua_Mob::GetCleanName` luabind binding | architect / `lua_mob.cpp:3773` | Bound and available to scripts as `npc:GetCleanName()` |
+| C++ CreateFromNPC strict-ID query | c-expert / `companion.cpp:215-222` | Same bug shape as Lua |
+| Other C++ companion_data lookups | c-expert / Finding v2-7 | All use PK or owner_id; only one site needs changing |
+| GM commands querying companion_data by npc_type_id | c-expert / grep gm_commands | 0 matches |
+| Pre-existing stale-name risk | c-expert / Finding | If admin renames an NPC in `npc_types` after recruitment, `companion_data.name` becomes stale; pre-existing, unrelated to v2 |
+| companion_data integrity | data-expert | All 5 production rows have valid npc_types FK; no cleanup needed for v2 |
+
+### Why the bug bites both layers
+
+```
+Player /say "recruit" near Lydl variant 10178 in freporte
+  → Lua Track 1: SELECT … WHERE npc_type_id=10178 → MISS (row stores 10162)
+  → Lua Track 2: full eligibility → "is too far from your level to recruit" (or whatever Track 2 returns)
+                                          ↑ what the user just experienced
+
+Even if Lua Track 1 were widened to find the row:
+  → Lua calls client:CreateCompanion(npc_10178)
+  → C++ CreateFromNPC: SELECT … WHERE npc_type_id=10178 → MISS (row stores 10162)
+  → C++ falls through to fresh-recruit branch → INSERT new row with npc_type_id=10178
+  → Player gets a duplicate level-1 row; original 10162 row is orphaned
+```
+
+Both queries must widen together. The C++ side is load-bearing: it owns the row creation and is the last layer to filter.
+
+## V2 Technical Approach
+
+### Approach selection (A vs B vs C vs D)
+
+| Option | Description | Verdict |
+|--------|-------------|---------|
+| **A.** Lua-only name lookup | Match `npc_types.name` between current NPC and stored row's npc_type_id | **Reject.** Lua-only doesn't fix C++; bug persists. |
+| **B.** Lua + C++: try ID first, fall back to name | Two queries per recruit attempt; preserves exact-match for legacy data | **Acceptable but unnecessary.** No gain over D — name match catches the ID-equal case for free since `companion_data.name` is derived from the same NPC the ID points to. Two queries per recruit is wasteful. |
+| **C.** Data-only — collapse Lydl variants to one | DELETE 10178/10181, repoint spawnentries to 10162 | **Reject.** Doesn't fix systemic issue (3,038 other affected names). Doesn't help if first-recruit picked a non-canonical variant. Touches PEQ content data — fragile against PEQ updates. |
+| **D.** Lua + C++: name lookup using `companion_data.name` | Single name-based query in both layers, no JOIN, no `npc_types.name` scan | **Selected.** Index-friendly (uses idx_owner_active), no schema migration, equivalent semantics for the single-variant case (name matches because ID matches), generic across all multi-variant NPCs. |
+
+c-expert independently arrived at the same shape ("Option B" in their writeup, which is what we're calling Option D here — terminology confusion across two reports; the SQL is identical). lua-expert independently confirmed `companion_data.name` already stores the clean form.
+
+**Why not JOIN on `npc_types.name`?** Two reasons. First, `npc_types.name` is unindexed `TEXT` over 67,530 rows; every recruit attempt would table-scan. Second, `npc_types.name` retains underscores and digits while `companion_data.name` is the cleaned form — joining would either require a `REPLACE(name, '_', ' ')` (still doesn't strip digits, breaks for `Lydl_the_Great_001`) or `CleanMobName` semantics in SQL (impossible). Pulling the clean name from `npc:GetCleanName()` at the call site sidesteps both problems.
+
+### The new query (both layers, identical shape)
+
+```sql
+SELECT id, level, experience, recruited_level, stance, name, companion_type,
+       is_dismissed, is_suspended, npc_type_id
+FROM companion_data
+WHERE owner_id = ?
+  AND name = ?                                -- bound to npc:GetCleanName()
+  AND (is_dismissed = 1 OR is_suspended = 1)
+ORDER BY level DESC, experience DESC, id DESC
+LIMIT 1
+```
+
+**Indexing:** the `idx_owner_active` composite (`owner_id, is_dismissed, is_suspended`) filters to ~5–10 rows per player; the `name` predicate then evaluates against that handful — negligible cost, no `companion_data.name` index needed. data-expert verified zero index work required.
+
+**Backward compatibility:** for any single-variant NPC, `companion_data.name` resolves to the same clean string regardless of whether we look up by ID or by name. Existing behavior is preserved bit-for-bit. Multi-variant NPCs gain the new behavior. No data migration. No row mutation. Old rows continue working.
+
+**Returning `npc_type_id` in the SELECT:** added to make the row's stored variant ID available for downstream code (currently used in `Load()` and identification). The original ID is preserved in `companion_data.npc_type_id`; only the *trigger* (which entity in the world re-activates the row) widens.
+
+### Code Changes
+
+#### Lua — `akk-stack/server/quests/lua_modules/companion.lua`
+
+1. **Function signature change at line 390** — `check_existing_companion_record(npc_type_id, char_id)` → `check_existing_companion_record(clean_name, char_id)`. Rename for clarity. Drops `npc_type_id` parameter.
+2. **SQL replacement at lines 393-399** — replace `npc_type_id = ?` with `name = ?`, keep ORDER BY and LIMIT 1 unchanged. Bind `clean_name` instead of `npc_type_id`.
+3. **Caller change at line 463** — `check_existing_companion_record(npc_type_id, char_id)` → `check_existing_companion_record(npc:GetCleanName(), char_id)`. The `npc_type_id` local at line 456 stays (still used for the cooldown_key construction at line 458 and in `_on_recruitment_success`).
+4. **Doc comment update at lines 385-389** — update the comment block to say "looks up by clean name instead of npc_type_id; matches the C++ CreateFromNPC name-based fallback."
+
+The deprecated `check_dismissed_record` at line 371 is left untouched (dead code, no callers, marked DEPRECATED).
+
+#### C++ — `eqemu/zone/companion.cpp`
+
+1. **Replace SQL at lines 218-220** — replace the strict `npc_type_id = {}` predicate with `name = '{}'`. Bind `source_npc->GetCleanName()`. Add the same `ORDER BY level DESC, experience DESC, id DESC` for deterministic selection (currently absent in C++ — picks up "v1 future-work item 1a" from the old plan as part of v2). Use `SQL escape` (existing `Strings::Escape` helper or fmt with content-side sanitization) to prevent SQL injection from a maliciously named NPC entity. The recommended pattern uses `CompanionDataRepository::EscapeString(database, source_npc->GetCleanName())` if such a helper exists; otherwise `Strings::Escape` from `common/strings.h`.
+
+   **Skeleton:**
+   ```cpp
+   std::string clean_name = Strings::Escape(source_npc->GetCleanName());
+   auto existing = CompanionDataRepository::GetWhere(
+       database,
+       fmt::format(
+           "owner_id = {} AND name = '{}' AND (is_dismissed = 1 OR is_suspended = 1) "
+           "ORDER BY level DESC, experience DESC, id DESC LIMIT 1",
+           owner->CharacterID(),
+           clean_name
+       )
+   );
+   ```
+   Engineer (c-expert) confirms the canonical escape helper at implementation time.
+
+2. **Cooldown deletion at lines 272-275** — keep keyed on `source_npc->GetNPCTypeID()` for now. The cooldown key is per-variant by design (Track 1 doesn't read it; only Track 2 does). data-expert confirmed leaving stale per-variant cooldowns in `data_buckets` is harmless. No change.
+
+3. **Update comment block at lines 209-214** — replace the current rationale with a multi-variant note: "Match by stored clean name rather than npc_type_id, so that multi-variant NPCs (e.g. `Lydl_the_Great` with three spawn variants in freporte) are correctly recognized as previously-recruited regardless of which variant the spawngroup picks this time."
+
+4. **`SetRecruitedNPCTypeID` at line 296** — unchanged. The fresh-recruit branch still stores the variant the player actually triggered against. This is the correct semantic: if a player has *never* recruited any Lydl variant, they recruit the variant they trigger on; `companion_data.name` then receives `GetCleanName()` and any future variant resolves Track 1.
+
+#### SQL / schema changes
+
+**None.** No migrations, no index additions, no row updates, no row deletes. Existing `idx_owner_active` carries the load.
+
+#### Configuration changes
+
+**None.**
+
+### Open questions resolved
+
+| Question | Resolution |
+|----------|------------|
+| `_000` suffix on entity name | Non-issue. `GetCleanName()` strips digits before either layer queries. `companion_data.name` already stores the stripped form. |
+| Track 1 dispatch when name-matched | Track 1 still fails-closed for first-time recruits: a player with NO `companion_data` row for a given `name` gets nil from the query, falls through to Track 2 unchanged. The exclusion check, level range, etc. all live in Track 2's `is_eligible_npc()` and remain untouched. |
+| Cross-character bleed | `companion_data.owner_id` scopes the query. Character A's row is never visible to Character B's lookup. |
+| Multi-variant within `companion_exclusions` | Lua Track 1 short-circuits past `is_eligible_npc` (which holds the exclusion check), so an excluded variant of a previously-recruited NPC will *still* re-recruit. This is the intended invariant per AC-10 (invariant overrides quest gating). data-expert confirmed none of the 5 active companions are in the exclusions table. |
+| Stale-name (admin renames NPC in `npc_types` after recruit) | Documented edge case. Workaround if it ever happens: admin updates `companion_data.name` in lockstep, or simply re-recruits the NPC fresh. Not blocking v2. |
+| Cross-zone same-name (e.g. freporte Lydl vs northro Lydl variant 392011) | Edge case the team flagged. Data-expert noted faction differs (186 vs 0). Two perspectives: (a) "same name = same character, accept any" — generous, matches PRD's player-experience framing; (b) "different faction = different lore character, require disambiguation." For v2 we go with (a) — the PRD invariant prioritizes "this is the NPC I recruited" by player perception, and faction-based disambiguation can be added later if needed. **Surface to user for explicit confirmation before implementation.** |
+
+## V2 Implementation Sequence
+
+| # | Task | Agent | Depends On | Scope |
+|---|------|-------|------------|-------|
+| V2-1 | Extend Lua test harness `make_db_stub` to dispatch on bound params (returns nil when name doesn't match, returns row when it does); add 2 failing TDD tests covering multi-variant detection in `test_companion_recruitment.lua`: (a) `test_rerecruit_finds_row_via_name_when_npc_type_id_differs` — row with npc_type_id=10162 + name="Lydl the Great", queried against current npc with type_id=10178 + same clean name, asserts Track 1 fires; (b) `test_rerecruit_falls_through_when_name_does_not_match` — row exists but name differs, asserts Track 2 fires (regression guard for first-recruit dispatch). Run via `make test-companion`; verify both fail. | lua-expert | — | ~80 lines test code; ~15 lines harness change |
+| V2-2 | Apply the Lua fix per "Code Changes → Lua" section (signature change, SQL change, caller change, doc comment). Run `make test-companion`; verify the 2 new tests pass; verify all 58 v1 tests still pass. | lua-expert | V2-1 | ~30 lines |
+| V2-3 | Add C++ Suite 35 (`TestCompanionReRecruitmentVariantNameMatch`) in `eqemu/zone/cli/tests/cli_companion_tests.cpp`. Tests the query logic directly via `CompanionDataRepository::GetWhere` with the new SQL — same pattern as Suite 20. Two cases: (a) row stored with npc_type_id=A and name="Foo"; query with name="Foo" returns the row; (b) row stored with name="Foo"; query with name="Bar" returns empty. Plus regression: existing Suite 20 (HP/mana restoration via re-recruit) must still pass after the C++ query change. | c-expert | — | ~60 lines |
+| V2-4 | Apply the C++ fix per "Code Changes → C++" section (SQL replacement at companion.cpp:218-220 with `Strings::Escape`-protected name binding, ORDER BY tie-breaker, comment block update). Build via `docker exec ... ninja -j$(nproc)` — full zone rebuild. | c-expert | V2-3 | ~25 lines |
+| V2-5 | Run `./bin/zone tests:companion` inside the container; verify Suite 35 passes and all prior 34 suites still pass. | c-expert | V2-4 | runtime |
+| V2-6 | Restart server (Spire or `make restart` + infra-expert process startup per MEMORY) so the new C++ binary and reloaded Lua are live. | infra-expert | V2-5 | ~5 minutes |
+| V2-7 | In-game scenario validation — see "V2 Validation Plan" below. Append results to existing test plan. | game-tester | V2-6 | manual |
+
+**Dependency graph:**
+
+```
+V2-1 ─→ V2-2 ─┐
+              ├─→ V2-6 ─→ V2-7
+V2-3 ─→ V2-4 ─┘
+       └─→ V2-5 ┘
+```
+
+V2-1/V2-2 (Lua) and V2-3/V2-4/V2-5 (C++) can run in parallel up to V2-6.
+
+### Required v2 implementation agents
+
+| Agent | Tasks | Rationale |
+|-------|-------|-----------|
+| lua-expert | V2-1, V2-2 | Lua change owner; harness extension owner |
+| c-expert | V2-3, V2-4, V2-5 | C++ change owner; test suite owner |
+| infra-expert | V2-6 | Server rebuild + restart sequencing per MEMORY |
+| game-tester | V2-7 | In-game validation owner |
+
+**Not needed:** data-expert (zero DB changes), config-expert (zero rule changes), perl-expert, protocol-agent (zero packet changes), lore-master (no narrative content touched).
+
+## V2 Risk Assessment
+
+### Technical risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| `companion_data.name` is stale because admin renamed an NPC after recruitment | Very Low | Medium | Pre-existing risk; document only. Workaround: admin updates the row by hand. |
+| Two distinct previously-recruited NPCs share a clean name | Very Low for current 5 companions; theoretically possible | Medium | `ORDER BY level DESC, experience DESC, id DESC LIMIT 1` picks the most-invested row. Acceptable. If user wants stricter semantics, add `npc_faction_id` predicate later — flagged in Out-of-Scope. |
+| Cross-zone variant collision (freporte Lydl 186 vs northro Lydl 0) treated as same NPC | Low (player would have to physically travel zones with a never-recruited variant in the new zone) | Low | v2 picks "name = same NPC" semantics. **Confirm with user before implementation.** |
+| C++ name binding allows SQL injection if NPC display name contains a quote | Very Low (PEQ NPC names are alphanumeric+underscore) | High if it occurs | Use `Strings::Escape` (or repository's escape helper) on the bound name. |
+| Replacing C++ SQL changes the row found in a way Load() doesn't expect | Low | Medium | The found row's PK is fed into `Load(existing[0].id)`; everything downstream works on PK. Only the *which row gets found* changes. Suite 35 verifies. |
+| Zone rebuild fails or introduces an unrelated build break | Low | High | Engineer reverts the one C++ patch hunk; Lua-only state still leaves us no worse than v1. |
+| Lua test harness change breaks one of the 58 v1 tests | Low | Low | Harness extension is additive (dispatch on params); old tests that don't exercise dispatch see identical behavior. CI catches it. |
+| Stale per-variant cooldowns accumulate in `data_buckets` | Certain (no GC) | Trivial | Already happens today; pre-existing. Track 1 ignores cooldowns. data-expert flagged but agreed harmless. |
+
+### Compatibility risks
+
+- **Charm pets, swarm pets, mercs, bots:** unaffected. None query `companion_data`. c-expert confirmed `Companion::CreateFromNPC` is the only site changing.
+- **Existing companion_data rows:** zero migration. `companion_data.name` is already populated correctly via `GetCleanName()` for every existing row (data-expert verified all 5 production rows).
+- **GM commands and admin tooling:** c-expert confirmed zero `npc_type_id`-keyed companion_data lookups in `gm_commands/`. No admin path requires strict ID match.
+- **PEQ content updates:** unaffected. `companion_data.name` is computed at recruit time from the live NPC, not pulled from `npc_types`.
+
+### Performance risks
+
+- New query: same access pattern as v1 (`idx_owner_active` filter to 5-10 rows, then string compare on a single column). Equivalent to v1 within measurement noise.
+- `npc_types.name` is **not** queried by either layer in v2. The unindexed-TEXT-table-scan concern data-expert raised is avoided entirely by using `companion_data.name`.
+
+## V2 Review Passes
+
+### Pass 1: Feasibility
+
+Yes, end-to-end. Lua change is mechanical (rename param, swap predicate, update caller). C++ change is mechanical (swap predicate, add escape, add ORDER BY). Test infrastructure exists in both layers; only delta is the harness dispatch extension on the Lua side. Build cycle is the standard ninja rebuild already documented in CLAUDE.md.
+
+**protocol-agent consultation:** not needed for v2 — zero packets change. Recruitment dialog and spawn packets are unaffected; the change is purely DB-query-shape.
+
+**config-expert consultation:** not needed for v2 — zero rules change.
+
+### Pass 2: Simplicity
+
+Yes. Single behavioral change in two synchronized sites: widen the predicate from ID-match to name-match. No new tables, no new columns, no rules, no migrations, no UPSERT redesign, no data dedup. Two new TDD tests in each layer (4 total). Build + restart is standard.
+
+We considered and rejected:
+- **JOIN on `npc_types.name`**: rejected for unindexed-TEXT scan and digit-stripping mismatch.
+- **Add `idx_name_prefix` index on `npc_types.name`**: not needed once we use `companion_data.name` directly. Defer indefinitely.
+- **Collapse Lydl variants in PEQ data** (Option C): rejected — doesn't fix the systemic issue, breaks PEQ updates, doesn't help first-recruits on non-canonical variants.
+- **`UNIQUE (owner_id, name)` on `companion_data`**: would prevent two rows with the same clean name for the same player. Currently desirable but premature: would require a deduplication pass first, and the v1 future-work `UNIQUE (owner_id, npc_type_id)` is still tracked. Defer both.
+- **Add `npc_faction_id` to the predicate**: rejected for v2 (over-constrains the simple case and the user has not asked for it). Tracked as future work if cross-zone collisions become a real problem.
+- **Triple-fallback (id → name → fuzzy)**: rejected as over-engineered.
+
+### Pass 3: Antagonistic
+
+What could go wrong:
+
+- **Edge: player recruited Lydl 10162 in freporte, never visited northro. Travels to northro and triggers recruit on Lydl 392011 (faction 0).** Track 1 fires — recognizes 392011's clean name `Lydl the Great` matches the freporte row. The freporte Lydl re-spawns from the existing row. **Is that correct?** Per current PRD invariant ("the NPC the player has previously recruited"): debatable. Treating same-name as same-character is the player-friendly read. **This is the user-confirmation question above. Surfaced explicitly.**
+
+- **Edge: player has TWO `companion_data` rows with the same clean name from two genuinely different NPCs.** Currently impossible (5 active companions, all unique names). Future risk if NPC content adds unrelated NPCs that share a name. ORDER BY tie-breaker selects highest-level row — the one with most player investment. Acceptable. data-expert agreed.
+
+- **Edge: SQL injection via NPC display name.** PEQ names are alphanumeric+underscore by content rule. Even so, escape the bound name. `Strings::Escape` covers it.
+
+- **Edge: race — player simultaneously triggers recruit on two different variants of the same NPC.** The `is_recruited` entity variable guard at `_on_recruitment_success` (companion.lua:514+) prevents double-add; the second call sees the entity flag and aborts. Same protection as v1.
+
+- **Edge: server crash mid-recruit.** Same as v1 — atomic SQL commit at `Save()` level. If the row is committed, restart restores; if not, the row stays in its dropped-out state and is re-recruitable.
+
+- **Edge: a future feature or admin tool inserts a `companion_data` row with a hand-typed name that has different casing or whitespace from `GetCleanName()`'s output.** The `latin1_swedish_ci` collation is case-insensitive so casing doesn't matter; whitespace is the genuine risk (e.g. trailing space in the row). Acceptable to ignore for v2 since no path produces such rows today.
+
+- **Edge: the user's "deeper bug" might have ANOTHER hidden dimension we haven't found yet.** This is the second time triage missed something. To address: (a) lua-expert, c-expert, and data-expert each independently audited their layer in v2 and converged on the same root cause and fix shape; (b) game-tester's v2 scenario list (below) covers all four variant cases; (c) we explicitly surface the cross-zone faction question to the user before implementation. If a third surprise lands, we treat it as v3 with the same discipline.
+
+### Pass 4: Integration
+
+Pieces fit cleanly. Lua-side and C++-side changes are independent up to V2-6 (server restart) and parallelizable. The single integration touchpoint is that BOTH must land before a server-restart: a Lua-only restart leaves C++ creating duplicate rows; a C++-only restart leaves Track 1 unable to fire because Lua's Track 1 query still misses. The implementation sequence enforces this — V2-6 only happens after both V2-2 (Lua tests pass) and V2-5 (C++ tests pass).
+
+Each agent has a complete file:line citation list and exact SQL to write. No reverse dependencies; no circular blocks.
+
+## V2 Validation Plan
+
+### Engineer-side (pre-server-restart)
+
+- **lua-expert (V2-2):** all 58 v1 tests pass + 2 new v2 tests pass. `make test-companion` exits 0.
+- **c-expert (V2-5):** Suite 35 passes; Suite 20 (regression) passes; all 34 prior suites pass.
+
+### Game-tester (V2-7, post-server-restart)
+
+Append these to the v1 test plan; do not replace it. Run BOTH plans.
+
+1. **Multi-variant re-recruit (canonical Lydl repro).** With Lydl row id=10 in `is_suspended=1` state (level 53, full gear), enter freporte, locate Lydl in the tavern. Repeat the recruit attempt across multiple zone re-spawns until each of the three variants (10162, 10178, 10181) has been observed at least once (the user can `#zone freporte` to force re-spawns). Re-recruit succeeds on all three. Companion rejoins as level 53 with all 14 inventory items. **This is the canonical AC-1/AC-3/AC-4/AC-5/AC-6 case for v2.**
+
+2. **Single-variant regression — Hollish_Tnoops, Jracol_Brestiage, Lashun_Novashine, Jimble_Woodentoe.** For each previously-recruited single-variant companion, dismiss → re-recruit → verify Track 1 fires (not Track 2 with cooldown). Confirms backward compat for non-multi-variant NPCs.
+
+3. **First-recruit regression — never-before-recruited NPC.** Approach a never-recruited NPC at a level outside `LevelRange`. Recruit attempt rejected with "is too far from your level to recruit." Confirms Track 2 first-recruit gating still fires when no `companion_data` row exists.
+
+4. **Cross-zone variant** *(only if user confirms the same-name = same-character semantics; otherwise skip).* Travel to northro, locate Lydl 392011 (different faction), trigger recruit. Expectation depends on user's design call: either Track 1 fires re-using freporte row (current plan), or specific guidance per user input.
+
+5. **Concurrent recruit regression — two simultaneous recruit attempts on the same variant of a previously-recruited NPC.** Existing `is_recruited` entity variable guard ensures only one companion is created.
+
+6. **C++ duplicate-row check.** After scenario 1, query `SELECT id, npc_type_id FROM companion_data WHERE owner_id=6 AND name='Lydl the Great';` — must return exactly ONE row (id=10, npc_type_id=10162). No duplicates from variant-mismatch INSERTs.
+
+### Acceptance criteria coverage (v2-specific)
+
+| AC | Scenario | Owner |
+|----|----------|-------|
+| AC-1, AC-3, AC-5, AC-6 (variant re-recruit) | game-tester scenario 1 + Lua TDD V2-1(a) + C++ Suite 35 case (a) | game-tester + engineers |
+| AC-7 (first-recruit gating) | game-tester scenario 3 + Lua TDD V2-1(b) | game-tester + lua-expert |
+| AC-8 (concurrent re-recruit) | game-tester scenario 5; existing v1 coverage | game-tester |
+| AC-9 (TDD-first) | V2-1 and V2-3 written before V2-2 and V2-4 respectively; verify failing first | lua-expert + c-expert |
+| AC-10 (quest-target NPC) | unaffected by v2; v1 coverage stands | game-tester |
+| Regression: no duplicate rows after multi-variant recruit | game-tester scenario 6 | game-tester |
+| Regression: single-variant NPCs unaffected | game-tester scenario 2 | game-tester |
+
+## V2 Out-of-Scope (tracked for future work)
+
+1. **`UNIQUE (owner_id, name)` constraint on `companion_data`** — paired with the v1-tracked `UNIQUE (owner_id, npc_type_id)`. Both deferred. Requires UPSERT semantics in C++ and a dedup pass first.
+2. **`npc_faction_id` disambiguation** — if cross-zone same-name collisions become a real problem (currently theoretical), add faction predicate to Track 1. Defer pending real evidence.
+3. **`Strings::Escape` audit of all `companion_data` queries** — c-expert noted only the new query needs it; existing ID-keyed queries don't. Future hardening if any other text-keyed lookup is added.
+4. **Stale-name handling if admin renames `npc_types`** — pre-existing, low-frequency, document-only.
+5. **Companion rename cascade** — if v2 introduces a companion-rename feature, `companion_data.name` would need to update. Not in scope.
+6. **`lua_companion.cpp:103` parameter rename** (`voluntary` → `permanent`) — still tracked from v1. Defer.
+7. **Cooldown GC for stale per-variant `data_buckets` rows** — harmless accumulation; defer indefinitely.
+8. **Add `idx_name_prefix(name(100))` on `npc_types.name`** — only relevant if we ever revert to JOIN-on-npc_types-name. Not needed for v2.
+9. **`check_dismissed_record` (deprecated function)** — v2 leaves it untouched. Could be deleted in cleanup pass.
+
+## V2 Decision Log
+
+| # | Decision | Rationale |
+|---|----------|-----------|
+| V2-1 | Use `companion_data.name` for re-recruit lookup, bound to `npc:GetCleanName()` | Avoids unindexed `npc_types.name` scan. Avoids digit-stripping mismatch between `npc_types.name` and `CleanMobName`. Keeps query scope inside the per-player rowset (~5-10 rows). |
+| V2-2 | Both Lua and C++ must change in lockstep | C++ `CreateFromNPC` runs an independent query; Lua-only fix would be silently undone by C++ falling through to fresh-recruit and inserting a duplicate row. |
+| V2-3 | Reject Option A (JOIN on `npc_types.name`) | Unindexed TEXT, 67k rows, table-scan per recruit. `REPLACE(name, '_', ' ')` doesn't strip digits. |
+| V2-4 | Reject Option C (data dedup of Lydl variants) | Doesn't fix systemic 3,038-name pattern; touches PEQ content; fragile against PEQ updates. |
+| V2-5 | Reject `UNIQUE` constraint and faction-disambiguation work for now | Premature; no current evidence either is needed. Track as future work. |
+| V2-6 | C++ ORDER BY added at the new query in lockstep with Lua's existing one | Picks up the v1 future-work item 1a; deterministic selection across both layers. |
+| V2-7 | Use `Strings::Escape` (or repository's canonical helper) on the bound NPC name | Defense against pathological NPC display names with SQL metacharacters; cheap. |
+| V2-8 | Cross-zone same-name (freporte Lydl vs northro Lydl) treated as same character | Player-experience semantics per PRD invariant; flagged for explicit user confirmation before implementation. |
+| V2-9 | TDD discipline carries from v1: failing tests before fix in BOTH layers | PRD AC-9. |
+
+## V2 Rollback
+
+Per-layer revert is independent and additive:
+
+1. **Lua revert (V2-2 only):** revert `companion.lua` to v1 state. Track 1 no longer matches multi-variant; bug reappears. C++ side may stay v2-fixed without harm — when Lua falls through to Track 2, C++'s `CreateFromNPC` is never called.
+2. **C++ revert (V2-4 only):** revert `companion.cpp:218-220` to v1 state. Lua Track 1 finds the row, calls `client:CreateCompanion`, C++ then runs the strict-ID query, misses, INSERTs a duplicate. **This rollback ordering is unsafe** — only roll back C++ if Lua is reverted in lockstep.
+3. **Test rollback:** new TDD tests stay in the repo as known-broken markers if either implementation is reverted. PRD discipline: tests survive even a revert.
+
+The atomic-rollback path is "revert both V2-2 and V2-4." Engineers do not roll back C++ alone.
+
+---
+
+> **Next step:** User reviews this v2 plan. Open question to confirm: cross-zone same-name semantics (Decision V2-8). Once confirmed, the orchestrator spawns the implementation team — lua-expert (V2-1, V2-2), c-expert (V2-3, V2-4, V2-5), infra-expert (V2-6), game-tester (V2-7).

@@ -2,7 +2,7 @@
 
 > **Feature branch:** `bugfix/companion-rerecruit`
 > **Created:** 2026-04-27
-> **Last updated:** 2026-04-28
+> **Last updated:** 2026-04-28 (v2 architecture phase opened)
 
 ---
 
@@ -12,18 +12,30 @@
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-04-27 | 2026-04-27 |
 | Design | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
-| Architecture | architect + protocol-agent + config-expert | Complete | 2026-04-27 | 2026-04-27 |
-| Implementation | infra-expert + lua-expert + data-expert | Complete | 2026-04-27 | 2026-04-28 |
-| Validation | game-tester | In Progress | 2026-04-28 | |
+| Architecture (v1) | architect + protocol-agent + config-expert | Complete | 2026-04-27 | 2026-04-27 |
+| Implementation (v1) | infra-expert + lua-expert + data-expert | Complete | 2026-04-27 | 2026-04-28 |
+| Validation (v1) | game-tester | Complete (v1 fix verified working in-game; surfaced multi-variant bug) | 2026-04-28 | 2026-04-28 |
+| Architecture (v2) | architect + lua-expert + c-expert + data-expert | Complete (pending user review) | 2026-04-28 | 2026-04-28 |
+| Implementation (v2) | lua-expert + c-expert + infra-expert | Not Started | | |
+| Validation (v2) | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Validation — server-side checks PASS; waiting on user in-game testing
+**Current phase:** Architecture v2 complete — awaiting user review of v2 plan, then implementation team spawn
 
 ---
 
 ## Handoff Log
 
 _Record each handoff between agents with context and any notes._
+
+### architect (v2) → user (review gate)
+- **Date:** 2026-04-28
+- **Notes:** v2 architecture appended to `architect/architecture.md` ("V2: Multi-Variant NPC Lookup Fix" section). Three-advisor consultations (lua-expert, c-expert, data-expert) all converged on Option D / B (same SQL): widen Track 1 lookup from `npc_type_id` match to `companion_data.name` match, keyed off `npc:GetCleanName()`. **C++ rebuild required this time** — Lua-only fix is provably insufficient because C++ `Companion::CreateFromNPC` runs an independent strict-ID query that creates a duplicate row and orphans the original.
+  - **Scope:** ~30 lines Lua + ~25 lines C++ + 4 new TDD tests + standard build cycle. Zero schema changes, zero rule changes, zero migrations.
+  - **One open user decision:** Decision V2-8 — cross-zone same-name semantics (treat freporte Lydl 186 and northro Lydl 392011 faction-0 as the same character or as distinct?). v2 default = same character (player-friendly). Confirm before implementation.
+  - **7 v2 implementation tasks** populated in the Implementation Tasks table; assigned experts: lua-expert (V2-1, V2-2), c-expert (V2-3, V2-4, V2-5), infra-expert (V2-6), game-tester (V2-7).
+  - **Advisor reports preserved** in `agent-conversations.md` under "Implementation Team Conversations (v2 — companion-rerecruit-architecture-v2 team)".
+  - **Decision Log** entries 11-19 added covering all v2 decisions.
 
 ### game-tester → completion (pending user in-game confirmation)
 - **Date:** 2026-04-28
@@ -113,6 +125,19 @@ _Populated by the architect after the architecture doc is approved._
 | 7 | Targeted DELETE of ghost row `companion_data.id=21` (SELECT-confirm-DELETE) | data-expert | Complete 2026-04-27 | Depends on Task 6 |
 | 8 | In-game scenario validation (AC-3, AC-4, AC-6, AC-7, AC-10 + regressions) | game-tester | In Progress 2026-04-28 | Server-side PASS; test-plan.md written; awaiting user in-game runs |
 
+### v2 Implementation Tasks (multi-variant lookup fix)
+
+| # | Task | Agent | Status | Notes |
+|---|------|-------|--------|-------|
+| V2-1 | Extend Lua test harness `make_db_stub` for param-aware dispatch + write 2 failing TDD tests for multi-variant detection | lua-expert | Not Started | Tests must fail BEFORE V2-2 per AC-9 |
+| V2-2 | Apply Lua fix in `companion.lua` (rename `check_existing_companion_record` param to `clean_name`, swap SQL predicate to `name = ?`, change caller at line 463 to pass `npc:GetCleanName()`, update doc comment); run `make test-companion`; verify 2 new tests pass + 58 v1 tests pass | lua-expert | Not Started | Depends on V2-1 |
+| V2-3 | Add Suite 35 (`TestCompanionReRecruitmentVariantNameMatch`) in `cli_companion_tests.cpp` — exercises `CompanionDataRepository::GetWhere` with new SQL; tests name-match + name-mismatch cases | c-expert | Not Started | Tests must fail BEFORE V2-4 per AC-9 |
+| V2-4 | Apply C++ fix at `companion.cpp:218-220` (replace `npc_type_id={}` with escaped `name='{}'`, add ORDER BY tie-breaker, update comment block); rebuild zone via ninja | c-expert | Not Started | Depends on V2-3 |
+| V2-5 | Run `./bin/zone tests:companion`; verify Suite 35 passes + Suite 20 (regression for re-recruit HP) passes + all 34 prior suites pass | c-expert | Not Started | Depends on V2-4 |
+| V2-6 | Server restart (containers + EQ processes per MEMORY: shared_memory, loginserver, world, 8 zone dynamics) so the new C++ binary and reloaded Lua go live | infra-expert | Not Started | Depends on V2-2 AND V2-5 (both layers must land in lockstep) |
+| V2-7 | In-game validation — 6 v2 scenarios (canonical Lydl multi-variant, single-variant regression, first-recruit regression, optional cross-zone, concurrent recruit, no-duplicate-row check) | game-tester | Not Started | Depends on V2-6 |
+
+
 ---
 
 ## Open Questions
@@ -126,6 +151,7 @@ person responsible for answering._
 | 2 | In-memory cache flushing | game-designer | architect | **Resolved** | Bypass is at the validation layer (Track 1 dispatch). Cache is irrelevant. lua-expert confirmed zero stale cooldown rows in data_buckets currently. See architecture.md Q2. |
 | 3 | Other drop-out conditions enumeration | game-designer | architect | **Resolved** | Death works correctly. Voluntary dismiss fixed by this change. Permanent dismiss N/A (no Lua path invokes it). Zone-disconnect and group-disband flagged as future work — not currently failing per bug report. See architecture.md Q3. |
 | 4 | Quest-state interaction on re-recruit of quest-target NPCs | lore-master | architect | **Resolved** | No special handling. Invariant overrides quest gating per AC-10. Killing a re-recruited quest-target still fires EVENT_DEATH on the underlying NPC. See architecture.md Q4. |
+| 5 | (v2) Cross-zone same-name semantics — treat freporte Lydl (faction 186) and northro Lydl 392011 (faction 0) as the same character (current plan) or as distinct NPCs requiring disambiguation? | architect | user | **Open — needs user input before V2 implementation** | Default: same character (player-friendly per PRD invariant). Alternative: add `npc_faction_id` predicate to Track 1 to keep cross-faction variants distinct. See architecture.md V2 Decision V2-8. |
 
 ---
 
@@ -146,7 +172,8 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-001 | Re-recruitment blocked by level cap (and possibly cooldowns + dismissed flag) | High | user | Open | TBD | |
+| BUG-001 | Re-recruitment blocked by level cap (and possibly cooldowns + dismissed flag) | High | user | Resolved (v1 fix; verified in-game 2026-04-28) | architect → lua-expert + data-expert | 2026-04-28 |
+| BUG-002 | Re-recruitment fails for multi-variant NPCs (e.g. Lydl_the_Great in freporte) when zone spawns a different `npc_type_id` variant than originally recruited | High | game-tester / user (in-game v1 validation) | Investigating → Fix Planned (v2 architecture complete) | architect → lua-expert + c-expert | |
 
 ---
 
@@ -166,6 +193,15 @@ _Key decisions made during this feature's development._
 | 8 | TDD tests added BEFORE the fix per PRD AC-9 — must fail today, pass after. | architect | 2026-04-27 | PRD design constraint. The test suite is the deliverable that survives in the repo as machine-verified evidence. |
 | 9 | LevelRange fallback hardened from `or 3` to `or 50` at companion.lua:207 | architect | 2026-04-27 | Defense against future rule_values reset. Matches DB intent. |
 | 10 | Targeted DELETE of ghost row companion_data.id=21 (Hollish Tnoops level=14, 0 inventory). No broad UPDATE sweep needed — zero rows currently stuck. | architect (after data-expert) | 2026-04-27 | data-expert verified live state: zero is_dismissed=1 rows, zero cur_hp=0 rows. Only single targeted DELETE warranted. |
+| 11 | (v2) v1 fix is correct but incomplete; v2 widens re-recruit lookup to handle multi-variant `npc_type_id` patterns (e.g. Lydl_the_Great with 3 freporte variants in spawngroup_140) | architect | 2026-04-28 | In-game testing surfaced 60% spawn-mismatch rate for Lydl. Multi-variant pattern is pervasive (3,038 proper-named NPCs world-wide have >1 npc_type_id) — generic fix preferred over data-specific dedup. |
+| 12 | (v2) Selected approach D/B: widen Track 1 from strict `npc_type_id` match to `companion_data.name` match keyed off `npc:GetCleanName()` | architect (after lua-expert + c-expert convergence) | 2026-04-28 | lua-expert and c-expert independently arrived at identical SQL shape. Avoids unindexed `npc_types.name` table scan (66K rows). Avoids digit-stripping mismatch between `npc_types.name` and `CleanMobName`. Single query per layer; backward compatible bit-for-bit for single-variant NPCs. |
+| 13 | (v2) C++ rebuild required — both Lua AND C++ must change in lockstep | architect (after lua-expert proof) | 2026-04-28 | C++ `CreateFromNPC` at companion.cpp:218 runs an INDEPENDENT strict-ID query. Lua-only fix would be silently undone: Track 1 finds row → calls `client:CreateCompanion(npc)` → C++ falls through to fresh-recruit INSERT → duplicate row, original orphaned. v1 boundary "zero C++ changes" cannot hold for v2. |
+| 14 | (v2) Reject Option A (JOIN on `npc_types.name`) | architect | 2026-04-28 | `npc_types.name` is unindexed TEXT, 67K rows; JOIN per recruit attempt = table scan. `REPLACE(name, '_', ' ')` doesn't strip digits while `CleanMobName` does — JOIN would miss for names with digit suffixes. |
+| 15 | (v2) Reject Option C (data dedup of Lydl variants) | architect | 2026-04-28 | Doesn't fix systemic 3,038-name pattern. Touches PEQ content. Fragile against PEQ updates. Doesn't help if first-recruit picked a non-canonical variant. |
+| 16 | (v2) `Strings::Escape` (or repository's canonical helper) on the bound NPC name in C++ SQL | architect | 2026-04-28 | Defense against pathological NPC display names with SQL metacharacters. Cheap and standard. |
+| 17 | (v2) ORDER BY `level DESC, experience DESC, id DESC LIMIT 1` added to C++ query in lockstep with Lua's existing one | architect | 2026-04-28 | Closes v1 future-work item 1a (C++ deterministic selection) as part of v2 since we're touching the C++ query anyway. |
+| 18 | (v2) Defer `UNIQUE (owner_id, name)` constraint and `npc_faction_id` disambiguation | architect | 2026-04-28 | Premature without evidence of need. Adding constraints requires UPSERT redesign and dedup pass first. v1 already tracks UNIQUE (owner_id, npc_type_id) — same fate. |
+| 19 | (v2) Cross-zone same-name semantics: treat as same character by default; surface to user for explicit confirmation | architect | 2026-04-28 | freporte Lydl 186 vs northro Lydl 0 share name only. PRD invariant prioritizes player perception; same-name = same character is the player-friendly read. User can override before implementation. |
 
 ---
 
