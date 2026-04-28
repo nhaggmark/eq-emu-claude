@@ -22,6 +22,30 @@ Read PRD → query `rule_values` for all `Companions:*` rows → cross-check aga
 
 ---
 
+## CORRECTION — Architect Follow-Up (2026-04-27)
+
+After sending the initial report, I ran additional research in response to the architect's direct consultation. This reveals a critical correction to the initial findings.
+
+**The Lua bypass already exists.** `companion.lua:450-476` implements a two-track system:
+- Re-recruitment track (lines 462-476): if `check_existing_companion_record()` returns a row, all level/cooldown/faction/persuasion checks are skipped entirely.
+- First-time track (lines 478+): full eligibility + cooldown + persuasion roll.
+
+`LevelRange` (line 207) and `RecruitCooldownS` (line 542) are both **Lua-only** — confirmed by grep of entire `eqemu/` C++ source. Neither is read in any `.cpp` or `.h` file. The comment at `eqemu/zone/companion.cpp:3792` confirms this explicitly: "No C++ method needed here — Lua reads RuleR(Companions, ReRecruitBonus)."
+
+**The real bug is in `check_existing_companion_record()` (`companion.lua:390-403`):**
+
+```sql
+WHERE owner_id = ? AND npc_type_id = ? AND (is_dismissed = 1 OR is_suspended = 1)
+```
+
+This query only detects the re-recruit track if `is_dismissed=1 OR is_suspended=1`. If those flags are not set correctly after death/dismissal — or are cleared prematurely — the query returns nil, the player falls through to the first-time track, and they hit the level check, cooldown, and persuasion roll.
+
+**Revised config-level conclusion:** Rules are not the bug. The bypass logic is correct and already implemented. The failure is upstream — in whether `is_dismissed` or `is_suspended` is set correctly on the `companion_data` record when a companion dies or is dismissed. That is entirely data-expert + lua-expert territory.
+
+**Config-expert has no implementation tasks for this feature** unless the architect decides to add new optional toggle rules.
+
+---
+
 ## Stage 2: Research
 
 ### Sources Consulted
