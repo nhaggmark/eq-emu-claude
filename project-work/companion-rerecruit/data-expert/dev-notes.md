@@ -170,9 +170,19 @@ DELETE FROM companion_data WHERE id = 21;
 
 Architecture note flagged to architect: the exclusion check should happen BEFORE the "previously recruited" bypass check in the recruit gate, so the bypass can short-circuit past exclusions for already-recruited NPCs.
 
+### Architect Second Round Follow-up (2026-04-27)
+
+**Q-A confirmed:** Lydl id=10, companion level=53, npc_types.level (base)=4, is_suspended=1, is_dismissed=0, cur_hp=1504. If the level-cap check uses npc_types.level=4 instead of companion_data.level=53, any player above level 54 trips LevelRange=50. That is the Track 2 bug path.
+
+**Q-B dedup query — architect's sketch had a logic flaw:** ORDER BY inside a subquery for IN() includes all rows, not just the winner. Correct approach is targeted DELETE by known id=21 only. Generalized dedup belongs in a migration script, not inline SQL.
+
+**Q-C exclusions:** All user companion NPCs (10162, 9144, 22014, 2029, 2032) confirmed absent from companion_exclusions. No corner case for repro candidates.
+
+**Q-D UNIQUE INDEX recommendation:** YES — but only after dedup DELETE and after C++ updated to UPSERT semantics. Schema change needs custom migration entry in database_update_manifest_custom.h. Deployment sequence critical: (1) targeted DELETE id=21, (2) ALTER TABLE ADD UNIQUE INDEX uk_owner_npc (owner_id, npc_type_id), (3) deploy C++ with UPSERT. C-expert must confirm no legitimate multi-row use case before adding constraint.
+
 ### Consensus Plan
 
-(Pending architecture.md — architect has all data needed to finalize)
+(Pending architecture.md — triage complete, awaiting build-phase task assignment)
 
 ---
 
