@@ -196,9 +196,67 @@ c-expert confirmed via SendMessage: Suite 29 tests 29.14-29.17 PASS, all 13 exis
 
 ---
 
+---
+
+## V2.8 — Stage 4: Build (2026-04-28)
+
+### V2.8 Implementation Log
+
+#### 2026-04-28 — c-expert V2.7 confirmation received
+
+c-expert confirmed via SendMessage: All 36 companion test suites PASS. Fixes A, R4, B, C all built and tested. eqemu committed at `17662d4ba` on `bugfix/companion-rez`.
+
+#### 2026-04-28 — make restart executed
+
+**What:** Ran `make restart` from `/mnt/d/Dev/eq/akk-stack/`. All containers stopped and restarted cleanly.
+**Containers up:** eqemu-server, mariadb, ftp-quests, phpmyadmin, peq-editor, npc-llm, all proxies and fail2ban sidecars.
+
+#### 2026-04-28 — MariaDB readiness confirmed
+
+**What:** `mysqladmin ping` returned `mysqld is alive` immediately on first attempt. No polling required.
+
+#### 2026-04-28 — shared_memory run to completion
+
+**What:** Ran `./bin/shared_memory` one-shot from `/home/eqemu/server/`. Loaded 1048 rules, 618 zones, items, spells. Exited cleanly.
+
+#### 2026-04-28 — loginserver started
+
+**What:** Started `./bin/loginserver` in background via nohup. Verified after 3s: PIDs confirmed running (419, 425, 468).
+
+#### 2026-04-28 — world started
+
+**What:** Started `./bin/world` in background via nohup. Verified after 8s: PIDs confirmed running (500, 507, 578).
+
+#### 2026-04-28 — 8 dynamic zones started
+
+**What:** Loop started dynamic_01 through dynamic_08 with 0.5s delay between each, FROM `/home/eqemu/server/`.
+**Verified:** `ps aux | grep 'zone dynamic' | grep -v grep | wc -l` returned **8**. World log confirms `zone_count [8]` at dynamic_08 connection.
+
+#### 2026-04-28 — V2 binary verified
+
+**What:** Zone binary at `/home/eqemu/server/bin/zone` is a symlink to `/home/eqemu/code/build/bin/zone`.
+**Build timestamp:** `2026-04-28 17:26:28` — this is c-expert's V2.7 build (eqemu commit `17662d4ba`).
+**V2 fix verification via `strings`:**
+- `V2Rez > 36.2 AI_ResurrectDeadGroupMember returns false when HP=0 (Fix R4)` — Fix R4 alive guard present
+- `V2Rez > 36.4b pre-flight capacity check (Option D)` — Fix C Option D present
+- `V2Rez > 36.4b group at capacity: GroupCount() == MAX_GROUP_MEMBERS` — Fix C capacity check present
+- `Companion::ResurrectFromCorpse: Spawn() failed for companion_id=[{}]` — Fix B Spawn() routing present
+- `Companion::Spawn: [{}] spawned for owner [{}] (entity id: {})` — Fix B Spawn path present
+- `AI_ResurrectDeadGroupMember` symbol present (full method compiled)
+All four V2 fixes (A, R4, B, C) confirmed in running binary.
+
+### V2.8 Problems & Solutions
+
+| Problem | Root Cause | Solution |
+|---------|-----------|----------|
+| None — clean startup | — | — |
+
+---
+
 ## Open Items
 
 - [x] Wait for c-expert SendMessage confirming Task 4 complete — RECEIVED 2026-04-27
+- [x] Wait for c-expert SendMessage confirming V2.7 complete — RECEIVED 2026-04-28
 
 ---
 
