@@ -903,6 +903,8 @@ if (g && g->GroupCount() >= MAX_GROUP_MEMBERS) {
 
 **Subtlety 3:** The crash-safety property of the original code (acknowledged at `companion.cpp:3617-3620`) is preserved: a crash between Step 3a and 3b leaves DB at `is_suspended=0` but no entity in zone — `!unsuspend` recovers. A crash between Spawn() success and Step 3a leaves DB at `is_suspended=1` (no UPDATE ran) and corpse intact — next rez attempt picks up from corpse. Both windows recoverable.
 
+**Subtlety 4 (per c-expert v2 final review):** If the implementation ever needs to roll back a `companion_data` write (e.g., a future refactor moves the `UpdateOne` call back before `Spawn()`), the rollback **MUST be a direct targeted SQL UPDATE**, NOT a call to `Companion::Suspend()`. `Suspend()` (`companion.cpp:2467`) calls `Save()` at line 2470, which writes the FULL ORM object state (HP, mana, position, equipment, etc.) — and those fields may be garbage or partially-initialized on a brand-new entity that failed group-join. Use a direct `database.QueryDatabase("UPDATE companion_data SET is_suspended=1, experience=experience-{xp_restore} WHERE id={companion_id}")` so only the rez-specific fields are touched. This same pattern is already used by the BUG-028 fallback at `companion.cpp:662-701`. Engineer note: with the Fix C ordering above (UPDATE moved AFTER Spawn() success), no rollback is needed in the normal path — this subtlety is forward-looking guidance for any future reordering.
+
 #### Fix R2 — Cross-zone auto-unsuspend at 10% HP (INDEPENDENT)
 
 **File:line:** `eqemu/zone/companion.cpp:4155` — replace the silent `continue` for `is_suspended=1` companions in `SpawnCompanionsOnZone()`.
