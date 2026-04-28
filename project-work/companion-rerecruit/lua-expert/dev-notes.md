@@ -179,7 +179,63 @@ The three PRD blockers (level range, cooldown, dismissed flag) all cascade from 
 
 ## Stage 4: Build
 
-Not started — architecture phase.
+**Started:** 2026-04-27
+**Status:** Complete
+
+### Pre-fix baseline
+
+Ran `make test-companion` against unmodified code — 53 tests pass (45 main + 8 edge cases), 0 fail.
+
+### Step A: Failing TDD tests (Task 2 / architecture task 2)
+
+Added 5 tests to `akk-stack/server/quests/tests/test_companion_recruitment.lua` before the fix:
+
+| Test | What it asserts | Why it fails pre-fix |
+|------|-----------------|----------------------|
+| TDD-1 | `cmd_dismiss` calls `Dismiss(false)` | cmd_dismiss calls `Dismiss(true)` today |
+| TDD-2 | `Dismiss` called once with `permanent=false` | same — permanent=true today |
+| TDD-3 | After cmd_dismiss(false), DB row preserved → Track 1 fires | Dismiss(true) = SoulWipe = no row |
+| TDD-4 | LevelRange fallback=50: 4-level gap allowed | fallback=3 blocks 4-level gap today |
+| TDD-5 | SQL includes `ORDER BY` for deterministic row selection | no ORDER BY in current query |
+
+Pre-fix result: **45 pass, 5 fail** (exactly the 5 new TDD tests).
+
+Committed: `akk-stack` commit `76e6753`
+Pushed to `origin/bugfix/companion-rerecruit`
+
+### Step B: Fix (Tasks 3, 4, 5 / architecture tasks 3, 4, 5)
+
+Four changes to `akk-stack/server/quests/lua_modules/companion.lua`:
+
+1. **Line 15** — doc comment: `companion:Dismiss(voluntary_bool)` corrected to `companion:Dismiss(permanent)` with accurate semantics (false=preserve, true=SoulWipe)
+2. **Line 207** — LevelRange fallback: `or 3` → `or 50`
+3. **Lines 394-397** — re-recruit query: added `ORDER BY level DESC, experience DESC, id DESC` before `LIMIT 1`
+4. **Line 1434** — root-cause fix: `npc:Dismiss(true)` → `npc:Dismiss(false)`
+
+Committed: `akk-stack` commit `ad79630`
+Pushed to `origin/bugfix/companion-rerecruit`
+
+### Step C: Post-fix verification (Task 6 / architecture task 6)
+
+Ran `make test-companion` after the fix:
+
+```
+=== Results: 50 passed, 0 failed ===
+All tests passed.
+--- test_companion_rerec_edge_cases.lua ---
+8 passed, 0 failed
+```
+
+Total: **58 tests pass, 0 fail.** All 5 TDD tests green. All 53 prior tests still green. No regressions.
+
+### Architecture deviations
+
+None. All 4 changes match architecture.md exactly:
+- Line 1434: `Dismiss(true)` → `Dismiss(false)` ✓
+- Line 15: doc comment corrected ✓
+- Line 207: `or 3` → `or 50` ✓
+- Lines 394-397: ORDER BY added ✓
+- 5 TDD tests written before fix ✓
 
 ---
 

@@ -86,11 +86,11 @@ _Populated by the architect after the architecture doc is approved._
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
 | 1 | Add `make test-companion` target to akk-stack Makefile (luajit via Docker exec) | infra-expert | Complete 2026-04-27 | Unblocks Task 2 |
-| 2 | Write 5 new failing TDD tests in `test_companion_recruitment.lua` per architecture.md test list | lua-expert | Not Started | Depends on Task 1 |
-| 3 | One-character fix at `companion.lua:1434` (`Dismiss(true)` → `Dismiss(false)`) | lua-expert | Not Started | Depends on Task 2 |
-| 4 | Doc comment correction at `companion.lua:15` (parameter semantics) | lua-expert | Not Started | Depends on Task 3 |
-| 5 | Lua hardening: LevelRange fallback at `companion.lua:207` (`or 3` → `or 50`) AND `ORDER BY level DESC, experience DESC, id DESC` at `companion.lua:394-397` | lua-expert | Not Started | Depends on Task 3 |
-| 6 | Run `make test-companion`; verify 5 new tests pass + 38 existing tests still pass | lua-expert | Not Started | Depends on Tasks 3, 4, 5 |
+| 2 | Write 5 new failing TDD tests in `test_companion_recruitment.lua` per architecture.md test list | lua-expert | Complete 2026-04-27 | akk-stack commit 76e6753 — 5 tests red pre-fix |
+| 3 | One-character fix at `companion.lua:1434` (`Dismiss(true)` → `Dismiss(false)`) | lua-expert | Complete 2026-04-27 | akk-stack commit ad79630 |
+| 4 | Doc comment correction at `companion.lua:15` (parameter semantics) | lua-expert | Complete 2026-04-27 | akk-stack commit ad79630 |
+| 5 | Lua hardening: LevelRange fallback at `companion.lua:207` (`or 3` → `or 50`) AND `ORDER BY level DESC, experience DESC, id DESC` at `companion.lua:394-397` | lua-expert | Complete 2026-04-27 | akk-stack commit ad79630 |
+| 6 | Run `make test-companion`; verify 5 new tests pass + 38 existing tests still pass | lua-expert | Complete 2026-04-27 | 58 total tests pass (50+8); all 5 TDD tests green |
 | 7 | Targeted DELETE of ghost row `companion_data.id=21` (SELECT-confirm-DELETE) | data-expert | Complete 2026-04-27 | Depends on Task 6 |
 | 8 | In-game scenario validation (AC-3, AC-4, AC-6, AC-7, AC-10 + regressions) | game-tester | Not Started | Depends on Task 7 |
 
