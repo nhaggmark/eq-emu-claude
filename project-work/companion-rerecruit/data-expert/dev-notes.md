@@ -205,7 +205,56 @@ Established via architect sign-off. Key DB-side deliverables for build phase:
 
 ## Stage 4: Build
 
-(Not started — planning phase only per task instructions)
+**Task:** Task 7 — Targeted DELETE of ghost row `companion_data.id=21`
+**Date:** 2026-04-27
+**Status:** Complete
+
+### Pre-state (verified before DELETE)
+
+**Ghost row (id=21):**
+```
+id  owner_id  npc_type_id  name            level  experience  times_died  is_suspended  is_dismissed  items
+21  6         9144         Hollish Tnoops  14     0           0           1             0             0
+```
+Matches architecture spec exactly: owner_id=6, npc_type_id=9144, name=Hollish Tnoops, level=14, experience=0, times_died=0, is_suspended=1, is_dismissed=0, items=0.
+
+**Canonical row (id=18) — confirmed healthier:**
+```
+id  owner_id  npc_type_id  name            level  experience  is_suspended  items
+18  6         9144         Hollish Tnoops  53     18707712    0             15
+```
+
+### Executed SQL
+
+```sql
+-- Step 3: Defensive companion_inventories delete (0 rows affected — confirmed)
+DELETE FROM companion_inventories WHERE companion_id = 21;
+-- ROW_COUNT() = 0
+
+-- Step 4: Ghost row delete
+DELETE FROM companion_data WHERE id = 21;
+-- ROW_COUNT() = 1
+```
+
+### Post-state (verified after DELETE)
+
+`SELECT * FROM companion_data WHERE id = 21` → empty result set. Ghost row is gone.
+
+**Full companion_data for owner_id=6 post-delete:**
+```
+id  owner_id  npc_type_id  name                level  experience  is_suspended  is_dismissed  items
+23  6         2029         Jracol Brestiage    53     22716517    0             0             11
+24  6         2032         Lashun Novashine    53     21745789    0             0             13
+18  6         9144         Hollish Tnoops      53     18707712    0             0             15
+10  6         10162        Lydl the Great      53     8106020     1             0             14
+22  6         22014        Jimble Woodentoe    53     22940525    0             0             17
+```
+
+5 rows total (was 6). Hollish Tnoops now has exactly 1 row (canonical id=18). Lydl the Great remains with is_suspended=1 (death state, correct).
+
+### SQL Artifact
+
+`context/task-7-cleanup.sql` — full SELECT-confirm-DELETE script with comments.
 
 ---
 

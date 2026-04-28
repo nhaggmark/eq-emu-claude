@@ -91,7 +91,7 @@ _Populated by the architect after the architecture doc is approved._
 | 4 | Doc comment correction at `companion.lua:15` (parameter semantics) | lua-expert | Not Started | Depends on Task 3 |
 | 5 | Lua hardening: LevelRange fallback at `companion.lua:207` (`or 3` → `or 50`) AND `ORDER BY level DESC, experience DESC, id DESC` at `companion.lua:394-397` | lua-expert | Not Started | Depends on Task 3 |
 | 6 | Run `make test-companion`; verify 5 new tests pass + 38 existing tests still pass | lua-expert | Not Started | Depends on Tasks 3, 4, 5 |
-| 7 | Targeted DELETE of ghost row `companion_data.id=21` (SELECT-confirm-DELETE) | data-expert | In Progress | Depends on Task 6 |
+| 7 | Targeted DELETE of ghost row `companion_data.id=21` (SELECT-confirm-DELETE) | data-expert | Complete 2026-04-27 | Depends on Task 6 |
 | 8 | In-game scenario validation (AC-3, AC-4, AC-6, AC-7, AC-10 + regressions) | game-tester | Not Started | Depends on Task 7 |
 
 ---
