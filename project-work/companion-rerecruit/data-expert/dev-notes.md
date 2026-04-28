@@ -4,7 +4,7 @@
 > **Agent:** data-expert
 > **Task(s):** Task #3 — Data layer triage for re-recruit blockers
 > **Date started:** 2026-04-27
-> **Current stage:** Stage 3 (Socialize — follow-up complete, awaiting architecture.md)
+> **Current stage:** Stage 3 COMPLETE — released from architecture team 2026-04-27
 
 ---
 
@@ -180,9 +180,26 @@ Architecture note flagged to architect: the exclusion check should happen BEFORE
 
 **Q-D UNIQUE INDEX recommendation:** YES — but only after dedup DELETE and after C++ updated to UPSERT semantics. Schema change needs custom migration entry in database_update_manifest_custom.h. Deployment sequence critical: (1) targeted DELETE id=21, (2) ALTER TABLE ADD UNIQUE INDEX uk_owner_npc (owner_id, npc_type_id), (3) deploy C++ with UPSERT. C-expert must confirm no legitimate multi-row use case before adding constraint.
 
+### Architect Sign-off (2026-04-27)
+
+All three decisions locked by architect:
+1. Tie-breaker `ORDER BY level DESC, experience DESC LIMIT 1` — accepted, recorded in architecture.md
+2. No retroactive UPDATE sweep — accepted; only targeted DELETE of id=21 with SELECT-confirm pattern
+3. UNIQUE INDEX on (owner_id, npc_type_id) — flagged out-of-scope-but-tracked; engineers investigate after dismiss fix lands
+4. Track 1 already short-circuits past is_eligible_npc() — exclusion ordering concern confirmed already correct in code
+5. Repro candidates (Lydl, Hollish, Jimble, Jracol, Lashun) removed from architecture risk register — none in exclusions
+
+Data-expert released from architecture team. Awaiting build-phase task assignment.
+
 ### Consensus Plan
 
-(Pending architecture.md — triage complete, awaiting build-phase task assignment)
+Established via architect sign-off. Key DB-side deliverables for build phase:
+- Targeted DELETE: `DELETE FROM companion_data WHERE id = 21` (after SELECT-confirm)
+- companion_data row selection rule: `ORDER BY level DESC, experience DESC LIMIT 1`
+- All three blockers are application-level; no schema migrations needed beyond optional future UNIQUE INDEX
+- data_buckets cooldown DELETE pattern (key format to be confirmed by c-expert/lua-expert):
+  `DELETE FROM data_buckets WHERE key LIKE 'companion_cooldown_%_{char_id}'`
+- companion_data UPDATE on re-recruit: `SET is_dismissed=0, is_suspended=0 WHERE id=? AND owner_id=?`
 
 ---
 
