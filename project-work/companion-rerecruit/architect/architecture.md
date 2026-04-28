@@ -906,3 +906,48 @@ Live DB already has the variants needed (`Lydl_the_Great` at 10162/10178/10181/3
 10. **`Lua_Client::GetCompanionByNPCTypeID` / `HasActiveCompanion` variant-aware lookup** — currently unused in production scripts; defer until any script depends on them. Future fix would mirror the v2 query shape (accept either ID, resolve by stored name).
 
 These refinements are documentation-only; no change to task list, SQL shape, or implementation sequence.
+
+---
+
+## V2 Refinements Round 2 (post-lua-expert full investigation, 2026-04-28)
+
+lua-expert delivered the comprehensive 6-question Lua investigation after the v2 plan was drafted. The findings confirm the plan; one terminology clarification and one harness detail are worth folding in.
+
+### Refinement R6: "Option B = Option D" terminology reconciliation
+
+c-expert's writeup labeled the chosen approach "Option B" (use `companion_data.name`); lua-expert's labeled it "Option D" (the same SQL). Internally the team used these labels interchangeably. **The architecture doc commits to the single-query name-only form** (predicate is `name = ?`, no `npc_type_id` in the WHERE clause).
+
+lua-expert proposed an "ID-first, name-fallback" pattern (two queries when the ID misses, one when it hits). This is functionally equivalent to the single name query for the multi-variant case but slightly more complex to test and reason about. The architect retains the single-query form for these reasons:
+
+| Criterion | Single name query (architect's plan) | ID-first + name fallback (lua-expert's pattern) |
+|-----------|--------------------------------------|------------------------------------------------|
+| Queries per recruit attempt | 1 always | 1 if canonical (~99%), 2 if variant (~1%) |
+| Code complexity | One SQL string | Two SQL strings + branching |
+| Test surface | One execution path | Two execution paths to cover |
+| Multi-variant correctness | identical (name match) | identical (name match in fallback) |
+| Single-variant correctness | identical (name resolves to same row as ID) | identical |
+| Same-name collision (two distinct NPCs) | ORDER BY tie-breaker selects most-invested row | ID-first path resolves canonical row when targeting canonical variant |
+
+The single-query approach is simpler, faster on average, and produces identical results for every case the user is likely to encounter. The same-name collision concern is theoretical (no current `companion_data` rows have it; data-expert verified) and the ORDER BY tie-breaker handles it deterministically.
+
+**Engineers implementing v2:** use the single name-only query as documented in "V2 Technical Approach → The new query." Do NOT implement the ID-first/fallback two-query pattern.
+
+### Refinement R7: Lua test harness extension shape (lua-expert's `make_db_stub_v2`)
+
+lua-expert proposed `make_db_stub_v2(id_row, name_row)` that inspects the SQL string at `prepare()` time to dispatch — returns `id_row` for the legacy ID query and `name_row` for the new name query. Since v2 uses a SINGLE name query (not ID-first-fallback), the harness is even simpler: stub returns the seeded row when the SQL contains `name = ?`, returns nil otherwise. Existing 58 v1 tests continue to use the standard `make_db_stub(row)` unchanged because their SQL still contains `name = ?` (v2 query) — the v1 tests will need a one-line adjustment to either (a) use a v2-aware stub or (b) seed rows whose `name` matches the test setup. lua-expert (Task V2-1) owns the harness shape; recommendation is to make `make_db_stub` SQL-agnostic by default (return seeded row for any query) so v1 tests pass unmodified, and add an explicit `make_db_stub_name_aware(name_row)` for v2 multi-variant tests.
+
+### Refinement R8: Underscore-vs-space in `companion_data.name`
+
+lua-expert verified via `HEX(name)` that all four Lydl variants in `npc_types` store the exact bytes `4C79646C5F7468655F4772656174` (Lydl_the_Great with underscores). After `CleanMobName`, this becomes `Lydl the Great` (space-separated, no digits). `companion_data.name` therefore stores the space-separated form. `npc:GetCleanName()` returns the same space-separated form.
+
+`MakeNameUnique` (entity.cpp:3303-3341) appends `_001`, `_002`, etc. to the entity name when multiple entities share a prefix; `CleanMobName` strips these digits. So world entities like `Lydl_the_Great_001` are correctly resolved to `Lydl the Great` by `GetCleanName()`. **No special handling needed in v2.**
+
+### Refinement R9: Cooldown variant leak (Track 2 only) is acceptable
+
+lua-expert flagged that cooldowns are stored per-variant (`companion_cooldown_10162_6` vs `companion_cooldown_10178_6`). A player who fails first-time recruit on variant 10162 would not be blocked from immediately attempting variant 10178 because the cooldown key differs. This is technically a first-recruit anti-spam bypass; it doesn't affect re-recruit (Track 1 ignores cooldowns) and only matters for never-recruited NPCs. Per c-expert's earlier finding, harmless. **No action needed for v2.** Documented as a future-work note if first-recruit anti-spam ever becomes a tight requirement.
+
+### Refinement R10: `check_dismissed_record` (companion.lua:371) deprecated
+
+lua-expert confirmed the deprecated function still uses strict ID match and has zero callers. v2 leaves it untouched. Out-of-Scope item 9 already covers this.
+
+These refinements are documentation-only; no change to task list, SQL shape, or implementation sequence.
