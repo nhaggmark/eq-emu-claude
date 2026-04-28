@@ -871,3 +871,38 @@ The atomic-rollback path is "revert both V2-2 and V2-4." Engineers do not roll b
 ---
 
 > **Next step:** User reviews this v2 plan. Open question to confirm: cross-zone same-name semantics (Decision V2-8). Once confirmed, the orchestrator spawns the implementation team — lua-expert (V2-1, V2-2), c-expert (V2-3, V2-4, V2-5), infra-expert (V2-6), game-tester (V2-7).
+
+---
+
+## V2 Refinements (post-c-expert full audit, 2026-04-28)
+
+c-expert delivered the comprehensive 7-question C++ audit after the v2 plan was drafted. Three findings are worth folding into the plan; none change the selected approach.
+
+### Refinement R1: Appearance behavior is correct under the fix
+
+The targeted entity's `npc_type_id` controls appearance and base stats (NPC constructor at `companion.cpp:226` uses `npc_type_data` loaded from the variant the player targeted at line 201). `Load()` then restores saved level/XP/gear and overwrites `m_recruited_npc_type_id` with the stored ORIGINAL id (e.g. 10162) but does not re-run the constructor — so visual appearance stays the targeted variant. For Lydl's three freporte variants (same race/gender/texture) this is invisible; for hypothetical visually-distinct multi-variant NPCs, the player sees whatever they targeted. This matches the intuitive player expectation ("I'm recruiting THIS Lydl in front of me") and requires zero additional code.
+
+### Refinement R2: Stable identity preserved across zone reloads
+
+`companion_data.npc_type_id` is preserved by `Load()`. `SpawnCompanionsOnZone` at `companion.cpp:4137` uses `cd.npc_type_id` to load the NPCType for zone-in spawns — which means a re-recruited Lydl, after the player zones out and back, will spawn as the ORIGINAL variant (10162) rendered from `LoadNPCTypesData(10162)`. Subsequent re-recruits that trigger on a different variant in another session will again temporarily render as the targeted variant until the next zone reload. This is acceptable: the DB row is the stable identity; the trigger is the per-session activation surface. **No action needed.**
+
+### Refinement R3: Two latent Lua bindings flagged for future-work
+
+`lua_client.cpp:3683` `GetCompanionByNPCTypeID(npc_type_id)` and `lua_client.cpp:3697` `HasActiveCompanion(npc_type_id)` scan the in-memory companion list by `GetRecruitedNPCTypeID()`. After v2, `GetRecruitedNPCTypeID()` returns the STORED original variant id (10162). A future script that calls `client:GetCompanionByNPCTypeID(10178)` to find a Lydl-recruited-via-10178-variant will miss. **c-expert confirmed via grep that zero production scripts call either function** — they appear only in module header comments. Adding this to V2 Out-of-Scope item 10 (new): "If these Lua bindings are ever used by future scripts, they should accept either ID and resolve via `companion_data.name` lookup (mirroring this v2 fix)." Not blocking. Documenting only.
+
+### Refinement R4: Suite 35 test harness confirmed
+
+c-expert verified the test harness supports real DB writes with a sentinel `owner_id=99999` for isolation. Suite 35 will:
+1. Seed a row with `npc_type_id=10162, name='Lydl the Great', is_suspended=1, owner_id=99999`
+2. Run the new query with `name='Lydl the Great'` against an unrelated `npc_type_id` (e.g. 10178)
+3. Assert row IS found
+4. Assert old strict-ID query returns empty for the same `npc_type_id=10178` (proves the test exercises the bug)
+5. Cleanup `DELETE WHERE owner_id=99999`
+
+Live DB already has the variants needed (`Lydl_the_Great` at 10162/10178/10181/392011) — no test fixtures to seed in `npc_types`.
+
+### Refinement R5: Out-of-Scope item added
+
+10. **`Lua_Client::GetCompanionByNPCTypeID` / `HasActiveCompanion` variant-aware lookup** — currently unused in production scripts; defer until any script depends on them. Future fix would mirror the v2 query shape (accept either ID, resolve by stored name).
+
+These refinements are documentation-only; no change to task list, SQL shape, or implementation sequence.
