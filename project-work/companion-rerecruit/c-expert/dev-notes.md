@@ -675,23 +675,86 @@ touches 5-10 rows. No schema change needed. Option A (JOIN) would need
    emit a `LogInfo` noting the stored vs. targeted ID mismatch. Helps diagnose any
    future stale-name cases in server logs without changing behavior.
 
-**Exclusions constraint — C++ is not affected:** data-expert noted that "name-match
+**Exclusions constraint — C++ is not affected for v2:** data-expert noted that "name-match
 path in Track 1 must still check companion_exclusions on the TARGET npc_type_id."
 Confirmed via grep: C++ has ZERO references to `companion_exclusions` anywhere in
-`zone/*.cpp` or `zone/*.h`. The exclusions check is Lua-only, lives in
-`is_eligible_npc()` (Track 2), and already doesn't run in Track 1 by design per
-PRD invariant. This constraint affects only the Lua implementation spec, NOT the
-C++ change at companion.cpp:218.
+`zone/*.cpp` or `zone/*.h`. Architect decision: Lua-only exclusion guard for v2 is
+functionally sufficient because `CreateFromNPC` has exactly ONE production caller
+(`lua_client.cpp:3647`). C++ defense-in-depth deferred to Out-of-Scope item 11.
+See Finding v2-13 for correction rationale.
 
-**Confirmed Option B query for C++ implementation:**
+**SUPERSEDED — DO NOT USE:** the `REPLACE` subquery shape below was proposed before
+architect correction. See Finding v2-13 for the correct query shape.
+~~`AND name = (SELECT REPLACE(name, '_', ' ') FROM npc_types WHERE id = {source_npc_type_id})`~~
+
+**Correct Option B query (per v2 architecture doc, architect-confirmed):**
 ```
-owner_id = {char_id}
+owner_id = ?
 AND name != ''
-AND name = (SELECT REPLACE(name, '_', ' ') FROM npc_types WHERE id = {source_npc_type_id})
+AND name = ?                   -- bound to source_npc->GetCleanName()
 AND (is_dismissed = 1 OR is_suspended = 1)
 ORDER BY level DESC, experience DESC, id DESC
 LIMIT 1
 ```
-The `name != ''` guard, `REPLACE` via PK subquery, and `ORDER BY` tie-breaker are all
-confirmed by data-expert. This is the exact query shape ready for implementation once
-architect approves.
+Bind `source_npc->GetCleanName()` as the second parameter. See Finding v2-13.
+
+---
+
+### Finding v2-13: Architect corrections — SQL shape and exclusions scope (2026-04-27)
+
+#### Correction 1: SQL shape — `REPLACE` subquery is WRONG, bind `GetCleanName()` instead
+
+The `REPLACE(npc_types.name, '_', ' ')` subquery shape was proposed in Finding v2-12
+but is incorrect. Verified against live source:
+
+`CleanMobName()` at `common/strings_legacy.cpp:208`:
+```cpp
+if (isalpha(in[i]) || (in[i] == '`')) {    // numbers, #, or any other crap just gets skipped
+    out[j++] = in[i];
+}
+```
+Only alpha chars and backtick are kept. **Digits are stripped, not preserved.**
+
+`MakeNameUnique()` at `entity.cpp:3331` appends `%03d` digit suffixes (`Lydl001`, `Lydl002`).
+`CleanMobName` strips those digits: `Lydl001` → `Lydl`. But `REPLACE('_', ' ')` would
+produce `Lydl001` (underscores → spaces, digits untouched). Match would fail for any
+in-zone disambiguated NPC.
+
+`source_npc->GetCleanName()` already has digits stripped — it IS the canonical form.
+Binding it directly as a query parameter avoids any SQL-side string transformation and
+is bit-for-bit identical to what `companion_data.name` stores (also written via `GetCleanName()`
+in `Save()`). This is the same pattern Lua uses (`npc:GetCleanName()`).
+
+**The correct WHERE clause for V2-4 implementation:**
+```cpp
+fmt::format(
+    "owner_id = {} AND name != '' AND name = '{}' "
+    "AND (is_dismissed = 1 OR is_suspended = 1) "
+    "ORDER BY level DESC, experience DESC, id DESC LIMIT 1",
+    owner->CharacterID(),
+    Strings::Escape(source_npc->GetCleanName())
+)
+```
+`Strings::Escape` on the bound name guards against SQL metacharacters in pathological
+NPC display names.
+
+#### Correction 2: Exclusions scope — v1 "safe to bypass" doesn't hold under v2 name-match
+
+**Original reasoning (v1, WRONG for v2):** "Track 1 bypasses exclusions by design —
+same ID means same exclusion state."
+
+**Why it breaks under v2:** v2 name-match fires on a SET of variant IDs sharing a name.
+Some variants may be excluded in `companion_exclusions`, others not. A player could
+potentially re-recruit via a non-excluded variant even if the originally-recruited ID
+was excluded (or vice versa). The PRD invariant covers re-recruiting YOUR companion,
+not exploiting name-match to bypass exclusions via a different variant.
+
+**Architect decision:** Lua-only exclusion check is functionally sufficient for v2.
+`CreateFromNPC` has exactly one production caller (`lua_client.cpp:3647`). lua-expert
+adds the exclusion check to `is_re_recruitment_eligible()` in V2-2. C++ defense-in-depth
+deferred to Out-of-Scope item 11.
+
+**Impact on V2-3 (Suite 35):** One test case removed — the exclusion-bypass test moves
+to V2-1 (lua-expert's responsibility). Suite 35 has TWO test cases:
+1. Name-match finds correct row when variant ID differs from stored ID (proves fix)
+2. Strict-ID query returns empty for the variant (proves test covers the bug, not just a vacuous pass)

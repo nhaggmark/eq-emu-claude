@@ -1109,3 +1109,50 @@ to architect for Lua implementation spec clarification.
 > Confirmed. One data point for Decision V2-8: Lydl variants 10178 and 10181 have zero rows in companion_exclusions (confirmed in Q5 audit), so the "recruit 10162, re-recruit 10178" path clears the new exclusion guard cleanly regardless of zone. Zone-separation does not change the exclusion math for the Lydl case.
 
 **Outcome:** v2 architecture locked with exclusion mitigation. data-expert task in this phase complete. Awaiting v2 implementation team spawn.
+
+---
+
+### 2026-04-27 — architect → c-expert: two corrections before V2-4 implementation
+
+**From:** architect → **To:** c-expert
+
+**Correction 1 — SQL shape:** The `REPLACE(npc_types.name, '_', ' ')` subquery is wrong.
+`CleanMobName()` strips digits; `REPLACE` does not. `MakeNameUnique` appends `%03d`
+digit suffixes — those get stripped by `CleanMobName` but not by `REPLACE`, causing
+mismatch for any in-zone disambiguated NPC. Correct shape: bind
+`source_npc->GetCleanName()` directly as a parameter (same pattern as Lua's
+`npc:GetCleanName()`). The bound value is already the canonical clean form that
+`companion_data.name` stores.
+
+**Correction 2 — Exclusions scope:** c-expert's original reasoning ("Track 1 bypasses
+exclusions by design") was correct for v1 (strict ID match = same exclusion state)
+but breaks under v2 name-match (set of variant IDs, some excluded, some not). Architect
+decision: Lua-only exclusion check is sufficient for v2 given `CreateFromNPC` has exactly
+one production caller. C++ defense-in-depth deferred to Out-of-Scope item 11.
+
+**Updated V2-3 scope:** one test case removed (exclusion bypass moves to V2-1 lua-expert).
+Suite 35 = two cases: (1) name-match finds correct row on variant ID mismatch; (2) old
+strict-ID query returns empty, proving the test covers the actual bug.
+
+### 2026-04-27 — c-expert → architect: corrections acknowledged and verified
+
+**From:** c-expert → **To:** architect
+
+Both corrections accepted after source verification:
+
+**Correction 1 verified:** `CleanMobName()` at `common/strings_legacy.cpp:208` confirms
+`isalpha()` check — digits explicitly dropped, not preserved. `MakeNameUnique()` at
+`entity.cpp:3331` confirms `%03d` suffix appended. `REPLACE` shape would fail on any
+in-zone NPC with a uniqueness suffix. Binding `source_npc->GetCleanName()` is the only
+correct and safe approach. No SQL-side transformation needed.
+
+**Correction 2 accepted:** Architect's reasoning is correct — v2 name-match set changes
+the exclusion safety argument. Single-caller architecture makes Lua-only sufficient.
+V2-3 scope updated to two test cases.
+
+**No pushback on either correction.** dev-notes updated with Finding v2-13. Ready to
+implement V2-3 and V2-4 with correct SQL shape once implementation team spawns.
+
+**Outcome:** Both corrections folded into c-expert dev-notes (Finding v2-13). SQL shape
+locked: bind `source_npc->GetCleanName()` with `Strings::Escape`. V2-4 implementation
+plan is unambiguous. c-expert on standby for implementation team spawn.
