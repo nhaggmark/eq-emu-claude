@@ -122,3 +122,115 @@ Task 1 is complete. lua-expert (Task 2) can now run `make test-companion` from `
 - `/home/eqemu/server/quests/tests/test_companion_rerec_edge_cases.lua`
 
 lua-expert should write the 5 new failing TDD tests to `test_companion_recruitment.lua` (host path: `akk-stack/server/quests/tests/test_companion_recruitment.lua`) and verify they fail via `make test-companion` BEFORE writing the fix.
+
+---
+
+# Task V2-6 — Full Stack Rebuild & Restart (v2 implementation)
+
+> **Task:** V2-6
+> **Date started:** 2026-04-27
+> **Current stage:** Stage 1 — Waiting for V2-2 (lua-expert) AND V2-5 (c-expert) to complete
+
+## Task Assignment
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| V2-6 | Server restart (containers + EQ processes per MEMORY) so new C++ binary and reloaded Lua go live | V2-2 (lua-expert complete) AND V2-5 (c-expert complete — Suite 35 + Suite 20 + 34 prior suites all pass) | Waiting |
+
+---
+
+## Stage 1: Plan
+
+### What V2-6 Must Do
+
+1. Confirm V2-2 and V2-5 are both complete and committed on `bugfix/companion-rerecruit`.
+2. Run ninja rebuild inside the eqemu-server container to compile the new C++ binary.
+3. Run `make restart` from `/mnt/d/Dev/eq/akk-stack/` to bring Docker containers back up.
+4. Start EQ server processes IN ORDER inside the container (from `/home/eqemu/server/`):
+   - `shared_memory` (run to completion — one-shot)
+   - `loginserver` (wait 3s)
+   - `world` (wait 8s)
+   - 8 dynamic zones via loop: `for i in 01..08; do nohup ./bin/zone dynamic_$i > logs/zone_dynamic_$i.log 2>&1 & sleep 0.5; done`
+5. Verify 8 zone processes are alive: `ps aux | grep 'zone dynamic' | grep -v grep | wc -l` (expect 8).
+6. Verify new binary is loaded — check world boot log for build timestamp or grep binary for new diagnostic log string.
+7. Notify team lead (orchestrator) that the stack is live and V2-7 (game-tester) can proceed.
+8. Commit dev-notes to `bugfix/companion-rerecruit` in the claude repo.
+
+### Critical Rules (from MEMORY.md)
+
+- NEVER use `eqlaunch zone` alongside manually-started zones — causes crash/restart loop.
+- Start zone processes FROM `/home/eqemu/server/` so relative log paths resolve.
+- `make restart` only restarts Docker containers — EQ processes do NOT auto-start.
+- Do NOT notify orchestrator until ALL processes (world + 8 zones) are confirmed running.
+
+### Files to Check / Paths
+
+| What | Path |
+|------|------|
+| Build command | `docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"` |
+| make restart | `cd /mnt/d/Dev/eq/akk-stack && make restart` |
+| EQ server start | Inside container at `/home/eqemu/server/` |
+| World boot log | `akk-stack/server/logs/` (world log, most recent) |
+| Zone logs | `akk-stack/server/logs/zone_dynamic_0N.log` |
+
+### Dependency Gate
+
+I must NOT proceed until c-expert sends a message confirming:
+- V2-5 complete: Suite 35 passes, Suite 20 passes, all 34 prior suites pass
+- C++ fix committed and pushed on `bugfix/companion-rerecruit` in eqemu repo
+
+---
+
+## Stage 1 Status: Complete
+
+---
+
+## Stage 4: Build — Implementation Log
+
+### 2026-04-27 — V2-6 Full Stack Rebuild and Restart
+
+**Dependency gate cleared:**
+- V2-2 (lua-expert): akk-stack commit `6358c48` — companion.lua name-match fix, 61/61 Lua tests pass
+- V2-5 (c-expert): eqemu commit `478d154b` — companion.cpp:218-220 name-based lookup fix, Suite 35 + Suite 20 + 34 prior suites all pass
+
+**Build:**
+- `docker exec akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"` → `ninja: no work to do.`
+- Binary was already compiled by c-expert during V2-4. ninja confirmed no dirty state.
+- Zone binary: `/home/eqemu/code/build/bin/zone` — timestamp `Apr 28 11:06` (today)
+- `/home/eqemu/server/bin/zone` is a symlink to build output — running processes use the new binary directly
+
+**make restart:**
+- Ran from `/mnt/d/Dev/eq/akk-stack/`
+- All containers stopped cleanly, all containers started cleanly
+- MariaDB was not immediately ready on first shared_memory attempt (connection refused `#2002`)
+- Waited for `mysqladmin ping` to return `mysqld is alive` before retrying — succeeded on second attempt
+
+**EQ process startup (from /home/eqemu/server/):**
+
+| Process | PID | Status | Notes |
+|---------|-----|--------|-------|
+| shared_memory | one-shot | Completed | Loaded 618 zones, 1,048 rules, DB connected |
+| loginserver | 442 | Running | Started 11:10 |
+| world | 550 | Running | Started 11:10, version 23.10.3-dev |
+| zone dynamic_01 | 686 | Running | Started 11:11 |
+| zone dynamic_02 | 689 | Running | Started 11:11 |
+| zone dynamic_03 | 692 | Running | Started 11:11 |
+| zone dynamic_04 | 698 | Running | Started 11:11 |
+| zone dynamic_05 | 706 | Running | Started 11:11 |
+| zone dynamic_06 | 708 | Running | Started 11:11 |
+| zone dynamic_07 | 711 | Running | Started 11:11 |
+| zone dynamic_08 | 713 | Running | Started 11:11 |
+
+**Verification:**
+- `ps aux | grep 'zone dynamic' | grep -v grep | wc -l` → `8` (expected 8)
+- World boot log: connected to DB, version `23.10.3-dev`, all systems normal
+- No `eqlaunch zone` used — all zones started manually per MEMORY.md
+
+**Problems and solutions:**
+
+| Problem | Root Cause | Solution |
+|---------|-----------|----------|
+| `docker exec -it` failed with "input device is not a TTY" | Non-interactive shell context | Dropped `-it` flag |
+| shared_memory failed on first run: `Can't connect to server on 'mariadb' (115)` | MariaDB container not yet accepting connections after `make restart` | Polled with `mysqladmin ping` until ready, then retried — succeeded immediately |
+
+**Stack status:** HEALTHY. New C++ binary (Apr 28 11:06) and updated companion.lua (commit 6358c48) are both live.
