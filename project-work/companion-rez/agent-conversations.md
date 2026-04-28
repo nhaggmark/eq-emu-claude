@@ -1110,3 +1110,13 @@ Three specific verification questions: (1) does `AI_ResurrectDeadGroupMember` op
 
 **Outcome:** Architect has final sign-off. v2 architecture doc can be written.
 
+---
+
+### 2026-04-27 — architect → c-expert: v2 plan locked, Subtlety 4 added, implementation order confirmed
+
+**From:** architect → **To:** c-expert
+
+v2 architecture locked and pushed at `9a0ae7b` + refinement at `17bd8c9` on `bugfix/companion-rez`. Fix C rollback refinement incorporated as Subtlety 4 (direct SQL UPDATE, not Suspend()/Save(), matches BUG-028 fallback pattern). Implementation order confirmed: V2.1 (failing tests) → V2.2/V2.3/V2.6 (Fixes A, R4, R2 — parallel) → V2.4 (Fix B) → V2.5 (Fix C + Option D) → V2.7-V2.10 (build/verify/restart/validate/commit). Awaiting team-lead/user approval before implementation team spawns.
+
+**Outcome:** c-expert standing by for V2.1–V2.10 task assignments.
+
