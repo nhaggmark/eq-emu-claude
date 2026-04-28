@@ -4,7 +4,7 @@
 > **Agent:** c-expert
 > **Task(s):** C++ triage — find level cap, dismissed-flag, and cooldown blockers; v2 triage — multi-variant npc_type_id lookup bug
 > **Date started:** 2026-04-27
-> **Current stage:** v2 TRIAGE IN PROGRESS — companion-rerecruit-architecture-v2 team
+> **Current stage:** v2 TRIAGE COMPLETE — on standby pending user V2-8 decision; tasks V2-3/V2-4/V2-5 queued for implementation team spawn
 
 ---
 
