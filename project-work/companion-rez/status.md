@@ -104,6 +104,13 @@ _Populated by the architect after the architecture doc is approved._
 | 5 | Server restart: `make restart` from akk-stack/, then full server start (loginserver / world / 8 dynamic_NN zones per documented startup procedure). | infra-expert | Complete 2026-04-28 | Full stack restart confirmed (dedb777). 8 zones running. |
 | 6 | In-game validation: 7 game-tester scenarios per Validation Plan (Scenarios 1, 2, 3, 4, 5, 6, 12 in architecture.md). User confirms. | game-tester | In Progress 2026-04-28 | Server-side PASS. In-game test guide at game-tester/test-plan.md. Awaiting user. |
 | 7 | Commit and push all changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no changes.) | c-expert | Complete 2026-04-27 | eqemu pushed (30f6d6ef5, 83a96f655). claude pushed after dev-notes update. |
+| V2.1 | Write 4 failing-first tests in Suite 36 of `cli_companion_tests.cpp` for V2 fixes. | c-expert | Complete 2026-04-27 | TDD red commit: b8c771a4f. Suite 36 confirmed RED at assertion 4 of test 36.1. |
+| V2.2 | Implement Fix A: clear membername[] slot in Companion::Death() at companion.cpp:713-718. | c-expert | Complete 2026-04-27 | Part of fix commit 17662d4ba. |
+| V2.3 | Implement Fix R4: IsAlive() guard at companion_ai.cpp:1935 + companion.cpp Process(). | c-expert | Complete 2026-04-27 | Part of fix commit 17662d4ba. |
+| V2.4 | Implement Fix B: route ResurrectFromCorpse entity creation through Spawn(owner). | c-expert | Complete 2026-04-27 | Part of fix commit 17662d4ba. |
+| V2.5 | Implement Fix C: atomic rez chain + Option D pre-flight group-capacity check. | c-expert | Complete 2026-04-27 | Part of fix commit 17662d4ba. |
+| V2.7 | Rebuild + verify: all 36 suites PASS, no warnings. | c-expert | Complete 2026-04-27 | Build clean. Suite 36: 17 tests GREEN. Full suite: no regressions. |
+| V2.10 | Commit + push V2 changes on bugfix/companion-rez in eqemu and claude repos. | c-expert | Complete 2026-04-27 | eqemu: b8c771a4f (red tests), 17662d4ba (fixes). claude: pending dev-notes commit. |
 
 ---
 

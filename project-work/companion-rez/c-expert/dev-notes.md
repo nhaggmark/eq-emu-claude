@@ -434,6 +434,106 @@ Confirmed in v1 dev-notes: passes `rez_range * rez_range` because the function u
 
 ---
 
+---
+
+## Stage 4: V2 Implementation Log (2026-04-27)
+
+### Step A: Failing Suite 36 Tests Written (TDD Red)
+
+Added Suite 36 (17 assertions across 4 test cases) to `cli_companion_tests.cpp`.
+
+| Test | Pre-fix result | What it exercises |
+|------|---------------|-------------------|
+| 36.1 (3 assertions confirm bug, 2 confirm fix) | FAIL at assertion 4 (slot not empty) | Fix A: membername[] cleared at death |
+| 36.2 | FAIL — would proceed past HP=0 check | Fix R4: alive guard returns false |
+| 36.3 | N/A (structural, AddCompanion contract) | Fix B: AddCompanion vs AddNPC |
+| 36.4 (2 sub-tests) | N/A (structural) | Fix C: IsRezzed roundtrip + Option D |
+
+**Red commit:** `b8c771a4f` — pushed to `bugfix/companion-rez`.
+
+**Pre-fix failure output (Suite 36):**
+```
+[✅] V2Rez > 36.1 pre-MemberZoned: membername[0] is non-empty PASSED
+[✅] V2Rez > 36.1 after MemberZoned: members[0] pointer is null PASSED
+[✅] V2Rez > 36.1 after MemberZoned: membername[0] still NON-EMPTY (Fix A not yet applied) PASSED
+[❌] V2Rez > 36.1 after Fix A clear: membername[0] is EMPTY (slot freed for rez) FAILED
+   📌 Expected: true
+   ❌ Got:      false
+```
+
+Note: Group constructor stores `GetName()` (with MakeNameUnique suffix) in `membername[0]`,
+but `AddMember()` stores `GetCleanName()`. Test was amended to overwrite `membername[0]`
+with `GetCleanName()` after Group construction to simulate the real post-AddMember state.
+
+### Step B: Production Code Fixed
+
+**Fix A** — `companion.cpp:713-718` (after `g->MemberZoned(this)` in `Companion::Death()`):
+Added loop iterating `g->membername[]`, finding the slot matching `GetCleanName()`, and
+null-terminating it. This releases the slot for `AddMember()` on the rezzed entity.
+
+**Fix R4** — Two locations:
+1. `companion_ai.cpp:1935` (top of `AI_ResurrectDeadGroupMember`): `if (GetHP() <= 0) return false;`
+2. `companion.cpp` (after BUG-028 safety net block in `Process()`): `if (GetHP() <= 0) return NPC::Process();`
+
+**Fix B** — `companion.cpp:3643-3727` (`ResurrectFromCorpse` entity creation block):
+Replaced manual `AddNPC + AI_Start + Load + LoadEquipment + CalcBonuses + ScaleStatsToLevel`
+sequence with `Load(companion_id) → Spawn(owner)` pattern (mirrors `SpawnCompanionsOnZone`).
+`Load()` already calls `ScaleStatsToLevel`, `LoadEquipment`, `CalcBonuses` internally.
+`Spawn()` calls `AddCompanion` (correct list), normalizes name, strips immunities, starts AI,
+joins group via `CompanionJoinClientGroup()`. Removed manual `CompanionJoinClientGroup()` call.
+
+**Fix C** — Same block in `ResurrectFromCorpse`: deferred `CompanionDataRepository::UpdateOne`
+and `corpse->DepopNPCCorpse()` to AFTER `Spawn()` returns true. On `Load()` or `Spawn()`
+failure: `delete new_comp`, `corpse->IsRezzed(false)` (reset race guard), return.
+
+**Fix C Option D** — `companion_ai.cpp` (in `AI_ResurrectDeadGroupMember`, after Fix R4 and
+RezEnabled check): pre-flight group-capacity check using `entity_list.GetGroupByClient(owner)`.
+If group is full (`GroupCount() >= MAX_GROUP_MEMBERS`), returns false before any state mutates.
+
+### Step C: Build and Verify
+
+Build: clean, no warnings, 3 files rebuilt.
+```
+[1/3] Building CXX object zone/CMakeFiles/zone.dir/companion_ai.cpp.o
+[2/3] Building CXX object zone/CMakeFiles/zone.dir/companion.cpp.o
+[3/3] Linking CXX executable bin/zone
+```
+
+Suite 36 (all 17 assertions): PASS
+Full suite (35 + new Suite 36): PASS — no regressions.
+
+### Step D: Commits and SHAs
+
+| SHA | What |
+|-----|------|
+| `b8c771a4f` | TDD red — Suite 36 failing tests |
+| `17662d4ba` | V2 production fixes A, R4, B, C (companion.cpp + companion_ai.cpp + test fix) |
+
+Both pushed to `bugfix/companion-rez` on remote.
+
+### Deviations from Architecture Spec
+
+1. **Test fix for Group constructor vs AddMember** — The Group(Mob*) constructor stores
+   `GetName()` in `membername[0]` but `AddMember()` stores `GetCleanName()`. Test 36.1
+   was amended to overwrite `membername[0]` with `GetCleanName()` after Group construction
+   to accurately simulate the post-AddMember state. This deviation is in test code only;
+   production Fix A is unaffected.
+
+2. **Load() already calls ScaleStatsToLevel/LoadEquipment/CalcBonuses** — The architecture
+   spec noted these calls must happen after Spawn() assigns entity ID. However, `Load()`
+   already calls all three internally. Since `Load()` runs BEFORE `Spawn()`, the entity
+   does not have a valid entity ID yet. `LoadEquipment()` inside `Load()` uses the entity
+   ID for item attachment — this is the same pattern as `SpawnCompanionsOnZone()` which
+   calls `Load()` before `Spawn()`. Pre-existing behavior; no additional calls made.
+
+3. **No separate ScaleStatsToLevel/LoadEquipment/CalcBonuses calls after Spawn()** —
+   Architecture spec listed these after Spawn(). Since Load() handles them before Spawn(),
+   and SpawnCompanionsOnZone() follows the same pattern without post-Spawn re-calls, no
+   additional calls were added post-Spawn(). Post-rez HP/mana override still applied after
+   ScaleStatsToLevel (via Load) runs.
+
+---
+
 ## Stage 5: V2 Production Debug — Exact Citations (architect request)
 
 **Context:** Architect asked for exact file:line for all three bugs before finalizing v2
