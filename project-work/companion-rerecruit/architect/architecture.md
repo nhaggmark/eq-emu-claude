@@ -93,6 +93,7 @@ client:CreateCompanion(npc)
 | Permanent dismiss `Dismiss(true)` | `companion.cpp:2553` (if branch) | Calls `SoulWipe()` — DELETES row |
 | Zone disconnect | not traced — out of scope for this fix | unknown, default behavior assumed (suspend on logout) |
 | Server restart | suspended companions correctly skipped on `SpawnCompanionsOnZone` `companion.cpp:4131-4134` | row preserved |
+| Death despawn timer (after `DeathDespawnS=1800s` no resurrection) | `companion.cpp:1888-1913` | Sets BOTH `is_dismissed=1` AND `is_suspended=1`, calls Save() |
 
 **Key data points (live DB, 2026-04-27)**
 
@@ -112,6 +113,36 @@ client:CreateCompanion(npc)
 
 - **Lua:** `akk-stack/server/quests/tests/test_companion_recruitment.lua` (38+ tests) and `test_companion_rerec_edge_cases.lua` — inline harness, no external deps. `luajit` is **not on host PATH** — only available in `eqemu/build/vcpkg_installed/x64-linux/`. Engineers must run via Docker exec or symlink.
 - **C++:** `eqemu/zone/cli/tests/cli_companion_tests.cpp` — 35+ suites, run via `./bin/zone tests:companion` (NOT gtest; uses zone CLI test runner). Suite 20 `TestCompanionReRecruitmentHP` partially covers re-recruit. The `EQEMU_BUILD_TESTS=OFF` flag and `eqemu/tests/` directory are a separate, mostly empty system; companion tests live in the zone CLI test runner.
+
+**Direct ground-truth verification (2026-04-27):**
+
+```lua
+-- companion.lua:13-16 (doc comment, INVERTED semantic):
+--   companion:Dismiss(voluntary_bool)    - true=voluntary (preserves record for re-recruitment), false=forced
+
+-- companion.lua:1430-1434 (cmd_dismiss):
+function companion.cmd_dismiss(npc, client, args)
+    npc:Say("Farewell.")
+    npc:Dismiss(true)         -- passes TRUE, intending "voluntary preserve"
+end
+```
+
+```cpp
+// companion.cpp:2553-2570 (C++ implementation):
+void Companion::Dismiss(bool permanent)
+{
+    if (permanent) {
+        SoulWipe();             // DELETEs the companion_data row
+    } else {
+        SetSuspended(true);
+        SetDismissed(true);
+        Save();
+    }
+    Depop();
+}
+```
+
+The C++ parameter is named `permanent`. The Lua doc comment has the parameter sense inverted. `cmd_dismiss(true)` invokes the SoulWipe branch — destroying the re-recruit hint.
 
 ### Gap Analysis
 

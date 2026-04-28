@@ -541,6 +541,41 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 3. **Architecture fully locked.** All implementation surface area enumerated above.
 4. **lua-expert task complete.** Implementation tasks captured for Phase 4: companion.lua edits + TDD tests.
 
+### 2026-04-27 — c-expert: 6-priority answers (with one factual error)
+
+**From:** c-expert → **To:** architect
+
+> Full priority-1 through priority-6 answers with file:line citations:
+>
+> - **Priority 1 (Death/Dismiss):** Death() takes 3 redundant save paths, all set `is_suspended=1` (companion.cpp:646-678 fallback, :1870-1884 Process safety net, :660-678 normal path). Plus a death-despawn-timer at companion.cpp:1888-1913: after `DeathDespawnS=1800s` with no resurrection, sets BOTH is_dismissed=1 AND is_suspended=1 and Save(). Dismiss(bool permanent) at companion.cpp:2553: `if(permanent) SoulWipe(); else { SetSuspended; SetDismissed; Save(); }`.
+> - **Priority 2 (CreateCompanion):** CreateFromNPC at companion.cpp:188 pre-checks companion_data; if existing row found → Load → SetHP → clear flags. NO level/faction/cooldown checks in C++. LIMIT 1 selection without ORDER BY (non-deterministic with duplicates).
+> - **Priority 3 (ReRecruitBonus):** companion.cpp:3792 has only a comment ("Lua reads this"); zero `eq.get_rule("Companions:ReRecruitBonus")` calls in companion.lua. Rule is unused.
+> - **Priority 4 ("too low level"):** Only at companion.lua:212 ("is too far from your level to recruit"); no C++ source. Reachable only on Track 2.
+> - **Priority 5 (test infra):** Real test suite at `eqemu/zone/cli/tests/cli_companion_tests.cpp` runs via `./bin/zone tests:companion`. Suite 20 `TestCompanionReRecruitmentHP` partially covers re-recruit. Add `TestCompanionReRecruitInvariant` following the same pattern.
+> - **Priority 6 (charm/swarm/merc):** Companion inherits NPC, not Bot/Merc. Zero shared paths.
+>
+> **Synthesis (CONTAINS FACTUAL ERROR):** "All four hypotheses eliminated. cmd_dismiss() in Lua calls companion:Dismiss(false) (voluntary dismissal, NOT permanent). The current actual blocker is group capacity — player has 4 active companions + 1 = 5 in group; adding Lydl makes 6, hits is_re_recruitment_eligible():416 'Your party is full.' This is working as designed."
+
+**Response from** architect:
+
+> Direct file read of `companion.lua:1430-1434` and `companion.cpp:2553-2570` confirms:
+>
+> 1. **C++ side** — `Dismiss(bool permanent)` is exactly as c-expert (and lua-expert) cited.
+> 2. **Lua side** — `cmd_dismiss` calls `npc:Dismiss(true)`, NOT `Dismiss(false)`. **c-expert's synthesis statement is factually wrong.**
+> 3. **Lua doc comment at line 15** — describes `voluntary_bool` with `true=voluntary` semantic, which is opposite of C++ `permanent` semantic.
+>
+> **Conclusion:** The Lua author intended `true=preserve` but C++ implements `true=SoulWipe`. lua-expert's smoking-gun finding stands. Architecture remains committed at d5f6f68 with the one-character fix.
+>
+> Replied to c-expert with the ground-truth code snippets and an explanation. c-expert's other priority findings (death has 3 save paths, CreateFromNPC is unconditional, ReRecruitBonus unused, charm/swarm/merc isolated, test infrastructure) all stand and remain load-bearing for the architecture.
+>
+> **NEW finding from c-expert that I am incorporating:** death-despawn-timer at companion.cpp:1888-1913 sets BOTH is_dismissed=1 AND is_suspended=1 after `DeathDespawnS=1800s`. This explains why Lydl's row currently has is_dismissed=0 (timer hasn't fired yet, or was cancelled by resurrection/zoning). Worth noting in the architecture doc as part of the drop-out paths table.
+
+**Outcome:**
+1. **Architecture is correct as committed.** The c-expert factual error about which boolean Lua passes is corrected; the underlying root cause (Lua passes `true` → SoulWipe) is unchanged.
+2. **Architecture doc updated** to add the death-despawn-timer drop-out path and direct ground-truth code snippets (for future agents who don't want to re-read the files).
+3. **Re-commit pending** — small additive update, not a teardown.
+4. **Lesson:** Even careful agents can introduce factual errors in synthesis. Always verify load-bearing claims by reading the actual file.
+
 ---
 
 ## Implementation Team Conversations
