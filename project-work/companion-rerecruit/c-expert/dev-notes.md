@@ -211,35 +211,39 @@ player has no group, the group capacity check is skipped in `is_re_recruitment_e
 (line 414-420). In that case, MaxPerPlayer would need its own enforcement. This appears
 to be a pre-existing design gap but is NOT specific to the re-recruitment bug.
 
-### Summary for Architect
+### Summary for Architect — REVISED after cross-check with lua-expert (2026-04-27)
 
-**Blocker 1 (level cap):** The Lua error "too far from your level to recruit" exists
-in `is_eligible_npc()` at `companion.lua:212`. However, the re-recruitment track BYPASSES
-this entirely — it routes through `is_re_recruitment_eligible()` which has no level check.
-The current LevelRange=50 rule value means even the first-time track rarely triggers this.
-The fix (if any is needed) is cosmetic: ensure the fallback default in `is_eligible_npc()`
-line 207 is `50` instead of `3`. The re-recruitment invariant is already upheld in code.
+**ROOT CAUSE FOUND: `companion.lua:1434` calls `npc:Dismiss(true)`, which maps to
+`Companion::Dismiss(true)` → `SoulWipe()` → DELETE companion_data row.**
 
-**Blocker 2 (cooldown):** No cooldown entries exist in data_buckets. The two-track system
-correctly bypasses cooldown for re-recruitment. The cooldown is only set on first-time
-recruitment FAILURE. This blocker is already resolved in the existing code.
+The Lua binding at `lua_companion.cpp:103` names the parameter `voluntary` but passes
+it unchanged to C++ `permanent`. The Lua doc comment at `companion.lua:15` says
+`true=voluntary (preserves record)` — this is WRONG. C++ treats `true=permanent=delete`.
+`cmd_dismiss` always passes `true`, so every `!dismiss` permanently deletes the row.
+On next recruit, Track 1 finds nothing, Track 2 fires, level check applies.
 
-**Blocker 3 (dismissed flag):** The flag IS properly cleared in `CreateFromNPC()` both
-in memory and in DB. The Lua `check_existing_companion_record()` correctly detects both
-`is_dismissed=1` and `is_suspended=1`. This blocker is already resolved in the existing
-code.
+**Blocker 1 (level cap):** Cascading symptom of the SoulWipe bug. Not a direct level-logic bug.
 
-**Current actual state:** The code is largely correct. The user's Lydl re-recruitment
-failure in the original bug report was likely due to:
-(a) An older version of companion.lua before the two-track system was implemented, OR
-(b) A full party (4 active companions leaving no room for Lydl re-recruitment)
+**Blocker 2 (cooldown):** Not an active blocker. Cooldown only fires on first-time FAILURE.
+Already bypassed by Track 1 when the row exists. Not the root cause.
 
-**What actually needs verification/testing:**
-- The two-track system needs regression test coverage proving the invariant holds
-- The Lua `LevelRange` default fallback should be changed from `3` to `50` to match
-  the DB rule value (defense against future rule_values reset)
-- An end-to-end integration test for the full re-recruitment path (DB record with
-  `is_suspended=1` → `check_existing_companion_record()` → `CreateFromNPC()` → flags cleared)
+**Blocker 3 (dismissed flag):** Root cause. `Dismiss(true)` removes the row entirely.
+`CreateFromNPC()` never finds a row to restore. The fix must ensure the row is preserved.
+
+**Lydl's current state (why Lydl differs):** Lydl DIED — death path never calls `Dismiss()`.
+Death sets `is_suspended=1` and saves via three independent fallback paths. The row
+exists (id=10, is_suspended=1) and IS findable by Track 1. Lydl can currently be re-recruited.
+
+**Corrected group capacity math:** `GroupCount() >= 6` with 4 companions + 1 player = 5.
+5 < 6 → group is NOT full. My prior "party full" diagnosis was wrong.
+
+**The fix (all Lua + Lua binding rename):**
+1. `companion.lua:1434` — `npc:Dismiss(true)` → `npc:Dismiss(false)` (lua-expert's domain)
+2. `lua_companion.cpp:103` — rename parameter `voluntary` → `permanent` for clarity
+3. New tests: `Dismiss(false)` preserves row; `Dismiss(true)` deletes; Track 1 end-to-end
+
+**No C++ behavior changes needed.** The `Companion::Dismiss(bool permanent)` logic is
+correct — `false=preserve, true=delete`. Only the call site and binding name are wrong.
 
 ---
 
