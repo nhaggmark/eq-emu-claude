@@ -203,6 +203,125 @@ Established via architect sign-off. Key DB-side deliverables for build phase:
 
 ---
 
+## Stage 4 — v2 Architecture Scope Audit (2026-04-27)
+
+**Dispatched by:** architect (companion-rerecruit-architecture-v2)
+**All queries read-only.**
+
+### Q1: Multi-Variant Scope Distribution
+
+| Variant count | Name count |
+|--------------|------------|
+| 2 | 3,900 |
+| 3 | 2,226 |
+| 4 | 619 |
+| 5 | 749 |
+| 6–9 | 800 |
+| 10+ | 907 |
+| **Total multi-variant** | **9,201** |
+
+Pattern is pervasive — not edge-case. Top generic offenders (`_`, `a_bitten_victim`, etc.) are not recruitable by name. For proper-named NPCs the scale is smaller but still significant (3,038).
+
+### Q2: Lydl Variant Deep Comparison
+
+All three freporte variants (10162/10178/10181) are TRUE VARIANTS of the same character:
+
+| Column | 10162 | 10178 | 10181 |
+|--------|-------|-------|-------|
+| level | 4 | 2 | 3 |
+| class | 12 (Wizard) | 12 | 12 |
+| race | 1 (Human) | 1 | 1 |
+| hp | 28 | 12 | 20 |
+| ac | 13 | 8 | 11 |
+| npc_faction_id | 186 | 186 | 186 |
+| loottable_id | 87849 | 87849 | 87849 |
+| npc_spells_id | 2 | 2 | 2 |
+| texture/helm | 0/0 | 0/0 | 0/0 |
+| bodytype | 1 | 1 | 1 |
+
+Same entity at different spawn-level variants. Name-match across all three is safe — they are the same lore character. 392011 (northro) also same race/class but faction=0.
+
+### Q3: Name Collision Risk (Unrelated NPCs Sharing a Name)
+
+For PROPER NAMED NPCs the race/class collision risk is low. The highest-risk cases are generic lowercase names:
+- `a_Citizen_of_Seru`: 88 ids, 7 classes, 8 races
+- `a_Dervish_Cutthroat`: 100 ids, 5 classes, 6 races
+
+For PROPER NAMED NPCs (recruitable-style), the only same-name/different-class rows found were edge cases like `2_an_erudite_spirit` (class 1 vs 2). Track 1 is scoped to `WHERE owner_id=?` — a player would need to have ALREADY recruited TWO different NPCs with the same proper name, which is presently impossible (players recruit specific known companions, not generic `a_bandit`).
+
+**False-positive risk for Option D:** Bounded by what the player can actually recruit. Not zero but low in practice for proper-named companions.
+
+### Q4: Name Normalization
+
+**Lydl hex:** All four variants have identical bytes `4C79646C5F7468655F4772656174`. No backticks, no whitespace, no hidden chars. Length=14.
+
+**Case sensitivity:** Collation `latin1_swedish_ci` is case-insensitive. `WHERE name='lydl_the_great'` = 4 rows. Case variants cannot coexist as distinct DB rows — the collation collapses them.
+
+**No _001/_002 suffixes** in npc_types for any Lydl variant. Runtime entity-ID disambiguation is in memory only, not persisted.
+
+**Underscore convention:** EQEmu stores names with underscores consistently. `GetName()` returns underscore form. No mixed convention found.
+
+### Q5: Dedup Feasibility (Option C)
+
+References to 10178 and 10181 (the two non-canonical Lydl variants):
+
+| Table | 10178 | 10181 |
+|-------|-------|-------|
+| spawnentry | 1 | 1 |
+| spawn2 (via spawnentry) | 1 | 1 |
+| npc_emotes | 0 | 0 |
+| companion_data | 0 | 0 |
+| companion_exclusions | 0 | 0 |
+
+npc_spells_id=2 and loottable_id=87849 are SHARED with 10162 — not references to 10178/10181 specifically.
+
+**Option C is low-complexity for Lydl specifically** (2 spawnentry rows to update + 2 npc_types rows to delete). BUT: PEQ variants are intentional for spawn-level scaling. Collapsing them breaks world design. Not recommended.
+
+### Q6: companion_data Risk Exposure (post-v1)
+
+Total rows: **5**.
+
+| npc_type_id | name | name_variant_count | at_risk? |
+|-------------|------|--------------------|---------|
+| 10162 | Lydl_the_Great | 4 | YES — 3 freporte variants |
+| 9144 | Hollish_Tnoops | 2 | LOW — sibling 383271 has zero spawnentry (orphan) |
+| 2029 | Jracol_Brestiage | 1 | No |
+| 2032 | Lashun_Novashine | 1 | No |
+| 22014 | Jimble_Woodentoe | 1 | No |
+
+**1 of 5 companion_data rows (Lydl) is an active real-world risk.**
+
+### Q7: companion_exclusions + Name-Match Bypass Risk — CRITICAL FINDING
+
+**Lore-anchor exclusions (type=0) with non-excluded name-siblings: 0.**
+All 7 lore-anchor exclusions have unique names. Zero bypass risk for Sir Lucan, Lord Antonius Bayle, etc.
+
+**Auto-exclusions (type=1) with non-excluded name-siblings: 789 excluded NPCs.**
+
+The bypass vector:
+1. Player recruits non-excluded NPC "Renux_Herkanor" (id=12032)
+2. Player later approaches excluded "Renux_Herkanor" (id=2033, reason: guildmaster/trainer class 28)
+3. With name-match Track 1, id=2033's recruit attempt matches companion_data row for id=12032 → Track 1 fires → exclusion check bypassed
+
+Sample exploitable cases:
+
+| Excluded id | Name | Reason | Non-excluded siblings |
+|-------------|------|--------|-----------------------|
+| 2033 | Renux_Herkanor | Guildmaster/trainer (class 28) | 12032, 56172 |
+| 5133 | Grenix_Mucktail | Rare/named boss | 15084, 15093, 407105 |
+| 17001 | an_elite_gnoll_guard | Rare/named boss | 17020, 17022 |
+| 17021 | a_gnoll_commander | Rare/named boss | 17037 |
+| 14195 | Tesch_Val_Kadvem | Rare/named boss | 18122 |
+| 8001 | Groflah_Steadirt | (auto-excluded) | 383200 |
+
+**Current production exposure: ZERO** — no companion_data rows match any excluded NPC name. No active bypass risk today.
+
+**Future exposure: REAL** — 789 is a large enough surface area that as players recruit more NPCs, collision probability grows.
+
+**Required mitigation:** Name-match Track 1 must still check `companion_exclusions` on the TARGET NPC (the NPC the player is talking to, not the stored companion_data row). Track 1 bypasses the 11 eligibility checks in `is_eligible_npc()` but must NOT bypass the exclusion check for the target. This is a design constraint the architect must incorporate into v2 implementation guidance.
+
+---
+
 ## Stage 4: Build
 
 **Task:** Task 7 — Targeted DELETE of ghost row `companion_data.id=21`
