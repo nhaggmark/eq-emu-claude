@@ -318,6 +318,46 @@ Key findings:
 
 ---
 
+### 2026-04-27 — architect → data-expert (Round-2 DB audit, 8 specific questions)
+
+**From:** architect → **To:** data-expert
+
+Eight specific questions: (1) npc_spells/npc_spells_entries for Cleric rez spells and SpellType_Resurrect bitmask value; (2) spells_new full row details for 5 rez spells including effectid1/2, effect_base_value1, mana, recast, targettype, goodEffect, expansion flags; (3) companion_data schema confirmation and live counts including zero-HP check; (4) live death-state repro; (5) rule_values for 7 specific companion rez/death rules; (6) data_buckets pending rez state; (7) companion corpse DB representation; (8) expansion gates on rez spells.
+
+---
+
+### 2026-04-27 — data-expert Round-2 Response → architect
+
+**From:** data-expert → **To:** architect
+
+Full artifact at `data-expert/context/db-audit-round2.md`.
+
+**Item 1 — npc_spells/npc_spells_entries:** All Cleric NPCs use `npc_spells_id=1`. Zero rez spells in list 1 (`effectid1=81` query returns 0 rows). Zero rez spell entries across ALL spell lists. This is by design — companion rez runs through `companion_spell_sets` exclusively.
+
+`SpellType_Resurrect = (1<<16) = 65536` confirmed from `common/spdat.h:648`. The DB `companion_spell_sets.spell_type=65536` is an exact match. Full SpellType enum documented in artifact.
+
+`LoadCompanionSpells()` at `companion_ai.cpp:288–308` query verified against live schema — correct column selection, correct WHERE clause.
+
+**Item 2 — spells_new:** 5/5 spells loaded. effectid1=81 (SE_Revive), goodEffect=1, targettype=15 (ST_Corpse). Mana 150→300→500→600→700, recast 20s uniform, cast 6s uniform, XP return 0%→35%→60%→75%→90%. `spells_new` has NO `min_expansion`/`max_expansion` columns on this schema.
+
+**Item 3 — companion_data:** All expected columns confirmed. Live: 5 rows, 0 suspended, 0 dismissed, 0 cur_hp=0. Clean state.
+
+**Item 4:** No dead companions currently. Cannot repro live.
+
+**Item 5 — rule_values:** All 7 rules present and correctly set. `RezEnabled=true` is NOT the bug.
+
+**Item 6 — data_buckets:** Zero rez-related keys.
+
+**Item 7 — companion corpse:** No companion_corpse table. Corpses entity-only, zone memory only.
+
+**Item 8 — expansion gates:** No expansion columns in `spells_new` or `companion_spell_sets`. `npc_spells_entries` has columns but all = -1 (all eras). No expansion gate anywhere in the data layer.
+
+**Flag raised:** `SpellType_Resurrect` is absent from both `SPELL_TYPES_BENEFICIAL` and `SPELL_TYPES_DETRIMENTAL` at `spdat.h:899`. If any dispatch path gates on `SPELL_TYPES_BENEFICIAL`, the rez call would be silently skipped. Architect to verify in companion_ai.cpp dispatch path.
+
+**Overall verdict: data layer fully correct and aligned with C++ pipeline. Fix is C++ only.**
+
+---
+
 ### 2026-04-27 — architect → config-expert (Seven-question rule audit)
 
 **From:** architect → **To:** config-expert
@@ -570,4 +610,181 @@ Key findings:
 - Flag: `Spells:AI_IdleNoSpellMaxRecast=60000` ms — rez trigger must run on its own dedicated timer, independent of the NPC idle spell AI loop, or the 10-second delay goal could be gated behind a 60-second AI recast window.
 
 **Outcome:** Config is definitively not the bug. All rules at correct defaults. Code changes required. No rule changes needed for this fix. Tier-preference and mid-combat-rez policies stay hard-coded. AI timer independence is an implementation constraint for c-expert.
+
+
+---
+
+### 2026-04-27 — c-expert → architect: ROOT CAUSE FOUND (spells.cpp:2051)
+
+**From:** c-expert → **To:** architect
+
+> **ROOT CAUSE CONFIRMED:** `eqemu/zone/spells.cpp:2049-2062` — the `case
+> ST_Corpse:` branch in `Mob::DetermineSpellTargets()` rejects any rez cast
+> whose target is not `IsPlayerCorpse()`. NPC companion corpses fail this
+> check, the spell is canceled with `CORPSE_NOT_VALID` BEFORE
+> `SpellEffect::Revive` can run.
+>
+> The downstream pipeline is correct and complete: `SpellEffect::Revive`
+> at `spell_effects.cpp:1707-1730` already routes companion corpses to
+> `Companion::ResurrectFromCorpse()` (auto-accept, no UI). The
+> `AI_ResurrectDeadGroupMember()` AI pipeline is wired into
+> `AI_Cleric` idle branch. `Corpse::SetCompanionData()` is called on
+> companion death at `attack.cpp:2908`. Suite 29 (13 unit tests) covers
+> rules / penalty / corpse metadata / AI gates pre-fix.
+>
+> **Fix is one logical addition at spells.cpp:2051:**
+> `if(!spell_target || (!spell_target->IsPlayerCorpse() && !spell_target->IsCompanionCorpse()))`
+>
+> Risks reviewed: charm/swarm/merc corpses unaffected (no companion_id),
+> mid-combat AC-8 already enforced by idle-only call site, multi-target
+> AC-6 works as one-corpse-per-tick.
+>
+> AC-2 player rez is a SEPARATE, ADDITIVE gap: `FindDeadGroupMemberCorpse`
+> only searches companion corpses. Architect to decide whether to wire
+> player-corpse search into the same scan or defer.
+
+**Outcome:** Root cause identified with file:line. Architect's plan must
+include the `spells.cpp:2051` extension, plus a decision on AC-2 player
+rez scope.
+
+---
+
+### 2026-04-27 — lua-expert → architect: NO Lua-side rez logic; pure-C++ fix is appropriate
+
+**From:** lua-expert → **To:** architect
+
+> Audit results:
+> - `companion.lua` (~1512 lines): no `event_combat`, no `event_death`,
+>   no rez logic, no rez command. The COMMANDS table has 23 commands;
+>   none touch rez.
+> - `global_npc.lua` (~712 lines): no `event_combat` handler. `event_death_zone`
+>   is for LLM-commentary kill-tracking only, not rez.
+> - `companion_culture.lua:484-495`: a "resurrection" event_type STUB exists
+>   for LLM commentary AFTER a rez succeeds — presentation only, not a trigger.
+> - `script_init.lua`: standard module bootstrap, no encounter or mod
+>   registrations relevant to rez.
+> - The buff queue pattern in `global_npc.lua:441-600` is the closest
+>   analogue to what a Lua-side rez queue would look like, but reusing it
+>   is unnecessary if C++ already handles trigger + execution.
+>
+> **Verdict:** Lua-side has zero involvement in this fix. The c-expert
+> root cause (`spells.cpp:2051`) is in C++. No Lua changes required.
+> The companion-rerecruit `is_suspended=1` death-state semantic still
+> holds (verified — no Lua change broke it).
+>
+> Optional future polish: fire `companion_culture.lua` rez-event LLM
+> commentary AFTER a successful rez. Out of scope for this fix.
+
+**Outcome:** Lua-expert confirms the architect hypothesis: pure-C++ fix.
+No Lua changes in this bugfix.
+
+---
+
+### 2026-04-27 — protocol-agent → architect: Titanium clean; companion bypass already in place
+
+**From:** protocol-agent → **To:** architect
+
+> Mapped both rez paths end-to-end:
+> 1. **Player corpse path** (existing, functional): `Corpse::CastRezz` →
+>    `OP_RezzRequest` (228-byte `Resurrect_Struct`) → `worldserver.RezzPlayer` →
+>    cross-zone routing → Titanium client dialog → `OP_RezzAnswer` back →
+>    `OPRezzAnswer()` applies rez. Titanium translation: NO `E()` or `D()`
+>    entry in `titanium_ops.h` — pass-through wire format. Bot precedent
+>    works the same way (botspellsai.cpp:204), confirming NPC casters are
+>    valid in this flow.
+> 2. **Companion corpse path** (server-side direct, no packets):
+>    `spell_effects.cpp:1720` → `Companion::ResurrectFromCorpse` →
+>    DB UPDATE → corpse depop → new entity spawn at corpse pos → group
+>    rejoin. ZERO opcodes touched. `OP_RezzRequest` is NEVER sent.
+>
+> **Verdict on user hypothesis:** "NPC corpses lack UI to confirm rez" is
+> accurate — and the bypass for that exact gap is ALREADY IN PLACE at
+> `spell_effects.cpp:1720`. The protocol layer is correct.
+>
+> **The remaining failure is upstream of `SpellEffect::Revive`** — i.e.,
+> in spell_target validation or AI initiation. (This matches c-expert's
+> root-cause finding at `spells.cpp:2051` — the spell never reaches
+> `SpellEffect::Revive` because `DetermineSpellTargets` cancels it.)
+>
+> No Titanium-specific concern. No translation-layer changes. No new
+> opcodes needed. No client-side modifications.
+
+**Outcome:** Protocol-clean. Bot precedent confirms NPC casters in player
+rez flow work in production. Companion bypass already protocol-correct.
+
+---
+
+### 2026-04-27 — data-expert → architect: DB clean; companion_spell_sets has rez tier under spell_type=65536
+
+**From:** data-expert → **To:** architect
+
+> Live DB audit:
+> - **No pending-rez state in DB** (`data_buckets`, `character_corpses`).
+>   Rez request/accept is in-memory opcode flow, no persistence.
+> - **No rez-blocking tables.** `SHOW TABLES LIKE '%rez%'` returns zero.
+> - **`companion_data` death state correct.** 5 active companion rows for
+>   character "Chelon" (owner_id=6); `is_suspended=0` for all (none dead
+>   right now); `is_dismissed=0`; cur_hp populated. No schema change needed.
+> - **Rez spells ARE populated in `companion_spell_sets` with
+>   `spell_type=65536`** (this is the companion system's custom rez bitmask,
+>   distinct from `npc_spells_entries`):
+>   - 9 Cleric rez spells in scope, ids 388/391/392/2168/2169/2170/2171/2172/1524
+>   - covers Reanimation (lvl 12) through Reviviscence (lvl 56)
+>   - PRD's 5 canonical spells all present (ids 392/2168/391/388/2172)
+>   - `min_hp_pct=0, max_hp_pct=0` (correct for rez — no HP gate)
+>   - The C++ AI uses `companion_spell_sets` (not `npc_spells_entries`).
+> - **Companions:Rez* rules already exist in `rule_values`** with sane
+>   values: `RezEnabled=true`, `RezPostCombatDelayS=10` (answers AC-1 N=10),
+>   `RezRange=200`, `RezWaiveReagents=true`. These were inserted in advance
+>   of (or alongside) the C++ scaffold.
+> - **PRD's 5 spell rows in `spells_new`:**
+>     | id | name | mana | cast_t | recast_t | targettype | effectid1 | xp_return |
+>     | 2168 | Reanimation | 150 | 6s | 20s | 15 | 81 | 0% |
+>     | 391 | Revive | 300 | 6s | 20s | 15 | 81 | 35% |
+>     | 388 | Resuscitate | 500 | 6s | 20s | 15 | 81 | 60% |
+>     | 2172 | Restoration | 600 | 6s | 20s | 15 | 81 | 75% |
+>     | 392 | Resurrection | 700 | 6s | 20s | 15 | 81 | 90% |
+>   - `targettype=15` = corpse-target (this is the `ST_Corpse` enum).
+>   - `effectid1=81` = Revive (corresponds to `SpellEffect::Revive`).
+>
+> **Verdict:** Data layer is complete and clean. Bug is purely
+> application-layer (C++). No DB changes needed for the fix.
+
+**Outcome:** Data layer clean. `companion_spell_sets` has all required
+rez spells, rules pre-defined. Architect can rely on the data layer as-is.
+
+---
+
+### 2026-04-27 — config-expert → architect: All rules clean; no config-only fix possible
+
+**From:** config-expert → **To:** architect
+
+> Rule audit complete:
+> - All 4 `Companions:Rez*` rules exist with sane defaults
+>   (`RezEnabled=true`, `RezPostCombatDelayS=10`, `RezRange=200`,
+>   `RezWaiveReagents=true`). No misconfiguration.
+> - `Companions:DeathDespawnS=1800` (30 min) — corpse persistence is
+>   plenty long for the 10-second rez delay window.
+> - `NPC:MinorNPCCorpseDecayTime=450000` (7.5 min) — even if the NPC
+>   corpse path used these timers (it doesn't, per attack.cpp:2911 which
+>   overrides to `Companions:DeathDespawnS`), 7.5 min is plenty.
+> - `Spells:AI_IdleBeneficialChance=100` — NPCs have full chance to cast
+>   beneficial spells while idle (post-combat). The AI casting pipeline
+>   is NOT gating rez.
+> - **No rule could explain the bug.** A wrong rule alone cannot produce
+>   "cleric attempts rez but nothing happens." The fix is in C++.
+>
+> **No new rules recommended for this fix.** Architect intent to keep
+> `RezPostCombatDelayS=10` (matching DB) is fine. Hardcoding tier-preference
+> and multi-target ordering policies is fine — fewer knobs is better,
+> consistent with the YAGNI principle.
+>
+> One observation: `Spells:AI_IdleNoSpellMaxRecast=60000ms` could in
+> theory delay rez attempts by up to 60s. Architect should confirm
+> whether `AI_ResurrectDeadGroupMember()` runs independently of this
+> timer or hooks into it.
+
+**Outcome:** Config clean. Architect's hardcode-the-policies approach is
+endorsed. Rules already in place support AC-1 (N=10), AC-3 (rezenabled),
+AC-7 (resource gates), and AC-8 (corpse window).
 
