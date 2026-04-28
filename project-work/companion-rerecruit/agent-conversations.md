@@ -811,4 +811,63 @@ _c-expert, lua-expert, data-expert working the multi-variant npc_type_id bug._
 
 8. **Third bug found (new, low severity):** `companion_data.name` can become stale if an NPC is renamed in npc_types after recruitment. Pre-existing, not introduced by this fix. Surfacing explicitly per instructions.
 
+### 2026-04-27 — data-expert: v2 multi-variant scope triage (response to team-lead dispatch)
+
+**From:** data-expert → **To:** architect
+
+> Full read-only DB triage complete. All queries run against live peq DB (67,530 npc_types rows). Findings:
+>
+> **HEADLINE: Name-only lookup is NOT safe for Lydl_the_Great.**
+>
+> **1. Multi-variant scope**
+> - 9,202 distinct names have > 1 npc_type_id (13.6% of 67,530 total rows by name collision)
+> - 3,038 proper-named NPCs (Title_Case_With_Underscores pattern) have > 1 npc_type_id
+> - This is pervasive across the entire PEQ content set — not an edge case unique to Lydl
+>
+> **2. Lydl_the_Great — 4 variants confirmed:**
+> - 10162 (level 4, freporte + highpass, faction 186, hp 28)
+> - 10178 (level 2, freporte, faction 186, hp 12)
+> - 10181 (level 3, freporte, faction 186, hp 20)
+> - 392011 (level 2, northro, faction 0)
+>
+> All 4 confirmed active in spawnentry. Spawngroup 5765 (freporte_140) contains 10162, 10178, AND 10181. **Name + zone is NOT unique: 3 variants share freporte.**
+>
+> **Name + npc_faction_id does NOT disambiguate** within freporte — all three share faction 186. Zone-based disambiguation works only for northro (392011).
+>
+> **3. Hollish_Tnoops — 2 variants:**
+> - 9144: real spawn (spawnentry exists in spawngroup 13593 / freporteHollish_Tnoops00822511)
+> - 383271: **orphan** (ZERO spawnentry rows) — exists in npc_types but never spawns. Not a real concern.
+>
+> **4. Other recruitable NPCs: no collision**
+> - Jracol_Brestiage (2029): 1 npc_type_id
+> - Lashun_Novashine (2032): 1 npc_type_id
+> - Jimble_Woodentoe (22014): 1 npc_type_id
+>
+> **5. Name normalization: clean**
+> - No trailing whitespace (confirmed for all 5 recruitable NPCs)
+> - Standard Title_Case_With_Underscores format
+> - Collation: `latin1_swedish_ci` (case-insensitive)
+> - No suffix patterns like `_002`
+>
+> **6. Index status: NO INDEX on npc_types.name**
+> - Column type is `TEXT` (65,535 max length) — cannot be indexed without prefix length
+> - Any name-based WHERE clause = full 67k row scan
+> - If name lookup goes hot, recommend: `ALTER TABLE npc_types ADD INDEX idx_name_prefix (name(100));`
+> - Requires a schema migration entry in `database_update_manifest_custom.h`
+>
+> **7. companion_data integrity: CLEAN**
+> - 0 stale rows: all 5 companion_data npc_type_ids have valid npc_types matches
+> - No additional cleanup needed for v2
+>
+> **Recommended safe v2 approach:**
+> Keep npc_type_id as primary lookup key. Add name-based secondary fallback in Lua `check_existing_companion_record()`:
+> "If no row matches `WHERE npc_type_id=?`, look for `WHERE owner_id=? AND name = (SELECT name FROM npc_types WHERE id=:spawned_id)`."
+> This widens the match to accept any same-name variant as a re-recruit trigger, while the companion_data row retains the original canonical npc_type_id.
+>
+> For C++ `companion.cpp:218`, the same widening is needed. c-expert proposed Option A (JOIN on npc_types.name) or Option B (use companion_data.name column directly). Option B avoids the npc_types full scan and uses PK lookup for the name.
+>
+> Full dev-notes + live query results: `claude/project-work/companion-rerecruit/data-expert/dev-notes.md` (committed b18ab88).
+
+**Outcome:** Findings sent to architect. Key design constraint established: name + zone is not unique for Lydl (3 variants in freporte), so a pure name-based lookup would produce ambiguous results. The recommended approach is npc_type_id primary with name-based fallback, scoped to the same owner_id, so the ambiguity resolves to the correct companion_data row regardless of which variant is currently spawned.
+
 9. **C++ change is REQUIRED** — unlike v1 which was Lua-only. Rebuild cycle needed.
