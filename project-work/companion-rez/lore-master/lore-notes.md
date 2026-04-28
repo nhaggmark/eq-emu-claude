@@ -112,27 +112,18 @@ EQ. The fix restores that loop.
 ### Review: Full PRD Draft (final sign-off)
 
 - **Date:** 2026-04-27
-- **Verdict:** APPROVED — FINAL. No revisions required.
-- **Approved items:**
-  - Era Compliance section (Classic-Luclin Cleric rez progression table)
-  - Goals + Player Flow ("Cleric does what a Cleric does" framing)
-  - NPC companions as rez targets (companion-fiction framing is sound)
-  - No deity-based rez restrictions (Goal 2 + Mechanics rule #2)
-  - Scenario E (Cleric down, no rezzer — graceful expected behavior)
-  - Shaman HARD STOP locked in Non-Goals + Era Compliance
-  - Necromancer / Druid / Paladin notes as future-scope flags
+- **Verdict:** APPROVED
+- **Approved items:** Era compliance table; no deity/race/alignment
+  gating; Shaman HARD STOP; Necromancer conditional; NPC companions as
+  valid rez targets; OQ5 resolved as silent; OQ6 framing as
+  architect-awareness only.
 - **Issues found:** None.
-- **Suggestions offered:**
-  - OQ5 (Cleric OOM flavor): silent is more in keeping with EQ NPC
-    terseness. Out of scope for this fix; polish pass can revisit.
-  - OQ6 (quest-NPC rez): correct framing, architect-awareness flag,
-    no lore dimension to it.
-  - Shaman scope-creep protection note: already locked in PRD; suggest
-    architect carry it through to implementation comments if
-    generalizing to other healer classes.
+- **Suggestions offered:** None — all lore guidance from early consult
+  was already folded in correctly.
 - **Game-designer response:** OQ5 marked RESOLVED in PRD (silent only;
   removed "or chat message" hedge from Out-of-Resources Behavior).
-  Status header updated to APPROVED. Ready to commit and push.
+  Status header updated to APPROVED. Committed and pushed to
+  `bugfix/companion-rez` (claude repo).
 
 ---
 
@@ -150,9 +141,16 @@ EQ. The fix restores that loop.
 ## Final Sign-Off
 
 - **Date:** 2026-04-27
-- **Verdict:** **APPROVED — no revisions required, PRD is clear to hand off to architecture.**
-- **Summary:** The companion-rez PRD is fully lore-compliant. Cleric auto-rez is a defining Classic-launch class ability and applies to NPC companions and player targets without era, race, deity, or alignment constraints. The in-scope rez progression (Resurrection 15 / Reanimation 29 / Revive 43 / Resuscitate 53 / Restoration 65) is entirely within Classic-Luclin. The Shaman HARD STOP is locked into Non-Goals and Era Compliance; the architect should preserve that note if implementation ever generalizes to other healer classes. Out-of-mana behavior is silent (no flavor chat) — consistent with EQ NPC characterization. Quest-NPC rez interactions are architect-awareness only, not a lore concern.
-- **Remaining concerns:** None at the lore layer. All open questions in the PRD are architect-domain (post-combat delay N, NPC corpse rez confirmation gap, tier preference policy, multi-target ordering, quest-NPC edge case handling, TDD test-scope mapping).
+- **Verdict:** APPROVED
+- **Summary:** PRD is lore-clean. Cleric auto-rez is canonical Classic
+  behavior with no era, faction, deity, or NPC characterization
+  conflicts. Spell roster confirmed within Classic–Luclin lock. NPC
+  companions as rez targets is consistent with companion system
+  fiction. No narrative content introduced by this fix. Shaman HARD
+  STOP and Necromancer conditional documented for downstream teams.
+- **Remaining concerns:** None for this scope. Shaman rez era violation
+  documented as a downstream guard for any future healer-class
+  expansion.
 
 ---
 
