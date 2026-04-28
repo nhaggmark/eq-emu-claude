@@ -870,4 +870,39 @@ _c-expert, lua-expert, data-expert working the multi-variant npc_type_id bug._
 
 **Outcome:** Findings sent to architect. Key design constraint established: name + zone is not unique for Lydl (3 variants in freporte), so a pure name-based lookup would produce ambiguous results. The recommended approach is npc_type_id primary with name-based fallback, scoped to the same owner_id, so the ambiguity resolves to the correct companion_data row regardless of which variant is currently spawned.
 
+---
+
+### 2026-04-27 — data-expert: v2 7-question architect scope audit
+
+**From:** architect → **To:** data-expert
+
+> Requested 7 specific DB queries to inform the v2 option selection (A/B/C/D):
+> 1. Multi-variant scope + distribution
+> 2. Lydl variant deep comparison (same character vs different?)
+> 3. Name collision risk — unrelated NPCs sharing a name (class/race mismatch)
+> 4. Name normalization (case, whitespace, backticks, suffixes)
+> 5. Dedup feasibility for Option C
+> 6. companion_data scope and exposure
+> 7. companion_exclusions bypass risk with name-match
+
+**Response from** data-expert (committed 90818b0):
+
+> **Q1 — Distribution:** 9,201 multi-variant names. 3,900 have 2 variants; 2,226 have 3; 619 have 4; 907 have 10+. Pervasive, not edge-case.
+>
+> **Q2 — Lydl confirmed same character:** All three freporte variants (10162/10178/10181) share identical class=12, race=1, faction=186, loottable=87849, spells=2. Only level (4/2/3) differs. Safe to name-match. 392011 (northro) same race/class but faction=0.
+>
+> **Q3 — Collision risk low for proper-named NPCs:** High race/class collision only in generic lowercase names (`a_Citizen_of_Seru`: 88 ids/7 classes; `a_Dervish_Cutthroat`: 100 ids/5 classes). Proper-named companions have minimal unrelated-entity collisions. Track 1 is scoped to owner_id — bounded by what the player actually recruited.
+>
+> **Q4 — Normalization clean:** All Lydl variants: identical bytes, no hidden chars, no backticks. Collation `latin1_swedish_ci` is case-insensitive — case variants cannot coexist as distinct rows. No `_001/_002` suffixes in npc_types. Underscore convention consistent.
+>
+> **Q5 — Option C feasible but not recommended:** 10178 and 10181 each have 1 spawnentry + 1 spawn2 ref; zero other references. 2 UPDATE + 2 DELETE would do it. But PEQ variants are intentional for spawn-level scaling — collapsing them breaks world design.
+>
+> **Q6 — companion_data exposure:** 5 rows. Lydl (10162) is the only active real-world risk (3 freporte variants). Hollish sibling 383271 has zero spawnentry (orphan, never spawns). Jracol/Lashun/Jimble have unique names.
+>
+> **Q7 — CRITICAL FINDING:** Lore-anchor exclusions (type=0) with non-excluded name-siblings: 0 — zero bypass risk for Sir Lucan etc. Auto-exclusions (type=1) with non-excluded name-siblings: **789 excluded NPCs**. Bypass vector: player recruits non-excluded Renux_Herkanor (12032) → later approaches excluded Renux_Herkanor (2033, guildmaster) → name-match Track 1 finds 12032's row → exclusion check on 2033 bypassed. 789 is a large enough surface that production exposure will grow as more NPCs are recruited. Current production exposure: ZERO (no companion_data rows match excluded NPC names).
+>
+> **Required mitigation:** Track 1 name-match must still check companion_exclusions on the TARGET NPC (the NPC being recruited NOW, not the stored row). Track 1 can bypass is_eligible_npc()'s 11 checks but must NOT bypass exclusions for the target. Implementation spec must instruct lua-expert and c-expert to add explicit exclusion guard even in Track 1.
+
+**Outcome:** Architect has full data for Option A/B/C/D decision. Q7 critical finding establishes that any name-based Track 1 implementation MUST add an explicit exclusion check on the spawned NPC. This is a new constraint not present in the v2 team-lead briefing or c-expert's Option D recommendation.
+
 9. **C++ change is REQUIRED** — unlike v1 which was Lua-only. Rebuild cycle needed.
