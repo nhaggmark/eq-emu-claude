@@ -18,6 +18,55 @@ Triage the C++ side of the companion re-recruitment blockers. Identify:
 
 ---
 
+## Stage 4: V2 Implementation Log (2026-04-27)
+
+### Tasks V2-3, V2-4, V2-5
+
+**V2-3: Suite 35 added (TDD)**
+
+File: `eqemu/zone/cli/tests/cli_companion_tests.cpp`
+- Added `#include "common/repositories/companion_data_repository.h"` to get `CompanionDataRepository::CompanionData` struct and helpers
+- Added `TestCompanionReRecruitmentVariantNameMatch()` (Suite 35) with 2 test cases:
+  - 35.1: Seeds a companion_data row with `npc_type_id=10162` (Lydl variant A), proves old strict-ID query with variant B (10178) returns empty, then proves new name-based query finds the row
+  - 35.2: Proves name-mismatch returns empty (WHERE clause actually filters)
+- Registered in `ZoneCLI::TestCompanion()`
+- Commit SHA: `6f752cd99`
+
+**V2-4: companion.cpp fix applied**
+
+File: `eqemu/zone/companion.cpp:218-220` (now lines 218-231)
+
+Changed query from:
+```cpp
+"owner_id = {} AND npc_type_id = {} AND (is_dismissed = 1 OR is_suspended = 1) LIMIT 1"
+```
+to:
+```cpp
+"owner_id = {} AND name = '{}' AND name != '' "
+"AND (is_dismissed = 1 OR is_suspended = 1) "
+"ORDER BY level DESC, experience DESC, id DESC LIMIT 1"
+```
+with `Strings::Escape(source_npc->GetCleanName())` as the name binding.
+
+Added diagnostic `LogInfo` when `existing[0].npc_type_id != source_npc->GetNPCTypeID()` to surface stale-name cases without changing behavior.
+
+Updated comment block explaining name-based matching and ORDER BY rationale.
+
+Commit SHA: `478d154bf`
+
+**V2-5: Tests verified**
+
+Post-fix build: clean (no warnings introduced)
+Test results: 569 PASSED, 0 FAILED across all 35 suites
+- Suite 20 (regression): PASSED
+- Suite 35 (new): all 7 assertions PASSED
+
+**Deviations from spec:** None. The `REPLACE` subquery was not used (rejected per V2 CORRECTIONS). No C++ exclusion check was added (Lua-only per V2 CORRECTIONS Correction 1).
+
+**Next step:** V2-6 (infra-expert: server restart so new binary is live)
+
+---
+
 ## Stage 1: Plan / Triage
 
 ### Files Examined
