@@ -276,10 +276,181 @@ this doesn't cause BENEFICIAL-gate failures in AI dispatch or resist checks.
 
 ---
 
+## V2 Investigation — Rez Chain Atomicity (2026-04-27)
+
+Dispatched by architect for v2 follow-up after in-game validation found the rez chain
+is non-atomic: corpse deleted but companion ends in `is_suspended=1` with no corpse.
+
+### DB Write Sequence in ResurrectFromCorpse (companion.cpp:3547-3700)
+
+**Exact sequence, with file:line:**
+
+1. `corpse->IsRezzed(true)` — in-memory flag only, no DB write (`companion.cpp:3587`)
+2. `CompanionDataRepository::UpdateOne(database, comp_data)` — **DB WRITE #1** (`companion.cpp:3624`)
+   - Sets `is_suspended=0`, `cur_hp=0`, `experience += xp_restore`
+   - This is the ONLY DB write in the rez chain before corpse deletion
+3. `corpse->DepopNPCCorpse()` — removes corpse from entity list (`companion.cpp:3630`)
+   - **CORPSE IS GONE AFTER THIS LINE**. No DB row for NPC corpses exists (confirmed v1).
+4. `new Companion(...)` + `entity_list.AddNPC(new_comp)` — entity creation (`companion.cpp:3633–3647`)
+5. `new_comp->AI_Start()` + `new_comp->Load(companion_id)` + `new_comp->LoadEquipment()`
+   + `new_comp->CalcBonuses()` + `new_comp->ScaleStatsToLevel(scale_level)` — entity setup
+6. `new_comp->CompanionJoinClientGroup()` — group join attempt (`companion.cpp:3680`)
+   - **CAN FAIL** — if `AddMember()` returns false (group at MAX_GROUP_MEMBERS=6),
+     falls through to `Suspend()` at `groups.cpp:2709`
+   - `Suspend()` calls `SetSuspended(true)` + `Save()` — **DB WRITE #2** (sets `is_suspended=1`)
+
+### Is `is_suspended=0` Set BEFORE or AFTER New Entity Spawns?
+
+**BEFORE.** The UpdateOne at step 2 sets `is_suspended=0` before `DepopNPCCorpse` (step 3)
+and before `entity_list.AddNPC` (step 4). The new entity is never "saved" by `ResurrectFromCorpse`
+itself — it relies on the state written by step 2. If the entity then calls `Suspend()` (step 6
+failure path), it writes `is_suspended=1` back over the step-2 write.
+
+### What Happens to the Corpse
+
+NPC/companion corpses are **entity-only** (zone memory). Confirmed in v1 audit:
+- `SHOW TABLES LIKE '%corpse%'` returns only `character_corpses` (player corpses only)
+- `character_corpses` has `is_rezzed`/`rezzable`/`rez_time` columns but these apply
+  to player corpses only
+- No `companion_corpses` table exists anywhere in the `peq` schema
+- When `DepopNPCCorpse()` is called at step 3, the corpse vanishes permanently from
+  the zone. It cannot be recreated. There is no DB row to restore it from.
+
+### Recovery State If Rez Chain Fails Halfway
+
+**The user-observed failure sequence:**
+1. Rez attempt → entity spawns (wrong name reported — likely a `GetCleanName()` vs
+   entity-name mismatch cosmetic issue, separate concern)
+2. `CompanionJoinClientGroup()` called → `AddMember()` returns false (group full)
+3. `Suspend()` called on the new entity → `Save()` writes `is_suspended=1`
+4. `Depop()` removes the new entity from zone
+5. Result: `companion_data.is_suspended=1`, corpse gone, companion unrecoverable
+   without manual `!unsuspend` OR a `#spawn`-style workaround
+
+**This IS the orphan-state vector.** The DB ends with `is_suspended=1` (correct for
+"not in zone") but the corpse is gone (so the rez path is permanently broken for this
+death cycle). The player CAN manually unsuspend: `!unsuspend` will call `Unsuspend()`
+which calls `CompanionJoinClientGroup()` again — but if the group is STILL full, it
+will `Suspend()` again. So the limbo state is not truly "unrecoverable" but it IS
+stuck until the group-full condition clears.
+
+**Secondary concern:** If the new entity's `Suspend()` + `Depop()` fires, does `Save()`
+correctly write `is_suspended=1`? Yes — `Suspend()` at `companion.cpp:2465-2481` calls
+`SetSuspended(true)` → `Save()` → `Depop()`. `Save()` at line 2836 writes
+`cd.is_suspended = m_suspended ? 1 : 0`. So the DB ends at `is_suspended=1`, which is
+actually the CORRECT state (companion is not in zone). The problem is the corpse is gone,
+not the DB state itself.
+
+**Live DB state (2026-04-27):** All 5 companions have `is_suspended=0` — no limbo rows
+currently. The failure has self-healed (or the user recovered manually).
+
+### Atomicity Options
+
+**Option A: DB transaction (BEGIN/COMMIT/ROLLBACK)**
+
+MariaDB supports transactions on InnoDB tables. All companion tables (`companion_data`,
+`group_id`, etc.) confirmed InnoDB. A transaction wrapping steps 2–6 would allow
+ROLLBACK to restore `is_suspended=1` if the chain fails.
+
+**Verdict: NOT the right tool here.** The problem is not DB consistency — the DB always
+ends in a *valid* state (`is_suspended=0` if success, `is_suspended=1` if failure via
+Suspend()). The problem is the CORPSE is gone from entity memory. No DB transaction can
+bring back a `DepopNPCCorpse()`'d entity. A ROLLBACK of the DB write would correctly
+restore `is_suspended=1`, but the corpse is still gone — which means the rez path is
+broken (no corpse = no retry). A transaction only helps if we can ALSO un-depop the
+corpse, which is an in-memory operation, not a DB operation.
+
+**Option B: Application-level rollback (re-create the corpse if chain fails)**
+
+If `CompanionJoinClientGroup()` fails, the rez chain could:
+1. Roll back `is_suspended` to 1 via a direct DB write
+2. Re-create a companion corpse entity at `corpse_pos` via `entity_list.AddCorpse()`
+   with `SetCompanionData()` called — restoring the rezzable state
+
+This is feasible. The corpse position is already saved in `corpse_pos` at step 2
+(line 3627) before `DepopNPCCorpse`. The companion_id and owner_char_id are available.
+The decay timer would need to be re-set to the remaining time (unknown at rollback point,
+but `DeathDespawnS` as a full reset is acceptable).
+
+**Verdict: RECOMMENDED APPROACH.** Application-level rollback preserves the user
+experience invariant: if rez fails partway, the companion is back in a "dead with corpse"
+state that is indistinguishable from never having attempted the rez (except for the
+`IsRezzed(true)` flag on the now-replaced corpse — new corpse needs `IsRezzed(false)`).
+
+**Option C: Re-order operations — defer DepopNPCCorpse until after group join succeeds**
+
+Move `corpse->DepopNPCCorpse()` to AFTER `CompanionJoinClientGroup()` returns true.
+If group join fails, skip DepopNPCCorpse (corpse stays), roll back the DB write
+(`is_suspended=1`, `experience -= xp_restore`), delete the new entity, and return.
+
+**Verdict: CLEANEST approach architecturally.** No corpse re-creation needed. The
+invariant becomes: corpse depops only when rez is confirmed successful. DB write only
+needs rollback (not corpse re-creation). The new entity is `delete`'d (it was never
+added to `entity_list` — or if already added, `Depop()` removes it).
+
+**Risk:** The new entity at step 4 (`entity_list.AddNPC`) is already visible to clients
+between step 4 and step 6. If group join fails, clients see a flash of the companion
+appearing then disappearing. Acceptable cosmetically; no game-state corruption.
+
+**Option D: Guard `DepopNPCCorpse` behind group-join check — unified fix**
+
+Check group capacity BEFORE doing any rez-chain writes. If the group is full and no
+auto-dismiss will occur, bail early (before step 2). This is the simplest change:
+add a pre-flight check at the top of `ResurrectFromCorpse` or at the top of
+`AI_ResurrectDeadGroupMember`. 
+
+**Verdict: CORRECT for the group-full case specifically**, but doesn't address the
+general atomicity concern (other failure modes: owner leaves zone mid-rez, entity_list
+AddNPC fails, etc.). Should be COMBINED with Option C for defense-in-depth.
+
+### Recommended Atomicity Approach (Architect Decision)
+
+**Primary:** Option D (pre-flight group-capacity check before any DB write or corpse deletion).
+This prevents the most common failure mode (group full) from ever entering the rez chain.
+
+**Secondary:** Option C (defer `DepopNPCCorpse` until after `CompanionJoinClientGroup`
+returns true). This makes the rez chain safe against all late-failure modes.
+
+Together these eliminate the limbo state. No DB transaction needed — the MariaDB
+transaction model doesn't help because the problem is in-memory entity lifecycle,
+not DB consistency.
+
+### Orphaned-Row Scenarios for V2 Cleanup
+
+**No orphaned DB rows currently** (live audit: all companions have `is_suspended=0`,
+group_id table has 2 entries, both valid for the active session).
+
+**Potential orphan from the failure scenario:** If rez fires, `is_suspended=0` is
+written, then failure occurs BEFORE the new `Suspend()` call writes `is_suspended=1`
+back (e.g., server crash between lines 3624 and 3630), the companion stays `is_suspended=0`
+in DB with no entity in zone. Player `!unsuspend` would attempt to spawn it — this
+is handled by the existing `Unsuspend()` path, which spawns a new entity and calls
+`CompanionJoinClientGroup()`. So even this crash-window scenario is recoverable via
+`!unsuspend`.
+
+**The v1 ghost-row equivalent here:** The analogous ghost-row scenario would be a
+`group_id` row left behind after a failed rez. But `CompanionJoinClientGroup()` at line
+2638-2639 does `RemoveCompanionFromGroup(this, GetGroup())` at entry if the companion
+already has a group. The newly-created entity doesn't have a group yet (it was just
+`new`'d), so no `group_id` row to orphan. Confirmed: `group_id` table has no orphaned
+companion entries (only Lashun Novashine + Chelon in group 1002, which is the active
+in-session group).
+
+---
+
+## Open Items (Updated)
+
+- [x] Architect confirmed C++ reads Companions:RezEnabled — yes, via rule system
+- [x] spell_type=65536 confirmed aligned with SpellType_Resurrect — pipeline correct
+- [x] V2 atomicity investigation complete — findings sent to architect 2026-04-27
+- [ ] Architect to verify SpellType_Resurrect not in SPELL_TYPES_BENEFICIAL is not a problem
+
+---
+
 ## Context for Next Agent
 
-The data layer is clean and complete for this feature. companion_spell_sets has
-all rez spells under spell_type=65536. rule_values has all four rez tuning rules.
-companion_data uses is_suspended=1 for death state. No schema changes are needed.
-The fix is entirely in C++ (and possibly Lua for the trigger). This report was
-sent to the architect as input to their triage.
+The data layer is clean and complete for both v1 and v2. No schema changes needed.
+The v2 atomicity problem is application-layer (C++ entity lifecycle), not a DB
+consistency problem. DB transactions don't help. The fix is: pre-flight group-capacity
+check (Option D) + defer DepopNPCCorpse until after group join succeeds (Option C).
+Findings sent to architect 2026-04-27.
