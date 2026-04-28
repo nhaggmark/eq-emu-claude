@@ -2,7 +2,7 @@
 
 > **Feature branch:** `bugfix/companion-rerecruit`
 > **Created:** 2026-04-27
-> **Last updated:** 2026-04-27
+> **Last updated:** 2026-04-28
 
 ---
 
@@ -13,17 +13,36 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-04-27 | 2026-04-27 |
 | Design | game-designer + lore-master | Complete | 2026-04-27 | 2026-04-27 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-04-27 | 2026-04-27 |
-| Implementation | _implementation team_ | Not Started | | |
-| Validation | game-tester | Not Started | | |
+| Implementation | infra-expert + lua-expert + data-expert | Complete | 2026-04-27 | 2026-04-28 |
+| Validation | game-tester | In Progress | 2026-04-28 | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation (architecture handoff complete)
+**Current phase:** Validation — server-side checks PASS; waiting on user in-game testing
 
 ---
 
 ## Handoff Log
 
 _Record each handoff between agents with context and any notes._
+
+### game-tester → completion (pending user in-game confirmation)
+- **Date:** 2026-04-28
+- **Notes:** Server-side validation PASS (21/21 checks). 58/58 TDD tests green.
+  Ghost row id=21 deleted. All 4 code changes confirmed live. No Lua errors in logs.
+  Deployment: user must run `#reload quest global` in-game before testing.
+  Test plan at `game-tester/test-plan.md` — 10 scenario tests + 2 edge cases.
+  Lydl (companion_data id=10, is_suspended=1, level 53, 14 gear items) is ready
+  to re-recruit immediately after reload. No blockers.
+
+### implementation team → game-tester (Task 8 handoff)
+- **Date:** 2026-04-27
+- **Notes:** All 7 implementation tasks complete. Commits:
+  - akk-stack 7101248: make test-companion target (infra-expert)
+  - akk-stack 76e6753: 5 failing TDD tests (lua-expert, pre-fix)
+  - akk-stack ad79630: Dismiss(true)→false + doc comment + LevelRange + ORDER BY (lua-expert)
+  - claude 5decc45: ghost row id=21 deleted (data-expert)
+  - claude f55ffbf: lua-expert dev-notes
+  Test results: 50/50 main + 8/8 edge case = 58/58 PASS.
 
 ### architect → implementation team (infra-expert + lua-expert + data-expert + game-tester)
 - **Date:** 2026-04-27
@@ -92,7 +111,7 @@ _Populated by the architect after the architecture doc is approved._
 | 5 | Lua hardening: LevelRange fallback at `companion.lua:207` (`or 3` → `or 50`) AND `ORDER BY level DESC, experience DESC, id DESC` at `companion.lua:394-397` | lua-expert | Complete 2026-04-27 | akk-stack commit ad79630 |
 | 6 | Run `make test-companion`; verify 5 new tests pass + 38 existing tests still pass | lua-expert | Complete 2026-04-27 | 58 total tests pass (50+8); all 5 TDD tests green |
 | 7 | Targeted DELETE of ghost row `companion_data.id=21` (SELECT-confirm-DELETE) | data-expert | Complete 2026-04-27 | Depends on Task 6 |
-| 8 | In-game scenario validation (AC-3, AC-4, AC-6, AC-7, AC-10 + regressions) | game-tester | Not Started | Depends on Task 7 |
+| 8 | In-game scenario validation (AC-3, AC-4, AC-6, AC-7, AC-10 + regressions) | game-tester | In Progress 2026-04-28 | Server-side PASS; test-plan.md written; awaiting user in-game runs |
 
 ---
 
