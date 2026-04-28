@@ -219,6 +219,29 @@ questions answered from concurrent triage).
 
 ---
 
+### 2026-04-27 — data-expert Triage Report → architect
+
+**From:** data-expert → **To:** architect
+
+Full DB audit of the companion rez data layer.
+
+**BOTTOM LINE: The data layer is fully set up and correct. The rez bug has zero DB-layer enforcement. It is purely application-layer.**
+
+Key findings:
+
+1. **No pending rez state in DB.** No rez_requests table, no data_buckets entries (only `soul_wipe_6_*` keys present). Rez request/accept is purely in-memory (opcode-based). NPC corpses do not persist in character_corpses. No DB persistence needed.
+2. **companion_data death state is correct, no schema change needed.** `is_suspended=1, is_dismissed=0` = rezzable candidate. Five live companions confirmed all currently active.
+3. **Rez spells fully populated in companion_spell_sets under spell_type=65536 for class_id=2.** All nine Classic-Luclin Cleric rez spells present (the five PRD spells plus Reconstitution, Reparation, Renewal, Reviviscence). NOT in npc_spells_entries — companion system uses companion_spell_sets exclusively.
+4. **Companions:Rez* rule_values ALREADY EXIST** — `RezEnabled=true`, `RezPostCombatDelayS=10` (answers PRD Q1: N=10s), `RezRange=200`, `RezWaiveReagents=true`. These rules are populated but the feature is broken — the C++ that reads them is either stubbed, broken, or not wired to the actual rez flow.
+5. **No AI/cast config in DB gates rez.** Lashun Novashine (npc_type_id=2032) has null npcspecialattks and special_abilities. No rule_values block NPC rez receiving.
+6. **Spell details for tier-preference (AC-5):** mana 150→300→500→600→700 by tier, cast time 6s uniform, recast 20s (relevant for AC-6 multi-target: 20-second gaps between rezzes), targettype=15 (corpse), XP return 0%→35%→60%→75%→90%.
+
+**Recommended data changes: NONE.** All schema, spell data, and rule_values are complete. Fix is C++ only (and possibly Lua for post-combat trigger).
+
+**Outcome:** Architect and c-expert have full data-layer picture. The c-expert's root cause analysis (spells.cpp ST_Corpse gate) confirms the data layer is clean — the problem is entirely in the C++ validation path, consistent with these findings.
+
+---
+
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._
@@ -252,4 +275,116 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 |-------|--------|--------|-----------|
 | Lore-master initial consult (era, NPC rezzability, flavor, deity edge cases) | game-designer ↔ lore-master | RESOLVED 2026-04-27 — APPROVED with Shaman HARD STOP folded into PRD | No |
 | Full PRD review for sign-off | game-designer ↔ lore-master | RESOLVED 2026-04-27 — FINAL APPROVED, no revisions required | No |
+
+
+### 2026-04-27 — Architect → c-expert: Triage live rez bug
+
+**From:** architect → **To:** c-expert
+
+> Big-picture finding from triage: the companion auto-rez subsystem appears
+> to be SUBSTANTIALLY ALREADY IMPLEMENTED in C++ — `Companion::AI_ResurrectDeadGroupMember()`
+> (companion_ai.cpp:1927), `m_rez_delay_timer` post-combat trigger
+> (companion.cpp:1944), `SpellEffect::Revive` companion-corpse auto-accept dispatch
+> (spell_effects.cpp:1707-1730), `Companion::ResurrectFromCorpse` static entry
+> (companion.cpp:3547), `Corpse::SetCompanionData` / `IsCompanionCorpse`
+> (corpse.cpp:178, corpse.h:104), companion-corpse marking on death
+> (attack.cpp:2905-2912), and a 13-test Suite 29 in cli_companion_tests.cpp.
+> Rules `Companions:RezEnabled`, `RezPostCombatDelayS=10`, `RezRange=200`,
+> `RezWaiveReagents=true` are wired.
+>
+> Asked c-expert to validate seven hypotheses (H1–H7) by reading actual code
+> and cite file:line for every gate the rez cast traverses from
+> `AIDoSpellCast(rez_spell, target_corpse)` to `SpellEffect::Revive`.
+> Specific asks: (1) walk the cast pipeline gate-by-gate, (2) verdict per
+> hypothesis, (3) verify GetCompanionCorpseByOwnerWithinRange handles player
+> corpses or only companion corpses, (4) verify m_companion_spells is populated
+> with rez spells flagged SpellType_Resurrect for Cleric, (5) run Suite 29
+> tests to see what passes/fails, (6) hunt stuck IsRezzed(true) state,
+> (7) explain the gap between the existing scaffolding and the user repro.
+
+**Response from** c-expert: _(awaiting reply)_
+
+**Outcome:** Awaiting c-expert's code-grounded triage report.
+
+---
+
+### 2026-04-27 — Architect → lua-expert: Lua hooks involved in companion auto-rez?
+
+**From:** architect → **To:** lua-expert
+
+> Asked lua-expert to audit Lua side: any post-combat / death / rez hooks
+> in companion.lua, global_npc.lua, or commands. Whether mod hooks
+> (lua_mod.cpp surface) could short-circuit a rez. Whether this fix
+> requires Lua changes at all (current architect hypothesis: pure C++,
+> Lua untouched). Whether the Lua TDD harness from companion-rerecruit
+> is suitable if Lua tests are needed. Confirmation that the
+> companion-rerecruit death-state (is_suspended=1 row preserved) still
+> holds. Asked for file:line citations and direct file reads, not memory.
+
+**Response from** lua-expert: _(awaiting reply)_
+
+**Outcome:** Awaiting lua-expert audit.
+
+---
+
+### 2026-04-27 — Architect → protocol-agent: Validate Titanium client packet flow for NPC corpse rez
+
+**From:** architect → **To:** protocol-agent
+
+> Asked protocol-agent to validate Titanium-client constraints for both
+> rez paths: (1) NPC corpse path (no client UI; corpse depops, NPC
+> respawns, group-update — confirm Titanium-safe), (2) player corpse
+> path (NPC caster → OP_RezzRequest → OP_RezzAnswer → worldserver flow,
+> rezzer_name handling for NPC entity name), (3) cast-packet pipeline
+> for corpse-targeted casts (OP_BeginCast / OP_Action / OP_CastSpell
+> Titanium translation), (4) IsRezzed(true) state desync risk on rezzed
+> corpse, (5) Bot precedent (bot.cpp:11457 / botspellsai.cpp:204 — rez
+> on player corpse works in production; confirm Companion rez uses same
+> path), (6) OP_RezzComplete back-channel.
+
+**Response from** protocol-agent: _(awaiting reply)_
+
+**Outcome:** Awaiting protocol-agent verdict.
+
+---
+
+### 2026-04-27 — Architect → data-expert: DB audit for companion rez subsystem
+
+**From:** architect → **To:** data-expert
+
+> Asked data-expert to audit: (1) npc_spells_entries — do live Cleric
+> NPCs have rez spells with SpellType_Resurrect flag set?
+> (2) spells_new — pull rows for the in-era rez spells (Resurrection
+> 15, Reanimation 29, Revive 43, Resuscitate 53, Restoration 65) and
+> confirm effect_id=Revive, mana, cast_time, targettype, expansion gates;
+> (3) companion_data schema sanity check; (4) live state — any
+> is_suspended=1 rows, any cur_hp=0 not suspended (which would be a bug);
+> (5) live rule_values for all Companions:Rez* and related;
+> (6) data_buckets for stuck pending-rez state; (7) confirm companion
+> corpses are entity-only (no character_corpses storage); (8) era /
+> expansion filtering on rez spells.
+
+**Response from** data-expert: _(awaiting reply)_
+
+**Outcome:** Awaiting data-expert DB audit report.
+
+---
+
+### 2026-04-27 — Architect → config-expert: Companion rez rule audit and least-invasive layer check
+
+**From:** architect → **To:** config-expert
+
+> Asked config-expert for rule audit: full list of Companions:Rez* rules
+> in ruletypes.h, live rule_values vs defaults, related rules in Character
+> / Spells / NPC categories, eqemu_config.json check, and the critical
+> least-invasive question — could the bug be explained by a wrongly-set
+> rule alone (RezEnabled=false, RezRange=0, etc.)? If yes, fix is
+> config-only. Architect's intent: keep RezPostCombatDelayS=10, hardcode
+> tier-preference and multi-target ordering policies (no rule), no rule
+> for mid-combat-rez disallow (AC-8 contract). Asked config-expert to
+> push back on any of these.
+
+**Response from** config-expert: _(awaiting reply)_
+
+**Outcome:** Awaiting config-expert verdict.
 
