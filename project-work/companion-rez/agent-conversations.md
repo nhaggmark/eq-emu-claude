@@ -1120,3 +1120,66 @@ v2 architecture locked and pushed at `9a0ae7b` + refinement at `17bd8c9` on `bug
 
 **Outcome:** c-expert standing by for V2.1–V2.10 task assignments.
 
+---
+
+## V3 Regression Triage — Implementation Team Conversations
+
+_2026-04-28: BUG-002 (visibility heartbeat) and BUG-003 (regen regression) triage_
+
+### 2026-04-28 — c-expert → architect: V3 regression triage complete
+
+**From:** c-expert → **To:** architect
+
+Complete code-grounded triage of BUG-002 and BUG-003. Findings:
+
+**Is Spawn() shared with normal recruit?**
+YES. Three call sites: `lua_client.cpp:3666` (first-time recruit), `companion.cpp:4255`
+(SpawnCompanionsOnZone zone-in), `companion.cpp:3703` (V2 Fix B: ResurrectFromCorpse).
+Spawn() itself was NOT modified by V2. Fix B only added Spawn() as a call site — it replaced
+the broken AddNPC sequence. This confirms BUG-002/003 cannot be caused by Fix B affecting
+first-time recruit or zone-in companions.
+
+**Prior heartbeat fix SHA:** `9e4b7dfd1` (2026-03-09) — "fix(companions): enable caster spell
+casting and prevent client-side vanishing." Added `m_ping_timer` to `Companion`, added the
+5-second `SentPositionPacket()` block at what is now `companion.cpp:2128-2142`.
+**What V2 changed about it:** NOTHING. Zero mentions of ping_timer, SentPositionPacket, or
+position-update code in the V2 diff. Heartbeat code is intact in HEAD.
+
+**BUG-002 root cause (CONFIRMED):**
+Fix R4 at `companion.cpp:1933-1935` adds `if (GetHP() <= 0) return NPC::Process()`.
+For DEAD companions (HP=0, kept alive by SetDepop(false) in Death()), this short-circuits
+the heartbeat block at line 2128. Pre-V2, dead companions ran the full Companion::Process()
+body including the ping timer and sent SentPositionPacket() every 5 seconds. Post-V2, dead
+companions jump to NPC::Process() which has no SentPositionPacket() call. Titanium client
+culls entities without position updates after ~5-10 seconds → "companion vanishes."
+The heartbeat for ALIVE companions is completely unchanged and intact.
+
+**Fix for BUG-002:** Least invasive: add `SentPositionPacket(0,0,0,0,0)` in the Fix R4
+dead-companion branch, on the existing m_ping_timer cadence. OR move the ping timer block
+to before the Fix R4 guard so all companions (alive or dead) get heartbeats.
+Risk: zero — only affects the dead-companion code path.
+
+**BUG-003 root cause (INCONCLUSIVE — likely not a V2 regression):**
+CalcManaRegen(), tic_timer, and m_mana_report_timer are all unchanged by V2. Rule values
+confirmed in DB: AlwaysMeditateRegen=true, CompanionManaRegenMult=100, ManaRegenMultiplier=175.
+The "~1%/report" observation is numerically consistent with a rezzed companion starting at
+0 mana with a large max_mana pool (e.g. 2000+ mana, 1%=20 mana, 3 tic_timer ticks in 15s × ~7/tick = ~21 mana ≈ 1%). This is expected post-rez behavior, not a regression.
+DB shows possible duplicate rows for some rules (NPC:OOCRegen, Character:RestRegenTimeToActivate
+appear twice) — recommend data-expert check for duplicate Companions:CompanionManaRegenMult rows.
+Recommend game-tester verify BUG-003 with a companion that was NOT recently rezzed. If it
+replicates on a fresh session companion, escalate to data-expert.
+
+**Fourth-bug scan results:** Clean except two items:
+1. Latent range bug: `entity.cpp:2044` `GetCorpseByOwnerWithinRange` uses `< range` (not `< range²`).
+   V1 fix passed `rez_range * rez_range = 40000`. Since the function does `< range` (not `< range²`),
+   effective range = sqrt(40000) = 200 units — accidentally correct at RezRange=200. Fragile if
+   RezRange rule is changed. Not a V2 regression, pre-existing.
+2. Fix A cross-zone group risk: clearing membername[] at death could disrupt world-side cross-zone
+   group records for a companion dying at the moment of a zone transition. Low real-world risk
+   (companions are zone-local NPCs), but flagging.
+
+**All four triage items documented in dev-notes.md Stage 6 (V3 Regression Triage).**
+Commit: `9468488` on bugfix/companion-rez in claude repo.
+
+**Outcome:** BUG-002 has a confirmed fix. BUG-003 needs game-tester verification before code fix.
+
