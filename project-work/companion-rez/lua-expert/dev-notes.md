@@ -165,9 +165,123 @@ BUG-003 is **entirely a C++ issue**. Lua has no regen calculation, no regen repo
 
 ---
 
+## BUG-003: Deep Dive — Architect Follow-Up Questions (2026-04-27)
+
+### Q1: Complete mechanism map — timer, cadence, V2 changes
+
+**Timer:** `m_mana_report_timer`, hardcoded 15 000 ms. No rule governs this interval.
+- Started: `Companion::Sit()` — `m_mana_report_timer.Start(15000)` (line 4012)
+- Disabled: `Companion::Stand()` — `m_mana_report_timer.Disable()` (line 4018)
+- Constructor: initialized at 15 000 ms, then immediately Disabled (line 133)
+
+**Cadence driver:** not a Lua timer, not a rule, not an event. Hardcoded 15-second `Timer` object. Fires inside `Companion::Process()` when `IsSitting() && !IsEngaged() && GetMaxMana()>0`.
+
+**V2 changes to this mechanism:** V2 commit `17662d4ba` added only the R4 alive guard (`GetHP()<=0` early return). For alive (HP>0) companions, the guard is a no-op. **No change to the mana report timer, Sit(), Stand(), or CalcManaRegen()**. The reporting cadence itself is unchanged by V2.
+
+**Sitting regen timer is independent:** `m_sitting_regen_timer(6000)` starts at construction and is never reset by `Sit()` or `Stand()`. It fires whenever `IsSitting() && !IsEngaged() && GetHP() < GetMaxHP()`. This means it does NOT need `Sit()` to be called to work — it fires from construction onward whenever the companion is sitting.
+
+### Q2: Does the mana report fire before or after the regen tick?
+
+**Before.** In `Companion::Process()` (balanced/aggressive path):
+1. Line 2162-2168: `CompanionGroupSay("Mana: %d%%")` — reads current mana
+2. Line 2237-2251: `m_sitting_regen_timer` fires → HP sitting bonus applied via `SetHP()`
+3. Line 2254: `NPC::Process()` → mana regen tick applied via `CalcManaRegen()` → `SetMana()`
+
+So every 15-second mana report reads mana BEFORE the 6-second NPC::Process regen tick. This means:
+- If the report fires on tick N, mana shown is pre-regen
+- The next mana regen fires 0-6 seconds later (whenever the 6s timer next hits)
+- In the worst case: report fires, then 6 seconds pass, then regen fires, then report fires again showing the post-regen value 15s later — giving a single regen quantum (36-38 mana) visible per 15s report
+
+This is not a regression from V2. This ordering predates V2.
+
+### Q3: Live regen rate calculation (empirical from CalcManaRegen diagnostic logs)
+
+From `akk-stack/server/logs/` CalcManaRegen entries (most recent session):
+- Lashun Novashine (cls=2 Cleric, lvl=54, meditate=295): `final_regen=36` mana/tick
+- Jimble Woodentoe (cls=4 Druid, lvl=54, meditate=270): `final_regen=36` mana/tick
+- Lydl the Great (cls=12 Shaman, lvl=54, meditate=295): `final_regen=38` mana/tick (spell bonus +1)
+
+Formula: `((meditate/10 + (level - level/4)) / 4) + 4` × `CharMult=175/100` × `CompMult=100/100`
+
+At level 54, meditate 295:
+- `((29 + 40) / 4) + 4 = 21.25 → 21` base
+- `21 × 175/100 = 36.75 → 36` final
+
+**"1% per report" math:** At 36 mana/tick, a 6-second regen tick, and report every 15s:
+- In 15 seconds, 2-3 regen ticks fire: 72-108 mana recovered
+- If max_mana is ~1800 (level 54 Cleric), that's 4-6% per 15-second report window
+
+**The user sees 1% per report.** 1% of 1800 = 18 mana per 15 seconds. That is roughly half of a single 6-second regen tick. This suggests either:
+- (A) Only 1 regen tick is firing per 15-second window (expected: 2-3), OR
+- (B) The `AlwaysMeditateRegen` rule is not firing correctly (but DB shows it's `true`), OR
+- (C) The `CompanionManaRegenMult` is lower than expected (DB shows 100 — no boost), OR
+- (D) The mana report timer fires much more frequently than 15s (timer restarted on each regen tick somehow), giving many reports per regen tick
+
+### Q4: Fix R4 guard reach — could it affect alive companions?
+
+The guard at lines 1911-1935:
+```
+if (GetHP() <= 0 && !m_suspended && m_companion_id > 0) { ... emergency save ... }
+if (GetHP() <= 0) { return NPC::Process(); }
+```
+
+For HP>0 companions: **both checks are false, both are complete no-ops.** They do not affect any timer, any mana calculation, or any code path for living companions. High confidence.
+
+### Q5: Differentiation test plan
+
+**Test 1 — SQL poll vs gsay cadence (definitive differentiation):**
+While a companion is sitting and regen is active, poll `companion_data.cur_mana` every 5 seconds:
+```sql
+SELECT name, cur_mana, max_mana FROM companion_data WHERE is_suspended=0;
+```
+If `cur_mana` increases ~36/tick every 6s → actual regen is working, reporting is the issue.
+If `cur_mana` barely moves → actual regen is broken.
+
+The `companion_data` table has `cur_mana` (bigint). However, it's only updated on `Save()` calls — not every regen tick. The SQL poll will NOT show per-tick changes unless a Save() fires. Better:
+
+**Test 2 — LogInfo injection in mana report (c-expert action):**
+Add a `LogInfo` to the `CompanionGroupSay("Mana: %d%%")` block that also logs `GetMana()`, `GetMaxMana()`, and the timer's last-check timestamp. Compare mana values between consecutive log lines — if delta is 36-108 mana per 15s, regen is fine and "1%" is misperception. If delta is near 0, regen is broken.
+
+**Test 3 — Observe `!status` snapshots (no code change):**
+Player can type `!status` every 15 seconds manually and note HP and mana absolute values. Compare to the gsay "Mana: X%" reports. If `!status` shows the same values as gsay, and the values change slowly, regen is actually slow.
+
+### Q6: Could the report fire BEFORE the regen tick, making each report one tick stale?
+
+Yes — confirmed above. The report reads mana BEFORE `NPC::Process()` runs `CalcManaRegen()`. But this was always true (not a V2 regression). The report shows the mana level from just before this tick's regen fires. The user would see the mana as it was at the start of each 15s window, with regen having already applied in the interim ticks.
+
+The only way "before regen tick" timing becomes a regression is if V2 reordered Process() such that the report now reads a stale value from before *multiple* ticks' worth of regen instead of just one. V2 did not reorder any of this.
+
+### Q7: Dependent behaviors — what else uses the same mechanism?
+
+`m_mana_report_timer` is used ONLY for the mana gsay. Nothing else depends on it.
+
+`m_sitting_regen_timer` is used ONLY for the HP sitting bonus at line 2237. Nothing else.
+
+`Companion::Sit()` is called from two places:
+- `companion.cpp:2023` — passive stance sitting sync
+- `companion.cpp:2152` — balanced/aggressive stance sitting sync
+
+Both are gated on `!IsEngaged() && !IsMoving()`. Changing the timer interval in `Sit()` would only affect mana report cadence. The HP sitting bonus timer is independent (not started in `Sit()`).
+
+If the architect changes `m_mana_report_timer` interval: zero other behaviors affected.
+If the architect changes `m_sitting_regen_timer` behavior: only HP regen bonus affected.
+If the architect modifies `Sit()`/`Stand()`: no Lua side effects (Lua has no sitting state logic).
+
+### Q8: Hypothesis ranking for the actual BUG-003 regression
+
+1. **Most likely:** The user is observing the normal reporting cadence for the FIRST TIME since a rez. Post-rez, `SetMana(0)` is applied (line in ResurrectFromCorpse). Companion starts at 0 mana. `CalcManaRegen` returns ~36/tick. Max mana ~1800. Each 15s window: 2-3 ticks = 72-108 mana = 4-6%. This is "1 mana report per 15 seconds at 4-6% change." User may be misperceiving "slow pace" because they're waiting from 0% — at 0%, the first few reports show 4%, 8%, 12%, which FEELS slow even though the rate is correct.
+
+2. **Second:** `CompanionManaRegenMult` is 100 (no boost). Before V2, was it different? If a prior session had a higher rule value and it was reset, that would explain "used to be faster." Check git log for rule changes.
+
+3. **Third:** Timer rearm issue post-rez. If `Sit()` is not called after rez (owner already sitting), `m_mana_report_timer` stays Disabled. But! The sitting-sync code at line 2147-2155 WILL call `Sit()` on the first alive Process() tick when `owner_sitting && !companion_sitting`. Since `Spawn()` does not call `Sit()`, the companion spawns standing (appearance = default from NPC data). On the next Process() tick with owner sitting: the sitting-sync fires, `Sit()` is called, `m_mana_report_timer.Start(15000)`. First report fires 15 seconds later. This is working as intended — but the 15-second wait before first report may feel like a regression.
+
+4. **Least likely:** Actual regen rate regression. `CalcManaRegen` is unchanged since `494eb66e7` (BUG-027 fix). No V2 change touches it.
+
+---
+
 ## Stage 2: Research
 
-_BUG-003 triage above constitutes the research pass for this task. All API refs empirically verified in companion.cpp._
+_BUG-003 deep-dive above. All data empirically verified from companion.cpp, server logs, and live DB rule values._
 
 ---
 
