@@ -1183,3 +1183,80 @@ Commit: `9468488` on bugfix/companion-rez in claude repo.
 
 **Outcome:** BUG-002 has a confirmed fix. BUG-003 needs game-tester verification before code fix.
 
+---
+
+## Architecture Team Conversations — V3 (BUG-002 Visibility Heartbeat)
+
+_Protocol-agent triage of companion visibility regression reported post-V2._
+
+---
+
+### 2026-04-28 — protocol-agent → architect: BUG-002 heartbeat triage complete
+
+**From:** protocol-agent → **To:** architect
+
+**Summary:** Full protocol-level investigation of BUG-002 (companion visibility
+heartbeat regression). Findings written to `protocol-agent/dev-notes.md`
+(BUG-002 Triage section).
+
+**Key findings:**
+
+1. **Prior heartbeat fix:** Commit `9e4b7dfd1` added `m_ping_timer` (5s interval)
+   to `Companion::Process()`. When `!IsMoving()`, fires `SentPositionPacket(0,0,0,0,0)`
+   via `entity_list.QueueClients()` every 5s. Titanium client cull window: ~10s.
+   Source: `companion.cpp:2128–2142`, `companion.h:522`.
+
+2. **V2 did NOT directly break the heartbeat.** V2's `Fix R4` added
+   `if (GetHP() <= 0) return NPC::Process()` at line 1933 — before the ping timer
+   at line 2128. For live companions in BALANCED/AGGRESSIVE stance in combat, this
+   guard does not fire and the ping timer path is reached normally. V2 made no other
+   changes to `Process()` between the HP guard and the ping timer.
+
+3. **Position update dedup (`25826c668`) does not block the heartbeat.** The dedup
+   (`m_last_seen_mob_position`) is in `MobMovementManager::SendCommandToClients` and
+   `CheckSendBulkNpcPositions`. The heartbeat uses `entity_list.QueueClients()` which
+   is a separate direct path — not gated by the dedup.
+
+4. **V2 Spawn() path (Fix B) is protocol-equivalent.** `AddCompanion` adds to both
+   `companion_list` and `mob_list`. `MobProcess()` iterates `mob_list` and calls
+   `Companion::Process()` via virtual dispatch. Heartbeat fires correctly for
+   rezzed companions via this path.
+
+5. **Root cause NOT found via static analysis.** Heartbeat code is present, correctly
+   placed, and logically sound. Regression is real but source is unclear from code
+   reading alone.
+
+**Key hypothesis for c-expert:**
+`NPC::Process()` → `Mob::AI_Process()` may call `RotateTo()` to face-track the target
+every tick. `RotateTo()` goes through `MobMovementManager` which sets `moving = true`.
+If `moving = true` persists to the top of the next `Companion::Process()` tick, the
+ping timer `Disable()` call at line 2134 resets the 5-second window on every combat tick.
+If this happens on most ticks, the ping timer never fires — it gets repeatedly disabled
+before it can check. The result: heartbeat silently dead in combat.
+
+Files to check: `zone/mob_ai.cpp`, `zone/mob_movement_manager.cpp` (RotateToCommand),
+`zone/mob.h:SetMoving()`.
+
+**Recommendation:** c-expert to verify `IsMoving()` state at the top of
+`Companion::Process()` for an engaged stationary companion, and whether
+`NPC::AI_Process()` sets `moving = true` via rotation.
+
+---
+
+### 2026-04-28 — protocol-agent → c-expert: IsMoving() investigation request
+
+**From:** protocol-agent → **To:** c-expert
+
+**Summary:** Forwarded hypothesis that `NPC::Process()` → `Mob::AI_Process()` →
+`RotateTo()` may be setting `moving = true` on combat ticks, continuously resetting
+the `m_ping_timer` window before it can fire. If combat AI sets `moving = true` on
+most ticks to face-track the target, the ping timer disable at `companion.cpp:2134`
+prevents any heartbeat packet from ever sending.
+
+**Suggested fix direction (if hypothesis confirmed):** Either (a) capture `IsMoving()`
+state BEFORE calling `NPC::Process()` and use that value for the ping timer check, or
+(b) change the ping timer to not be gated on `IsMoving()` when
+`m_hold_combat_position = true`.
+
+**Outcome:** Awaiting c-expert investigation.
+

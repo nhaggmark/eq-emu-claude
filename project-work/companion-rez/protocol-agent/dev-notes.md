@@ -168,10 +168,10 @@ N/A — this is a planning/triage task. No code changes.
 
 ---
 
-## Open Items
+## Open Items (Task P1 — CLOSED)
 
-- [ ] Architect to verify `SetCompanionData()` is called in companion death path
-- [ ] Lua-expert to confirm/deny existence of Cleric post-combat rez trigger
+- [x] Architect to verify `SetCompanionData()` is called in companion death path
+- [x] Lua-expert to confirm/deny existence of Cleric post-combat rez trigger
 
 ---
 
@@ -184,3 +184,116 @@ The rez packet flow has TWO paths at `spell_effects.cpp:1708–1729`:
 For companion rez to work, `IsCompanionCorpse()` must return true, which requires `Corpse::SetCompanionData()` to have been called when the companion died. If that call is missing in the death path, the companion corpse is treated as a plain NPC corpse and the rez spell has no effect (falls through neither branch at spell_effects.cpp:1714/1720).
 
 The Titanium client is not involved in companion rez at all — no `OP_RezzRequest` is ever sent to the client for companion targets. No Titanium-side fix is needed.
+
+---
+
+# BUG-002 Triage: Companion Visibility Heartbeat Regression
+
+> **Task:** Protocol/visibility investigation for BUG-002
+> **Date:** 2026-04-28
+> **Stage:** Stage 2 Complete — Findings ready for architect
+
+---
+
+## Stage 1: Plan
+
+Investigation scope:
+1. Map entity-visibility packet flow for NPC companions
+2. Find the prior heartbeat fix (`m_ping_timer`)
+3. Determine whether V2 commit (`17662d4ba`) broke or bypassed the heartbeat
+4. Identify Titanium client cull window
+5. Check position update deduplication system from `25826c668`
+
+---
+
+## Stage 2: Research Findings
+
+### Prior Heartbeat Fix
+
+**Commit:** `9e4b7dfd1` — "fix(companions): enable caster spell casting and prevent client-side vanishing"
+
+**What it does:** Added `m_ping_timer` (5-second interval) to `Companion::Process()`. When the companion is stationary (`!IsMoving()`), it calls `SentPositionPacket(0.0f, 0.0f, 0.0f, 0.0f, 0)` every 5 seconds. This sends `OP_ClientUpdate` directly to all clients via `entity_list.QueueClients()`, preventing the Titanium client from culling the entity.
+
+**Source location:** `eqemu/zone/companion.cpp:2128–2142`, `eqemu/zone/companion.h:522`
+
+### Entity Visibility Packet Flow
+
+When the Titanium client renders an entity, it depends on:
+1. `OP_NewSpawn` / `NewSpawn_Struct` — initial spawn into client's awareness (sent by `AddCompanion` via `CreateSpawnPacket`)
+2. `OP_ClientUpdate` / `PlayerPositionUpdateServer_Struct` — periodic position updates to keep entity alive in client render set
+3. Titanium client culls entities that haven't received an `OP_ClientUpdate` in **~10 seconds** (documented in `ec00daa5b` commit message: "clients will disappear after 10 seconds without a position update to the client")
+
+The 10-second cull timeout is a Titanium client behavior, not server-configurable. The heartbeat at 5-second intervals provides 2× margin.
+
+### `OP_ClientUpdate` Wire Format (Titanium)
+
+`SentPositionPacket` uses `OP_ClientUpdate` with `PlayerPositionUpdateServer_Struct` (line 1392 of `eq_packet_structs.h`, ~24 bytes, bitfield-packed). No Titanium translation entry in `titanium_ops.h` — it's a pass-through. The struct is sent as-is.
+
+### V2 Commit Analysis (`17662d4ba`)
+
+V2 added the following to `Companion::Process()`:
+
+```cpp
+// Line 1933
+if (GetHP() <= 0) {
+    return NPC::Process();  // FIX R4: dead entities skip companion AI
+}
+```
+
+This early return is **before** the ping timer at line 2128. For dead companions this is correct — dead entities should not fire the heartbeat. For LIVE companions in combat (HP > 0), this guard does not fire, and the ping timer path is reached normally.
+
+V2 made NO other changes to `Process()` between line 1933 and the ping timer at 2128. The two bare `return;` statements added by V2 are in `ResurrectFromCorpse()`, not in `Process()`.
+
+**Conclusion: V2 did NOT directly break the heartbeat for living companions.**
+
+### Position Update Deduplication System (`25826c668`)
+
+Commit `25826c668` ("Performance: Client/NPC Position Update Optimizations") added `CheckSendBulkNpcPositions()` called from `Handle_OP_ClientUpdate`. This function iterates `mob_list` and sends position updates to the client, but **skips any mob whose position hasn't changed since the last send** (using `m_last_seen_mob_position` map on the `Client` object).
+
+**Critical path for companions:**
+- `CheckSendBulkNpcPositions` iterates `mob_list` → includes companions (IsNPC() returns true for companions)
+- If companion is stationary in combat, its position matches `m_last_seen_mob_position` → skipped
+- The heartbeat (`SentPositionPacket`) fires via `entity_list.QueueClients()` — bypasses `MobMovementManager::SendCommandToClients` and the dedup entirely
+- `m_last_seen_mob_position` is only updated by `MobMovementManager::SendCommandToClients`, NOT by `QueueClients`
+
+**Conclusion: The dedup system does not block the heartbeat. Heartbeat packets still reach the client every 5 seconds.**
+
+### Spawn Path Difference: AddNPC vs AddCompanion (V2 Fix B)
+
+Pre-V2 rez path: `entity_list.AddNPC(new_comp)` — adds to `npc_list` + `mob_list`, calls `SendPositionToClients()` after spawn.
+V2 rez path: `new_comp->Spawn(owner)` → `entity_list.AddCompanion()` — adds to `companion_list` + `mob_list`, sends spawn packet via `CreateSpawnPacket()` + `QueueClients()`, does NOT call `SendPositionToClients()`.
+
+`SendPositionToClients()` is an initial position sync for the client. `AddCompanion` instead sends `CreateSpawnPacket` which includes full spawn data. The `m_ping_timer` handles ongoing keepalive for both paths.
+
+**Conclusion: The V2 Spawn() path is protocol-equivalent to AddNPC for entity visibility.**
+
+### Root Cause Assessment
+
+Static analysis does not reveal a clear code-level regression. The heartbeat mechanism is intact in the current codebase:
+- `m_ping_timer` is declared in `companion.h:522`
+- Timer is initialized to 5000ms in constructor, starts disabled (`companion.cpp:131`)
+- In `Process()`, enabled when `!IsMoving()` and fires `SentPositionPacket(0,0,0,0,0)` every 5 seconds (`companion.cpp:2133–2141`)
+- For BALANCED/AGGRESSIVE stance companions in combat, the code path reaches the ping timer correctly (no early returns between line 1933 and 2128 for these stances)
+- PASSIVE stance takes an early return at line 2036 (before the ping timer), but passive companions are never in combat (their hate list is wiped each tick)
+
+### Remaining Hypothesis for c-expert
+
+The user reports this is "only in combat." Two possible explanations for static analysis not revealing the bug:
+
+**Hypothesis A — Timing window in rez path:** The rezzed companion spawns via `Spawn()` which sets up `m_ping_timer.Disable()` in the constructor. If the companion is immediately engaged (e.g., rez fires mid-combat), the ping timer may not fire in time before the first cull window if the companion doesn't move at all and the initial spawn packet's position tracking is incomplete.
+
+**Hypothesis B — `IsMoving()` false positive during combat AI:** If the movement manager briefly sets `moving = true` during NPC::AI_Process() (pursuit calculation) even when the companion doesn't physically translate position, the ping timer's `Disable()` call may reset the 5-second window more often than expected, leaving a gap larger than 10 seconds between actual heartbeat sends.
+
+**Hypothesis C — The bug is about newly-rezzed companions specifically:** V2's `Fix R4` `GetHP() <= 0` guard fires for the OLD dead entity. The NEW rezzed entity starts fresh with HP > 0 from `Spawn()`. But `Load()` is called BEFORE `Spawn()` and sets HP from `comp_data.cur_hp` — which V2's Fix C deferred to 0 at the time `Load()` executes. The NPC constructor default (max_hp from npc_type) prevails, so HP > 0 before `Spawn()`. Not a regression path.
+
+**Recommendation for c-expert:** Instrument `MobMovementManager::SetMoving` and the `IsMoving()` check around `companion.cpp:2133` to verify `moving = false` is consistently maintained during stationary combat. Also check if `NPC::Process()` internally calls any movement commands that set `moving = true` temporarily (e.g., face-target rotation via `RotateTo`).
+
+### Titanium Client Cull Timeout
+
+The Titanium cull window is **~10 seconds** without an `OP_ClientUpdate`. This is hardcoded in the client and not server-configurable. The 5-second heartbeat interval provides adequate margin. No Titanium-specific change is needed.
+
+---
+
+## Recommended Fix (Protocol Assessment)
+
+The heartbeat mechanism itself is correct. The c-expert should investigate the `moving` flag state during NPC AI processing for companions in combat — specifically whether `NPC::Process()` → `Mob::AI_Process()` temporarily sets `moving = true` during aggro rotation or pursuit calculations, which would reset the ping timer window and potentially create gaps > 10 seconds between heartbeat sends.
