@@ -4,7 +4,7 @@
 > **Agent:** lua-expert
 > **Task(s):** Architecture triage (Lua side)
 > **Date started:** 2026-04-27
-> **Current stage:** Stage 1 (Plan / Triage)
+> **Current stage:** Stage 2 — BUG-003 gsay regen reporting triage complete
 
 ---
 
@@ -12,7 +12,8 @@
 
 | # | Task | Depends On | Status |
 |---|------|------------|--------|
-| T-Lua-1 | Triage Lua side of rez/post-combat | — | In Progress |
+| T-Lua-1 | Triage Lua side of rez/post-combat | — | Complete |
+| T-Lua-2 | BUG-003 gsay regen reporting — Lua-side triage | — | Complete 2026-04-27 |
 
 ---
 
@@ -96,9 +97,77 @@ Extending `make test-companion` for rez would require: mock `Lua_Corpse` objects
 
 ---
 
+---
+
+## BUG-003: gsay Regen Reporting — Lua-Side Triage (2026-04-27)
+
+### Scope Determination
+
+The "gsay" regen reporting the user observes is **not Lua**. The reporting is entirely in C++.
+
+### Key Finding: Reporting Lives in C++ — `m_mana_report_timer`
+
+**File:** `eqemu/zone/companion.cpp`
+
+| Location | Purpose |
+|---|---|
+| Line 57: constructor | `m_mana_report_timer(15000)` — default 15s interval |
+| Line 133 | `m_mana_report_timer.Disable()` — starts disabled |
+| Line 2028-2034 | PASSIVE stance: mana report fires when `IsSitting() && !IsEngaged() && GetMaxMana()>0 && timer.Check()` |
+| Line 2162-2168 | BALANCED/AGGRESSIVE stance: same condition |
+| Line 4012 | `Companion::Sit()` starts the timer: `m_mana_report_timer.Start(15000)` |
+| Line 4018 | `Companion::Stand()` disables it |
+
+The report message is: `CompanionGroupSay(this, "Mana: %d%%", static_cast<int>(GetManaRatio()))`
+
+### What Lua Does (and Doesn't)
+
+- **Lua is NOT involved in regen reporting.** There is no gsay timer in any Lua module.
+- The `comp_commentary_*` timer in global_npc.lua is LLM-commentary at 600s intervals — unrelated.
+- The `gsay_deliver_*` timer in global_npc.lua is for deferred LLM response delivery — unrelated.
+- `companion.lua:756-794` shows HP/mana status only when `!status` command is issued (not periodic).
+- There is no `GetManaRatio()`, `GetHPRatio()`, or periodic status GroupMessage anywhere in Lua.
+
+### V2 Changes That Could Affect Regen
+
+V2 commit `17662d4ba` added this guard at the top of `Companion::Process()` (line 1933):
+```cpp
+if (GetHP() <= 0) {
+    return NPC::Process();
+}
+```
+This is Fix R4 to prevent dead companions from running AI. **For live companions, this guard is a no-op** — it only short-circuits HP=0 entities. So Fix R4 alone cannot be the cause for live companion regen regression.
+
+**However**, the V2 commit also routes `ResurrectFromCorpse` through `Companion::Spawn()` instead of `AddNPC` (Fix B). `Spawn()` does NOT call `Sit()`, so the mana_report_timer remains Disabled() after a rez. The companion will not begin reporting until the owner sits, which triggers the sitting-sync logic in `Process()` to call `Sit()`, which starts the timer.
+
+### Sitting Regen Bonus Path
+
+The actual HP regen bonus is at `companion.cpp:2237-2251` — gated on `m_sitting_regen_timer.Check()` (6s). This is separate from the mana report timer. Both `m_mana_report_timer` and `m_sitting_regen_timer` start fresh when `Sit()` is called.
+
+**If the companion never properly calls `Sit()` post-rez**, both the sitting regen bonus AND the mana report timer would never fire — consistent with user's "1%/report" observation (they'd be seeing base OOC regen from `NPC::Process()` without the sitting bonus).
+
+### Confidence Assessment
+
+The **reporting cadence is definitely C++** — high confidence, empirical.
+
+Whether the regression is:
+- (A) `Sit()` not being called after rez via the new `Spawn()` path — **plausible, needs c-expert to verify** whether `Spawn()` triggers any sitting state synchronization or whether `Process()` correctly calls `Sit()` on the first tick post-rez when the owner is sitting.
+- (B) Actual regen rate change (Fix A clearing membername[], Fix B different HP init in `ResurrectFromCorpse`) — **possible, c-expert domain**.
+- (C) The sitting-regen bonus timer (`m_sitting_regen_timer`) being reset/dropped by Spawn routing — **possible, same as (A)**.
+- (D) Pure reporting cadence regression (timer not starting post-rez) — **possible if (A) is true**, but user says regen itself is slow too.
+
+### Recommendation to Architect
+
+BUG-003 is **entirely a C++ issue**. Lua has no regen calculation, no regen reporting, and no sitting logic. The investigation should focus on `Companion::Process()` and the `Spawn()` path to verify that:
+1. `Sit()` is called correctly after rez (either in first Process() tick or explicitly in Spawn).
+2. The `m_sitting_regen_timer` and `m_mana_report_timer` are started cleanly.
+3. Fix A's `membername[]` clearing doesn't affect group-based regen bonuses (if any).
+
+---
+
 ## Stage 2: Research
 
-_Pending architect dispatch and plan socialization._
+_BUG-003 triage above constitutes the research pass for this task. All API refs empirically verified in companion.cpp._
 
 ---
 
