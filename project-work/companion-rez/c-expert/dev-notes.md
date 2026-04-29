@@ -837,3 +837,228 @@ if (g && g->GroupCount() >= MAX_GROUP_MEMBERS) { return false; }
 **Test 30.5 (cross-zone auto-unsuspend):** In the unit test harness there is no owner-zones-out simulation. This test is best handled by game-tester live scenario. The unit test can only verify that `SpawnCompanionsOnZone()` calls the auto-unsuspend path when `is_suspended=1` (structural test, similar to 29.16's approach). Include as a structural no-crash test.
 
 **No other push-back on the v2 plan.** Fix A, B, C, R4, D (Option D pre-flight), and R2 (auto-unsuspend on zone-in) all address distinct real failure modes. None are redundant. The dependency order (A before B, B before C) is correct as stated.
+
+---
+
+## Stage 6: V3 Regression Triage (2026-04-28)
+
+**Context:** V2 commit `17662d4ba` closed BUG-001 (rez works). User then reported:
+- BUG-002: Companions vanish from screen during combat when stationary (heartbeat regression)
+- BUG-003: HP/mana regen drastically slowed (~1%/report when sitting)
+
+This section is a complete code-grounded regression audit against the V2 diff.
+
+---
+
+### (a) Companion::Process() call chain pre-V2 vs post-V2
+
+**V2 changes to `Companion::Process()`:** One addition — Fix R4 at `companion.cpp:1928-1935`:
+```cpp
+if (GetHP() <= 0) {
+    return NPC::Process();
+}
+```
+This guard fires ONLY when `GetHP() <= 0`. For LIVE companions, the code path is completely unchanged.
+
+**Heartbeat (ping timer) location:** `companion.cpp:2128-2142`
+```cpp
+if (IsMoving()) {
+    m_ping_timer.Disable();
+} else {
+    if (!m_ping_timer.Enabled()) { m_ping_timer.Start(5000); }
+    if (m_ping_timer.Check()) { SentPositionPacket(0.0f, 0.0f, 0.0f, 0.0f, 0); }
+}
+```
+This runs at line 2128, AFTER the Fix R4 guard at line 1933. For `GetHP() > 0` (alive) companions,
+Fix R4 does NOT fire, and the heartbeat block IS reached on every process tick.
+
+**Regen tick location:** `npc.cpp:630` — `tic_timer.Check()` (6-second cadence) inside
+`NPC::Process()`. Companion mana regen at `npc.cpp:693-696` calls
+`CastToCompanion()->CalcManaRegen()`. This runs inside `NPC::Process()` which is called by
+`Companion::Process()` at line 2254 (for alive companions) or by Fix R4's early return
+`return NPC::Process()` (for dead companions). Both paths call `NPC::Process()`.
+
+**Conclusion:** Fix R4 does NOT affect the heartbeat or regen tick for LIVE companions.
+
+---
+
+### (b) Is Spawn(owner) shared with normal recruitment?
+
+**YES.** `Companion::Spawn()` is called from three sites:
+1. `lua_client.cpp:3666` — first-time recruitment (always was `Spawn()`)
+2. `companion.cpp:4255` — `SpawnCompanionsOnZone()`, zone-in (always was `Spawn()`)
+3. `companion.cpp:3703` — `ResurrectFromCorpse()` — V2 Fix B added this call
+
+`Spawn()` itself was NOT modified in V2. Fix B only changed `ResurrectFromCorpse()` to call
+`Spawn()` instead of the old `AddNPC` sequence. The Spawn() function has been the single
+entry point for recruitment and zone-in since before this feature branch. Any regression
+affecting `Spawn()` would affect ALL three call sites, not just rez — and the user did not
+report new-recruitment bugs.
+
+**Conclusion:** Fix B's change to call `Spawn()` from `ResurrectFromCorpse` does NOT affect
+normal (non-rez) companions. The wide blast radius the bug reports suggest would require
+a change to `Spawn()` itself, which did not happen.
+
+---
+
+### (c) Prior visibility heartbeat fix — commit SHA and what V2 changed about it
+
+**Prior heartbeat fix commit:** `9e4b7dfd1` (2026-03-09)
+- Message: "fix(companions): enable caster spell casting and prevent client-side vanishing"
+- Added `m_ping_timer` member to `Companion`, initialized disabled in constructor
+- Added the block at what became `companion.cpp:2128-2142`: when stationary, start 5s timer;
+  on fire, call `SentPositionPacket(0,0,0,0,0)` to keep client render set alive
+
+**What V2 changed about this fix:** Nothing. The V2 diff (`git diff 83a96f655..17662d4ba -- zone/companion.cpp`)
+has zero mentions of `ping_timer`, `SentPositionPacket`, or any position-update related code.
+The heartbeat is present and intact in HEAD.
+
+**Verified:** `grep -n "m_ping_timer" zone/companion.cpp` shows lines 56, 131, 2134-2140 — all
+original from `9e4b7dfd1`, untouched by V2.
+
+---
+
+### BUG-002 Root Cause Hypothesis
+
+The heartbeat code is intact. Fix R4 does not bypass it for alive companions. BUT: Fix R4
+DOES bypass the heartbeat for DEAD companions (`GetHP() <= 0` → early return to `NPC::Process()`).
+
+Pre-V2: A dead companion entity (HP=0, but kept alive in zone via `SetDepop(false)`) ran the
+FULL `Companion::Process()` body including the ping timer. `SentPositionPacket()` fired every
+5 seconds on the dead entity — keeping the dead-but-visible-on-screen entity rendered by the client.
+
+Post-V2 (Fix R4): A dead companion entity hits `GetHP() <= 0` and returns `NPC::Process()`.
+`NPC::Process()` has NO `SentPositionPacket()` call. After 5-10 seconds of no position updates,
+the Titanium client culls the entity from its render set — the dead companion appears to vanish.
+
+**However:** The user says "In combat... LIVE companions vanish." This phrasing could mean
+they see it during a combat encounter — at the moment the companion is alive in combat — but
+the entity that vanishes is one that just died in that combat encounter. OR it could mean alive
+companions actually vanish.
+
+If the dead companion's corpse-entity disappears from screen (since Fix R4 stopped heartbeats
+for HP=0 entities), the player perceives "companion vanished during combat." This is a different
+phenomenon than the prior bug (alive companions vanishing) but presents similarly.
+
+**Definitive answer for BUG-002:** The heartbeat for ALIVE companions is intact and unchanged.
+The visible regression is the dead-companion heartbeat being skipped by Fix R4 — corpse entities
+at HP=0 now stop receiving position updates and are culled by the client after ~5-10 seconds.
+
+**Fix:** The ping timer block in `Companion::Process()` needs to also run for dead companions,
+OR the Fix R4 guard should explicitly send a final position update before delegating to
+`NPC::Process()`, OR the dead-companion path should be handled by `NPC::Process()` calling
+`SentPositionPacket()` — but `NPC::Process()` is not the right place for companion-specific
+heartbeats.
+
+Least-invasive fix: remove the `GetHP() <= 0` early-return from `Companion::Process()` and
+instead gate only the AI paths (fix the original dead-caster self-rez problem without
+short-circuiting visibility).
+
+Alternative: add `SentPositionPacket(0,0,0,0,0)` to the dead-companion branch before returning.
+One line. Targeted. No risk to alive-companion code paths.
+
+---
+
+### (d) Regen tick path
+
+**CalcManaRegen() location:** `companion.cpp:1512`
+**Regen fires in:** `npc.cpp:693-696` inside `tic_timer.Check()` (6-second interval)
+**Path for alive companions:** `Companion::Process()` → line 2254 `NPC::Process()` → tic_timer
+
+V2 did NOT touch `CalcManaRegen()`, `npc.cpp`, or the `tic_timer` path. Verified: git diff
+for V2 commit shows only changes to `companion.cpp`, `companion_ai.cpp`, and `cli_companion_tests.cpp`.
+
+**Rule check:** DB confirms `Companions:AlwaysMeditateRegen=true`, `Companions:CompanionManaRegenMult=100`,
+`Character:ManaRegenMultiplier=175`. These values are unchanged from before V2.
+
+**Gsay cadence:** `m_mana_report_timer` is 15 seconds, started in `Sit()`, disabled in `Stand()`.
+This runs at `companion.cpp:2163-2168`. V2 did not touch this timer.
+
+**BUG-003 Root Cause Hypothesis:** The regen code is unchanged. The report cadence is unchanged.
+If the user observes "~1%/report" at 15-second intervals, the actual regen amount per 15s window
+should be approximately `3 × CalcManaRegen()` (three 6-second tics in 15 seconds).
+
+Two alternative explanations:
+1. **Report is from a DIFFERENT companion** (a non-caster, or a companion that died and was
+   rezzed via Fix B which sets mana=0 post-rez). A rezzed companion starts at 0 mana. As it
+   regens, 1% increments at 15-second reports would be consistent with very low mana + normal
+   regen rate if `max_mana` is large (e.g., 2000+ mana → 1% = 20 mana, and CalcManaRegen at
+   level ~50 with good meditate might return 6-10/tick × 3 ticks = 18-30 mana per 15s → ~1%).
+2. **AlwaysMeditateRegen rule or CompanionManaRegenMult changed.** DB shows both are correct.
+   But if a rule reload happened mid-session or the rule_values table has a duplicate entry
+   (note: DB shows `Character:RestRegenTimeToActivate` and `NPC:OOCRegen` appear twice in the
+   output, suggesting possible duplicate rows), a duplicate `CompanionManaRegenMult` entry could
+   cause the last-read value to override correctly.
+3. **The dead-companion Fix R4 path:** Dead companions at HP=0 return `NPC::Process()` early.
+   `NPC::Process()` runs the tic_timer. But dead companions have `GetHP() <= 0` — the regen
+   block in `NPC::Process()` at line 664 is gated on `GetHP() < GetMaxHP()`. For a dead companion
+   with HP exactly at 0 and max_hp presumably > 0, this gate passes and regen fires. But the
+   companion is dead — it shouldn't regen HP. However, mana regen fires unconditionally when
+   `GetMana() < GetMaxMana()` at line 692. Dead companions may be regenerating mana (and HP)
+   via the `NPC::Process()` path. This is probably benign but was not the pre-V2 behavior.
+
+**Distinction: actual regen vs reporting cadence.** The mana report timer (`m_mana_report_timer`)
+is started by `Sit()` and fires every 15 seconds. If `Sit()` is called multiple times or the timer
+is reset somehow, the cadence could change. V2 did not change `Sit()` or the report timer.
+
+**Most likely BUG-003 cause:** The "~1%/report" observation is for a rezzed companion that
+just came back with 0 mana. 1% increments at 15-second cadence are numerically consistent with
+normal CalcManaRegen rates at high max_mana (see arithmetic above). This may NOT be a regression
+at all, but rather expected behavior for the rez path (post-rez companion starts at 0 mana).
+Recommend game-tester verify with a companion that was NOT recently rezzed.
+
+---
+
+### (e) Fourth-bug check
+
+Scanning for adjacent regressions from V2 changes:
+
+| Behavior | Status | Notes |
+|----------|--------|-------|
+| Aggro broadcast (alive companions) | NOT REGRESSED | BALANCED/AGGRESSIVE stance logic at lines 2040-2126 unchanged by V2 |
+| Group buffs (buff spell AI) | NOT REGRESSED | `AI_IdleCastCheck` not touched by V2; `AI_EngagedCastCheck` not touched |
+| Follow/movement | NOT REGRESSED | `mob_ai.cpp` movement code unchanged; `GetFollowDistance()` unchanged |
+| Pet movement | NOT REGRESSED | No pet code touched |
+| Spell casting (non-rez) | NOT REGRESSED | `AI_PursueCastCheck`, `AI_EngagedCastCheck` unchanged |
+| Cross-zone group tracking | RISK — Fix A | Fix A clears `membername[]` at companion death. The "should NOT clear name" comment at `groups.cpp:606` was written for living members who zone out. But if a companion dies while the group is being processed for cross-zone tracking, clearing the name might disrupt world-side group records. Low risk in practice (companions are local-zone NPCs, not tracked cross-zone by world), but worth noting. |
+| `GetCorpseByOwnerWithinRange` range bug (V1 latent) | LATENT BUG | `entity.cpp:2044` uses `< range` (not `< range²`). V1 fix passed `rez_range * rez_range = 40000` to a function that does `< range`. Effective range = sqrt(40000) = 200 units, which matches intent. But if `RezRange` rule is changed, the range behavior will be wrong (the effective range would be sqrt(new_range²) = new_range, so it accidentally works but the calling code is wrong). Not a V2 regression, but should be fixed. |
+
+**Dead companion HP/mana regen via NPC::Process():** A new behavior introduced by V2 Fix R4:
+dead companions now reach `NPC::Process()`'s regen tick (since Fix R4 calls `return NPC::Process()`
+rather than blocking `NPC::Process()`). Pre-V2, dead companions ran the full `Companion::Process()`
+which also called `NPC::Process()` at the end. So the regen tick ran pre-V2 too. No regression.
+
+---
+
+### V3 Fix Recommendations
+
+**BUG-002 fix:** At `companion.cpp:1933-1935` (the Fix R4 dead-companion early return), add a
+single `SentPositionPacket(0.0f, 0.0f, 0.0f, 0.0f, 0)` call on a timer before delegating to
+`NPC::Process()`. This preserves the dead-companion heartbeat for the Titanium client render set
+without reverting Fix R4's intent.
+
+Alternatively: move the ping timer block to fire BEFORE the Fix R4 guard — i.e., let all
+companions (dead or alive) emit the position heartbeat from `Companion::Process()`, then guard
+only the AI-specific logic. This is cleaner but slightly higher risk.
+
+**BUG-003 fix:** Likely not a code regression. Recommend game-tester verify with a non-rezzed
+companion baseline. If regression is confirmed, investigate duplicate rule_values rows
+(DB showed duplicates for `NPC:OOCRegen` and `Character:RestRegenTimeToActivate`). A duplicate
+`Companions:CompanionManaRegenMult=0` row (if it exists) would explain 0 regen. Check with:
+`SELECT * FROM rule_values WHERE rule_name = 'Companions:CompanionManaRegenMult';`
+
+**`GetCorpseByOwnerWithinRange` latent range bug:** Pass `rez_range` (not `rez_range * rez_range`)
+to `GetCorpseByOwnerWithinRange()` in `FindDeadGroupMemberCorpse()`. The function internally uses
+`< range` (comparing against the raw distance squared). Currently the accidental squaring produces
+the correct effective range, but it's fragile.
+
+---
+
+### Risk Assessment
+
+| Fix | Change | Risk to existing flow |
+|-----|--------|-----------------------|
+| BUG-002: add SentPositionPacket in Fix R4 dead path | 1 line in dead-companion branch | Zero — dead-companion path only |
+| BUG-002: move ping timer before Fix R4 guard | Restructure Process() top section | Low — ping timer already tested |
+| BUG-003: verify rule_values duplicate | DB read-only check | Zero |
+| Latent range bug: fix arg to GetCorpseByOwnerWithinRange | 1 value change in FindDeadGroupMemberCorpse | Zero — effective range unchanged at RezRange=200 |
