@@ -158,7 +158,9 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-001 | Cleric companion attempts rez post-combat but NPC companion stays down | High | user | Fix In Progress | c-expert (Phase 4) | |
+| BUG-001 | Cleric companion attempts rez post-combat but NPC companion stays down | High | user | Resolved (V2) — user-confirmed in-game 2026-04-28 (Jimble Woodentoe rez succeeded) | c-expert | 2026-04-28 |
+| BUG-002 | NPC companions vanish from screen during combat if stationary (visibility heartbeat regressed) | High | user | Open | TBD (V3 architecture) | |
+| BUG-003 | Companion HP/mana regen drastically slowed (~1%/report when sitting); possibly regen tick or gsay reporting cadence | High | user | Open | TBD (V3 architecture) | |
 
 ---
 
