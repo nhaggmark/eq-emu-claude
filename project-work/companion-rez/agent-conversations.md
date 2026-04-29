@@ -1290,3 +1290,120 @@ The protocol-agent's position update dedup finding (commit 25826c668) is also no
 
 **Outcome:** IsMoving() hypothesis ruled out. BUG-002 root cause confirmed as Fix R4 dead-companion heartbeat regression. Fixes committed to dev-notes.md.
 
+
+---
+
+## Architecture Team Conversations — V3 (Architect-side log)
+
+_2026-04-28: Architect's V3 dispatch and synthesis_
+
+---
+
+### 2026-04-28 — architect → c-expert: V3 regression investigation kickoff
+
+**From:** architect → **To:** c-expert
+
+**Summary:** Dispatched 7 specific investigation tasks for V3:
+1. Read `Companion::Process()` end-to-end; describe what runs before/after the V2 Fix R4 guard
+2. Trace regen tick path (CalcHPRegen, CalcManaRegen, tic_timer cadence)
+3. Find the prior heartbeat fix in git history; verify intact post-V2
+4. Trace `Mob::SendPosUpdate` and visibility paths
+5. Confirm whether `Spawn()` is shared with normal recruit / zone-in / rez
+6. Check if any V2 fix inadvertently disabled a timer/callback
+7. Find the gsay reporting mechanism
+
+**Outcome:** Full triage delivered — see `c-expert/dev-notes.md` Stage 6
+(V3 Regression Triage). Root cause for BUG-002 confirmed: V2 Fix R4 at
+`companion.cpp:1933-1935` short-circuits the prior heartbeat at `companion.cpp:2128-2142`
+for HP=0 entities. Pre-V2, dead companions ran the full Process() body; post-V2 they
+return early via `NPC::Process()` which has no `SentPositionPacket()` call. BUG-003
+likely not a V2 regression — math consistent with freshly-rezzed companion at 0 mana.
+
+**Filed:** Two latent bugs flagged for future scope — `entity.cpp:2044` range fragility
+and Fix A cross-zone group risk.
+
+---
+
+### 2026-04-28 — architect → protocol-agent: V3 BUG-002 packet trace
+
+**From:** architect → **To:** protocol-agent
+
+**Summary:** Dispatched 8 specific protocol-side investigation tasks for BUG-002:
+heartbeat opcode, client cull window, AddCompanion vs AddNPC differences, dont_queue
+parameter semantics, position update emission paths, packet capture suggestions.
+
+**Outcome:** Full triage delivered — see `protocol-agent/dev-notes.md` (BUG-002 Triage).
+Heartbeat mechanism confirmed intact in code (`m_ping_timer` at `companion.cpp:2128`,
+`Mob::SentPositionPacket` emits `OP_ClientUpdate` via `entity_list.QueueClients`,
+Titanium cull ~10s, 5s heartbeat = 2× margin). Position update dedup at `25826c668`
+does NOT block the heartbeat (heartbeat bypasses `MobMovementManager` dedup via
+direct QueueClients call). Spawn path is protocol-equivalent for entity visibility.
+
+**Open hypothesis:** `NPC::AI_Process()` may set `moving=true` on combat ticks via
+face-tracking rotation, which would Disable the ping timer and prevent heartbeats.
+Not confirmed via static analysis but defensive.
+
+**V3 plan addresses both:** (1) the confirmed dead-entity heartbeat skip via Fix V
+Option A restructure, and (2) the open hypothesis defensively via the
+`m_hold_combat_position` bypass at the heartbeat block.
+
+---
+
+### 2026-04-28 — architect → lua-expert: V3 BUG-003 reporting cadence
+
+**From:** architect → **To:** lua-expert
+
+**Summary:** Dispatched 7 Lua-side investigation tasks for BUG-003:
+find gsay-mana-report mechanism, verify V2 didn't change cadence, sanity-check Fix R4
+guard reach for alive companions, recommend empirical differentiation tests, list
+adjacent functionality that depends on the same mechanism.
+
+**Outcome:** Full triage delivered — see `lua-expert/dev-notes.md` (BUG-003 Lua-Side Triage
++ Deep Dive Architect Follow-Up). Reporting is **entirely C++** (`m_mana_report_timer(15000)`
+in `companion.cpp:57`, fires inside `Companion::Process()` lines 2028-2034 / 2162-2168).
+No Lua hooks. V2 made no change to `Sit()`, `Stand()`, the report timer, or `CalcManaRegen()`.
+Empirical math: level 54 cleric, meditate=295 → `final_regen=36/tick` (live diagnostic logs).
+"1%/report at 15s" is consistent with freshly-rezzed companion at 0 mana climbing toward
+a 1800-mana pool — first few reports show 4-6% increments which feel slow. **Hypothesis
+ranking: most-likely cause is post-rez climb-from-zero misperception; least-likely cause
+is actual regen rate regression (no V2 code change touches CalcManaRegen).**
+
+**V3 plan response:** BUG-003 deferred to game-tester empirical verification (V3-5 + V3-6
+sustained-sit baselines). No code change in V3 unless verification confirms regression.
+
+---
+
+### 2026-04-28 — architect: V3 synthesis and Fix V design
+
+**From:** architect (decision log)
+
+After receiving all three advisor triages plus c-expert's complete v3 dev-notes Stage 6,
+the architect synthesized:
+
+**Confirmed root cause for BUG-002:** V2 Fix R4 at `companion.cpp:1933-1935` blanket
+early-return for HP=0 entities skips the heartbeat block at line 2128 (and the
+death-despawn timer block at line 1938). Pre-V2 baseline: `Companion::Death()` calls
+`SetDepop(false)` to keep the dead entity in the world for the rez window; pre-V2
+`Companion::Process()` ran the full body for HP=0 entities (no top-level guard); the
+heartbeat fired every 5s and Titanium kept rendering the body. Post-V2, dead entities
+skip the heartbeat → Titanium culls after 5-10s → user perceives "companion vanished
+mid-combat." Secondary contract break: the despawn timer also never fires for HP=0
+entities, so 30-min auto-dismiss is broken (entity leaks until rez or zone restart).
+
+**Fix V Option A (RECOMMENDED):** restructure `Companion::Process()` top-section.
+Capture `bool is_dead = (GetHP() <= 0);` instead of early-returning. Wrap AI-dispatch-only
+sections in `if (!is_dead)`. Leave heartbeat, despawn timer, sitting regen, mana report,
+and fleeing-immunity sync unguarded — they already gate on alive-only conditions in
+practice. Defensive layer at the heartbeat block: bypass `IsMoving()` when
+`m_hold_combat_position == true` to close protocol-agent's open hypothesis.
+
+**Fix V Option B (FALLBACK):** keep early-return guard, inline the heartbeat + despawn
+calls before delegation. Uglier (code duplication of despawn body) but simpler structurally.
+
+**BUG-003 deferred:** game-tester runs sustained-sit baselines (V3-5 + V3-6). Architect
+decides at V3.6 whether to scope a V3-followup or close as misperception.
+
+**V3 architecture posted to architecture.md as new section "V3: Visibility & Regen
+Regression Fix" — preserves V1 + V2 sections intact.**
+
+---

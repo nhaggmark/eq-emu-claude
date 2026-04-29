@@ -1238,3 +1238,505 @@ BUG-028 stays in backlog as a separate investigation into the entity list / spaw
 ---
 
 > **Next step (V2 — minus R2):** Spawn the implementation team with c-expert (V2.1, V2.2, V2.3, V2.4, V2.5, V2.7, V2.10), infra-expert (V2.8), and game-tester (V2.9). Do NOT spawn lua-expert / data-expert / config-expert / protocol-agent / perl-expert — they have no V2 implementation tasks. The four fixes can land in 1-2 commits if the engineer prefers (Fix A + R4 in one commit; Fix B + C in another) or as individual commits per fix — c-expert's call. Fix R2 is DEFERRED — see Descope Notice at the top of the V2 section.
+
+---
+
+# V3: Visibility & Regen Regression Fix
+
+> **V3 author:** architect
+> **V3 date:** 2026-04-28
+> **V3 status:** Drafted — awaiting user review before implementation team is spawned
+> **V3 advisors:** c-expert (regression triage + file:line citations), protocol-agent (heartbeat protocol trace), lua-expert (gsay reporting cadence audit + DB-backed regen math)
+
+---
+
+## V3 Executive Summary
+
+V2 (`17662d4ba`) closed BUG-001 in-game (rez works end-to-end). The user then reported two regressions of previously-fixed behavior:
+
+- **BUG-002** — NPC companions vanish from screen during combat when stationary (a previously-fixed "heartbeat" bug returning).
+- **BUG-003** — HP/mana regen reports show "1%/report" when sitting (used to closely match the player's own pace).
+
+Three independent advisor triages converge on a single, narrow root cause for **BUG-002**, a **likely-non-regression for BUG-003** that needs an empirical confirmation step before any code change, and one fourth-bug latent issue worth flagging.
+
+| Bug | Verdict | Root cause | Fix surface |
+|-----|---------|-----------|-------------|
+| BUG-002 (visibility) | **CONFIRMED REGRESSION** | V2 Fix R4's `if (GetHP() <= 0) return NPC::Process();` at `companion.cpp:1933-1935` short-circuits the prior heartbeat (`m_ping_timer` → `SentPositionPacket`) at `companion.cpp:2128-2142`. Pre-V2, dead-but-still-rendered companion entities (kept in zone via `SetDepop(false)` after `Companion::Death()`) ran the full `Companion::Process()` body, so the heartbeat fired every 5s and the Titanium client kept the entity in its render set. Post-V2, dead entities skip the heartbeat block entirely; Titanium client culls them after ~5–10s — the player perceives "companion vanished mid-combat" because the entity that died seconds earlier disappears from screen instead of remaining as a visible body until rez or despawn. | **Single C++ change in `companion.cpp` Process() top-section.** Two equivalent options (architect picks **Option A** below). |
+| BUG-002 alt | **HYPOTHESIS — STILL OPEN** | protocol-agent flagged: `NPC::AI_Process` may set `moving = true` on combat ticks via face-tracking rotation; if so, the heartbeat block's `IsMoving()` check at `companion.cpp:2133` repeatedly disables `m_ping_timer` before it can fire, leaving alive-companion combat heartbeats silently dead. c-expert did not confirm this in static analysis and the dead-companion explanation accounts for the user's symptom on its own. **V3 fix addresses this defensively (see Option A subtlety #2).** | Same fix as primary. |
+| BUG-003 (regen reporting) | **LIKELY NOT A V2 REGRESSION** | All regen / report-cadence code is unchanged from before V2. lua-expert's empirical math (level 54 cleric, meditate=295 → `final_regen=36/tick` per live `CalcManaRegen` log lines, 6s tic) shows that the user's "1%/report at 15s cadence" is numerically consistent with a freshly-rezzed companion (post-rez `SetMana(0)`) climbing from 0 toward a large `max_mana` pool — the first few reports show 4-6% increments that *feel* slow because the absolute baseline starts at 0%. **No code change yet.** Empirical verification step required before any code change. | **Diagnostic-first.** game-tester observes a non-rezzed sitting companion baseline; data-expert verifies no duplicate `rule_values` rows (DB shows duplicates for `NPC:OOCRegen` and `Character:RestRegenTimeToActivate` — concerning lint). If empirical verification confirms a real regen rate regression, **escalate to a separate V3 follow-up** with new data; do not bundle with the V3 visibility fix. |
+| Fourth-bug A | **LATENT (pre-existing, not V2)** | `entity.cpp:2044` `GetCorpseByOwnerWithinRange` uses `< range` (raw distance squared compared against a non-squared range argument). V1 fix passes `rez_range * rez_range = 40000`; effective range comes out to sqrt(40000)=200, accidentally correct at `RezRange=200`. Fragile if the rule is changed. | Not in V3 scope. Filed as a separate latent bug for future investigation. |
+| Fourth-bug B | **LATENT (V2 contract risk)** | Fix A's `membername[]` clear at `Companion::Death()` could disrupt world-side cross-zone group records if a companion dies during a zone transition. Companions are zone-local (no cross-zone tracking in practice) — low real-world risk. | Not in V3 scope. Documented for future awareness. |
+
+**The V3 implementation surface is one targeted C++ change** + an empirical observation step for BUG-003. No DB changes. No Lua. No protocol changes. No new rules.
+
+---
+
+## V3 Existing System Analysis
+
+### What V2 left intact and what V2 broke
+
+**Heartbeat mechanism (prior fix `9e4b7dfd1`, 2026-03-09):**
+- **Constructor:** `m_ping_timer(5000)` initialized in `Companion::Companion(...)` at `companion.cpp:56`; `Disable()` at line 131.
+- **Process body:** `companion.cpp:2128-2142`:
+  ```cpp
+  if (IsMoving()) {
+      m_ping_timer.Disable();
+  } else {
+      if (!m_ping_timer.Enabled()) {
+          m_ping_timer.Start(5000);
+      }
+      if (m_ping_timer.Check()) {
+          SentPositionPacket(0.0f, 0.0f, 0.0f, 0.0f, 0);
+      }
+  }
+  ```
+- **Packet wire:** `Mob::SentPositionPacket` at `mob.cpp:1714` emits `OP_ClientUpdate` with `PlayerPositionUpdateServer_Struct`, broadcast via `entity_list.QueueClients(this, &outapp, send_to_self == false, false)`. Titanium client culls entities ~10s after the last position update; the 5s cadence provides 2× margin.
+- **Bot precedent:** `bot.cpp:1737-1748` uses the same pattern with `BOT_KEEP_ALIVE_INTERVAL=5000`.
+
+**V2 Fix R4 break-of-contract:**
+- Inserted at `companion.cpp:1928-1935`:
+  ```cpp
+  if (GetHP() <= 0) {
+      return NPC::Process();
+  }
+  ```
+- This guard sits **above** the heartbeat block at line 2128 in the function body. **For HP=0 entities, the guard returns before the heartbeat block can run.**
+- Pre-V2 baseline: `Companion::Death()` calls `SetDepop(false)` (`companion.cpp:627`) so the dead companion entity stays in the zone for the rez window. The pre-V2 `Companion::Process()` had **no `GetHP() <= 0` guard at the top**; dead entities ran the full body, the heartbeat fired every 5s, and Titanium kept rendering the dead entity as a visible body until either (a) the rez completed and replaced it, or (b) `m_death_despawn_timer` fired (30 min) and cleaned it up.
+- Post-V2: dead entity hits the guard at line 1933 → returns early → heartbeat at line 2128 never runs → Titanium client culls the entity from its render set after 5–10s → player perceives "the companion vanished mid-combat."
+- **Secondary contract break (caught during V3 review):** the same Fix R4 guard also bypasses the `m_death_despawn_timer.Check()` block at `companion.cpp:1937-1964`. Pre-V2, the despawn timer check ran on every tick for dead companions and fired at 30 minutes (`Companions:DeathDespawnS=1800`) to mark the row dismissed and trigger entity cleanup. Post-V2, this timer never gets checked for HP=0 entities. **A dead companion that is never rezzed will leak its entity reference indefinitely** (until zone restart) instead of self-cleaning at the 30-min mark. This is a pollution issue, not yet user-visible because zones recycle frequently and companions usually do get rezzed.
+
+**Regen path (intact):**
+- `NPC::Process()` at `npc.cpp:630` ticks `tic_timer` (6s cadence). At `npc.cpp:692-696`, when `GetMana() < GetMaxMana()` and `IsCompanion()`, it calls `CastToCompanion()->CalcManaRegen()` and applies the result via `SetMana()`.
+- `Companion::CalcManaRegen()` at `companion.cpp:1512` uses the meditate formula `(((meditate/10) + (level - level/4))/4) + 4`, then multiplies by `RuleI(Character, ManaRegenMultiplier)/100` and `RuleI(Companions, CompanionManaRegenMult)/100`.
+- Both rules confirmed live in DB: `Character:ManaRegenMultiplier=175`, `Companions:CompanionManaRegenMult=100`, `Companions:AlwaysMeditateRegen=true`.
+- For an alive companion (level 54 cleric, meditate 295 — sample from live `CalcManaRegen` diagnostic log lines): `final_regen = 36/tick`. At 6s tics × 15s report cadence = ~2.5 ticks per report = ~90 mana per report = ~5% of a 1800-mana pool.
+- The user's "1%/report" math: 1% of 1800 = 18 mana per 15s — half of one tick's regen. lua-expert's read: this is consistent with a freshly-rezzed companion at `cur_mana=0` (post-rez `SetMana(0)`) for the first few report intervals, where each report reads mana **before** the next regen tick fires (the report-then-regen ordering at `companion.cpp:2162-2168` predates V2; was always true).
+- **Empirical verification still required** before declaring this not a regression — see V3 Validation Plan.
+
+**Gsay reporting (intact):**
+- `m_mana_report_timer(15000)` initialized at `companion.cpp:57`, `Disable()` at line 133.
+- Started in `Companion::Sit()` at `companion.cpp:4012`; disabled in `Companion::Stand()` at line 4018.
+- Fires inside `Companion::Process()` at lines 2028-2034 (PASSIVE stance) and 2162-2168 (BALANCED/AGGRESSIVE) on `IsSitting() && !IsEngaged() && GetMaxMana() > 0` — emits `CompanionGroupSay(this, "Mana: %d%%", static_cast<int>(GetManaRatio()))`.
+- V2 made no change to `Sit()`, `Stand()`, the report timer, or the report block. **Cadence is unchanged.**
+
+**Spawn() shared-path verification (c-expert):**
+- `Companion::Spawn(Client* owner)` at `companion.cpp:2410` is called from THREE sites:
+  1. `lua_client.cpp:3666` — first-time recruit (always was `Spawn()`)
+  2. `companion.cpp:4255` — `Client::SpawnCompanionsOnZone()` (zone-in; always was `Spawn()`)
+  3. `companion.cpp:3703` — `Companion::ResurrectFromCorpse()` (V2 Fix B added this call)
+- `Spawn()` itself was NOT modified by V2. Fix B only added Spawn() as a call site for the rez path (replacing the broken manual `AddNPC` sequence).
+- Implication: a regression caused by `Spawn()` would affect **all three call sites**, not just rez. The user reports only the visibility/regen symptoms; first-recruit and zone-in both rendered companions correctly during V2-era live play. **Therefore the visibility regression is not in `Spawn()`** — it is in the dead-entity Process() path (Fix R4).
+
+### Gap Analysis (V3)
+
+| Symptom | Pre-V2 | Post-V2 | V3 Gap |
+|---------|--------|---------|--------|
+| Dead companion entity visible to client until rez/despawn | YES (heartbeat ran for HP=0 entities) | NO (Fix R4 short-circuits heartbeat) | **CLOSED by V3 Fix V** |
+| Dead companion auto-dismiss after 30min `DeathDespawnS` | YES (despawn timer ran in Process body) | NO (Fix R4 short-circuits despawn timer) | **CLOSED by V3 Fix V** (same fix; reorder Fix R4 to gate ONLY the AI dispatch path, not the heartbeat or despawn timer) |
+| Alive companion heartbeat in combat | YES | YES (Fix R4 doesn't fire for HP>0) | None directly. **Defensive option** — also bypass the `IsMoving()` gate when `m_hold_combat_position=true` so caster face-tracking via NPC::AI_Process can never disable the timer mid-combat (covers protocol-agent's open hypothesis). |
+| Mana regen rate (alive sitting companion) | Working at ~36/tick (level 54 cleric) | Working at same rate (no V2 change) | **Likely no gap.** Empirical verification required (see Validation Plan). |
+| Mana report cadence | 15s in `Sit()` → `Stand()` window | Unchanged | None. |
+| Sitting HP regen bonus (`m_sitting_regen_timer`) | 6s cadence; HP additive bonus | Unchanged | None. |
+| Adjacent V2-touched functionality (aggro broadcast, group buffs, follow, pet movement, spell casting non-rez) | Working | Verified working post-V2 by c-expert fourth-bug scan | None. |
+
+**Two concrete gaps:**
+
+1. **`companion.cpp:1928-1935`** — Fix R4's blanket early-return for HP=0 entities is too coarse. It correctly skips AI dispatch (the original R-4 self-rez intent) but unintentionally skips the heartbeat (line 2128) and the despawn timer (line 1937), both of which are correct-and-necessary for dead companion entity lifecycle. **Fix V** restructures this to gate only the AI dispatch path.
+2. **BUG-003 empirical verification** — game-tester scenario observing a NON-rezzed sitting companion's mana progression vs a NON-rezzed player Cleric's mana progression (controlled, same level, same meditate). If the rates match, BUG-003 is closed as misperception. If they don't, escalate to a follow-up bugfix with new data.
+
+No other gaps. No Lua changes. No protocol changes. No DB schema changes. No new rules.
+
+---
+
+## V3 Technical Approach
+
+### V3 Architecture Decision
+
+Least-invasive-first per layer, applied with regression discipline:
+
+| Layer | Considered? | Decision | Rationale |
+|-------|-------------|----------|-----------|
+| Rule values | Yes | **No change** | No rule could explain the heartbeat-bypass for HP=0 entities. config-expert / data-expert previously confirmed regen rules are sane. (BUG-003 may surface a duplicate `rule_values` row issue — flagged for data-expert if BUG-003 empirical verification confirms regression.) |
+| Server config | Yes | **No change** | Not a config-layer issue. |
+| Lua scripts | Yes | **No change** | lua-expert audit confirmed no gsay/reporting/sitting logic in Lua. |
+| SQL data | Yes | **No change** | No schema or data change. |
+| C++ source | Yes | **One targeted change in `Companion::Process()` top-section** | Restructure Fix R4 to gate only the AI dispatch path so the heartbeat and despawn timer continue to run for dead entities (matching pre-V2 semantics for those two responsibilities while preserving the R-4 self-rez block from V2). |
+
+The V3 fix surface is decisively **C++-only and within one function** (`Companion::Process()`).
+
+### V3 Code Changes
+
+**Single targeted change. No new tests file; one new test in Suite 36.**
+
+#### Fix V — Restructure Fix R4 to preserve heartbeat and despawn timer for dead entities
+
+**File:line:** `eqemu/zone/companion.cpp:1928-1935`
+
+**Current (broken):**
+```cpp
+// Fix R4 (BUG-001 V2): skip ALL companion AI for dead entities.  NPC::Process() is
+// still called so the despawn timer and standard NPC cleanup (p_depop flag) continues
+// to function.  This prevents dead companions from entering the AI dispatch path in
+// NPC::Process() → Mob::AI_Process() → AI_IdleCastCheck(), which can trigger rez
+// attempts, buff casts, or movement on a dead entity.
+if (GetHP() <= 0) {
+    return NPC::Process();
+}
+
+// Check death despawn timer
+if (m_death_despawn_timer.Enabled() && m_death_despawn_timer.Check()) { ... }
+// ... rest of Companion::Process body, including heartbeat at line 2128 ...
+```
+
+The above guard's COMMENT is wrong — `NPC::Process()` does NOT run "the despawn timer." The despawn timer is at line 1938 inside `Companion::Process()` body, AFTER the guard. `NPC::Process()` runs ticking, regen, `AI_Process()`, etc. — none of which fire `SentPositionPacket()` or check `m_death_despawn_timer`.
+
+**Option A (RECOMMENDED — targeted, minimal):** Move the dead-entity AI gate from "early-return at top" to "narrow gates around AI dispatch in `NPC::Process()` call, with explicit heartbeat + despawn-timer + group-zoned-cleanup runs preserved."
+
+```cpp
+// V3 Fix V: replace the V2 Fix R4 blanket early-return with narrow gates.
+// V2 Fix R4 correctly identified that AI dispatch (rez self-cast, buff casting,
+// movement) must not fire on dead entities.  But the blanket early-return ALSO
+// bypassed the visibility heartbeat (line 2128 below) and the death-despawn timer
+// check (line 1938 below) — both of which MUST run for dead entities so the
+// Titanium client keeps rendering the body and so the 30-min auto-dismiss fires.
+//
+// New approach: let dead entities run the responsibilities that are part of their
+// lifecycle (heartbeat, despawn check, group-cleanup), and short-circuit ONLY the
+// AI dispatch path at the bottom of this function. NPC::Process() at line 2254
+// already gates AI_Process internally via IsAIControlled() — but companions stay
+// AIControlled even when dead, so we explicitly bypass the AI portion below by
+// returning early from the BALANCED/AGGRESSIVE stance scanning, melee triple-attack,
+// and AI cast-check paths when GetHP() <= 0.
+
+bool is_dead = (GetHP() <= 0);
+```
+
+Then, after the existing Process() body responsibilities (death-despawn timer, rez-delay timer, retention timer, replacement-spawn timer, FleeingImmunity sync) complete normally for both alive and dead, **wrap the AI-dispatch-only sections in `if (!is_dead)` guards** at:
+- The PASSIVE stance branch returning early at line 2010 (already short-circuits AI; no change needed)
+- The BALANCED/AGGRESSIVE stance scanning at lines 2040-2126 (wrap in `if (!is_dead)`)
+- The triple-attack interception at lines 2203-2218 (wrap in `if (!is_dead)`; dead entities do not auto-attack)
+- The class-positioning + AI dispatch path that includes UpdateCombatPositioning at line 2194 (wrap in `if (!is_dead)`)
+
+Leave the heartbeat block at lines 2128-2142 and the sitting regen / mana report blocks **unguarded** (they already gate on alive-only conditions: `IsSitting()`, `!IsEngaged()`, `GetMaxMana() > 0`, etc., which a dead entity will not satisfy in normal practice).
+
+The final `return NPC::Process()` at line 2254 stays unchanged — `NPC::Process()` runs the BuffProcess + tic_timer + corpse-or-cleanup logic that dead entities legitimately need.
+
+**Option B (FALLBACK — simpler, slightly larger blast radius):** Keep the early-return guard, but add the heartbeat call inline before delegating. Two lines:
+
+```cpp
+if (GetHP() <= 0) {
+    // Visibility heartbeat for dead companion entities — Titanium client culls
+    // entities without position updates after ~10s.  Pre-V2 the heartbeat at
+    // line 2128 ran for HP=0 entities; V2 Fix R4's early-return regressed it.
+    // Same 5s cadence as the alive heartbeat (BOT_KEEP_ALIVE_INTERVAL parity).
+    if (!m_ping_timer.Enabled()) { m_ping_timer.Start(5000); }
+    if (m_ping_timer.Check()) {
+        SentPositionPacket(0.0f, 0.0f, 0.0f, 0.0f, 0);
+    }
+    // Despawn timer must still fire for the 30-min auto-dismiss path.
+    if (m_death_despawn_timer.Enabled() && m_death_despawn_timer.Check()) {
+        // duplicate the existing despawn-timer body from line 1938-1963 OR
+        // refactor it into a private method called from both alive and dead branches
+    }
+    return NPC::Process();
+}
+```
+
+Option B is uglier (code duplication of the despawn timer body) and the ugliness scales if more companion-lifecycle responsibilities are added in future. Option A is the cleaner long-term shape.
+
+**Architect recommendation: Option A.** Engineer (c-expert) chooses the final form during implementation; both options resolve BUG-002 and the secondary despawn-timer leak. The implementation MUST verify both heartbeat-for-dead and despawn-timer-for-dead by writing the failing tests below first.
+
+#### Defensive subtlety #2 — protocol-agent's `IsMoving()` hypothesis
+
+protocol-agent flagged that `NPC::AI_Process()` may set `moving = true` on combat ticks via face-tracking rotation, which could repeatedly disable `m_ping_timer` before its 5s window elapses, leaving alive-companion combat heartbeats silently dead. c-expert did NOT confirm this in static analysis, and the dead-entity explanation accounts for the user's symptom on its own.
+
+**Defensive layer (recommended in same Fix V):** at the heartbeat block (line 2128), keep the `IsMoving()` gate but ALSO bypass it when `m_hold_combat_position == true` (caster/healer at range, holding position):
+
+```cpp
+// V3 Fix V defensive layer: caster/healer companions hold combat position via
+// m_hold_combat_position even though NPC::AI_Process may briefly set moving=true
+// during face-tracking rotation each tick.  The IsMoving gate would repeatedly
+// Disable the ping timer before it fires, leaving combat heartbeats silently dead.
+// Bypass the gate when explicitly holding position so the heartbeat is guaranteed
+// to fire on its 5s cadence regardless of moving-flag noise.
+bool actually_moving = IsMoving() && !m_hold_combat_position;
+if (actually_moving) {
+    m_ping_timer.Disable();
+} else {
+    if (!m_ping_timer.Enabled()) {
+        m_ping_timer.Start(5000);
+    }
+    if (m_ping_timer.Check()) {
+        SentPositionPacket(0.0f, 0.0f, 0.0f, 0.0f, 0);
+    }
+}
+```
+
+This change is independent of Option A vs B; it lands in the same fix block and closes protocol-agent's open hypothesis without waiting for empirical confirmation that combat AI sets `moving=true`. Risk is zero — `m_hold_combat_position` is set only by `UpdateCombatPositioning()` (`companion.cpp:1669-1902`) for caster/healer roles at range, which are exactly the scenarios where stationary heartbeat is most needed.
+
+#### V3 TDD — New tests in Suite 36
+
+Per AC-9 (TDD discipline retained from V1/V2). Add to `eqemu/zone/cli/tests/cli_companion_tests.cpp` Suite 36 (the V2 suite); the engineer may choose to start a new Suite 37 if Suite 36 grows unwieldy.
+
+| Test | What it asserts | Pre-fix behavior | Post-fix behavior |
+|------|-----------------|------------------|-------------------|
+| **V3.1 (heartbeat for dead entity)** | After `Companion::Death()` and the next `Process()` tick, `m_ping_timer` is enabled and a `SentPositionPacket` was queued (verify via spawn-packet-counter or by polling `m_ping_timer.Check()` after a 5-second timer-advance). | FAILS — Fix R4 returns before the ping-timer block runs | PASSES — Option A's structural change ensures the heartbeat block runs for dead entities |
+| **V3.2 (despawn timer for dead entity)** | After `Companion::Death()` simulating 1801 seconds of `Process()` ticks (or by directly setting `m_death_despawn_timer` to fire), the dead companion is correctly marked dismissed (`m_is_dismissed = true`) and `Save()` runs. | FAILS — Fix R4 returns before the despawn-timer check runs | PASSES — Option A preserves the despawn timer check |
+| **V3.3 (defensive heartbeat in held position)** | Set `m_hold_combat_position = true` and `IsMoving() = true` (mock `moving` flag). On the next `Process()` tick, the ping timer is enabled (NOT disabled) and `SentPositionPacket` queued on its 5s cadence. | FAILS — current `IsMoving()` gate disables the timer | PASSES — defensive layer bypasses the gate when holding position |
+| **V3.4 (alive companion regression guard)** | An alive companion in combat (HP > 0, `IsEngaged()=true`, BALANCED stance) still runs the heartbeat block and emits `SentPositionPacket` on 5s cadence — i.e., the V3 restructure does not break alive heartbeat for any stance. | PASSES (alive heartbeat was never broken) | PASSES (regression guard for V3) |
+
+**Existing Suite 36 (V2) tests must continue to pass** unchanged after V3. The V3 change touches only the `Companion::Process()` top-section AI gate; it does NOT change the rez chain, group slot release, or atomicity logic from V2. Engineer verifies all 17+ V1 + V2 tests still pass after V3 lands.
+
+#### V3 BUG-003 Diagnostic-First Approach
+
+**No code change yet.** game-tester runs the following empirical observation BEFORE any BUG-003 code change is contemplated:
+
+1. **Setup:** a single non-rezzed sitting Cleric companion at full mana, sitting next to the player who is also a sitting Cleric of similar level. (Both must have similar gear and meditate skill caps for a fair comparison.)
+2. **Polling:** record absolute `cur_mana` values from both via the `!status` companion command (player) and the gsay mana report (companion) every 15s for 5 minutes.
+3. **Comparison:** plot or tabulate the absolute mana progression. If the companion's mana climbs at the same per-tick rate as the player's mana climbs, BUG-003 is misperception (closed).
+4. **Secondary lint (data-expert):** scan `rule_values` for any duplicate rows of `Companions:CompanionManaRegenMult`, `Companions:AlwaysMeditateRegen`, `Character:ManaRegenMultiplier`. The DB output during c-expert's V3 audit showed duplicates for `NPC:OOCRegen` and `Character:RestRegenTimeToActivate` — which is concerning lint regardless of whether it affects BUG-003. data-expert confirms or denies any regen-rule duplicates.
+
+**If verification confirms a real regen rate regression:** scope a separate V3-followup bugfix with new evidence. Do NOT bundle the regen fix with the visibility fix in this V3 round — the visibility fix has a clean code-grounded root cause; bundling a speculative regen fix dilutes the V3 review and risks introducing regressions in regen logic that may not need any change.
+
+**If verification confirms "1%/report" is a freshly-rezzed-companion artifact:** close BUG-003 with a documentation note in the companion runbook explaining post-rez mana climbing.
+
+---
+
+## V3 Implementation Sequence
+
+| # | Task | Agent | Depends On | Estimated Scope |
+|---|------|-------|------------|-----------------|
+| V3.1 | Write 4 new failing tests in Suite 36 of `cli_companion_tests.cpp` per the table above (V3.1, V3.2, V3.3, V3.4). Build the test binary inside the akk-stack container and run via `./bin/zone tests:companion`. Verify V3.1, V3.2, V3.3 fail; V3.4 passes (regression guard). | c-expert | — | ~120 lines C++ test code |
+| V3.2 | Implement Fix V Option A in `companion.cpp` `Companion::Process()` top-section: remove the V2 Fix R4 blanket early-return; introduce `bool is_dead = (GetHP() <= 0);` capture; wrap AI-dispatch-only sections (BALANCED/AGGRESSIVE stance scanning, triple-attack interception, UpdateCombatPositioning + AI cast-check) in `if (!is_dead)` guards; leave the death-despawn timer check, heartbeat block, sitting regen, mana report, and fleeing-immunity sync unguarded (they already gate on alive-only conditions). Implement defensive subtlety #2 at the heartbeat block: bypass `IsMoving()` when `m_hold_combat_position=true`. | c-expert | V3.1 | ~25 lines C++ (mostly indentation / wrapping) |
+| V3.3 | Rebuild zone binary (`docker exec akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`). Re-run Suite 36 — verify V3.1, V3.2, V3.3 now PASS and all V1/V2 tests still pass. Run full companion test suite to confirm no regression elsewhere. | c-expert | V3.2 | runtime |
+| V3.4 | `make restart` from akk-stack/, then full server stack startup (loginserver / world / 8 dynamic_NN zones per the documented procedure). | infra-expert | V3.3 | runtime |
+| V3.5 | In-game validation per V3 Validation Plan below (3 sustained-play scenarios + BUG-003 diagnostic baseline). User confirms BUG-002 closed and reports BUG-003 verification result. | game-tester | V3.4 | manual |
+| V3.6 | If BUG-003 verification confirms regression: scope a separate V3-followup bugfix with the new evidence. Do NOT extend V3 to handle it. If misperception: close BUG-003 with a runbook note. | architect (decision-maker) + game-tester (data) | V3.5 | analysis |
+| V3.7 | Commit and push V3 changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no V3 changes.) | c-expert | V3.3 | git |
+
+**Dependency graph:**
+
+```
+V3.1 (failing tests) ──→ V3.2 (Fix V Option A + defensive layer) ──→ V3.3 (rebuild + verify) ──→ V3.4 (server restart) ──→ V3.5 (validate) ──┬──→ V3.6 (BUG-003 decision)
+                                                                                                                                              └──→ V3.7 (commit + push)
+```
+
+**Ordering matters:** Tests MUST be written before the fix (TDD discipline retained). V3.6 BUG-003 decision is informed by V3.5 game-tester data; if regression is confirmed, that becomes a separate bugfix branch — NOT part of V3.7's commit.
+
+---
+
+## V3 Required Implementation Agents
+
+| Agent | Task(s) | Rationale |
+|-------|---------|-----------|
+| **c-expert** | V3.1, V3.2, V3.3, V3.7 | All C++ source and test runner work. Owns `companion.cpp`, `cli_companion_tests.cpp`. Production debug agent for this V3 fix; produced the V3 triage. |
+| **infra-expert** | V3.4 | Server restart and full-stack startup procedure. |
+| **game-tester** | V3.5 | Live in-game validation, plus BUG-003 baseline diagnostic. |
+| **architect** | V3.6 | BUG-003 follow-up scoping decision based on V3.5 data. |
+
+**Not needed for V3:**
+- **lua-expert:** No Lua changes. V3 triage already complete.
+- **data-expert:** No DB schema/data changes for the V3 fix. Optional `rule_values` duplicate-row scan if BUG-003 verification fires.
+- **config-expert:** No rule changes.
+- **protocol-agent:** No client packet changes. V3 triage already complete.
+- **perl-expert:** No Perl involved.
+
+---
+
+## V3 Risk Assessment
+
+### V3 Technical Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| Option A's `is_dead` guards miss an AI-dispatch path that should NOT run on dead entities (e.g., a future companion AI feature added below the BALANCED/AGGRESSIVE blocks) | Low | Medium | Engineer adds a defensive comment block at the top of `Companion::Process()` documenting the intent: "Dead entities run heartbeat + despawn + group cleanup; AI dispatch must be `is_dead`-guarded." Future contributors guard new AI dispatch sections by the same flag. |
+| Option A's restructure accidentally re-enables a self-rez path (the original R-4 issue from V2) | Low | High | The R-4 self-rez path was specifically `AI_ResurrectDeadGroupMember` called from `AI_IdleCastCheck`. V2 added an explicit `if (GetHP() <= 0) return false;` guard at the TOP of `AI_ResurrectDeadGroupMember` (`companion_ai.cpp:1935`) — that guard remains in place after V3 and protects the self-rez path independently. Option A's `if (!is_dead)` wrapping of `UpdateCombatPositioning + AI cast-check` is defense-in-depth on top of that. **Both layers must remain intact.** |
+| Defensive heartbeat layer (subtlety #2) over-fires when companion is genuinely moving and `m_hold_combat_position` is stale | Very Low | Low | `m_hold_combat_position` is reset to `false` at the top of `UpdateCombatPositioning()` every tick (`companion.cpp:1672`). Stale state cannot persist beyond one tick. Worst case: one extra `SentPositionPacket(0,0,0,0,0)` on a moving caster — already redundant with the real position update from movement, harmless. |
+| Heartbeat-for-dead introduces network noise (one extra packet per dead companion every 5s for up to 30 min) | Very Low | Negligible | Packet size is 24 bytes. 1 dead companion × 1 packet × 5s × 360 ticks (30 min) × N nearby clients = a few hundred KB total over the death lifecycle. At the small-group target (1-3 players) and ~5 dead companions max per player, this is well under any noticeable bandwidth. |
+| Despawn-timer-for-dead actually fires now and exposes a bug in the despawn body that was previously masked | Low | Medium | The despawn-timer body at `companion.cpp:1938-1964` is unchanged code that pre-V2 was reaching its `Save()` and `MemberZoned` calls correctly for dead entities. V3 simply restores that behavior. Test V3.2 explicitly validates the despawn body fires correctly post-V3. |
+| Tests V3.1-V3.3 cannot be written with high fidelity in the unit test harness (no zone tick advance) | Low | Low | The cli test runner already handles this for V2 Suite 36 tests (e.g., 36.5 R4 alive guard). The same pattern applies: invoke methods directly, mock `GetHP()` returns, assert on observable state changes (e.g., a counter incremented inside a wrapped `SentPositionPacket` mock). c-expert chooses the test fidelity vs effort tradeoff. |
+
+### V3 Compatibility Risks
+
+- **V1 + V2 fixes:** V3 does not touch V1's `spells.cpp:2051` extension, V1's `FindDeadGroupMemberCorpse` player-corpse priority, V2's Fix A (group slot at death), V2's Fix B (Spawn() routing), V2's Fix C (atomic rez chain), or V2's Fix R4 alive guard at `companion_ai.cpp:1935`. V3 ONLY restructures the V2 Fix R4 line at `companion.cpp:1933-1935` — the other Fix R4 line at `companion_ai.cpp:1935` stays. Independent.
+- **Fresh-recruit + zone-in companions:** unchanged. V3 affects only the dead-entity path inside `Companion::Process()`. Alive companions go through the same branch as before V3.
+- **Charm pets, swarm pets, mercenaries, bots:** None of these go through `Companion::Process()`. No interaction. Bot's heartbeat is independent at `bot.cpp:1737-1748` and uses the same pattern V3 mirrors.
+- **Existing companion data:** No DB changes. No migration. Existing dead companion entities (if any are left in zones at V3 land time) immediately benefit from the restored heartbeat + despawn timer.
+
+### V3 Performance Risks
+
+None. V3 reorders existing `Companion::Process()` body without adding new operations. The restored heartbeat for dead entities is one 24-byte packet broadcast per 5s per dead companion — negligible at the 1-3 player + 5 companion target.
+
+---
+
+## V3 Review Passes
+
+### V3 Pass 1: Feasibility
+
+**Can we actually build this?** Yes. One C++ change in `Companion::Process()` top-section (~25 lines of indentation/wrapping for Option A; even less for Option B). Standard Docker-exec rebuild. Existing CLI test runner. No new dependencies.
+
+**c-expert verification:** Full code-grounded triage in `c-expert/dev-notes.md` Stage 6. File:line citations for every claim. Pre-V2 vs post-V2 diff verified via `git show 17662d4ba`.
+
+**protocol-agent verification:** Heartbeat protocol mechanism confirmed. `OP_ClientUpdate` wire format pass-through (no Titanium translation). Position-update dedup system at `25826c668` does NOT block the heartbeat path (heartbeat uses `entity_list.QueueClients()` directly, bypassing the `m_last_seen_mob_position` dedup). Defensive `m_hold_combat_position` layer recommended pending c-expert confirmation that combat AI sets `moving=true`.
+
+**lua-expert verification:** No Lua/quest hooks in regen, gsay, or sitting paths. BUG-003 is entirely a C++ concern. Empirical math (level 54 cleric, meditate=295, `final_regen=36/tick` from live `CalcManaRegen` log) shows "1%/report" is consistent with freshly-rezzed-companion-at-zero-mana climb pattern.
+
+### V3 Pass 2: Simplicity
+
+**Is this the simplest approach?** Yes. The fix surface is one logical change to one function (Option A: structural restructure of one Process() top-section) plus one defensive line at one heartbeat block. Considered and rejected:
+
+- **Revert V2 Fix R4 entirely:** rejected. The R-4 self-rez prevention is correct and the test 36.5 covers it. Reverting would re-open the dead-Cleric-self-rez edge case.
+- **Add a separate `Companion::ProcessDead()` method:** rejected. Premature abstraction; the dead-entity path is small and reads cleanly inline.
+- **Move the heartbeat to NPC::Process():** rejected. The heartbeat is companion-specific (Bot has its own at `bot.cpp:1737-1748`). Generalizing would touch NPC base class semantics for all NPCs and break the bot/companion isolation.
+- **Add a new rule `Companions:DeadHeartbeatIntervalS`:** rejected. The 5s interval is a Titanium client constraint, not a tunable. Hardcoded matches the existing pattern.
+- **Bundle a BUG-003 fix speculatively:** rejected. The user's regression-discipline feedback explicitly warns against speculative changes. Empirical verification first; code change only if the verification confirms.
+- **Bundle the latent `GetCorpseByOwnerWithinRange` range fix:** rejected. Not user-visible. Files separately.
+
+### V3 Pass 3: Antagonistic
+
+**What could go wrong?**
+
+- **Edge: companion dies, owner immediately zones away. Dead companion entity persists with heartbeat + despawn timer. Owner returns to zone 31 minutes later.** Despawn timer fired at minute 30, dismissed the companion. Owner sees "X has returned home" message and a clean state. Acceptable.
+- **Edge: companion dies during combat, NEXT companion rez fires within 5 seconds and replaces the dead entity.** The dead entity's `m_ping_timer` runs once or not at all (depending on tick alignment). The replacement entity (new Companion via Fix B `Spawn()`) takes over. No visible glitch.
+- **Edge: 5 companions die in rapid succession.** Each dead entity emits one heartbeat packet every 5s. At 5 dead × 1 packet × 5s = 1 packet/s of dead-entity heartbeat traffic per nearby client. Trivial.
+- **Edge: companion dies in a zone with 50 nearby clients (raid context).** Heartbeat packets broadcast to all 50 clients per dead entity. 5 dead × 1 packet × 50 clients × 5s = 50 packets/s. Still trivial; well under standard zone packet rates. Not a real concern at 1-3 player target.
+- **Edge: `m_hold_combat_position` is inadvertently set on a moving companion (bug in `UpdateCombatPositioning`).** Defensive heartbeat layer would over-fire `SentPositionPacket` redundantly with movement updates. Harmless duplicate.
+- **Edge: companion is HP=0 but `IsEngaged()=true` (transient state during the Death() call).** Heartbeat fires once, then `IsEngaged()` resets when hate is cleared. No issue.
+- **Edge: Death() is called on a companion that has not yet received an entity ID (entity_id=0 case from BUG-028 fallback).** The dead entity stays in zone with id=0. Heartbeat block calls `SentPositionPacket(0,0,0,0,0)` which uses `GetID()` for `spu->spawn_id`. `spu->spawn_id=0` is a no-op for the client (no entity to update). Harmless.
+- **Edge: Despawn timer fires while a rez is mid-cast.** The rez `IsRezzed(true)` race guard at `companion.cpp:3640` prevents another cleric from targeting the same corpse, but the despawn-timer body at line 1938-1963 marks the dead entity dismissed and saves to DB independently. This could create a window where the rez completes, replaces the entity, but the DB row was just marked dismissed by the despawn timer. **Mitigation:** the despawn timer body sets `m_is_dismissed=true` then `Save()`; `ResurrectFromCorpse` later writes `is_suspended=0, is_dismissed=0` (it explicitly clears both per V2 Fix B at companion.cpp:3656). Last-write-wins; rez clobbers the dismissal. **Acceptable.** If the rez is faster than the despawn timer (always — 30 min vs the AI-tick rez cadence of seconds), no race.
+- **Antagonistic re: BUG-003 deferral:** What if game-tester verifies regen IS broken and the fix needs to ship in the same V3 round to keep the user productive? The V3 plan explicitly does not block on this — the visibility fix lands; if regen is real, a V3-followup is scoped. The user's regression-discipline feedback explicitly says "be extremely careful not to break existing functionality" — bundling a speculative regen fix violates that exact principle.
+
+**Protocol-level edge cases (protocol-agent consult):** addressed by defensive `m_hold_combat_position` bypass.
+
+**DB boundary conditions (data-expert consult):** No DB writes added by V3. Existing DB writes in the despawn-timer body now fire correctly for dead entities (they were silently broken by V2 Fix R4 — V3 restores correctness).
+
+### V3 Pass 4: Integration
+
+**How do the pieces fit together?** The fix is shorter and more linear than V1 or V2:
+
+```
+[ V3.1 — write 4 failing Suite 36 tests ]
+             ↓
+[ V3.2 — Fix V Option A + defensive heartbeat layer ]
+             ↓
+[ V3.3 — rebuild + verify all tests pass + no regressions ]
+             ↓
+[ V3.4 — server restart ]
+             ↓
+[ V3.5 — game-tester (BUG-002 in-game + BUG-003 baseline) ]
+             ↓
+[ V3.6 — architect decides BUG-003 close vs followup ]
+             ↓
+[ V3.7 — commit + push V3 to bugfix/companion-rez ]
+```
+
+**Cross-cutting integration with V1 + V2 + companion-rerecruit:**
+- V1's `spells.cpp:2051` extension and `FindDeadGroupMemberCorpse` player-corpse priority — untouched.
+- V2's Fix A (group slot at death), Fix B (Spawn routing), Fix C (atomic rez), and Fix R4 alive-guard at `companion_ai.cpp:1935` — untouched.
+- V3 ONLY restructures `Companion::Process()` body; it preserves V2 Fix R4's intent (dead entities don't dispatch AI) while restoring pre-V2 invariants for heartbeat + despawn timer.
+- companion-rerecruit's death-state semantic (`is_suspended=1, is_dismissed=0` row preserved) — untouched. V3 makes the despawn-timer auto-dismiss path work again, which is the correct behavior for dead companions that are never rezzed.
+
+**Sustained-play validation is mandatory.** V2's tests covered brief encounters; V3 must validate at the time-scales where the regressions manifest — see Validation Plan.
+
+**Each engineer task is self-contained.** c-expert has the file:line for the fix in dev-notes Stage 6 (V3 Regression Triage). No "TBD" / "engineer figures out" in any task description.
+
+---
+
+## V3 Validation Plan — Sustained-Play Mandatory Scenarios
+
+The user's regression-discipline feedback explicitly flagged that V2's brief-encounter validation missed the sustained-play regressions. **V3 validation explicitly includes sustained, long-duration scenarios.** game-tester runs ALL of the following, in order, before declaring V3 closed.
+
+### Mandatory game-tester scenarios
+
+1. **Scenario V3-1 (PRIMARY — BUG-002 closure, sustained combat):** Player + Cleric companion + Wizard companion + Warrior companion engage a 5+ minute combat encounter (multi-pull, sustained DPS race). At least one companion dies in the first half of the encounter. Verify: the dead companion's BODY remains visible on the player's screen for the full duration of the encounter (until rez or until the player exits the encounter), with no "vanish on stationary" symptom. Verify: the cleric continues to heal the alive companions; if Cleric companion is the one that died, observe a different healer attempt rez per V2 logic. **PRIMARY V3 REGRESSION TEST.**
+
+2. **Scenario V3-2 (BUG-002 in held-position combat, caster):** Player + Wizard companion engage a fight where the Wizard holds combat range and casts spells without moving. After 60+ seconds of stationary casting, verify the Wizard remains visible on screen (no vanish). Move the Wizard intentionally (target switch via aggro). Stationary again for 60+ seconds. Wizard remains visible throughout. **Defensive heartbeat layer validation.**
+
+3. **Scenario V3-3 (BUG-002 dead entity persistence — 30 min lifecycle):** Recruit a low-level Warrior companion. Have it die in a low-level zone with no other clerics nearby (so no rez fires). Sit at the corpse / dead entity. Observe the dead Warrior body remains on screen for the full 30-minute despawn window. At ~30 min, verify the death-despawn-timer auto-dismiss fires: player gets the "X has returned home. You can recruit them again when you find them." message; the dead entity is removed from screen cleanly. **Despawn timer regression test (the secondary V2 Fix R4 break documented in V3 Pass 2).**
+
+4. **Scenario V3-4 (alive companion regression guard):** All V1 + V2 game-tester scenarios MUST continue to PASS after V3. Game-tester re-runs the V1 + V2 test plan (V2-1 PRIMARY rez closure, V2-2 multi-target sequencing, V2-4 atomicity, V2-5 dead-caster self-rez, V2-6 immunity strip, V2-7 V1 regression, V2-8 no-leak-many-cycles).
+
+5. **Scenario V3-5 (BUG-003 empirical baseline — sustained sit):** Recruit a fresh non-rezzed Cleric companion at full mana. Sit player + companion side-by-side for 5 minutes. Record `cur_mana` from gsay reports every 15s and `!status` snapshots every 60s. Compare to the player's own mana progression at the same level / meditate. **If rates match within 10%, BUG-003 is misperception.** **If companion regen is materially slower (>30% gap), file V3-followup bugfix.**
+
+6. **Scenario V3-6 (BUG-003 post-rez baseline — confirm "1%/report" hypothesis):** Repeat scenario V3-5 but with a freshly-rezzed companion (cur_mana=0 from rez `SetMana(0)`). Observe the first 5 reports. **If the rate matches the alive baseline once mana climbs above 0**, the user's "1%/report" was the freshly-rezzed climb-from-zero pattern. Document the runbook note: "Post-rez companions start at 0 mana; first few mana reports show 4-6% increments climbing toward full pool, which can feel slow."
+
+7. **Scenario V3-7 (multi-zone-cycle regression check):** Player recruits 2 companions, fights, dies, returns to bind, rebuilds, zones to a different area, fights again, zones back. Verify: companions follow correctly across zones, heartbeat fires for sitting companions in the new zone, no visibility regression in any zone, no DB row leaks (data-expert verifies `companion_data` row count stable).
+
+8. **Scenario V3-8 (multi-rez-cycle regression check):** Same companions die and are rezzed 5+ times in rapid succession (deliberately test the V2 Fix B rez path under sustained load). Verify: each rez restores a visible-and-heartbeat-firing entity, no leak of dead entities, group slots correctly cycled per V2 Fix A.
+
+### Engineer-side validation (V3.3)
+
+Before declaring V3.3 complete, c-expert MUST verify:
+- All 4 new Suite 36 V3 tests PASS.
+- All 17+ existing tests in Suite 29 (V0 + V1) and Suite 36 (V2) still PASS.
+- Full companion test suite (35+ suites total) exits cleanly with status 0.
+- Build artifacts in `eqemu/build/bin/` are fresh.
+- No new compiler warnings.
+
+### V3 Acceptance Criteria coverage
+
+| Symptom | V3 Validation method | Owner |
+|---------|----------------------|-------|
+| BUG-002 visibility heartbeat (combat, stationary, sustained) | Suite 36 V3.1 + V3.3 + V3.4 + game-tester V3-1 + V3-2 | c-expert + game-tester |
+| BUG-002 dead-entity 30-min despawn | Suite 36 V3.2 + game-tester V3-3 | c-expert + game-tester |
+| BUG-002 alive companion regression guard | Suite 36 V3.4 + game-tester V3-4 (V1+V2 re-run) | both |
+| BUG-003 regen reporting | game-tester V3-5 + V3-6 (empirical) | game-tester (data) → architect (decision) |
+| Sustained-play discipline (regression discipline feedback) | game-tester V3-1 (5 min) + V3-3 (30 min) + V3-7 (multi-zone) + V3-8 (multi-rez) | game-tester |
+| Adjacent functionality (aggro, group buffs, follow, pet movement, spell casting) | game-tester V3-4 (V1+V2 re-run includes these) + V3-1 sustained encounter | game-tester |
+
+---
+
+## V3 Rollback Plan
+
+Per V1 + V2 PRD `## Rollback`, fixes are independently revertable. V3 maintains the same property:
+
+1. **V3 Fix V Option A (Process() restructure) rollback:** Revert the restructure. V2 Fix R4's blanket early-return restored. BUG-002 re-opens (dead entity heartbeat + despawn timer skipped). Tests V3.1, V3.2, V3.3 fail. AC for visibility / dead-entity persistence regresses. **The V2 Fix R4 alive guard at `companion_ai.cpp:1935` STAYS in place** (independent change; not part of V3 rollback). The dead-Cleric-self-rez edge case from V2 stays closed.
+
+2. **V3 defensive heartbeat layer rollback:** Revert just the `m_hold_combat_position` bypass in the heartbeat block. Heartbeat goes back to gating only on `IsMoving()`. Test V3.3 fails. If protocol-agent's `IsMoving()` hypothesis is real, alive-companion combat heartbeat could silently fail (no current empirical evidence this is happening — defensive layer was preventative).
+
+3. **TDD test rollback:** The 4 new Suite 36 V3 tests stay in the repo even on rollback per AC-9 — failing tests document any regressed behavior.
+
+The two changes (V3 Option A + defensive heartbeat) can be reverted independently. V3 introduces no schema changes; no DB migration; no rule additions — rollback is purely C++ revert.
+
+---
+
+## V3 Resolved Open Questions
+
+### Q1 — Was V2's Fix B path shared with normal recruit?
+
+**Resolution: YES.** c-expert traced all `Companion::Spawn()` callers: `lua_client.cpp:3666` (first-recruit), `companion.cpp:4255` (zone-in), `companion.cpp:3703` (V2 Fix B rez). `Spawn()` itself was NOT modified by V2 — Fix B only added the rez call site. **Implication:** a `Spawn()`-side regression would affect all three call sites; the user reports neither recruit nor zone-in regressions, so the visibility regression is NOT in `Spawn()`. The regression is in the dead-entity Process() path (Fix R4).
+
+### Q2 — What was the prior heartbeat fix?
+
+**Resolution:** Commit `9e4b7dfd1` (2026-03-09), "fix(companions): enable caster spell casting and prevent client-side vanishing." Added `m_ping_timer(5000)` + `SentPositionPacket(0,0,0,0,0)` keepalive at what became `companion.cpp:2128-2142`. Mirrors `Bot::Process()` pattern at `bot.cpp:1737-1748`. **The code is intact in HEAD post-V2** — V2 did not modify it. But V2 Fix R4's blanket early-return at `companion.cpp:1933` short-circuits the heartbeat block for HP=0 entities. **V3 restores the pre-V2 invariant.**
+
+### Q3 — Is BUG-003 actual regen broken or reporting cadence broken?
+
+**Resolution: Likely neither — likely a freshly-rezzed-companion artifact.** lua-expert's empirical math (level 54 cleric, meditate=295, `final_regen=36/tick` from live `CalcManaRegen` diagnostic logs) shows that "1%/report at 15s cadence" is consistent with a post-rez companion (`SetMana(0)` applied) climbing from 0 mana toward a 1800-mana pool. The first few reports show 4-6% increments which the user perceives as "slow." V2 made NO changes to `CalcManaRegen`, `tic_timer`, `m_mana_report_timer`, `Sit()`, `Stand()`, or any regen-tick or report-cadence code. **Empirical verification step (V3-5 + V3-6) required before any code change.** If verification confirms a real regression, scope a V3-followup bugfix; do NOT bundle with V3 visibility fix.
+
+### Q4 — Is there a fourth bug?
+
+**Resolution: TWO LATENT items, neither in V3 scope:**
+1. `entity.cpp:2044` `GetCorpseByOwnerWithinRange` uses `< range` against squared distance, with V1 calling-convention passing `range²`. Effective range = sqrt(range²) = range — accidentally correct at `RezRange=200`. Fragile if rule is changed. Pre-existing latent bug; not a V2 regression. Filed separately.
+2. V2 Fix A's `membername[]` clear at `Companion::Death()` could disrupt world-side cross-zone group records if companion dies during a zone transition. Companions are zone-local (no cross-zone tracking in practice) — low real-world risk. Documented in V2 Fix A subtleties.
+
+Neither item is a V3 fix scope; both are documented for future awareness.
+
+---
+
+## V3 Open Items / Future Work
+
+- **Latent range bug at `entity.cpp:2044`:** Pass `rez_range` (not `rez_range * rez_range`) to `GetCorpseByOwnerWithinRange()` — pre-existing, accidentally correct at default rule value. File as a separate latent bug.
+- **Duplicate `rule_values` rows lint:** DB output during c-expert's V3 audit showed duplicate rows for `NPC:OOCRegen` and `Character:RestRegenTimeToActivate`. Concerning regardless of BUG-003. data-expert investigates if BUG-003 verification fires; otherwise filed for future cleanup.
+- **BUG-003 follow-up bugfix:** Conditional on V3-5 / V3-6 verification result. Architect decides post-V3.5.
+- **Sustained-play test scaffold:** Multiple V2/V3 lessons argue for adding sustained-play test scenarios to the standard validation pipeline going forward — not just brief-encounter unit tests. game-tester scope expansion. Out of V3 scope.
+- **`Companion::ProcessDead()` extraction:** If the dead-entity Process() path grows, refactor into a separate method. Currently small enough to read inline. Out of scope.
+- **NPC base-class heartbeat generalization:** Both Bot and Companion implement nearly identical heartbeat patterns. A future refactor could move the heartbeat into a shared NPC method. Out of V3 scope; touches Bot.
+
+---
+
+> **Next step (V3):** Spawn the implementation team with **c-expert** (V3.1, V3.2, V3.3, V3.7), **infra-expert** (V3.4), and **game-tester** (V3.5). Do NOT spawn lua-expert / data-expert / config-expert / protocol-agent / perl-expert — they have no V3 implementation tasks. **All V3 changes can land in a single commit on `bugfix/companion-rez` per c-expert's call.**
+>
+> **Architect (V3.6) decides BUG-003 follow-up** based on V3.5 game-tester data — close-as-misperception vs scope a V3-followup bugfix.
+
+---

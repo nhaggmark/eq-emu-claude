@@ -378,3 +378,127 @@ shipping; they are tracked here so they don't get lost between bugfixes._
   preserved) is what Fix R2 reads when auto-unsuspending on zone-in (NOTE: Fix R2 is DEFERRED from V2 — see V2-8 in Decision Log).
   Without companion-rerecruit, V2 would have no row to recover from. V2
   builds on companion-rerecruit cleanly.
+
+---
+
+# V3 — Visibility & Regen Regression Fix
+
+> User reported two regressions of previously-fixed behavior after V2 landed:
+> BUG-002 (companions vanish from screen during combat when stationary) and
+> BUG-003 (HP/mana regen reports show ~1%/report when sitting). V3 reopens
+> the workflow at the architecture phase.
+
+## V3 Workflow Status
+
+| Phase | Agent | Status | Started | Completed |
+|-------|-------|--------|---------|-----------|
+| V3 Architecture | architect + c-expert + protocol-agent + lua-expert (advisors) | Complete | 2026-04-28 | 2026-04-28 |
+| V3 Implementation | c-expert + infra-expert + game-tester | Not Started | | |
+| V3 Validation | game-tester | Not Started | | |
+| V3 Completion | _user_ | Not Started | | |
+
+**V3 Current phase:** Architecture (complete) — awaiting user review before
+implementation team is spawned. Will transition to Implementation after user
+confirms the V3 plan.
+
+---
+
+## V3 Handoff Log
+
+### V3 architect → V3 implementation team (c-expert + infra-expert + game-tester)
+- **Date:** 2026-04-28
+- **Notes:** V3 architecture posted to `architect/architecture.md` as new section
+  "V3: Visibility & Regen Regression Fix" (preserves V1 + V2 sections intact).
+  **Confirmed root cause for BUG-002:** V2 Fix R4 at `companion.cpp:1933-1935`
+  blanket early-return for HP=0 entities skips the prior heartbeat (`m_ping_timer`
+  → `SentPositionPacket`) at `companion.cpp:2128-2142` AND the death-despawn timer
+  at `companion.cpp:1937-1964`. Pre-V2 baseline: dead companion entities ran the
+  full `Companion::Process()` body (no top-level guard); the heartbeat fired every
+  5s and Titanium kept rendering the body until rez or auto-dismiss. Post-V2,
+  dead entities skip both → Titanium culls after 5-10s → user perceives
+  "companion vanished mid-combat."
+  **BUG-003 likely NOT a V2 regression** — empirical math (level 54 cleric,
+  meditate=295 → `final_regen=36/tick`) shows "1%/report at 15s cadence" is
+  consistent with freshly-rezzed companion at 0 mana climbing toward a large
+  max_mana pool. lua-expert + c-expert independently verified all regen and
+  reporting code unchanged from before V2. V3-5 + V3-6 game-tester baselines
+  required to differentiate misperception vs real regression.
+  **V3 Fix V (Option A recommended):** restructure `Companion::Process()`
+  top-section to capture `bool is_dead = (GetHP() <= 0);` and wrap AI-dispatch-only
+  sections in `if (!is_dead)` guards — preserves heartbeat, despawn timer, and
+  group-cleanup runs for dead entities. Defensive layer at heartbeat block:
+  bypass `IsMoving()` when `m_hold_combat_position == true` to close
+  protocol-agent's open `IsMoving()` hypothesis.
+  **Spawn: c-expert (V3.1, V3.2, V3.3, V3.7), infra-expert (V3.4), game-tester
+  (V3.5). Architect rejoins at V3.6 to decide BUG-003 follow-up.** Do NOT spawn
+  lua-expert / data-expert / config-expert / protocol-agent / perl-expert —
+  they have no V3 implementation tasks.
+
+---
+
+## V3 Implementation Tasks
+
+| # | Task | Agent | Status | Notes |
+|---|------|-------|--------|-------|
+| V3.1 | Write 4 new failing tests in Suite 36 of `cli_companion_tests.cpp` (V3.1 heartbeat-for-dead, V3.2 despawn-timer-for-dead, V3.3 defensive-heartbeat-in-held-position, V3.4 alive-companion-regression-guard). Build + run. Verify V3.1, V3.2, V3.3 fail and V3.4 passes pre-fix. | c-expert | Not Started | TDD red |
+| V3.2 | Implement Fix V Option A: restructure `Companion::Process()` top-section per architecture.md. `bool is_dead = (GetHP() <= 0);` capture + `if (!is_dead)` guards on AI dispatch sections. Plus defensive heartbeat layer (`m_hold_combat_position` bypass). | c-expert | Not Started | ~25 lines C++ |
+| V3.3 | Rebuild zone binary inside container. Re-run Suite 36 — verify V3.1-V3.3 now PASS, V3.4 still passes, all V1/V2 tests unchanged. Run full companion test suite. | c-expert | Not Started | runtime |
+| V3.4 | `make restart` + full server stack startup (loginserver / world / 8 dynamic_NN zones per documented procedure). | infra-expert | Not Started | runtime |
+| V3.5 | In-game validation per V3 Validation Plan: 8 scenarios (V3-1 sustained combat 5+ min PRIMARY, V3-2 caster held position 60+s, V3-3 dead-entity 30-min lifecycle, V3-4 V1+V2 regression re-run, V3-5 BUG-003 non-rezzed sit baseline, V3-6 BUG-003 post-rez sit baseline, V3-7 multi-zone-cycle, V3-8 multi-rez-cycle). | game-tester | Not Started | manual + sustained |
+| V3.6 | Architect decides BUG-003 follow-up scope based on V3.5 game-tester data. Close as misperception vs scope V3-followup bugfix. | architect | Not Started | analysis |
+| V3.7 | Commit and push V3 changes on `bugfix/companion-rez` in eqemu and claude repos. (akk-stack and spire have no V3 changes.) | c-expert | Not Started | git |
+
+---
+
+## V3 Open Questions
+
+| # | Question | Raised By | Assigned To | Status | Answer |
+|---|----------|-----------|-------------|--------|--------|
+| V3-Q1 | Is V2's Fix B `Spawn()` reroute shared with normal recruit + zone-in? | architect | c-expert | RESOLVED 2026-04-28 | YES — three call sites; Spawn() itself unchanged by V2; first-recruit + zone-in unaffected. |
+| V3-Q2 | What was the prior heartbeat fix? | architect | c-expert | RESOLVED 2026-04-28 | Commit `9e4b7dfd1` (2026-03-09). `m_ping_timer(5000)` + `SentPositionPacket(0,0,0,0,0)` keepalive at `companion.cpp:2128-2142`. Code intact post-V2 but bypassed by Fix R4 for HP=0 entities. |
+| V3-Q3 | Is BUG-003 actual regen broken or reporting cadence broken? | architect | lua-expert + c-expert | LIKELY MISPERCEPTION 2026-04-28 | Empirical math shows "1%/report" consistent with freshly-rezzed companion at 0 mana. V2 made no change to regen/reporting code. game-tester V3-5 + V3-6 baselines required to confirm before any code change. |
+| V3-Q4 | Is there a fourth bug we haven't seen? | architect | c-expert | TWO LATENTS 2026-04-28 | (1) `entity.cpp:2044` `GetCorpseByOwnerWithinRange` range fragility (pre-existing, accidentally correct at default rule). (2) Fix A cross-zone group risk (low real-world risk; companions are zone-local). Neither in V3 scope. |
+| V3-Q5 | Does BUG-003 need to ship in same V3 round or as follow-up? | architect | architect | RESOLVED 2026-04-28 | FOLLOW-UP. Bundling speculative fix violates user's regression-discipline feedback. game-tester V3-5/V3-6 verifies first; architect decides at V3.6. |
+
+---
+
+## V3 Bug Reports (status updates)
+
+| # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
+|---|-----|----------|-------------|--------|-------------|----------|
+| BUG-002 | NPC companions vanish from screen during combat if stationary (visibility heartbeat regressed) | High | user | **Investigating** — V3 architecture complete; fix in V3 implementation queue | c-expert (V3.2) | |
+| BUG-003 | Companion HP/mana regen drastically slowed (~1%/report when sitting); possibly regen tick or gsay reporting cadence | High | user | **Investigating** — likely misperception per c-expert + lua-expert empirical math; game-tester V3-5/V3-6 baselines pending; architect decides V3.6 follow-up scope | game-tester (V3.5) → architect (V3.6) | |
+
+---
+
+## V3 Decision Log
+
+| # | Decision | Made By | Date | Rationale |
+|---|----------|---------|------|-----------|
+| V3-1 | BUG-002 root cause = V2 Fix R4 blanket early-return for HP=0 entities skips heartbeat + despawn timer | architect (c-expert + protocol-agent triage) | 2026-04-28 | Pre-V2 dead companions ran full Process() body; heartbeat fired every 5s; Titanium kept rendering. Post-V2 they skip the body. |
+| V3-2 | BUG-003 likely NOT a V2 regression; empirical verification first | architect (lua-expert + c-expert math) | 2026-04-28 | All regen and reporting code unchanged from before V2; "1%/report" math consistent with freshly-rezzed climb-from-zero. User regression-discipline feedback explicitly disallows speculative fixes. |
+| V3-3 | Fix V Option A (Process() restructure with `is_dead` capture + AI-dispatch guards) over Option B (early-return + inline heartbeat duplication) | architect | 2026-04-28 | Cleaner long-term shape; reads inline; no code duplication of despawn timer body; Option B is fallback if engineer prefers. |
+| V3-4 | Defensive heartbeat layer (`m_hold_combat_position` bypass on `IsMoving()` gate) included in same Fix V | architect (protocol-agent hypothesis) | 2026-04-28 | Closes protocol-agent's open hypothesis (NPC AI rotation may set `moving=true` mid-combat) defensively without waiting for empirical confirmation. Risk zero. |
+| V3-5 | Sustained-play game-tester scenarios mandatory in V3 (per user regression-discipline feedback) | architect | 2026-04-28 | V2's brief-encounter scenarios missed BUG-002/003. V3-1 (5+ min combat), V3-3 (30-min dead lifecycle), V3-7 (multi-zone), V3-8 (multi-rez) added. |
+| V3-6 | Two latent bugs flagged but NOT in V3 scope: `entity.cpp:2044` range fragility and Fix A cross-zone group risk | architect (c-expert fourth-bug scan) | 2026-04-28 | Neither is V2 regression nor user-visible. File separately to keep V3 surface tight. |
+| V3-7 | BUG-003 follow-up bugfix conditional on V3-5/V3-6 verification result | architect | 2026-04-28 | If misperception, close with runbook note. If real regression, scope separate bugfix with new evidence — do NOT bundle with V3 visibility fix. |
+
+---
+
+## V3 Notes
+
+- The V3 plan is the third architecture cycle on this bugfix branch. The user has
+  explicitly flagged regression discipline (`feedback_refactor_regression_discipline.md`):
+  "make sure that when we do these large refactors we are being extremely careful not
+  to break existing functionality." The V3 plan responds with: enumeration of adjacent
+  functionality (c-expert fourth-bug scan), sustained-play test scenarios (V3-1 5+ min,
+  V3-3 30-min, V3-7 multi-zone, V3-8 multi-rez), empirical-first BUG-003 approach
+  (no speculative code change), and explicit deferral of latent bugs out of V3 scope
+  to keep the surface tight.
+- The V3 fix is structurally smaller than V1 or V2 — one targeted change in one
+  function — but the validation plan is intentionally larger to compensate for the
+  V2 oversight that missed the sustained-play regressions.
+- Per the user's regression-discipline feedback, the V3 plan explicitly does NOT
+  bundle a speculative BUG-003 fix with the confirmed BUG-002 fix. game-tester
+  empirical baseline runs first; architect decides BUG-003 scope at V3.6.
+
