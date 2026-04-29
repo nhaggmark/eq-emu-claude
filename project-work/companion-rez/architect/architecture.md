@@ -1799,3 +1799,900 @@ No change. **c-expert** owns V3.1 (3 tests), V3.2 (Fix V Option A — without Su
 
 > **V3 plan is now FINAL.** All advisor input (c-expert + protocol-agent + lua-expert) consolidated. Awaiting user review before implementation team is spawned.
 
+
+
+---
+
+# V3 Re-Triage Architecture (2026-04-29) — SUPERSEDES Prior V3 Plan
+
+> The prior V3 architecture cycle above is **SUPERSEDED** as of 2026-04-29.
+> The user directed a complete re-process of BUG-002, BUG-003, and BUG-004
+> together, with explicit emphasis on the customized NPC and Spawn systems
+> and their downstream consumers. The prior V3 plan was scoped only to
+> BUG-002 + BUG-003 and was produced before the architect agent definition
+> was updated with customized-system awareness discipline.
+>
+> This V3 Re-Triage section is the new ground truth. Prior V3 plan content
+> remains on disk above as historical reference but is NOT to be implemented
+> as-is.
+
+## Executive Summary
+
+The V3 Re-Triage analyzed three reported bugs (BUG-002 visibility heartbeat, BUG-003 regen "1%/report", BUG-004 player AoE hits own companions) as a triage cluster per V3R Architecture Mandate 2. Five-advisor enumeration over Round 1 (c-expert, lua-expert, config-expert, data-expert; protocol-agent contributed substantive pre-findings P-1/P-2/P-3) **refuted** the working hypothesis that all three bugs share a single V2 root cause. Three independent root causes emerged, plus a NEW BUG-005 (auto-dismiss timer broken for dead companions) discovered during the customized-system enumeration that the prior V3 plan missed.
+
+The V3R fix surface comprises **two C++ changes** (Fix V Option A restructure + Fix W α two-site IsCompanion exclusion) addressing BUG-002 + BUG-005 + BUG-004, plus an **empirical-first BUG-003 workflow** that may produce a one-line rule UPDATE (Branch B-rule) or close BUG-003 with a runbook note (Branch B-misperception) or escalate to a follow-up bugfix (Branch A/C/D). Total surface: ~25 lines of C++ across two files + ~10-15 lines of C++ across two more files + 4 new TDD tests + 9 sustained-play game-tester scenarios + a 4-test empirical protocol.
+
+## Customized-System Enumeration (Primary V3R Deliverable)
+
+Per V3R Architecture Mandate 1, this enumeration is the primary architecture deliverable. The fix shapes follow from the enumeration, not vice versa.
+
+The full enumeration is captured across:
+- **C++ side (35 consumers):** `architect/context/agent-conversations.md` 2026-04-29 c-expert FORMAL ENUMERATION entry (sections A.1–H.9)
+- **Lua side (18 consumers):** agent-conversations.md 2026-04-29 lua-expert FORMAL ENUMERATION entry (sections A–H)
+- **Configuration / rules (47 Companions:* rules + Pets:* / Spells:* / Aggro:* / NPC:* / Character:* / Range:* / Combat:* / Group:* / Adventure:* coverage):** agent-conversations.md 2026-04-29 config-expert EXPANDED enumeration entry
+- **SQL / data layer (10 categories):** agent-conversations.md 2026-04-29 data-expert Round 1 entry (sections A–J)
+- **Protocol layer (3 substantive pre-findings P-1/P-2/P-3):** agent-conversations.md 2026-04-29 protocol-agent ready entry
+
+Full Round 2 synthesis at `architect/context/round-2-joint-root-cause-synthesis.md`.
+
+### Critical enumeration findings
+
+**Working hypothesis REFUTED** (V3R-D1):
+- BUG-002 ↔ BUG-004 share NO surface (different functions, different files)
+- BUG-003 root cause is at a different layer entirely (likely rule values)
+- The shared correlation is "V2 reduced the masking of pre-existing or newly-introduced issues," not "V2 introduced a single bug that manifests three ways"
+
+**NEW BUG-005 discovered** (V3R-D2): c-expert C-5 / B.2 finding. V2 Fix R4 early-return at `companion.cpp:1933-1935` for HP<=0 entities also bypasses `m_death_despawn_timer.Check()` at `companion.cpp:1938-1964`. Since `m_death_despawn_timer` is a Companion-class member, `NPC::Process()` has no knowledge of it. **30-minute auto-dismiss is not enforced for dead-not-rezzed companions post-V2.** Prior V3 plan missed entirely. BUG-005 ships in the same V3R fix as BUG-002 with zero additional code surface.
+
+**Three-advisor convergence on BUG-004 root cause:** c-expert C-2 + config-expert G-3 + data-expert D-3. Companions never call `SetOwnerID()` (they use custom `m_owner_char_id`). The `_NPC(x) = x->IsNPC() && !x->GetOwnerID()` matrix in `Mob::IsAttackAllowed` returns true for companions → Client-vs-NPC branch returns true → companion is hit. **Pre-existing gap, not a V2 regression.** Fix shape α (narrow IsCompanion exclusion) confirmed over β (SetOwnerID with wide blast radius) and γ (Client-side override only). Codebase precedent at `entity.cpp:5636` (cone AoE IsCompanion exclusion) supports the α pattern.
+
+**Four-advisor convergence on BUG-003 verdict:** c-expert C-3 + lua-expert L-1 + config-expert G-5/G-10 + data-expert D-9. Regen code path is unchanged by V2. Strongest hypothesis: **rule-tuning divergence (G-10)** — player has `Character:ManaRegenMultiplier=175` (1.75x), companions have `Companions:CompanionManaRegenMult=100` (no scaling). Testable WITHOUT code change.
+
+## Joint Root-Cause Analysis
+
+| Bug | Root cause | V2 attribution | Convergence |
+|---|---|---|---|
+| BUG-002 | Fix R4 early-return skips `m_ping_timer` heartbeat → Titanium culls dead/dying stationary companion | V2 Fix R4 (introduced regression) | c-expert C-1 + protocol-agent P-1 (two-advisor) |
+| BUG-005 (new) | Same Fix R4 early-return skips `m_death_despawn_timer.Check()` → 30-min auto-dismiss not enforced | V2 Fix R4 (introduced regression) | c-expert C-5 (single-advisor discovery, 90% confidence; antagonistic-pass verification scenario in Validation Plan) |
+| BUG-004 | Companions don't `SetOwnerID()`; `_NPC(x)` matrix returns true; Client-vs-NPC branch unconditionally allows attack. Two paths: `Mob::IsAttackAllowed` base + `IsPetOwnerOfClientBot` for ST_TargetAENoPlayersPets | NOT a V2 regression. Pre-existing gap. V2 Fix B may have made it more visible by ensuring rezzed companions are reliably present in entity-list | c-expert C-2 + config-expert G-3 + data-expert D-3 (three-advisor) |
+| BUG-003 | Most likely **rule-tuning divergence** (player has 1.75x mana regen multiplier, companions don't). Possible alternative branches: actual code regression / climb-from-zero misperception / buff loss on rez | None directly. Perceived correlation may be coincidental (V2 made rez reliable → sustained-play increased → user noticed pre-existing tuning gap) | All four closed advisors converge on "regen code unchanged"; G-10 is strongest hypothesis |
+
+## Fix Specifications
+
+Detailed fix specs at `architect/context/round-3-fix-proposal-and-task-breakdown.md`.
+
+### Fix V (Option A) — `Companion::Process()` Top-Section Restructure
+
+Addresses **BUG-002 + BUG-005**. Replace Fix R4 blanket early-return with `bool is_dead = (GetHP() <= 0);` capture + `if (!is_dead)` guards on AI-dispatch sections. Keep the heartbeat block (B.1) AND the death despawn timer block (B.2) UNCONDITIONAL.
+
+| Block | File:line | Run when dead? |
+|---|---|---|
+| `m_ping_timer` heartbeat | `companion.cpp:2128-2142` | YES (UNCONDITIONAL — outside guard) |
+| `m_death_despawn_timer.Check()` | `companion.cpp:1938-1964` | YES (UNCONDITIONAL — outside guard) |
+| `m_rez_delay_timer` engaged tracking | `companion.cpp:1966-1981` | NO (inside `if (!is_dead)`) |
+| `m_retention_check_timer` | `companion.cpp:1984-1986` | NO |
+| Sitting sync / stand-when-engage | `companion.cpp:2144-2160` | NO |
+| Mana report gsay | `companion.cpp:2162-2168` | NO |
+| LOM announcement | `companion.cpp:2171-2188` | NO |
+| Combat positioning / formation | `companion.cpp:2190-2218` | NO |
+| Attack rounds | `companion.cpp:2203-2218` | NO |
+
+Net: heartbeat fires for dead-but-corpse-visible companions (BUG-002 fixed), despawn timer fires (BUG-005 fixed), AI dispatch correctly skipped for dead entities (Fix R4's intent preserved).
+
+### Fix W (α) — Two-site `IsCompanion`-Aware AoE Exclusion
+
+Addresses **BUG-004**. Two narrowly-scoped C++ checks following codebase precedent at `entity.cpp:5636`.
+
+**Site 1 — `Mob::IsAttackAllowed` `_CLIENT vs _NPC` matrix (`aggro.cpp:732+`):** Insert a check before the matrix returns true: if `mob2->IsCompanion() && CastToCompanion()->GetOwnerCharacterID() == mob1's CharacterID`, return false. **Architect lean: surgical insertion (Option 2 in Round 3)** — auditable, follows precedent, avoids unintended-consequence risk of macro modification.
+
+**Site 2 — `IsPetOwnerOfClientBot` for `ST_TargetAENoPlayersPets` (`effects.cpp:1143-1145`):** Extend the function to also return true if the entity is a Companion owned by a Client/Bot. Or add a sibling check in the filter site. **Architect lean: extend `IsPetOwnerOfClientBot`** — follows the function's intent (is this entity a PC's pet for AoE protection?), and treating an owned companion as equivalent for this purpose only changes behavior in the right direction.
+
+**Cross-owner check is essential:** Both sites verify `m_owner_char_id == caster CharacterID`. PVP behavior preserved (other players' AoE can still hit your companion).
+
+### V3R-Empirical-1 — BUG-003 4-Test Protocol (per Mandate 3)
+
+Per V3R Architecture Mandate 3 (empirical-first on suspected regressions), BUG-003 work in V3R is bounded by an empirical measurement protocol with branched outcomes. NO code change for BUG-003 is contemplated until the protocol runs.
+
+| Test | Setup | Decision |
+|---|---|---|
+| Test 1 | `#set mana_full` on Lashun. Sit. 4-cycle 60s observation of !status mana + gsay reports | If ≥100 mana/report → Branch B-misperception (close with note) |
+| Test 1.5 | If Test 1 ≤50/report: `UPDATE rule_values SET rule_value='175' WHERE rule_name='Companions:CompanionManaRegenMult';` + `#rules reload` (or `#rules set <Rule> <Value>` for transient test). Re-run Test 1 setup. | If now ≥100/report → Branch B-rule (V3R fix is one rule UPDATE) |
+| Test 2 | `#set mana 0` on Lashun. Sit. Same 4-cycle observation | Compare to Test 1 — confirms misperception is/isn't the explanation |
+| Test 3 | Unsuspend Jimble + `#kill` Jimble + wait for Lashun auto-rez | Compare to Test 2 — Branch C if Jimble post-rez is slower (rez path degrades regen) |
+| Test 4 (optional) | Repeat Test 1 with vs without active regen buffs | Branch D if buff state significantly affects regen — escalate to lua-expert |
+
+**SQL polling note:** Per data-expert D-11 finding, `companion_data.cur_mana` is written ONLY at lifecycle-event Save() calls (Death, dismiss, suspend, rez-complete). It does NOT update on regen ticks. **The discriminator is in-game `!status` mana observation**, not SQL polling. SQL is used only for pre/post lifecycle-event setup snapshots.
+
+| Test 1 | Test 1.5 | V3R action |
+|---|---|---|
+| ≥100/report | (skip) | Close BUG-003 with runbook note. **No V3R code/rule change.** |
+| ≤50/report | ≥100/report | V3R fix is ONE rule UPDATE: `Companions:CompanionManaRegenMult` 100 → 175. **No code change.** |
+| ≤50/report | ≤50/report | Escalate to c-expert C++ investigation OR descope to follow-up bugfix |
+
+## Implementation Sequence
+
+| # | Task | Agent | Dependencies |
+|---|---|---|---|
+| V3R.1 | Write 4 failing-first tests in Suite 36: V.1 (heartbeat-for-dead), V.2 (despawn-timer-for-dead), V.3 (alive-companion-regen-regression-guard), W.1 (aoe-excludes-owner-companion). Build the test binary; verify V.1, V.2, W.1 FAIL pre-fix; V.3 PASSES pre-fix. | c-expert | None |
+| V3R.2 | Implement Fix V Option A: restructure `Companion::Process()` top-section per the block guard mapping above. ~25 lines C++. | c-expert | V3R.1 |
+| V3R.3 | Implement Fix W α: two-site IsCompanion-aware AoE exclusion. Site 1 in aggro.cpp, Site 2 in effects.cpp. ~10-15 lines C++ across both files. | c-expert | V3R.1 (parallel with V3R.2 acceptable) |
+| V3R.4 | Rebuild zone binary. Re-run Suite 36 — verify V.1, V.2, W.1 PASS, V.3 still PASSES, all V1/V2 tests unchanged. Run full companion test suite. | c-expert | V3R.2 + V3R.3 |
+| V3R.5 | `make restart` + full server stack startup (loginserver / world / 8 dynamic zones per documented procedure). | infra-expert | V3R.4 |
+| V3R.6 | In-game validation per V3R Validation Plan: 9 sustained-play scenarios + V3R-Empirical-1 4-test protocol for BUG-003. Branch routing per decision matrix. | game-tester | V3R.5 |
+| V3R.7 | Architect rejoins to make BUG-003 final decision based on V3R.6 results. Closes BUG-003 with no V3R action (Branch B-misperception), routes Branch B-rule to V3R.6.5, or files follow-up bugfix (Branch A/C/D). | architect | V3R.6 |
+| V3R.6.5 (conditional) | Execute BUG-003 rule UPDATE: `UPDATE rule_values SET rule_value='175' WHERE rule_name='Companions:CompanionManaRegenMult';` + `#rules reload` (or `#rules set <Rule> <Value>` for transient test) + verify. Only runs if Branch B-rule confirmed at V3R.7. | data-expert | V3R.7 |
+| V3R.8 | Commit and push V3R changes on `bugfix/companion-rez` in eqemu and claude repos. Includes code commits, the conditional rule UPDATE if applied, architecture/status updates. | c-expert | V3R.7 / V3R.6.5 |
+
+**Spawn list when implementation team is approved:** c-expert (V3R.1, V3R.2, V3R.3, V3R.4, V3R.8), infra-expert (V3R.5), game-tester (V3R.6). Architect rejoins at V3R.7. data-expert is conditionally re-spawned for V3R.6.5 only if Branch B-rule. **Do NOT spawn lua-expert / config-expert / protocol-agent** — they have no V3R implementation tasks.
+
+## Validation Plan
+
+Detailed validation plan at `architect/context/round-4-validation-plan.md`. Three bands:
+
+**Band 1 — Direct symptom validation:**
+- V3R-1 BUG-002 visibility heartbeat (PRIMARY)
+- V3R-2 BUG-005 auto-dismiss after 30 minutes (PRIMARY, slow scenario)
+- V3R-3 BUG-004 AoE friend/foe filter (PRIMARY)
+- V3R-4 BUG-003 V3R-Empirical-1 4-test protocol with decision matrix
+
+**Band 2 — Sustained-play coverage (per Mandate 4):**
+- V3R-5 Sustained combat encounter (5+ minutes)
+- V3R-6 Long-duration sit regen (3+ minutes)
+- V3R-7 Multi-zone cycle
+- V3R-8 Multi-rez cycle (with C-10 atomic-rez coexistence-window verification)
+- V3R-9 Sustained AoE encounter
+
+**Band 3 — Adjacent-system regression coverage (per Mandate 5):**
+For each customized subsystem the V3R fix touches (Companion::Process tick, IsAttackAllowed, IsPetOwnerOfClientBot, m_death_despawn_timer, m_ping_timer, conditional CompanionManaRegenMult), at least one consumer beyond the symptom is tested. Full consumer matrix in the validation plan document.
+
+**Aggregate pass criteria:**
+1. All Band 1 PRIMARY scenarios pass
+2. V3R-4 has a defined outcome routed per the decision matrix
+3. All Band 2 sustained-play scenarios pass
+4. All Band 3 adjacent-system regression scenarios pass
+5. Antagonistic-pass hooks (C-10, NPC:OOCRegen interaction) examined and documented
+6. Suite 29 + Suite 36 V1/V2 tests continue to pass
+
+## Risk Assessment
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| Fix V breaks alive-companion regen path (`if (!is_dead)` guard placement error) | HIGH if it occurs; LOW probability | V.3 regression-guard test ensures alive-companion regen continues; sustained-play V3R-5 + V3R-6 catch tick-rate regressions |
+| Fix W exclusion logic incorrectly blocks legitimate AoE (e.g., on cross-owner companions) | MEDIUM if it occurs; LOW probability | Owner-CharacterID match check ensures cross-owner companions still hit normally; PVP behavior preserved by design |
+| BUG-003 empirical test inconclusive (Test 1 borderline) | LOW | 4-test protocol with backup branches B-rule and C/D escalation; if inconclusive, default to descoping BUG-003 to follow-up bugfix per V3R-D6 |
+| BUG-005 fix interferes with `!unsuspend` recovery path | LOW probability | E-15 antagonistic check confirmed `!unsuspend` reloads via SpawnCompanionsOnZone path; despawn timer re-initialized to disabled state |
+| Fix C atomic-rez coexistence window (C-10) double-AoE | LOW (theoretical only; single-threaded zone tick) | V3R-8 multi-rez cycle includes "cast AoE during rez moment" verification scenario |
+| `NPC:OOCRegen` vs `Companions:OOCRegenPct` interaction (G-9) — companions on wrong code path | MEDIUM if it occurs; LOW probability | V3R-6 long-duration sit regen scenario discriminates code paths empirically |
+| Implementation surface expands during V3R.6 escalation | LOW | V3R-D6 explicitly defers Branch A/C/D BUG-003 work to follow-up bugfix; V3R surface is bounded at V3R.4 |
+
+## Review-Pass Findings
+
+Detailed at `architect/context/round-5-four-review-passes.md`.
+
+| Pass | Result | Key items |
+|---|---|---|
+| Feasibility | PASS | All extension points verified by c-expert enumeration; codebase precedent for Fix W; established GM commands for empirical protocol |
+| Simplicity | PASS | Fix V minimal (Option A is the cleanest restructure); Fix W two-site is minimum correct; V3R-Empirical-1 minimized to 3-5 tests with conditional escalation; BUG-005 bundled (zero additional surface) |
+| Antagonistic | PASS | 20 items considered; no edge case unbroken; no race / performance / exploit / backward-compat concern; 2 items (C-10 + G-9) are validation-time hooks already in plan |
+| Integration | PASS | Task dependency graph clean; each expert has sufficient context; validation covers every changed system; order minimizes wasted work |
+
+## Decision Log (V3R)
+
+| # | Decision | Rationale |
+|---|---|---|
+| V3R-D1 | Three independent root causes for BUG-002 / BUG-003 / BUG-004; not a shared V2 root cause | Three-advisor convergence in Round 1 refuted working hypothesis |
+| V3R-D2 | NEW BUG-005 discovered during enumeration: 30-minute auto-dismiss timer broken by Fix R4 | c-expert C-5 / B.2 finding; same root cause as BUG-002, same fix (zero additional surface) |
+| V3R-D3 | BUG-002 + BUG-005 fix: Option A pattern with heartbeat + despawn timer kept UNCONDITIONAL | Two-advisor convergence on shape; despawn timer must be unconditional too (the prior V3 plan implicitly required this but didn't enumerate it) |
+| V3R-D4 | BUG-004 fix shape α (narrow IsCompanion exclusion at 2 sites) over β (SetOwnerID with wide blast radius) and γ (Client-side override only) | β rejected per Mandate principle of minimum blast radius; γ insufficient (doesn't address Site 2); α follows codebase precedent at entity.cpp:5636 |
+| V3R-D5 | BUG-003 empirical-first via D-13 4-test protocol + G-11 rule-bump as Test 1.5 | Mandate 3; strongest hypothesis (G-10 rule-tuning divergence) is testable without code change |
+| V3R-D6 | BUG-003 fix is conditional: Branch B-rule (rule UPDATE only) is the most likely outcome; Branch A/C/D escalate to follow-up bugfix | Per regression-discipline feedback: do not bundle speculative code changes with confirmed code changes |
+| V3R-D7 | BUG-005 documented in V3R architecture; orchestrator owns BUG-005 report file creation | Per CLAUDE.md, the orchestrator (not architect) creates BUG-NNN report files |
+| V3R-D8 | C-10 atomic-rez coexistence window flagged for game-tester awareness in V3R-8; no fix needed | Single-threaded zone tick eliminates real race; verification-only scenario |
+| V3R-D9 | Optional rule `Companions:AoEExcludesCompanions` (config-expert G-7 proposal) NOT added | Per minimum-surface principle, hardcoded is preferred over an operator-tuning toggle for behavior that should always be the correct default |
+| V3R-D10 | Fix V Option A's `if (!is_dead)` guards include B.3 / B.4 / B.7 / B.8 / B.9 / B.10 / B.11 (all AI dispatch); B.1 heartbeat + B.2 despawn timer stay UNCONDITIONAL | Per c-expert enumeration each block correctly mapped; preserves Fix R4's intent (no AI dispatch for dead) while restoring heartbeat + despawn timer |
+
+## Open Questions
+
+| # | Question | Owner | Status | Notes |
+|---|---|---|---|---|
+| V3R-Q1 | `Companions:CompanionManaRegenMult` history audit (was it ever higher than 100?) | c-expert | Pending git audit | Documentation-only; not load-bearing for fix |
+| V3R-Q2 | HP regen parallel question: does companion HP regen have a similar tuning gap to mana regen? | config-expert | Pending follow-up 2 | Affects whether V3R rule fix extends to a parallel HP regen bump |
+| V3R-Q3 | data-expert SQL column name verification (`owner_id` vs `owner_char_id`) for V3R-4 setup query | data-expert | Pending | Affects validation plan SQL snippet correctness |
+| V3R-Q4 | `NPC:OOCRegen` vs `Companions:OOCRegenPct` code-path interaction | (validation-time discrimination via V3R-6) | Empirical | If V3R-6 reveals companions on wrong path, escalate to c-expert |
+| V3R-Q5 | protocol-agent formal structured enumeration (B/F sections) | protocol-agent | Pending | Pre-findings P-1/P-2/P-3 cover substantive needs; formal enumeration would add depth without changing conclusions |
+
+## Handoff to Implementation Team (Pending User Approval)
+
+Implementation team will be spawned ONLY after the user reviews and approves this V3R Architecture section per the V3R brief.
+
+**Implementation sequence:**
+1. V3R.1 (TDD red tests) → c-expert
+2. V3R.2 (Fix V Option A) → c-expert
+3. V3R.3 (Fix W α two-site) → c-expert
+4. V3R.4 (rebuild + verify) → c-expert
+5. V3R.5 (server restart) → infra-expert
+6. V3R.6 (in-game validation + V3R-Empirical-1) → game-tester
+7. V3R.7 (architect rejoins for BUG-003 decision)
+8. V3R.6.5 (conditional rule UPDATE) → data-expert (only if Branch B-rule confirmed)
+9. V3R.8 (commit + push) → c-expert
+
+**Assigned experts:** c-expert, infra-expert, game-tester. data-expert conditionally re-spawned for V3R.6.5 only. architect rejoins at V3R.7.
+
+**Do NOT spawn:** lua-expert, config-expert, protocol-agent — they have no V3R implementation tasks. Round 1 advisory work is complete.
+
+**Bug report file flag:** BUG-005 (newly discovered) needs a formal report file at `claude/project-work/companion-rez/bugs/BUG-005-companion-auto-dismiss-timer-broken/report.md`. Per CLAUDE.md, the orchestrator (not architect) owns BUG-NNN file creation. Architect documents the discovery here in the V3R architecture section and surfaces the file-creation need to the orchestrator via the architecture-complete summary.
+
+
+---
+
+## V3R Architecture Refinements (Post c-expert Formal Addendum, 2026-04-29 late)
+
+After the V3R architecture sections above were written, c-expert delivered a comprehensive Round 2 formal enumeration addendum (logged in agent-conversations.md as findings C-11 through C-16) that addresses the four open questions (Q1 fix-shape α/β/γ, Q2 dead-entity skips, Q3 regen scaling, Q4 group-operations ordering) and closes the G-5a git-audit carry-forward. This refinements section captures the corrections to the V3R architecture without rewriting the prior content. The refinements supersede where they conflict.
+
+### Refinement R-1 — Fix W is ONE site, not two (supersedes Fix Specifications / Fix W α section)
+
+c-expert C-11 (D.1, D.4, D.5) confirmed:
+- `EntityList::AESpell()` (effects.cpp:1198) calls `caster->IsAttackAllowed(target, true)`
+- `SpellOnTarget` (spells.cpp:3920) ALSO calls `caster->IsAttackAllowed(spelltar, true)`
+- **Both call sites resolve through the same base `Mob::IsAttackAllowed` function.** Fixing the base function once covers both call sites.
+
+c-expert D.4 explicitly: "`IsPetOwnerOfClientBot()` filter — Not applicable as a standalone fix — too narrow (only covers one spell target type). Fix α covers all detrimental AoE."
+
+**Updated Fix W spec:** ONE site, not two. Implementation surface reduced from "~10-15 lines C++ across 2 sites" to "~10-15 lines C++ at 1 site."
+
+**Updated Implementation Sequence — V3R.3 task description:** "Implement Fix W α: single-site IsCompanion-aware AoE exclusion in `Mob::IsAttackAllowed` `_CLIENT vs _NPC` matrix at aggro.cpp:867. Both `EntityList::AESpell` and `SpellOnTarget` call this function — single fix covers all detrimental AoE paths. ~10-15 lines C++ in one file."
+
+### Refinement R-2 — Fix W α code sketch with cross-group-member-companion exclusion (supersedes prior Fix W α Site 1 spec)
+
+c-expert C-12 provided a precise code sketch for Fix W at `aggro.cpp:867` that handles BOTH "owner's own companion" AND "group member's companion" via the same branch:
+
+```cpp
+else if(_NPC(mob2)) {
+    // Block client from attacking its own companion or a group member's companion
+    if (mob2->IsCompanion() &&
+        mob2->CastToNPC()->CastToCompanion()->GetOwnerCharacterID() != 0) {
+        if (mob1->IsClient()) {
+            auto* c = mob1->CastToClient();
+            auto* grp = c->GetGroup();
+            Companion* comp = mob2->CastToNPC()->CastToCompanion();
+            if (comp->GetOwnerCharacterID() == c->CharacterID()) {
+                return false;
+            }
+            if (grp && grp->IsGroupMember(mob2)) {
+                return false; // companion of a group member
+            }
+        }
+    }
+    return true;
+}
+```
+
+This is BETTER than the prior Round 3 architect specification which only checked the immediate owner. Cross-group-member companion exclusion is the correct extended behavior — a multi-player party A's caster shouldn't AoE-hit party member B's companion either.
+
+**c-expert is NOT writing the final fix code** — the sketch shows the pattern and scope for engineer reference. The exact line edit is for V3R.3 implementation.
+
+### Refinement R-3 — Fix shape β fully ruled out with 9-side-effect enumeration (extends V3R-D4)
+
+c-expert C-11 enumerated NINE unintended side-effects of fix shape β (SetOwnerID on companions during Spawn):
+
+| β risk | Surface | Impact |
+|---|---|---|
+| 1 | `Mob::GetOwner()` requires `GetPetID()==GetID()` mismatch | Permanent inconsistency between `HasOwner()` and `GetOwner() != null` |
+| 2 | `attack.cpp:2631-2656` kill credit | Companion kills give NO XP to player (existing comment at line 2657 explicitly notes the workaround for the gap β re-introduces) |
+| 3 | `npc.cpp:2239-2262` FillSpawnStruct | `SetPetOwnerClient(true)` set as side-effect of `is_pet=1` path |
+| 4 | `entity.cpp:708-713` AddNPC zone-load | `owner->SetPetID(npc->GetID())` overwrites real pet's petid |
+| 5 | `npc.cpp:583-594` NPC::Process depop | Clears petid on companion during depop |
+| 6 | `spells.cpp:2413` CazicTouch | Cazic Touch on companion redirects to owner client |
+| 7 | `spells.cpp:4075-4087` blocked pet buffs | Blocked pet buffs would fire for companions |
+| 8 | `spells.cpp:3761` buff sync packet | Every buff applied to companion triggers `SendPetBuffsToClient()` |
+| 9 | `npc.cpp:672` HP regen branch | Companions fall into owned-pet regen branch instead of NPC OOC regen branch |
+
+**V3R-D4 reaffirmed with stronger backing.** The 9-side-effect enumeration is exactly the V3R Architecture Mandate "fix that subtly breaks adjacent functionality" pattern in microcosm. β rejected.
+
+### Refinement R-4 — BUG-003 narrative refinement (supersedes Joint Root-Cause Analysis BUG-003 row)
+
+c-expert C-14 ran the git audit on `Companions:CompanionManaRegenMult`. **Result: the rule has been at default value 100 across ALL commits in git history.** It was never set to a higher value and reset.
+
+This refines the BUG-003 narrative:
+- The G-10 hypothesis ("rule-tuning divergence — player has 1.75x, companion has 1.0x") still stands as the leading explanation for the structural gap
+- The user's "back to being extremely slow" framing is now SHARPER: it's NOT "a prior fix was reset." It's likely "the user's perception of regen parity has degraded over time as the player's `Character:ManaRegenMultiplier=175` was tuned higher without matching the companion multiplier"
+- **Branch B-rule fix narrative is "introducing parity," not "restoring a regressed value"**
+
+c-expert C-15 confirmed at the C++ level: NO scaling factor in `Companion::CalcManaRegen()` depends on V2-touched state. `spellbonuses.ManaRegen` and `itembonuses.ManaRegen` are restored by Load() → CalcBonuses() in the rez path. `aabonuses.ManaRegen` is always 0 for companions. Group membership and owner pointer are NOT consulted by `CalcManaRegen`. **Four-advisor convergence on BUG-003 cleanly closed at the C++ level.**
+
+### Refinement R-5 — Q4 confirms Fix A has zero Lua blast radius (extends V3R-D7 / closes lua-expert L-2)
+
+c-expert C-16 enumerated `Group::AddMember`, `MemberZoned`, `GroupMessage`, `GroupCount`:
+
+- `Group::GroupMessage` iterates `members[]` (pointer array) via `ValidateMember(i)` — does NOT iterate `membername[]`
+- `Group::GroupCount` counts non-empty `membername[i]` slots — does NOT check `members[]`
+- `Group::IsGroupMember`, `Group::GetMember` ALL use `members[]` (pointer array)
+- Fix A's `membername[i]` clear ONLY affects `GroupCount` over-counting and `AddMember` name-collision-check blocking re-join (both correct fixes)
+
+**lua-expert L-2 carry-forward CLOSED.** Fix A has zero Lua-callable blast radius. All Lua-exposed group methods use the pointer array, not the string array.
+
+---
+
+## Updated Open Questions (post c-expert addendum)
+
+| # | Question | Status |
+|---|---|---|
+| V3R-Q1 | `Companions:CompanionManaRegenMult` history audit | **CLOSED** (C-14): Always 100 across git history. Branch B-rule narrative is "introducing parity," not "restoring." |
+| V3R-Q2 | HP regen parallel question | Still pending config-expert follow-up 2 |
+| V3R-Q3 | data-expert SQL column name verification | Still pending data-expert |
+| V3R-Q4 | NPC:OOCRegen vs Companions:OOCRegenPct interaction | Still empirical at V3R-6 validation time |
+| V3R-Q5 | protocol-agent formal structured enumeration | Still pending; pre-findings P-1/P-2/P-3 cover substantive needs; non-blocking |
+| **V3R-Q6 (NEW)** | Q4 Fix A Lua blast radius | **CLOSED** (C-16): Zero Lua blast radius confirmed |
+| **V3R-Q7 (NEW)** | β risk vs α scope | **CLOSED** (C-11): β fully ruled out with 9-side-effect enumeration |
+
+
+---
+
+## V3R Architecture Refinements II (Post config-expert Follow-ups, 2026-04-29 late)
+
+config-expert delivered Follow-ups 1 and 2 with a **critical correction to the G-10 hypothesis** plus a confirmed HP regen gap (also predates V2 but materially affects V3R BUG-003 scope). This refinements section supersedes the prior BUG-003 narrative where it conflicts.
+
+### Refinement R-6 — G-10 hypothesis REFUTED: companions already get `Character:ManaRegenMultiplier` (supersedes BUG-003 row in Joint Root-Cause Analysis)
+
+config-expert read `Companion::CalcManaRegen()` at `companion.cpp:1548-1549`:
+
+```cpp
+regen = (regen * RuleI(Character, ManaRegenMultiplier)) / 100;
+regen = (regen * RuleI(Companions, CompanionManaRegenMult)) / 100;
+```
+
+Companions apply BOTH multipliers sequentially. The 1.75x player multiplier IS already being applied to companion mana regen. The G-10 hypothesis ("companions miss the 1.75x because that rule only applies to Characters") is INCORRECT.
+
+**Updated BUG-003 diagnosis tree:**
+- ~~Branch (d): Rule-tuning divergence~~ — REFUTED by code inspection
+- Branch (a): Actual server-side regen broken at code level — **RANKED HIGHER** (no longer LOW)
+- Branch (b): Misperception / freshly-rezzed climb from 0 mana — Still PLAUSIBLE
+- Branch (c): Indirect via buff loss (lua-expert L-8) — Still PLAUSIBLE-LOW
+
+### Refinement R-7 — Test 1.5 RE-FRAMED as code-path diagnostic, not fix candidate (supersedes V3R-Empirical-1 Test 1.5 + decision matrix)
+
+The `Companions:CompanionManaRegenMult` rule bump is no longer a fix candidate — bumping it to 175 would over-scale (1.75x × 1.75x = 3.06x effective). **The bump test is now a DIAGNOSTIC** for whether the companion is hitting `Companion::CalcManaRegen()` at all post-V2.
+
+**Revised Test 1.5:** Bump `CompanionManaRegenMult` from 100 to 200 (giving 2x scaling on top of existing 1.75x — clear visible signal). `#rules reload` (or `#rules set <Rule> <Value>` for transient test). Observe.
+
+| Test 1 | Test 1.5 (corrected) | Verdict |
+|---|---|---|
+| ≥100/report | (skip Test 1.5) | **Branch B-misperception** — regen working correctly. Close BUG-003 with runbook note. No V3R action. |
+| ≤50/report | Regen DOUBLES at bumped value | CalcManaRegen() being hit correctly. Branch (b) misperception or freshly-rezzed-from-zero is the explanation. **Restore rule to 100; close BUG-003 as misperception.** |
+| ≤50/report | Regen UNCHANGED at bumped value | CalcManaRegen() being BYPASSED. V2 broke the custom regen path. **Branch (a) confirmed — escalate to c-expert for full NPC::Process() regen-path trace; descope from V3R to follow-up bugfix.** |
+
+**There is NO Branch B-rule outcome anymore for mana regen.** The rule bump is purely diagnostic. The mana fix path collapses to: misperception (close) or actual code regression (follow-up bugfix).
+
+### Refinement R-8 — HP regen gap is REAL and predates V2 (NEW finding to add to BUG-003 / V3R scope)
+
+config-expert grep'd `HPRegenMultiplier` across all zone source files:
+
+| Entity | Source file | Multiplier applied? |
+|---|---|---|
+| Client | client_mods.cpp:295, :311 | YES — `Character:HPRegenMultiplier` |
+| Bot | bot.cpp:6334, :6731 | YES |
+| Merc | merc.cpp:444, :453 | YES |
+| **Companion** | `Companion::CalcHPRegen()` at companion.cpp:1493-1506 | **NO — NOT applied** |
+
+This is a real structural gap. Bots, Mercs, and Clients ALL apply `Character:HPRegenMultiplier=200` (2x). Companions don't. The user's report explicitly mentions both HP and mana being slow ("Mana and health regen seem to be screwed up again"). **HP regen has a real, asymmetric gap; mana regen does not.**
+
+**This gap predates V2** (CalcHPRegen has never applied this multiplier), but the user noticed it during sustained-play windows post-V2 alongside BUG-002/003/004.
+
+| Entity | HP regen multiplier | Mana regen multiplier |
+|---|---|---|
+| Player (Client) | 2x (applied) | 1.75x (applied) |
+| Bot | 2x (applied) | 1.75x (assumed) |
+| Merc | 2x (applied) | 1.75x (assumed) |
+| Companion | **1x (NOT applied)** | 1.75x (applied) |
+
+### Refinement R-9 — V3R-D12 (NEW): Add HP regen parity fix to V3R scope conditional on empirical confirmation
+
+**Architect decision V3R-D12:** Add HP regen parity fix to V3R scope, but ONLY as an empirical-confirmed fix per Mandate 3. The V3R-Empirical-1 protocol must include an HP regen Test 1 + Test 1.5 parallel to the mana regen tests. If empirical confirms the user perceives slow HP regen, the fix is small. If empirical shows HP regen perception is fine, descope to follow-up.
+
+**Fix shape options for HP regen:**
+
+| Option | Surface | Pros | Cons |
+|---|---|---|---|
+| **α-HP (PREFERRED)** | One-line C++ in `Companion::CalcHPRegen()` to apply `Character:HPRegenMultiplier` | Matches Bot/Merc/Client pattern; zero new rules; minimum surface | Removes ability to tune companion HP regen separately from player |
+| β-HP | New `Companions:CompanionHPRegenMult` rule + apply in `CalcHPRegen()` | Parallel to `CompanionManaRegenMult`; operator-tunable | Introduces new rule + ruletypes.h entry + rule_values INSERT |
+
+**Architect lean: Option α-HP (one-line C++).** Per V3R minimum-surface principle. The `Character:HPRegenMultiplier` rule already exists; companions should be aligned with Bot/Merc/Client behavior pattern.
+
+### Refinement R-10 — V3R-Empirical-1 protocol expanded to cover BOTH HP and mana
+
+The protocol now has 8 substantive tests (not 4):
+
+| Test | Purpose |
+|---|---|
+| Test 1-mana | Mana regen at full mana, current rules — establish baseline |
+| Test 1.5-mana (diagnostic) | Bump `CompanionManaRegenMult` to 200; does mana regen double? |
+| Test 1-hp | HP regen at full HP, current rules — establish baseline |
+| Test 1.5-hp (proposed fix verification) | If V3R-D12 α-HP fix is applied, re-run Test 1-hp; does HP regen now scale at 2x? |
+| Test 2 | Drain-and-climb (`#set mana 0` / `#damage`) — discriminates climb-from-zero |
+| Test 3 | Post-rez (Jimble auto-rez) — discriminates rez-path degraded regen |
+| Test 4 (optional) | Buff state — discriminates buff-loss contribution |
+
+The mana side discriminates among Branch B-misperception / Branch A-code-regression. The HP side discriminates whether α-HP fix is needed and effective. Combined, the protocol covers both halves of the user's "Mana and health regen seem to be screwed up" report.
+
+### Refinement R-11 — V3R Implementation Sequence updated for V3R-D12
+
+**Conditional V3R.3.5 (HP regen parity fix):** If V3R-Empirical-1 HP test confirms user perceives slow companion HP regen, c-expert applies α-HP one-line change in `Companion::CalcHPRegen()` to apply `Character:HPRegenMultiplier`. Tested via Test 1.5-hp post-fix.
+
+**This task is conditional and architect-decided at V3R.7.** It does NOT extend the current V3R surface unless empirical validates the gap. Per V3R-D6, code regressions confirmed by empirical test go to follow-up bugfix; only the α-HP one-line C++ change for the structural gap (not a regression) ships in V3R if confirmed.
+
+### Updated Open Questions (post config-expert follow-ups)
+
+| # | Question | Status |
+|---|---|---|
+| V3R-Q1 (history audit) | CLOSED (C-14): always 100 in git history |
+| V3R-Q2 (HP regen parallel) | **CLOSED (G-16):** YES — real gap; α-HP one-line C++ fix in `Companion::CalcHPRegen()` to apply `Character:HPRegenMultiplier`, conditional on V3R-Empirical-1 HP test confirmation |
+| V3R-Q3 (SQL column name) | Still pending data-expert |
+| V3R-Q4 (NPC:OOCRegen interaction) | Still empirical at V3R-6 |
+| V3R-Q5 (protocol-agent formal) | Still pending; non-blocking |
+| V3R-Q6 (Q4 Lua blast radius) | CLOSED (C-16): zero |
+| V3R-Q7 (β risk enumeration) | CLOSED (C-11): 9 side-effects, β rejected |
+| **V3R-Q8 (NEW)** | G-10 mana hypothesis | **REFUTED (G-14):** companions DO get `Character:ManaRegenMultiplier`; no mana tuning gap; Test 1.5 reframed as diagnostic |
+| **V3R-Q9 (NEW)** | HP regen parity fix shape (α-HP vs β-HP) | **DECIDED (V3R-D12):** α-HP one-line C++ preferred over β-HP new rule |
+
+
+---
+
+## V3R Architecture Refinements III (Post protocol-agent Formal Enumeration, 2026-04-29 late)
+
+protocol-agent delivered the formal Round 1 structured enumeration (26 consumers across 7 areas). **Round 1 is now FULLY CLOSED for all five advisors.** The formal enumeration independently confirms all prior advisor convergences and surfaces one new gap.
+
+### Refinement R-12 — Five-advisor convergence reaffirmed for all four bugs
+
+| Bug | Convergence at Round 1 close |
+|---|---|
+| BUG-002 | c-expert C-1 + protocol-agent P-1 + protocol-agent A.1/G.1 — three independent reads |
+| BUG-005 | c-expert C-5 only (single-advisor discovery, 90% confidence; protocol-agent did not enumerate the timer specifically because it's an internal timer state, not a wire-format consumer) |
+| BUG-004 | c-expert C-2 + config-expert G-3 + data-expert D-3 + protocol-agent C.1/F.1 — four independent reads |
+| BUG-003 | c-expert C-3 + lua-expert L-1 + config-expert G-5 + data-expert D-9 + protocol-agent D.3/G.5 — five independent reads |
+
+All Round 1 verdicts hold. The architecture is on a five-advisor consensus.
+
+### Refinement R-13 — NEW gap flagged: A.3 SendArmorAppearance on rez path
+
+protocol-agent finding A.3: `EntityList::AddCompanion()` at `entity.cpp:4047-4076` does NOT call `SendArmorAppearance()`. `EntityList::AddNPC()` at `entity.cpp:737` does. Pre-V2 rez path used `AddNPC` (→ SendArmorAppearance) → companion appearance correct post-rez. Post-V2 rez path uses `AddCompanion` (→ NO SendArmorAppearance) → companion may render naked/default after rez.
+
+**This is NOT a V3R-scope bug.** It's a visual/cosmetic concern not reported by the user. The rezzed companion's combat behavior, regen, AoE filtering, etc. are all unaffected. Decision: V3R-D13 (NEW) — flag for V3R-8 multi-rez cycle game-tester scenario verification only. NOT a V3R fix surface.
+
+**V3R-D13 (NEW):** A.3 SendArmorAppearance gap is NOT in V3R scope unless either:
+1. V3R-8 multi-rez cycle scenario reveals visible armor regression in-game → file follow-up bugfix or expand V3R
+2. c-expert confirms `ResurrectFromCorpse` does NOT handle armor appearance elsewhere → file follow-up bugfix
+
+Adding to V3R-8 scenario: "After each rez cycle, observe companion's visual appearance — does the companion render its equipped armor, or does it appear naked/default?"
+
+### Refinement R-14 — P-7 finding: V2 Fix B is a NET protocol correctness IMPROVEMENT
+
+protocol-agent finding P-7: V2 Fix B brought three protocol-correctness improvements to the rez path:
+- `NPC=0` override now applied (was `NPC=1` via AddNPC pre-V2)
+- `is_pet=0` override applied
+- Name normalization applied
+
+These are CORRECTNESS improvements, not regressions. Pre-V2 rezzed companions had `NPC=1` and `is_pet` undefined — a less-correct wire-format state.
+
+**Architecture impact:** Strengthens V3R-D4 (fix shape α over β) — β (SetOwnerID) would NOT be "restoring a pre-V2 state." Companions have NEVER called SetOwnerID(). The 9-side-effect blast radius c-expert enumerated in C-11 is the full unmitigated risk.
+
+### Refinement R-15 — P-6 question RESOLVED via cross-reference
+
+protocol-agent flagged: "did pre-V2 manual AddNPC path call SetOwnerID on companions? If yes → V2 regression. If no → pre-existing gap."
+
+**Resolution via cross-reference to c-expert C-11 β-risk-2:** The comment at `attack.cpp:2657` explicitly notes "Companions use m_owner_char_id / GetCompanionOwner() rather than the standard Mob ownerid field, so HasOwner() returns false for them." This is a long-standing design choice — companions have NEVER called `SetOwnerID()` since the system was designed.
+
+**P-6 verdict: BUG-004 is a PRE-EXISTING gap, NOT a V2 regression.** Reaffirmed via five-advisor convergence at Round 1 close.
+
+### Updated Open Questions (Round 1 fully closed)
+
+| # | Question | Status |
+|---|---|---|
+| V3R-Q1 | History audit | CLOSED (C-14) |
+| V3R-Q2 | HP regen parallel | CLOSED (G-16) |
+| V3R-Q3 | SQL column name | Still pending data-expert |
+| V3R-Q4 | NPC:OOCRegen interaction | Still empirical at V3R-6 |
+| V3R-Q5 | protocol-agent formal enumeration | **CLOSED (P-4 through P-8)** |
+| V3R-Q6 | Q4 Lua blast radius | CLOSED |
+| V3R-Q7 | β risk enumeration | CLOSED |
+| V3R-Q8 | G-10 mana hypothesis | REFUTED (G-14) |
+| V3R-Q9 | HP regen fix shape | DECIDED (V3R-D12 α-HP) |
+| **V3R-Q10 (NEW)** | A.3 SendArmorAppearance gap | **FLAGGED for V3R-8 game-tester scenario verification (V3R-D13)** |
+
+### V3R Round 1 Close Summary
+
+**All five advisors fully closed.** No outstanding advisor work. No outstanding open questions block V3R implementation. Three substantive late refinements absorbed (data-expert D-11/D-13 SQL polling correction during Round 1, c-expert C-11–C-16 formal addendum, config-expert G-14–G-17 G-10 refutation + HP regen gap, protocol-agent P-4–P-8 formal enumeration with A.3 gap discovery). All refinements either confirmed prior decisions or surfaced new findings that have been integrated into the architecture without changing the strategic shape.
+
+The V3R architecture is **MAXIMALLY CONSOLIDATED** across all advisor inputs and ready for user approval.
+
+
+---
+
+## V3R Architecture Refinements IV (Post c-expert Section D Supplement, 2026-04-29 late)
+
+c-expert delivered the Section D supplement closing out the lua-expert L-5 cross-reference question with definitive code-grounded specificity. This is the **last analytical close-out on BUG-004** before user approval.
+
+### Refinement R-16 — `Mob::IsAttackAllowed` and `EntityList::AESpell` BOTH have ZERO group-membership reads
+
+c-expert C-17 traced the full execution flow of `Mob::IsAttackAllowed` (15 sequential checks). c-expert C-18 traced the full per-mob filter chain in `EntityList::AESpell` (11 sequential checks). **Neither calls `IsGroupMember`, `SameGroup`, `GetGroup`, `members[]`, `membername[]`, or any Group struct.** The AoE filter is purely type-matrix + ownerid/petid + faction + LoS.
+
+### Refinement R-17 — Fix A is COMPLETELY IRRELEVANT to BUG-004 (DEFINITIVE)
+
+c-expert C-19: BUG-004 reproduces identically for live recruited companions (group state fully populated), rezzed companions post-V2 (group state restored via Spawn), AND dead companions pre-V2 (hypothetical, group state stale). The AoE filter is blind to group membership for any entity type.
+
+**No dead-then-rezzed transient case exists in the AoE pipeline.** Fix A's `membername[]` clear has zero effect on BUG-004's reproduction. The lua-expert L-5 cross-reference question is definitively closed: Fix A is irrelevant.
+
+### Refinement R-18 — Fix α is NECESSARY AND SUFFICIENT at single site
+
+c-expert C-20: Fix α at `aggro.cpp:867` (within the `_CLIENT vs _NPC` matrix branch) is the complete fix. The fix only needs to address the alive case because dead-companion-as-corpse is excluded by earlier `_NPCCORPSE` macro filters before reaching `IsAttackAllowed`.
+
+This validates the Round 3 fix-shape decision and the c-expert C-12 code sketch as the canonical implementation.
+
+### Refinement R-19 — `entity.cpp:5636` cone AoE precedent is structural inspiration, NOT implementation reference
+
+c-expert C-21: `GetTargetsForConeArea` at `entity.cpp:5636` DOES have `!ptr->IsCompanion()` filter. But this is a DIFFERENT code path from `AESpell` — used only by cone-shaped AoE spells.
+
+**Existing inconsistency:** cone AoE excludes companions (entity.cpp:5636 path) while `AESpell` doesn't (effects.cpp:1199 path). **Fix α brings AESpell into consistency with the cone path.** After V3R ships, both AoE paths will uniformly exclude owner's companions.
+
+The cone AoE precedent is structural inspiration for the IsCompanion-exclusion pattern, not an implementation reference. The actual implementation site is `aggro.cpp:867`, not `entity.cpp:5636`.
+
+### Updated Open Questions (final close-out)
+
+| # | Question | Status |
+|---|---|---|
+| V3R-Q1 | History audit | CLOSED |
+| V3R-Q2 | HP regen parallel | CLOSED |
+| V3R-Q3 | SQL column name | Still pending data-expert |
+| V3R-Q4 | NPC:OOCRegen interaction | Empirical at V3R-6 |
+| V3R-Q5 | protocol-agent formal | CLOSED |
+| V3R-Q6 | Q4 Lua blast radius | CLOSED |
+| V3R-Q7 | β risk enumeration | CLOSED |
+| V3R-Q8 | G-10 mana hypothesis | REFUTED |
+| V3R-Q9 | HP regen fix shape | DECIDED (V3R-D12 α-HP) |
+| V3R-Q10 | A.3 SendArmorAppearance | FLAGGED for V3R-8 |
+| **V3R-Q11 (NEW)** | **L-5 / AoE filter group-awareness** | **CLOSED (R-17): zero group reads, Fix A irrelevant** |
+| **V3R-Q12 (NEW)** | **Fix α coverage scope (alive vs dead-rezzed transient)** | **CLOSED (R-18): alive case only is sufficient** |
+
+### V3R Round 1 + Round 2 + All Refinements: COMPLETELY CLOSED
+
+**All advisor analytical work is complete.** Five-advisor Round 1 closed; lua-expert L-5 sharpened question routed and definitively answered; all 12 open questions resolved or routed to empirical/follow-up. The V3R architecture is at FINAL consolidation. No further analytical refinements anticipated before implementation.
+
+The architecture document now contains:
+- Initial V3R section (post-Round-1)
+- Refinements I (post c-expert formal addendum C-11–C-16)
+- Refinements II (post config-expert follow-ups G-14–G-17)
+- Refinements III (post protocol-agent formal enumeration P-4–P-8)
+- Refinements IV (post c-expert Section D supplement C-17–C-21) ← this section
+
+Plus full Round 1 enumeration text in agent-conversations.md, working artifacts in architect/context/ for rounds 2-5.
+
+
+---
+
+## V3R Architecture Refinements V (Post protocol-agent Round 1 Targeted Follow-up, 2026-04-29 final)
+
+protocol-agent delivered FU-1 through FU-5 in response to the heartbeat-fan-out / group-update / m_owner / spawn-struct queries. **Two prior decisions are CORRECTED:** A.3 retracted, C-10 resolved. Two new positive findings further validate Fix B and the α fix-shape decision.
+
+### Refinement R-20 — V3R-D13 REVERSED: A.3 SendArmorAppearance is NOT a real gap
+
+protocol-agent's FU-1 retracts the earlier P-5 / R-13 / V3R-D13 finding. The rez path calls `Load()` → `LoadEquipment()` at `companion.cpp:3693` BEFORE `Spawn()` → `FillSpawnStruct()` at `companion.cpp:3703`. `LoadEquipment()` populates `m_equipment[]`; `FillSpawnStruct` reads `GetEquipmentMaterial()` from `m_equipment[]`. **The initial spawn packet already includes equipment textures via `equipment.Slot[i].Material`.**
+
+The `SendArmorAppearance` call in AddNPC sent a follow-on `OP_WearChange` update, but the initial spawn packet from AddCompanion already carries the data. **Functionally equivalent for visual rendering — no naked rezzed companion regression.**
+
+**V3R-D13 REVERSED.** No V3R-8 verification scenario needed for visual armor rendering. The A.3 line item in V3R-Q10 is closed as a non-issue.
+
+### Refinement R-21 — C-10 atomic-rez coexistence concern RESOLVED
+
+protocol-agent's FU-5 resolves c-expert's C-10 antagonistic-pass uncertainty. Corpses live in `corpse_list`, NOT `mob_list`. `EntityList::AESpell` iterates `GetCloseMobList()` on `mob_list`. The corpse is NOT in the AoE sweep target set during the Fix C coexistence window.
+
+**No doubled AoE hit risk from the atomic-rez window.** C-10 is closed. The V3R-8 multi-rez cycle scenario can drop the "verify no double-AoE during rez moment" verification (low-priority defensive observation only).
+
+### Refinement R-22 — NEW positive finding: Fix B fixed pre-V2 group-window-targeting name divergence
+
+protocol-agent's FU-2 reveals an UNDOCUMENTED net positive of Fix B:
+- Pre-V2: spawn packet `name = "Guard_Liben001"` (raw `MakeNameUnique` name); group window `membername = "Guard Liben"` (GetCleanName). **Diverged.** Titanium click-to-target in the group window silently failed.
+- Post-V2 Fix B: `Companion::Spawn()` calls `strcpy(name, GetCleanName())` at `companion.cpp:2430-2431` BEFORE `AddCompanion`. **Names match.**
+
+This is an additional protocol-correctness improvement that V2 brought. Provides further evidence that V2 was a net positive on the rez path. β (SetOwnerID) would not have addressed this issue; only Fix B's name-normalization did.
+
+### Refinement R-23 — m_owner_char_id feeds ZERO packet-emission paths
+
+protocol-agent's FU-3: `m_owner_char_id` is used only for AI logic, group join, `IsFriendlyTarget`, and DB queries. **No packet-emission paths.** Server-side ownership awareness for companions is purely internal to the AI/group/spell system; the Titanium client has no wire-format signal of companion ownership.
+
+**Architectural implication:** The BUG-004 fix is necessarily purely server-side (Fix W α at `aggro.cpp:867`). No Titanium client changes possible or needed. V3R-D4 (α over β) reaffirmed yet again.
+
+### Updated Open Questions (FINAL close-out)
+
+| # | Question | Status |
+|---|---|---|
+| V3R-Q1 | History audit | CLOSED |
+| V3R-Q2 | HP regen parallel | CLOSED |
+| V3R-Q3 | SQL column name | Still pending data-expert (non-blocking) |
+| V3R-Q4 | NPC:OOCRegen interaction | Empirical at V3R-6 (non-blocking) |
+| V3R-Q5 | protocol-agent formal | CLOSED |
+| V3R-Q6 | Q4 Lua blast radius | CLOSED |
+| V3R-Q7 | β risk enumeration | CLOSED |
+| V3R-Q8 | G-10 mana hypothesis | REFUTED |
+| V3R-Q9 | HP regen fix shape | DECIDED |
+| **V3R-Q10** | **A.3 SendArmorAppearance** | **CLOSED (R-20): not a real gap, V3R-D13 REVERSED** |
+| V3R-Q11 | L-5 / AoE filter group-awareness | CLOSED |
+| V3R-Q12 | Fix α coverage scope | CLOSED |
+| **V3R-Q13 (NEW)** | **C-10 atomic-rez coexistence** | **CLOSED (R-21): corpses in corpse_list not mob_list, no AoE doubling possible** |
+
+### V3R Architecture FINAL CONSOLIDATION POINT
+
+**All advisor analytical work is complete.** Five-advisor Round 1 + Round 2 + five waves of refinements (I, II, III, IV, V) all integrated. **Two prior architecture decisions REVERSED based on late corrections** (V3R-D13 retracted; C-10 resolved). The architecture now reflects the most code-grounded, advisor-converged state achievable.
+
+The architecture document contains:
+- Initial V3R section (post-Round-1)
+- Refinements I (post c-expert formal addendum C-11–C-16)
+- Refinements II (post config-expert follow-ups G-14–G-17)
+- Refinements III (post protocol-agent formal enumeration P-4–P-8)
+- Refinements IV (post c-expert Section D supplement C-17–C-21)
+- Refinements V (post protocol-agent Round 1 targeted follow-up P-9–P-13) ← this section
+
+The strategic shape of the V3R fix is unchanged from the initial summary; the refinements only tightened scope (Fix W 2→1 site), corrected hypotheses (G-10 refuted), discovered new bugs (BUG-005), surfaced and then retracted concerns (A.3 / C-10), and added a conditional new fix (V3R-D12 α-HP). **No further refinements anticipated.**
+
+
+---
+
+## V3R Architecture Refinements VI (Post data-expert close-out, 2026-04-29 final-final)
+
+data-expert delivered the last close-out items for V3R: SQL column name verification and a critical GM-command correction.
+
+### Refinement R-24 — `owner_id` SQL column name VERIFIED CORRECT (V3R-Q3 closed)
+
+data-expert confirmed via live schema query that the column in `companion_data` is `owner_id` (INT UNSIGNED, NOT NULL, indexed). The SQL snippets in D-13 / V3R-Empirical-1 are correct as written. **V3R-Q3 closed.**
+
+### Refinement R-25 — `#reloadrules` DOES NOT EXIST; corrected to `#rules` family
+
+**Architecture-document-wide correction.** I had documented `#reloadrules` across multiple V3R artifacts based on a guess. data-expert confirmed via `gm_commands/rules.cpp` that the correct command family is `#rules`:
+
+| Subcommand | Behavior |
+|---|---|
+| `#rules set [Rule] [Value]` | in-memory only, reverts on zone restart (PREFERRED for transient testing) |
+| `#rules setdb [Rule] [Value]` | in-memory + persists to DB (must be manually reverted) |
+| `#rules reload` | reloads current ruleset from DB into memory |
+| `#rules get [Rule]` | reads current in-memory value (use to verify) |
+
+**Recommended Test 1.5 sequence (transient, safe):**
+
+```
+#rules set Companions:CompanionManaRegenMult 175
+#rules get Companions:CompanionManaRegenMult   ← verify = 175
+[run 4-cycle observation]
+#rules set Companions:CompanionManaRegenMult 100
+#rules get Companions:CompanionManaRegenMult   ← verify reverted = 100
+```
+
+**All instances of `#reloadrules` in V3R artifacts have been globally replaced with `#rules reload` (or `#rules set <Rule> <Value>` for transient test) via mechanical substitution.** Verification: 0 remaining `#reloadrules` references in architecture.md, status.md, round-3-fix-proposal-and-task-breakdown.md, round-4-validation-plan.md.
+
+**Architect note — this was a `feedback_never_guess_commands.md` violation.** Per the user's standing feedback, "Never guess commands; check `claude/docs/gm-commands-reference.md` first or ask the user." The architect documented `#reloadrules` across the V3R artifacts without verifying. data-expert's catch is the discipline working as designed; the correction is mechanical and the V3R artifacts are now command-name-correct.
+
+### Updated Open Questions (FINAL FINAL FINAL close-out)
+
+| # | Question | Status |
+|---|---|---|
+| V3R-Q1 | History audit | CLOSED |
+| V3R-Q2 | HP regen parallel | CLOSED |
+| V3R-Q3 | SQL column name | **CLOSED (R-24): owner_id verified correct** |
+| V3R-Q4 | NPC:OOCRegen interaction | Empirical at V3R-6 (non-blocking) |
+| V3R-Q5 | protocol-agent formal | CLOSED |
+| V3R-Q6 | Q4 Lua blast radius | CLOSED |
+| V3R-Q7 | β risk enumeration | CLOSED |
+| V3R-Q8 | G-10 mana hypothesis | REFUTED |
+| V3R-Q9 | HP regen fix shape | DECIDED |
+| V3R-Q10 | A.3 SendArmorAppearance | CLOSED (V3R-D13 reversed) |
+| V3R-Q11 | L-5 / AoE filter group-awareness | CLOSED |
+| V3R-Q12 | Fix α coverage scope | CLOSED |
+| V3R-Q13 | C-10 atomic-rez coexistence | CLOSED |
+| **V3R-Q14 (NEW)** | **#reloadrules existence** | **CLOSED (R-25): does not exist; replaced with `#rules reload` / `#rules set` family** |
+
+### V3R Architecture FINAL FINAL FINAL CONSOLIDATION
+
+**All 14 open questions resolved or routed to empirical.** All 5 advisors fully closed (Round 1 + Round 2 + all targeted follow-ups). The V3R architecture is at maximum consolidation; no further analytical refinements anticipated; all command names verified.
+
+The architecture document contains:
+- Initial V3R section (post-Round-1)
+- Refinements I (post c-expert formal addendum C-11–C-16)
+- Refinements II (post config-expert follow-ups G-14–G-17)
+- Refinements III (post protocol-agent formal enumeration P-4–P-8)
+- Refinements IV (post c-expert Section D supplement C-17–C-21)
+- Refinements V (post protocol-agent Round 1 targeted follow-up P-9–P-13)
+- Refinements VI (post data-expert close-out D-14–D-15) ← this section
+
+
+---
+
+## V3R Architecture Refinements VII (Post c-expert G-5a Git Audit, 2026-04-29 final)
+
+c-expert ran the final close-out audit on `Companions:CompanionManaRegenMult` history.
+
+### Refinement R-26 — V3R-Q1 / G-5a CLOSED definitively: rule was always at 100
+
+Three independent git audit queries:
+
+| Query | Finding |
+|---|---|
+| ruletypes.h diff history | Single commit `d553ed62d` (2026-03-10) introduces rule at default=100. No prior value; no subsequent change. |
+| `git log -S 'CompanionManaRegenMult' --all` | Two commits total: `d553ed62d` introducing commit + `627aed644` (BUG-032 unrelated ruletypes.h touch). Rule never set to non-100. |
+| akk-stack SQL seed/migration search | Zero hits. No SQL migration touched this rule. |
+
+**`Companions:CompanionManaRegenMult` was introduced at 100 on 2026-03-10 and has NEVER been changed.** No "regression from a prior higher value" exists in the git record.
+
+### Refinement R-27 — Architecture narrative for BUG-003 mana fully grounded
+
+c-expert's interpretation: the user's "for a long time the pace of their regen closely matched my own" baseline was `CalcManaRegen()`'s introduction in commit `d553ed62d` (the meditate formula). The user's comparison baseline is the meditate formula itself, not a multiplier value.
+
+**The user's "back to being extremely slow" report has two possible explanations:**
+- **Branch B-misperception:** meditate formula IS working correctly; user's perception of "matching" was always against an unscaled baseline. The 1.75x player multiplier was added/tuned higher AFTER 2026-03-10, creating the gap that finally became visible.
+- **Branch A-code-regression:** an actual code regression introduced AFTER 2026-03-10 by V2 that BYPASSES `CalcManaRegen()` entirely.
+
+The Test 1.5 diagnostic (`#rules set Companions:CompanionManaRegenMult 200`) discriminates: if regen doubles, CalcManaRegen is firing (Branch B-misperception). If regen unchanged, CalcManaRegen is bypassed (Branch A — escalate to follow-up bugfix per V3R-D6).
+
+### Updated Open Questions (FINAL FINAL FINAL FINAL close-out)
+
+| # | Question | Status |
+|---|---|---|
+| V3R-Q1 | History audit | **CLOSED (R-26): rule was always at 100; no regression from prior higher value** |
+| V3R-Q2 | HP regen parallel | CLOSED |
+| V3R-Q3 | SQL column name | CLOSED |
+| V3R-Q4 | NPC:OOCRegen interaction | Empirical at V3R-6 (non-blocking) |
+| V3R-Q5 | protocol-agent formal | CLOSED |
+| V3R-Q6 | Q4 Lua blast radius | CLOSED |
+| V3R-Q7 | β risk enumeration | CLOSED |
+| V3R-Q8 | G-10 mana hypothesis | REFUTED |
+| V3R-Q9 | HP regen fix shape | DECIDED |
+| V3R-Q10 | A.3 SendArmorAppearance | CLOSED (V3R-D13 reversed) |
+| V3R-Q11 | L-5 / AoE filter group-awareness | CLOSED |
+| V3R-Q12 | Fix α coverage scope | CLOSED |
+| V3R-Q13 | C-10 atomic-rez coexistence | CLOSED |
+| V3R-Q14 | #reloadrules existence | CLOSED |
+
+**14 of 14 open questions resolved. Only V3R-Q4 (NPC:OOCRegen interaction) remains routed to empirical verification at V3R-6 — non-blocking for architecture approval.**
+
+### V3R Architecture FINAL ABSOLUTE CONSOLIDATION
+
+**Seven refinement sections (I through VII) capturing the complete advisor input chain:**
+1. Refinements I (post c-expert formal addendum C-11–C-16)
+2. Refinements II (post config-expert follow-ups G-14–G-17)
+3. Refinements III (post protocol-agent formal enumeration P-4–P-8)
+4. Refinements IV (post c-expert Section D supplement C-17–C-21)
+5. Refinements V (post protocol-agent Round 1 targeted follow-up P-9–P-13)
+6. Refinements VI (post data-expert close-out D-14–D-15)
+7. Refinements VII (post c-expert G-5a git audit C-22–C-24) ← this section
+
+Strategic shape NEVER changed across the seven refinement waves; each wave either tightened scope, closed an open question, or grounded an existing decision in deeper evidence. The architecture is **maximally code-grounded, advisor-converged, and historically-verified**.
+
+
+---
+
+## V3R USER-APPROVED FINAL SCOPE (2026-04-29) — BUG-003 DESCOPED
+
+The user has reviewed the V3R architecture and given a revised approval. **BUG-003 (both mana and HP sides) is fully descoped from V3R and moved to a future separate "companion regen mechanics deep dive" bugfix.** This section captures the user-approved revised scope and supersedes any prior V3R section content where BUG-003 was in scope.
+
+### User Decisions (Locked)
+
+| # | Decision | Rationale |
+|---|---|---|
+| 1 | **BUG-004 fix shape α** | Architect-recommended; per V3R Mandate principle of minimum blast radius |
+| 2 | **BUG-003 mana — SKIP for V3R** | User will run a separate project for a deeper dive on companion regen mechanics |
+| 3 | **BUG-003 HP — SKIP for V3R** | User wants both regen sides (mana + HP) handled together in the separate regen-mechanics project |
+| 4 | **V3R-Empirical-1 protocol — SKIP** | Follows naturally from skipping both BUG-003 sides |
+| 5 | **`Companions:AoEExcludesCompanions` rule — REJECTED** | Architect-recommended; per V3R minimum-surface principle, hardcoded behavior locked |
+| 6 | **Overall plan — APPROVED with the revisions above** | Ship locked-down BUG-002/004/005 fixes now without BUG-003 distraction |
+
+### Final V3R Scope (after user revisions)
+
+**IN scope:**
+- **Fix V Option A** for BUG-002 + BUG-005 (`Companion::Process()` restructure, ~25 lines C++)
+- **Fix W α** single-site for BUG-004 (`Mob::IsAttackAllowed` at aggro.cpp:867, ~10-15 lines C++ per c-expert C-12 sketch)
+- **3 new TDD tests** in Suite 36: V.1 (heartbeat-for-dead), V.2 (despawn-timer-for-dead), W.1 (aoe-excludes-owner-companion). **V.3 (alive-companion-regen-regression-guard) is REMOVED** since BUG-003 is descoped.
+- **Sustained-play game-tester scenarios for BUG-002, BUG-004, BUG-005:** V3R-1 (heartbeat PRIMARY), V3R-2 (auto-dismiss PRIMARY), V3R-3 (AoE friend/foe PRIMARY), V3R-5 (sustained combat 5+ min), V3R-7 (multi-zone cycle), V3R-8 (multi-rez cycle), V3R-9 (sustained AoE encounter)
+- **Adjacent-system regression coverage** for the customized subsystems Fix V and Fix W touch (Companion::Process tick consumers, IsAttackAllowed consumers, m_death_despawn_timer, m_ping_timer)
+
+**OUT of V3R scope (descoped to future companion-regen-mechanics bugfix):**
+- ~~V3R-Empirical-1 4-test protocol~~ — REMOVED
+- ~~V3R-D12 conditional α-HP one-line C++ fix~~ — REMOVED
+- ~~Test 1.5 mana code-path diagnostic via `#rules set Companions:CompanionManaRegenMult`~~ — REMOVED
+- ~~V3R-6 long-duration sit regen scenario (BUG-003 baseline)~~ — REMOVED (V3R-6 number is freed; remaining scenarios renumber)
+- ~~V.3 alive-companion-regen-regression-guard test~~ — REMOVED (regen path is no longer being modified by V3R)
+- ~~Empirical-Test-4 buff-state branch~~ — REMOVED
+
+### Final V3R Implementation Sequence (post-user-revision)
+
+| # | Task | Agent | Dependencies | Notes |
+|---|---|---|---|---|
+| V3R.1 | Write 3 failing-first tests in Suite 36: V.1 (heartbeat-for-dead), V.2 (despawn-timer-for-dead), W.1 (aoe-excludes-owner-companion). Build the test binary; verify all 3 FAIL pre-fix. | c-expert | None | TDD red commit before any fix |
+| V3R.2 | Implement Fix V Option A: restructure `Companion::Process()` top-section. `bool is_dead = (GetHP() <= 0);` capture + `if (!is_dead)` guards on AI-dispatch sections. Keep B.1 heartbeat AND B.2 `m_death_despawn_timer.Check()` UNCONDITIONAL. ~25 lines C++. | c-expert | V3R.1 | Replaces V2 Fix R4 alive-guard |
+| V3R.3 | Implement Fix W α: single-site IsCompanion-aware AoE exclusion in `Mob::IsAttackAllowed` `_CLIENT vs _NPC` matrix at `aggro.cpp:867`. Surgical insert per c-expert C-12 code sketch (handles both owner's own companion AND group member's companion). ~10-15 lines C++. | c-expert | V3R.1 | Single site; c-expert C-12 sketch is the implementation pattern |
+| V3R.4 | Rebuild zone binary. Re-run Suite 36 — verify V.1, V.2, W.1 PASS, all V1/V2 tests unchanged. Run full companion test suite. | c-expert | V3R.2 + V3R.3 | Build verification |
+| V3R.5 | `make restart` from akk-stack/, then full server stack startup (loginserver / world / 8 dynamic zones per documented procedure). | infra-expert | V3R.4 | runtime |
+| V3R.6 | In-game validation per V3R Validation Plan (post-revision): 7 sustained-play scenarios (V3R-1 heartbeat PRIMARY, V3R-2 auto-dismiss 30-min PRIMARY, V3R-3 AoE PRIMARY, V3R-5 sustained combat 5+min, V3R-7 multi-zone, V3R-8 multi-rez, V3R-9 sustained AoE). User confirms BUG-002 + BUG-005 + BUG-004 closed. | game-tester | V3R.5 | manual + sustained |
+| V3R.7 | Commit and push V3R changes on `bugfix/companion-rez` in eqemu and claude repos. | c-expert | V3R.6 | git |
+
+**Spawn list (revised):** c-expert (V3R.1, V3R.2, V3R.3, V3R.4, V3R.7), infra-expert (V3R.5), game-tester (V3R.6). **architect does NOT need to rejoin** (no V3R.7 BUG-003 decision step anymore — BUG-003 is descoped). **data-expert is NOT re-spawned** (no conditional V3R.6.5 rule UPDATE — empirical protocol descoped). **lua-expert / config-expert / protocol-agent** unchanged — no V3R implementation tasks.
+
+### Final V3R Validation Plan (post-revision)
+
+**Band 1 — Direct symptom validation:**
+- V3R-1 — BUG-002 visibility heartbeat (PRIMARY)
+- V3R-2 — BUG-005 auto-dismiss after 30 minutes (PRIMARY, slow scenario)
+- V3R-3 — BUG-004 AoE friend/foe filter (PRIMARY)
+- ~~V3R-4 — BUG-003 V3R-Empirical-1 4-test protocol~~ — REMOVED
+
+**Band 2 — Sustained-play coverage:**
+- V3R-5 — Sustained combat encounter (5+ minutes)
+- ~~V3R-6 — Long-duration sit regen (3+ minutes)~~ — REMOVED (BUG-003 descoped)
+- V3R-7 — Multi-zone cycle
+- V3R-8 — Multi-rez cycle
+- V3R-9 — Sustained AoE encounter
+
+**Band 3 — Adjacent-system regression coverage:**
+
+For each customized subsystem the V3R fix touches, at least one consumer beyond the symptom is tested. Updated matrix:
+
+| Subsystem touched | Consumer scenario | Pass criterion |
+|---|---|---|
+| `Companion::Process()` AI tick (Fix V) | V3R-5 sustained combat: alive companion behaves normally throughout | Cleric stands when player engages; melee swings on attack-timer cadence; combat positioning correct |
+| `Mob::IsAttackAllowed` AoE filter (Fix W) | V3R-3 PRIMARY + V3R-9 sustained AoE | Companion correctly excluded across multiple AoE casts; cross-group-member companions also excluded |
+| `m_death_despawn_timer` (BUG-005, restored by Fix V) | V3R-2 PRIMARY (30-min wait) | Auto-dismiss fires correctly; rez interrupt correctly resets/disables timer |
+| `m_ping_timer` heartbeat (BUG-002, restored by Fix V) | V3R-1 PRIMARY + V3R-5 sustained alive-stationary | Companion remains visible during dying-window AND during sustained alive-stationary combat |
+| `Companion::IsAttackAllowed` companion-as-caster (UNCHANGED but adjacent) | V3R-5 sustained combat: companion casting beneficial spells on group | Group heals land on companions; companion-cast harmful spells still allowed against valid hostiles |
+
+### Future Companion Regen Mechanics Bugfix (Known-Pending)
+
+Per the user's decision 2 + 3, a separate bugfix workspace will handle BUG-003 mana + HP together as a deep-dive on companion regen mechanics. Suggested scope when that workspace is bootstrapped:
+
+- **Empirical investigation:** measure actual companion mana + HP regen rates (via in-game `!status` polling or instrumented logging) under controlled scenarios — confirm whether `CalcManaRegen()` and `CalcHPRegen()` are exercising the expected code paths.
+- **Code-path verification:** confirm whether companions hit the custom `Companion::CalcManaRegen()` / `Companion::CalcHPRegen()` paths or fall through to base NPC regen branches under all scenarios (sit/stand, in-combat/OOC, post-rez, pre-rez).
+- **Multiplier asymmetry:** evaluate the structural gap between Client/Bot/Merc applying `Character:HPRegenMultiplier=200` and Companion not applying it — decide whether to align (one-line C++ in `Companion::CalcHPRegen`) or maintain the asymmetry intentionally with a `Companions:CompanionHPRegenMult` rule.
+- **Visibility gap analysis:** investigate the user's "back to extremely slow" perception baseline against the actual measured regen rates — is the perception a misperception or a real regression?
+- **Buff-state interaction:** test whether regen-boosting buffs (Spirit of Cheetah / Clarity / etc.) correctly persist or are correctly re-applied across Death/rez cycles.
+
+The architecture context for this future bugfix is preserved in:
+- This V3R section (Refinements II findings G-14 / G-16 documenting the mana hypothesis refutation and the HP regen structural gap)
+- `architect/context/round-2-joint-root-cause-synthesis.md` (BUG-003 4-branch diagnosis tree)
+- `architect/context/round-3-fix-proposal-and-task-breakdown.md` (Section 4 — original V3R-Empirical-1 protocol design, can serve as starting point)
+- `architect/context/round-4-validation-plan.md` (Scenario V3R-4 design, can serve as game-tester scenario template)
+- agent-conversations.md V3R section (D-9 protocol, D-13 4-test scenario, G-10/G-11/G-14/G-15/G-16 hypothesis evolution, C-22/C-23 git audit)
+
+### Updated Decision Log
+
+| # | Decision | Rationale |
+|---|---|---|
+| **V3R-D14 (NEW)** | **BUG-003 (both mana and HP) fully descoped from V3R; moved to future companion-regen-mechanics bugfix** | User decision (2026-04-29). User wants regen handled holistically in a dedicated workspace, not bundled with the locked-down BUG-002/004/005 fixes. Honors regression-discipline principle of not bundling speculative work with confirmed work. |
+| **V3R-D15 (NEW)** | **`Companions:AoEExcludesCompanions` rule REJECTED; hardcoded behavior locked** | User decision (2026-04-29). Architect-recommended per minimum-surface principle. AoE exclusion of owner's own companion should always be the correct default; no operator-tuning toggle needed. |
+
+### Updated Open Questions (post-user-revision)
+
+| # | Question | Status |
+|---|---|---|
+| V3R-Q1 | History audit | CLOSED |
+| V3R-Q2 | HP regen parallel | DEFERRED to future regen-mechanics bugfix |
+| V3R-Q3 | SQL column name | CLOSED (was needed for Empirical protocol; now moot) |
+| V3R-Q4 | NPC:OOCRegen interaction | DEFERRED to future regen-mechanics bugfix |
+| V3R-Q5 | protocol-agent formal | CLOSED |
+| V3R-Q6 | Q4 Lua blast radius | CLOSED |
+| V3R-Q7 | β risk enumeration | CLOSED |
+| V3R-Q8 | G-10 mana hypothesis | REFUTED (preserved as input to future regen-mechanics bugfix) |
+| V3R-Q9 | HP regen fix shape | DEFERRED (V3R-D12 α-HP preserved as candidate for future regen-mechanics bugfix) |
+| V3R-Q10 | A.3 SendArmorAppearance | CLOSED |
+| V3R-Q11 | L-5 / AoE filter group-awareness | CLOSED |
+| V3R-Q12 | Fix α coverage scope | CLOSED |
+| V3R-Q13 | C-10 atomic-rez coexistence | CLOSED |
+| V3R-Q14 | #reloadrules existence | CLOSED |
+
+**14 of 14 open questions either resolved or deferred to the future regen-mechanics bugfix.** No outstanding question blocks V3R implementation.
+
+### Final V3R Scope Summary (Locked)
+
+| Bug | Status | Fix |
+|---|---|---|
+| BUG-002 visibility heartbeat | IN V3R | Fix V Option A (~25 lines C++) |
+| BUG-003 mana | OUT (descoped to future regen-mechanics bugfix) | n/a |
+| BUG-003 HP | OUT (descoped to future regen-mechanics bugfix) | n/a |
+| BUG-004 player AoE hits companions | IN V3R | Fix W α single-site (~10-15 lines C++) |
+| BUG-005 auto-dismiss timer broken | IN V3R | Same Fix V Option A (zero additional surface) |
+
+**Total V3R surface (LOCKED):** ~35-40 lines C++ across 2 files (`companion.cpp` + `aggro.cpp`) + 3 new TDD tests + 7 sustained-play game-tester scenarios.
+
