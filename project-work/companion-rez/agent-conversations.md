@@ -3838,3 +3838,33 @@ data-expert filed the BUG-005 report file at `/mnt/d/Dev/eq/claude/project-work/
 
 **Net architecture impact:** Task #16 (orchestrator-flag for BUG-005 file creation) is now operationally satisfied. No further architect action needed on BUG-005 documentation.
 
+---
+
+## V3R Implementation Team
+
+### 2026-04-29 — team-lead → c-expert: Implementation brief
+
+**From:** team-lead → **To:** c-expert
+
+Brief: c-expert is implementation lead for V3R. Tasks: V3R.1 (TDD red — 3 failing tests in Suite 37), V3R.2 (Fix V Option A in Companion::Process()), V3R.3 (Fix W α in aggro.cpp:867), V3R.4 (rebuild + verify), V3R.7 (commit + push). Authoritative docs listed. BUG-003 descoped. W.1 behavioral test requires a real Client — unit test infrastructure cannot create one; behavioral assertion delegated to in-game V3R.6.
+
+**Outcome:** c-expert acknowledged brief and proceeded.
+
+---
+
+### 2026-04-29 — c-expert → team-lead: V3R.1-4 complete
+
+**From:** c-expert → **To:** team-lead
+
+V3R.1 (TDD red commit 1c03ce9ea): Suite 37 added to `cli_companion_tests.cpp`. V.1 (ping timer for dead) and V.2 (despawn timer for dead) fail pre-fix as expected. W.1 is structural prerequisites (IsPingTimerEnabled, TriggerPingTimer, IsDeathDespawnTimerEnabled, TriggerDeathDespawnTimer test hooks added to companion.h). Note: the client-vs-companion behavioral assertion for BUG-004 cannot be unit-tested without a real Client object — W.1 verifies preconditions only; behavioral protection comes from in-game V3R.6.
+
+V3R.2 (Fix V Option A): `Companion::Process()` restructured. Fix R4 blanket early-return replaced with `const bool is_dead = (GetHP() <= 0)`. Two `if (!is_dead)` blocks wrap all AI-dispatch sections. Heartbeat (m_ping_timer block) and death despawn timer block stay UNCONDITIONAL.
+
+V3R.3 (Fix W α): `aggro.cpp` — added `companion.h` include. In the `_CLIENT vs _NPC` matrix branch (now line 868+), inserted IsCompanion guard: checks `mob2->IsCompanion() && GetOwnerCharacterID() != 0`, then if mob1 is a Client checks owner match OR group membership. Follows C-12 sketch exactly.
+
+V3R.4: Rebuild clean (3 files recompiled, 0 warnings). Full Suite 37 green: V.1 PASS, V.2 PASS, W.1 PASS. All prior suites pass. Commits pushed to origin/bugfix/companion-rez (eqemu: 035d33348, claude: 716654a).
+
+V3R.7 (commit+push): Complete — both eqemu and claude repos pushed to bugfix/companion-rez.
+
+**Next:** V3R.5 (infra-expert server restart) and V3R.6 (game-tester in-game validation) are the remaining gates before the feature is complete.
+
