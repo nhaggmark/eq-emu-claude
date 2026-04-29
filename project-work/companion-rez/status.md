@@ -159,8 +159,9 @@ Open → Investigating → Fix In Progress → Resolved._
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
 | BUG-001 | Cleric companion attempts rez post-combat but NPC companion stays down | High | user | Resolved (V2) — user-confirmed in-game 2026-04-28 (Jimble Woodentoe rez succeeded) | c-expert | 2026-04-28 |
-| BUG-002 | NPC companions vanish from screen during combat if stationary (visibility heartbeat regressed) | High | user | Open | TBD (V3 architecture) | |
-| BUG-003 | Companion HP/mana regen drastically slowed (~1%/report when sitting); possibly regen tick or gsay reporting cadence | High | user | Open | TBD (V3 architecture) | |
+| BUG-002 | NPC companions vanish from screen during combat if stationary (visibility heartbeat regressed) | High | user | Re-Triage (V3-redo) — prior V3 plan superseded 2026-04-29 | TBD (V3-redo architecture) | |
+| BUG-003 | Companion HP/mana regen drastically slowed (~1%/report when sitting); possibly regen tick or gsay reporting cadence | High | user | Re-Triage (V3-redo) — prior V3 plan superseded 2026-04-29 | TBD (V3-redo architecture) | |
+| BUG-004 | Player harmful AoE spells (mez, stun) affect own NPC companions; AoE friend/foe filter regressed | High | user | Open — Re-Triage (V3-redo) 2026-04-29 | TBD (V3-redo architecture) | |
 
 ---
 
@@ -526,4 +527,92 @@ c-expert ruled out protocol-agent's open hypothesis with code-grounded RotateToC
 | # | Decision | Made By | Date | Rationale |
 |---|----------|---------|------|-----------|
 | V3-8 | Defensive `m_hold_combat_position` heartbeat bypass (Fix V Subtlety #2) REMOVED from V3 scope | architect (c-expert empirical math) | 2026-04-29 | c-expert ruled out the IsMoving() flicker hypothesis with code-grounded math: RotateToCommand completes in one movement-manager tick (`td≈380 ≥ max delta 256`), main loop ordering ensures `IsMoving()=false` at next Process() tick. Defensive layers without empirical justification are risk surface for zero gain (regression-discipline feedback). YAGNI applied. |
+
+---
+
+# V3 — RE-TRIAGED (2026-04-29)
+
+> The earlier V3 architecture cycle (above) is **SUPERSEDED**. The user
+> directed a complete re-process of BUG-002, BUG-003, and BUG-004
+> together, with explicit emphasis on the customized NPC and Spawn
+> systems and their downstream consumers. The prior V3 plan was scoped
+> only to BUG-002 + BUG-003 and was produced before the architect agent
+> definition was updated with customized-system awareness discipline.
+>
+> This V3 Re-Triage section is the new ground truth. The prior V3 plan
+> remains on disk as historical reference but is NOT to be implemented
+> as-is. The new architecture team starts fresh and may arrive at a
+> different fix shape for BUG-002/003 once BUG-004 and the
+> customized-system enumeration are factored in.
+
+## V3 Re-Triage Workflow Status
+
+| Phase | Agent | Status | Started | Completed |
+|-------|-------|--------|---------|-----------|
+| V3 Re-Triage Architecture | architect (lead) + c-expert + protocol-agent + lua-expert + data-expert (advisors) | Not Started | | |
+| V3 Re-Triage Implementation | TBD per architect's task breakdown | Not Started | | |
+| V3 Re-Triage Validation | game-tester | Not Started | | |
+| V3 Re-Triage Completion | _user_ | Not Started | | |
+
+**V3 Re-Triage current phase:** Architecture (re-engaging fresh).
+
+## V3 Re-Triage Scope
+
+Three open bugs in the same regression family:
+
+- **BUG-002** — NPC companions vanish from screen during combat
+  when stationary (visibility heartbeat regression).
+- **BUG-003** — Companion HP/mana regen drastically slowed
+  (~1%/report when sitting); user uncertain whether actual regen
+  or gsay reporting cadence.
+- **BUG-004** — Player harmful AoE spells (mez, stun) affect own
+  NPC companions; AoE friend/foe filter regressed.
+
+**Working hypothesis (architect to confirm or refute):** All three
+bugs share a root cause in V2's entity-registration / Spawn-pipeline
+changes. V2's Fix B routed `ResurrectFromCorpse` through `Spawn(owner)`
+and Fix A cleared `membername[]` slot at Death. Downstream subsystems
+that consume customized companion entity-list metadata, group-membership
+state, or owner-pointer ownership may have been silently affected.
+
+## V3 Re-Triage Architecture Mandates
+
+The architect MUST satisfy these mandates in the re-triage architecture
+doc, not optional:
+
+1. **Customized-system enumeration is the primary deliverable.** Per
+   updated architect agent definition, the architect must enumerate
+   every downstream consumer of the customized NPC / Spawn / entity-list
+   / group / AI-tick metadata that V2 touched. The fix shape comes
+   second; the enumeration comes first. A shallow enumeration means the
+   architecture phase is incomplete.
+2. **All three bugs analyzed together.** Do not silo BUG-002, BUG-003,
+   and BUG-004 into separate analyses. They are a triage cluster — find
+   the shared root cause(s) before designing fixes.
+3. **Empirical-first on BUG-003.** Prior V3 verdict was "likely
+   misperception"; that verdict is preserved as a hypothesis, not a
+   conclusion. Mandate empirical measurement before any code change for
+   BUG-003 (SQL polling of mana field cadence vs gsay frequency).
+4. **Sustained-play test scenarios mandatory.** Per
+   `feedback_refactor_regression_discipline.md`, the validation plan
+   includes long-duration combat (5+ min), long-duration sitting
+   regen, multi-zone cycles, multi-rez cycles, and sustained AoE
+   encounter scenarios.
+5. **Adjacent-system regression coverage.** For each customized
+   subsystem the fix touches, the validation plan must include a
+   regression test for at least one consumer — not only the symptom
+   the fix targets.
+6. **Treat the prior V3 plan as one input among many.** It is not
+   gospel. The new architect cycle may arrive at a different fix
+   shape if the BUG-004 + customized-system enumeration changes the
+   picture.
+
+## V3 Re-Triage Decision Log
+
+| # | Decision | Made By | Date | Rationale |
+|---|----------|---------|------|-----------|
+| V3R-1 | Prior V3 architecture plan (V3-1 through V3-8) is superseded; fresh architecture cycle re-engaged with all three bugs in scope | user (via team-lead) | 2026-04-29 | Prior V3 was scoped only to BUG-002 + BUG-003 and predates the architect agent's updated customized-system awareness discipline. User explicitly directed a complete re-process. |
+| V3R-2 | Architect agent definition updated 2026-04-29 to add "CRITICAL: Customized System Awareness" section with mandate to enumerate downstream consumers before designing fixes on customized NPC/Spawn paths | user (via team-lead) | 2026-04-29 | Two prior bugfix V2 cycles silently broke adjacent customized-system behaviors. The discipline addition is structural, not advisory. |
+| V3R-3 | All three bugs (BUG-002, BUG-003, BUG-004) analyzed as a triage cluster; not siloed | user (via team-lead) | 2026-04-29 | Strong correlation across all three: V2 entity-registration changes affect downstream subsystems that consume companion metadata. Root cause likely shared. |
+
 
