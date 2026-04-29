@@ -1407,3 +1407,43 @@ decides at V3.6 whether to scope a V3-followup or close as misperception.
 Regression Fix" — preserves V1 + V2 sections intact.**
 
 ---
+
+---
+
+### 2026-04-29 — c-expert → architect: protocol-agent IsMoving() hypothesis ruled out
+
+**From:** c-expert → **To:** architect
+
+**Summary:** Investigated protocol-agent's open hypothesis (NPC::AI_Process may set `moving=true` via face-tracking rotation, leaving the ping timer continuously disabled in combat). **Hypothesis RULED OUT** with code-grounded math.
+
+**Empirical analysis:**
+- RotateToCommand at running speed: `td = 200 × 19 × frame_time ≈ 380` heading units per frame
+- Max heading delta: 256 units (full circle)
+- Since `td ≈ 380 ≥ dist ≤ 256`, rotation completes in ONE movement-manager tick — `SetMoving(false)` runs in the same `RotateToCommand::Process()` that set true
+- Main loop ordering (`main.cpp:601-617`): MobProcess() runs → AI queues RotateToCommand → mMovementManager->Process() runs AND completes the command → SetMoving(false). Next Companion::Process() tick sees `IsMoving()=false`. Heartbeat fires.
+- For caster/healer holding position (`m_hold_combat_position=true`): FaceTarget only fires when `!IsMoving()` (`mob_ai.cpp:1361`); stationary target → `current_heading==new_heading` (`mob.cpp:4951`) → no rotation; moving target → completes in one tick. Either way, `IsMoving()=false` at next tick.
+
+**Conclusion:** This would have been pre-V2 behavior — V2 changed nothing about it. Heartbeat works correctly for alive companions before and after V2. BUG-002 root cause is solely the V2 Fix R4 dead-companion heartbeat skip.
+
+**Logged at commit 985524d on bugfix/companion-rez (claude repo).**
+
+---
+
+### 2026-04-29 — architect → V3 implementation team: V3 amendment locked
+
+**From:** architect (decision log)
+
+Per c-expert's IsMoving() hypothesis ruling-out, V3 plan amended:
+
+**REMOVED from V3 scope:**
+- Fix V Subtlety #2 (defensive `m_hold_combat_position` heartbeat bypass) — was protective dead weight against a now-disproven hypothesis
+- Test V3.3 (defensive-heartbeat-in-held-position) — no fix, no test
+
+**V3 Fix V is now strictly Option A:** restructure `Companion::Process()` top-section to capture `bool is_dead = (GetHP() <= 0);` and wrap AI-dispatch-only sections in `if (!is_dead)` guards. Heartbeat block at `companion.cpp:2128-2142` left exactly as-is (no `m_hold_combat_position` bypass added).
+
+**V3 implementation surface is 3 new tests + 1 C++ change.** Tests renumbered: V3.1 (heartbeat-for-dead), V3.2 (despawn-timer-for-dead), V3.3 (alive-companion-regression-guard). Implementation tasks renumbered: V3.1 (failing tests), V3.2 (Fix V Option A), V3.3 (rebuild + verify), V3.4 (server restart), V3.5 (game-tester scenarios), V3.6 (BUG-003 decision), V3.7 (commit + push).
+
+**BUG-003 empirical-first approach unchanged.** game-tester V3-5 + V3-6 sustained-sit baselines before any code change.
+
+**V3 plan is now FINAL.** Per regression-discipline principle: defensive changes without empirical justification are risk surface for zero gain. YAGNI applied.
+

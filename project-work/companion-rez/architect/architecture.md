@@ -1740,3 +1740,62 @@ Neither item is a V3 fix scope; both are documented for future awareness.
 > **Architect (V3.6) decides BUG-003 follow-up** based on V3.5 game-tester data — close-as-misperception vs scope a V3-followup bugfix.
 
 ---
+
+---
+
+## V3 Amendment — IsMoving() Hypothesis Ruled Out (2026-04-29)
+
+> **Author:** architect
+> **Status:** Supersedes V3 Fix V Subtlety #2 (defensive heartbeat layer) and V3 test 30/36-V3.3
+> **Source:** c-expert post-triage analysis with code-grounded RotateToCommand math
+
+### What changed
+
+protocol-agent's open hypothesis ("`NPC::AI_Process` may set `moving=true` via face-tracking rotation, leaving the ping timer continuously disabled in combat") was investigated by c-expert with full file:line citations. **Hypothesis is RULED OUT.**
+
+c-expert's empirical math:
+- `RotateToCommand` at running speed (`rotate_to_speed=200`): per-frame turn capacity `td = 200 × 19 × frame_time ≈ 380` heading units
+- Maximum heading delta is 256 units (full circle in heading-encoding terms)
+- Since `td ≈ 380 ≥ dist ≤ 256`, the rotation completes in ONE movement-manager tick — `SetMoving(false)` is called inside the same `RotateToCommand::Process()` that set `moving = true`
+- Main loop ordering verified at `eqemu/zone/main.cpp:601-617`:
+  1. `entity_list.MobProcess()` runs → `Companion::Process()` → `NPC::Process()` → `AI_Process()` queues `RotateToCommand`
+  2. `zone->Process()` → `mMovementManager->Process()` runs the queued command AND completes it → `SetMoving(false)`
+- At the top of the NEXT `Companion::Process()` tick: `IsMoving() == false`. Heartbeat block runs, `m_ping_timer` ticks normally.
+
+For caster/healer companions explicitly holding combat position (`m_hold_combat_position = true`), `FaceTarget` only fires when `!IsMoving()` (`mob_ai.cpp:1361`). If the target is stationary, `current_heading == new_heading` (`mob.cpp:4951`) and `FaceTarget` does nothing — no rotation, no `SetMoving` toggle. If the target moved, the rotation completes in one tick. **Either way, `IsMoving() == false` at the top of the next Process() tick.**
+
+The hypothesis would have been pre-V2 behavior — there is no V2 change that could have made it worse. The ping timer was working correctly for alive companions before V2 and continues to work correctly post-V2.
+
+### Implications for V3 Fix V
+
+**Subtlety #2 (defensive `m_hold_combat_position` heartbeat bypass) is REMOVED from V3 scope.**
+
+Reasoning: per the user's regression-discipline feedback ("be extremely careful not to break existing functionality"), defensive layers without empirical justification add risk surface for zero gain. With the `IsMoving()` hypothesis ruled out, the bypass would change `IsMoving()` semantics at the heartbeat block for no closed bug. **YAGNI** — drop it.
+
+**V3 Fix V is now strictly:** restructure `Companion::Process()` top-section to capture `bool is_dead = (GetHP() <= 0);` instead of early-returning, wrap AI-dispatch-only sections in `if (!is_dead)` guards, leave heartbeat / despawn timer / sitting regen / mana report / fleeing-immunity sync unguarded. Option A as originally specified, **without** Subtlety #2.
+
+The heartbeat block at `companion.cpp:2128-2142` is left exactly as-is post-V3 (no `m_hold_combat_position` bypass). For dead entities, the heartbeat now reaches them (via the Option A restructure). For alive entities, no change from current behavior.
+
+### V3 Implementation Surface (Updated)
+
+| Test | What it asserts | Status |
+|------|-----------------|--------|
+| **V3.1 (heartbeat for dead entity)** | After Death(), the next Process() tick reaches the heartbeat block; `m_ping_timer` is enabled and `SentPositionPacket` is queued on its 5s cadence for HP=0 entities. | KEEP — primary regression guard |
+| **V3.2 (despawn timer for dead entity)** | After Death() simulating 1801s of Process() ticks, dead companion is correctly marked dismissed and Save() runs. | KEEP — secondary regression guard |
+| ~~**V3.3 (defensive heartbeat in held position)**~~ | ~~Set `m_hold_combat_position=true` and `IsMoving()=true`; verify ping timer fires on 5s cadence anyway.~~ | **REMOVED** — hypothesis ruled out by c-expert; defensive layer no longer in Fix V |
+| **V3.4 (alive companion regression guard)** | Alive companion in combat (HP > 0, IsEngaged=true, BALANCED stance) still runs the heartbeat block on 5s cadence — V3 restructure does not break alive heartbeat. | KEEP — renumber to V3.3 |
+
+**Net V3 implementation surface is now 3 new tests + 1 C++ change** (down from 4 new tests + 1 C++ change with subtlety). Smaller, cleaner, and aligned with regression-discipline feedback.
+
+### V3.6 BUG-003 follow-up decision is unchanged
+
+The empirical-first approach to BUG-003 stands. game-tester runs V3-5 (non-rezzed sit baseline) and V3-6 (post-rez sit baseline) before any code change is contemplated. Architect decides at V3.6.
+
+### Updated implementation team list
+
+No change. **c-expert** owns V3.1 (3 tests), V3.2 (Fix V Option A — without Subtlety #2), V3.3 (rebuild + verify, formerly V3.4), V3.7 (commit + push). **infra-expert** owns V3.4 (server restart, formerly V3.5). **game-tester** owns V3.5 (8 sustained-play scenarios + BUG-003 baselines, formerly V3.6). **architect** rejoins at V3.6 (BUG-003 follow-up decision, formerly V3.7).
+
+---
+
+> **V3 plan is now FINAL.** All advisor input (c-expert + protocol-agent + lua-expert) consolidated. Awaiting user review before implementation team is spawned.
+

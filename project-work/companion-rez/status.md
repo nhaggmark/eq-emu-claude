@@ -502,3 +502,28 @@ confirms the V3 plan.
   bundle a speculative BUG-003 fix with the confirmed BUG-002 fix. game-tester
   empirical baseline runs first; architect decides BUG-003 scope at V3.6.
 
+
+---
+
+## V3 Amendment — IsMoving() Hypothesis Ruled Out (2026-04-29)
+
+c-expert ruled out protocol-agent's open hypothesis with code-grounded RotateToCommand math (`td ≈ 380 ≥ max heading delta 256` → rotation completes in one tick → `IsMoving()=false` at next Process() tick). The defensive `m_hold_combat_position` heartbeat bypass (Fix V Subtlety #2) is removed from V3 scope per the user's regression-discipline feedback (no defensive layers without empirical justification). V3 Fix V is now strictly Option A — restructure `Companion::Process()` top-section.
+
+**V3 Implementation Tasks (Revised — supersedes earlier table)**
+
+| # | Task | Agent | Status | Notes |
+|---|------|-------|--------|-------|
+| V3.1 | Write 3 new failing tests in Suite 36: heartbeat-for-dead, despawn-timer-for-dead, alive-companion-regression-guard. (Removed: defensive-heartbeat-in-held-position — hypothesis ruled out.) | c-expert | Not Started | TDD red |
+| V3.2 | Implement Fix V Option A: restructure `Companion::Process()` top-section. `bool is_dead = (GetHP() <= 0);` capture + `if (!is_dead)` guards on AI dispatch. (Removed: `m_hold_combat_position` bypass at heartbeat block.) | c-expert | Not Started | ~25 lines C++ |
+| V3.3 | Rebuild + verify all V1/V2 tests still pass + new V3 tests pass. | c-expert | Not Started | runtime |
+| V3.4 | `make restart` + full server stack startup. | infra-expert | Not Started | runtime |
+| V3.5 | In-game validation: 8 scenarios (V3-1 through V3-8 per architecture.md). | game-tester | Not Started | manual + sustained |
+| V3.6 | Architect decides BUG-003 follow-up scope based on V3.5 game-tester data. | architect | Not Started | analysis |
+| V3.7 | Commit and push V3 changes on `bugfix/companion-rez` in eqemu and claude repos. | c-expert | Not Started | git |
+
+**V3 Decision Log addition**
+
+| # | Decision | Made By | Date | Rationale |
+|---|----------|---------|------|-----------|
+| V3-8 | Defensive `m_hold_combat_position` heartbeat bypass (Fix V Subtlety #2) REMOVED from V3 scope | architect (c-expert empirical math) | 2026-04-29 | c-expert ruled out the IsMoving() flicker hypothesis with code-grounded math: RotateToCommand completes in one movement-manager tick (`td≈380 ≥ max delta 256`), main loop ordering ensures `IsMoving()=false` at next Process() tick. Defensive layers without empirical justification are risk surface for zero gain (regression-discipline feedback). YAGNI applied. |
+
