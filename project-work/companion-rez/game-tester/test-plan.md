@@ -1069,3 +1069,474 @@ None identified from server-side validation.
 | # | Item | Workaround |
 |---|------|------------|
 | FU-1 | Cross-zone rez resilience (Fix R2 descoped) — dead companions stay is_suspended=1 if owner zones away mid-rez | `!unsuspend <name>` after returning to the zone |
+
+---
+
+# V3R Re-Triage: Visibility / AoE / Auto-Dismiss Fix — Test Plan
+
+> **V3R Author:** game-tester
+> **V3R Date:** 2026-04-29
+> **V3R Architecture doc:** `architect/architecture.md` — V3 Re-Triage section
+> **V3R Validation Plan doc:** `architect/context/round-4-validation-plan.md`
+> **V3R Commits:** `1c03ce9ea` (Suite 37 TDD red), `035d33348` (Fix V + Fix W)
+
+Three bugs fixed in V3R:
+- **BUG-002** — NPC companions vanish from screen during stationary combat intervals (visibility heartbeat regression). Root cause: V2 Fix R4 early-return at `companion.cpp:1933` bypassed `m_ping_timer` heartbeat for HP=0 entities. Fix V Option A restructures `Companion::Process()` top-section so heartbeat is unconditional.
+- **BUG-005** — 30-minute auto-dismiss timer never fires for dead companions. Root cause: same Fix R4 early-return also bypassed `m_death_despawn_timer.Check()`. Fixed for free by same Fix V restructure.
+- **BUG-004** — Player harmful AoE spells (mez, stun) affect own companions. Root cause: pre-existing gap — companions do not call `SetOwnerID()` so `Mob::IsAttackAllowed` `_CLIENT vs _NPC` matrix permitted attacks. Fix W α inserts a companion-owner exclusion at `aggro.cpp:867`.
+
+**BUG-003 (regen) is DESCOPED from V3R.** Do not test or measure regen in this plan.
+
+**Systems touched:** C++ source only (`companion.cpp`, `aggro.cpp`). No Lua, no SQL, no protocol, no config.
+**TDD test suite:** Suite 37 (3 new V3R tests: V.1, V.2, W.1 — all confirmed GREEN post-fix).
+**Known companion roster (character_id=6):** Lashun Novashine (Cleric/24), Hollish Tnoops (Warrior/18), Jimble Woodentoe (Ranger/22), Jracol Brestiage (Rogue/23), Lydl the Great (Wizard/10).
+
+---
+
+## V3R Part 1: Server-Side Validation
+
+### V3R Server-Side Results
+
+| # | Check | Result | Details |
+|---|-------|--------|---------|
+| 1 | Commit verification — V3R TDD red commit | PASS | `1c03ce9ea` on `bugfix/companion-rez` — Suite 37 failing-first tests |
+| 2 | Commit verification — V3R fix commit | PASS | `035d33348` on `bugfix/companion-rez` — Fix V Option A + Fix W α |
+| 3 | Commit ordering — TDD red precedes fix | PASS | `1c03ce9ea` (red) before `035d33348` (fix) — AC-9 TDD discipline maintained |
+| 4 | Binary freshness — zone binary timestamp | PASS | `/home/eqemu/code/build/bin/zone` built 2026-04-29 14:15 — post-V3R commit |
+| 5 | Binary verification — `m_ping_timer` in binary | PASS | `m_ping_timer` symbol present — heartbeat code path in binary |
+| 6 | Binary verification — `m_death_despawn_timer` in binary | PASS | `m_death_despawn_timer` symbol present — despawn timer code path in binary |
+| 7 | Binary verification — `GetOwnerCharacterID` in binary | PASS | `GetOwnerCharacterID` symbol present — Fix W owner-matching code in binary |
+| 8 | Binary verification — `IsCompanion` in binary | PASS | `IsCompanion` symbol present — Fix W companion guard in binary |
+| 9 | Test suite — Suite 37 V.1 (heartbeat-for-dead) | PASS | Per infra-expert confirmed: all 3 Suite 37 tests GREEN post-fix |
+| 10 | Test suite — Suite 37 V.2 (despawn-timer-for-dead) | PASS | Per infra-expert confirmed: all 3 Suite 37 tests GREEN post-fix |
+| 11 | Test suite — Suite 37 W.1 (aoe-excludes-owner-companion) | PASS | Per infra-expert confirmed: all 3 Suite 37 tests GREEN post-fix |
+| 12 | Test suite — All 36 prior suites still PASS | PASS | Per infra-expert confirmed: zero regressions across prior suites |
+| 13 | DB integrity — companion_data state | PASS | 5 rows (owner_id=6): Lydl(10) alive, Hollish(18) alive, Jimble(22) suspended, Jracol(23) alive, Lashun(24) alive. 1 suspended row is Jimble — pre-existing dead state from prior testing, not a V3R issue |
+| 14 | DB integrity — companion_data owner FK | PASS | 0 orphaned rows (all owner_ids resolve to valid character_data.id) |
+| 15 | DB integrity — companion_data npc_type_id FK | PASS | 0 orphaned rows (all npc_type_ids resolve to valid npc_types.id) |
+| 16 | Rule validation — Companions:RezEnabled | PASS | `true` |
+| 17 | Rule validation — Companions:RezPostCombatDelayS | PASS | `10` |
+| 18 | Rule validation — Companions:RezRange | PASS | `200` |
+| 19 | Rule validation — Companions:RezWaiveReagents | PASS | `true` |
+| 20 | Rule validation — Companions:DeathDespawnS | PASS | `1800` (30 min — required for V3R-2 auto-dismiss scenario) |
+| 21 | Rule validation — Companions:CompanionManaRegenMult | INFO | `100` (BUG-003 descoped — not validated in V3R) |
+| 22 | Cleric rez spell data — companion_spell_sets | PASS | 9 Cleric rez spells present (class_id=2, spell_type=65536), all targettype=15, effectid1=81 |
+| 23 | Log analysis — world.log errors post-restart | PASS | No errors. 8 zones registered (dynamic_01 through dynamic_08, ports 7000-7007). Loginserver connected. No FATAL or crash entries |
+| 24 | Log analysis — zone_dynamic logs errors | PASS | Zone startup clean. Pre-existing inventory slot warnings (3810-3819, char_id=6) present but pre-date this fix — unrelated |
+| 25 | Log analysis — crash directory | PASS | Newest crash is Apr 20 (pre-V3R). No post-V3R crashes |
+| 26 | Build verification | PASS | Binary is 233 MB, built 2026-04-29 14:15. Zero new compiler warnings per infra-expert confirmation |
+| 27 | Zone process count | PASS | 8 dynamic zone processes running (loginserver PID 383, world PID 478, zones PIDs 613-642 per infra-expert confirmation) |
+
+### V3R Pre-Existing Condition Note
+
+Jimble Woodentoe (companion_id=22) has `is_suspended=1` in `companion_data`. This is a pre-existing dead-companion state from prior test sessions — NOT a V3R issue. Jimble should be the first subject of the BUG-005 auto-dismiss timer test (V3R-2): if V3R-2 is run before Jimble is unsuspended, Jimble's suspended row can serve as the test subject for the 30-minute auto-dismiss timer verification.
+
+**To reset Jimble for testing (if needed before V3R-2):**
+```sql
+docker exec akk-stack-mariadb-1 mysql -ueqemu -p'ZSF4Iz1Eht0eZ2Qn68bAAEXln6Prc79' peq -e "UPDATE companion_data SET is_suspended=0 WHERE id=22;"
+```
+Then `!summon Jimble` in-game to bring him into the zone.
+
+---
+
+## V3R Part 2: In-Game Testing Guide
+
+### V3R Overview
+
+**What V3R fixes:**
+- Companions no longer vanish during stationary combat intervals — heartbeat restored.
+- Dead companions auto-dismiss after 30 minutes as designed — despawn timer restored.
+- Player harmful AoE spells (mez, stun, AoE damage) no longer hit own companions — AoE exclusion added.
+
+**What V3R does NOT fix (descoped):** BUG-003 regen. Do not measure regen rates during these tests. A companion's mana regeneration appearing slow is expected behavior until the dedicated companion-regen-mechanics bugfix.
+
+**Validation structure:** Three bands of testing are required per the V3R regression-discipline mandate:
+- **Band 1 — Direct symptoms:** V3R-1 (heartbeat), V3R-2 (auto-dismiss), V3R-3 (AoE filter)
+- **Band 2 — Sustained-play coverage:** V3R-5 (5+ min combat), V3R-7 (multi-zone), V3R-8 (multi-rez), V3R-9 (sustained AoE)
+- **Band 3 — Adjacent-system regression:** Woven into the Band 2 scenarios below
+
+**Key rule:** `Companions:DeathDespawnS=1800` (30 minutes). V3R-2 requires waiting the full 30 minutes. Start it in parallel with other tests.
+
+### V3R Companion Roster Reminder
+
+| Name | Class | companion_id | Role in tests |
+|------|-------|-------------|---------------|
+| Lashun Novashine | Cleric (2) | 24 | The rezzer; stationary caster for heartbeat tests |
+| Hollish Tnoops | Warrior (1) | 18 | Primary "dies in combat" subject |
+| Jimble Woodentoe | Ranger (4) | 22 | Secondary death subject; currently suspended — use for V3R-2 |
+| Jracol Brestiage | Rogue (9) | 23 | Additional melee for multi-companion tests |
+| Lydl the Great | Wizard (12) | 10 | Stationary caster; good for heartbeat companion visibility |
+
+### V3R GM Setup Commands
+
+```
+#level 54                      -- match companion level if needed
+#reloadquests                  -- refresh quest scripts
+#kill                          -- kill targeted NPC/companion (for engineering death)
+#repop                         -- repopulate zone NPCs
+#goto <zone> <x> <y> <z>       -- teleport to specific location
+#zone <zoneshort>              -- zone to a zone by short name
+#showstats                     -- show stats of targeted NPC
+#findnpc <name>                -- find NPC/companion entity in zone by name
+```
+
+---
+
+### V3R-1: BUG-002 Visibility Heartbeat (Band 1 PRIMARY)
+
+**What you're proving:** After Fix V Option A, dead and stationary-alive companions no longer vanish from screen during combat. The `m_ping_timer` heartbeat fires unconditionally every 5 seconds regardless of HP state.
+
+**Prerequisite:** Player + Lashun Novashine (Cleric) + at least one melee companion (Hollish). Zone with combat mobs available. Lashun must be at a level where she is stationary during fights (she casts, does not melee).
+
+**Steps:**
+1. Unsuspend all companions and bring them into the zone:
+   ```
+   !summon Lashun
+   !summon Hollish
+   ```
+2. Zone into a combat zone with manageable mobs:
+   ```
+   #zone najena
+   ```
+3. Engage a mob. Let combat play out.
+4. During the fight, focus your eyes on Lashun. She is a caster — she will stand in place and cast spells without moving.
+5. Watch Lashun continuously for a minimum of 60 seconds while she is stationary.
+6. Repeat with Hollish if Hollish also has stationary intervals.
+
+**Pass if:** Lashun (and any other stationary companion) remains fully visible throughout the entire fight, even during intervals of 30+ seconds with no movement.
+
+**Fail if:** Any companion vanishes from screen during a stationary window of 5-30 seconds and reappears only when they next move. This is the original BUG-002 symptom.
+
+**Adjacent regression checks (Band 3):**
+- After the fight, verify `!status Lashun` responds normally — heartbeat firing does not interfere with command dispatch.
+- Verify Lashun still casts heals and rez spells normally — heartbeat is a position-packet send, not a logic interrupt.
+
+---
+
+### V3R-2: BUG-005 Auto-Dismiss Timer (Band 1 PRIMARY — START THIS FIRST, RUN IN BACKGROUND)
+
+**What you're proving:** After Fix V Option A, the `m_death_despawn_timer.Check()` fires unconditionally for dead companions. Dead companions auto-dismiss after `Companions:DeathDespawnS=1800` seconds (30 minutes).
+
+**Important: Start this test IMMEDIATELY upon beginning your testing session, then run other tests in parallel. This is a 30-minute wait.**
+
+**Prerequisite:** One dead companion. Jimble Woodentoe (companion_id=22) is already suspended in the database. Use him as the test subject.
+
+**Steps:**
+
+**Step A — Set up the dead companion (do this first):**
+1. Bring Jimble into the zone in dead/suspended state. If he is already is_suspended=1 in the DB, just verify he is NOT in the zone (suspended companions are not in zone).
+2. Use `!summon Jimble` — if he appears as a corpse/dead entity, that is the correct dead state. If the !summon command restores him alive, then instead:
+   - Kill Jimble directly: `#kill` while targeting him
+   - Verify he is in dead state: he should be a corpse entity in the zone, or removed (is_suspended=1 in DB)
+3. Confirm Jimble is in dead/suspended state:
+   ```
+   docker exec akk-stack-mariadb-1 mysql -ueqemu -p'ZSF4Iz1Eht0eZ2Qn68bAAEXln6Prc79' peq -e "SELECT id, name, is_suspended FROM companion_data WHERE id=22;"
+   ```
+   Expected: `is_suspended=1`
+
+**Step B — Note the current time and wait:**
+4. Note the exact current time.
+5. Do NOT rez Jimble. Do NOT use `!unsuspend Jimble`. Let the timer run.
+6. Run other tests (V3R-1, V3R-3, V3R-5, etc.) while this timer runs.
+7. After 31+ minutes, check whether Jimble has auto-dismissed.
+
+**Step C — Verify auto-dismiss fired:**
+8. At the 31-minute mark, run:
+   ```
+   docker exec akk-stack-mariadb-1 mysql -ueqemu -p'ZSF4Iz1Eht0eZ2Qn68bAAEXln6Prc79' peq -e "SELECT id, name, is_suspended, is_dismissed FROM companion_data WHERE id=22;"
+   ```
+9. Use `#findnpc Jimble` in-game — Jimble should not be present as an entity.
+
+**Pass if:** After 30+ minutes without rez, Jimble's entity is no longer in zone AND `companion_data` shows `is_dismissed=1` or the row state reflects the auto-dismiss (is_dismissed was set by auto-dismiss logic).
+
+**Fail if:** After 31+ minutes, Jimble's dead entity is still present in the zone occupying a group slot, with no auto-dismiss having fired. This is the BUG-005 symptom.
+
+**Adjacent regression check (Band 3 — auto-dismiss interrupted by rez):**
+- Independently: kill a second companion (Jracol or Hollish) mid-test.
+- Immediately have Lashun rez them (within the 30-minute window).
+- Verify the rez succeeds AND the despawn timer is correctly stopped (the rezzed companion is alive, not pending auto-dismiss).
+
+---
+
+### V3R-3: BUG-004 AoE Friend/Foe Filter (Band 1 PRIMARY)
+
+**What you're proving:** After Fix W α, the player's harmful AoE spells no longer affect their own companions. The `Mob::IsAttackAllowed` exclusion at `aggro.cpp:867` checks `IsCompanion() && GetOwnerCharacterID() == owner_char_id` before returning true.
+
+**Prerequisite:** Player must have a harmful AoE spell: AoE mez, AoE stun, AoE damage, or any AoE detrimental. Player + 2+ companions. At least 1 enemy mob.
+
+**Steps:**
+1. Bring all 5 companions into the zone:
+   ```
+   !summon Lashun
+   !summon Hollish
+   !summon Jracol
+   !summon Lydl
+   ```
+2. Zone into a combat zone with multiple mobs:
+   ```
+   #zone najena
+   ```
+3. Pull 2-3 mobs. Position so that your companions AND the mobs are within AoE radius.
+4. Cast a player harmful AoE spell — AoE mez, AoE stun, or AoE damage.
+5. Observe target list and effects.
+
+**Pass if:**
+- Enemy mobs are mezzed/stunned/damaged by the AoE.
+- Own companions (Lashun, Hollish, Jracol, Lydl, etc.) are NOT mezzed, stunned, or damaged by the player's AoE.
+- Companions continue fighting normally after the AoE cast.
+
+**Fail if:** Any companion receives the AoE debuff (mez, stun, damage) from the player's own harmful AoE cast.
+
+**Repeat with multiple AoE types:**
+- AoE mez (Mesmerize line)
+- AoE stun
+- AoE damage (if available)
+
+**Adjacent regression checks (Band 3 — AoE subsystem consumers):**
+- **NPCs can still AoE companions:** If an enemy mob uses a harmful AoE, companions SHOULD be affected (Fix W only excludes the player's own companions from the player's OWN AoE; third-party AoE from mobs is unchanged). Verify mobs can still AoE the companions.
+- **Group beneficial AoE reaches companions:** Cast a group heal or group buff — companions SHOULD receive it. Fix W only affects the detrimental AoE matrix; beneficial AoE path is unchanged.
+- **Companion can cast on NPC:** Have Lashun or Lydl cast a harmful spell at an enemy — companions should still be able to hit hostile NPCs. The fix excludes companions as targets of the PLAYER's AoE, not the companion's own spell casting.
+
+---
+
+### V3R-5: Sustained Combat Encounter — 5+ Minutes (Band 2)
+
+**What you're proving:** Over a sustained engagement longer than 5 minutes, all three fixes remain stable. Heartbeat does not drift or stop. AoE exclusion holds across many spell casts. Adjacent AI behaviors (regen tick, LOM announcements, combat positioning) are unbroken.
+
+**Prerequisite:** Player + 3-5 companions. A zone with challenging mobs or multiple pulls. Plan to spend at least 5 minutes in continuous combat.
+
+**Steps:**
+1. Bring full companion party into a challenging zone. Deeper Najena, Befallen, or Lake of Ill Omen work well.
+2. Engage and sustain combat for 5+ minutes — chain-pull mobs to keep continuous engagement.
+3. During combat, observe all of the following continuously:
+   - **Visibility:** All companions remain visible throughout. No companion vanishes during a stationary window.
+   - **Lashun's behavior:** She stands at caster range, casts heals when companions are wounded. She does not run into melee.
+   - **AoE exclusion (if you cast AoE):** Companions are not affected by player AoE.
+   - **Melee companion attacks:** Hollish, Jracol swing at mobs on regular attack-round cadence.
+4. If Lashun runs low on mana during the sustained fight:
+   - Watch for a single LOM ("low on mana") announcement — `Companions:LOMThresholdPct=15` should trigger it.
+   - Verify she does NOT spam the announcement repeatedly.
+5. After the fight, issue several companion commands to verify command dispatch is intact:
+   ```
+   !status
+   !passive
+   !aggressive
+   !follow
+   !guard
+   !hold
+   !recall
+   ```
+
+**Pass if:**
+- All companions remain visible for the full 5+ minute engagement.
+- No companion vanishes during stationary windows.
+- AoE (if cast) does not hit own companions.
+- Melee companions are swinging on cadence.
+- LOM announcement fires at most once per low-mana event.
+- All !commands respond normally at end of combat.
+
+**Fail if:**
+- Any companion vanishes during the 5+ minute window (BUG-002 regression).
+- Any companion is hit by player AoE during the sustained encounter (BUG-004 regression).
+- Any !command is unresponsive post-combat.
+
+---
+
+### V3R-7: Multi-Zone Cycle (Band 2)
+
+**What you're proving:** Companion entity-list registration is stable across zone transitions. Fix V's restructure of `Companion::Process()` does not affect the `SpawnCompanionsOnZone` path. Companions are visible and functional after each zone-in.
+
+**Prerequisite:** Player + 2+ companions. Access to 3 different zones.
+
+**Steps:**
+1. Confirm all companions are visible and `!status` responds in starting zone.
+2. Zone to a second zone:
+   ```
+   #zone qeynos
+   ```
+3. Immediately after zone-in: verify all companions followed you and are visible. Issue `!status`.
+4. Sit and wait 60 seconds. Verify companions remain visible (heartbeat during idle).
+5. Zone to a third zone:
+   ```
+   #zone befallen
+   ```
+6. Immediately after zone-in: verify visibility. Issue `!status`.
+7. Pull 2-3 mobs and engage in a brief combat (2+ minutes). Verify visibility during combat.
+8. Zone back to starting zone. Verify one final time.
+
+**Pass if:**
+- Companions follow correctly on all 3 zone transitions.
+- All companions are visible immediately after each zone-in.
+- All companions remain visible during idle (60s sit) in the new zone.
+- `!status` responds in each zone.
+- Combat in the new zone shows stable companion visibility.
+
+**Fail if:**
+- Any companion fails to appear in the new zone.
+- Any companion vanishes from view after zone-in during idle or combat.
+- `!status` is unresponsive in any zone.
+
+---
+
+### V3R-8: Multi-Rez Cycle (Band 2)
+
+**What you're proving:** Fix V does not degrade rez-path behavior from V1/V2. Each rez cycle produces a fully-functional companion. AoE exclusion (Fix W) works for rezzed companions just as well as alive-from-spawn companions.
+
+**Prerequisite:** Player + Lashun (Cleric) + 1 melee companion (Hollish). Zone with combat.
+
+**Steps — repeat 3 times:**
+1. Engage a fight and let Hollish die. Win the fight.
+2. Wait for Lashun's auto-rez (10-70 seconds). Observe the rez cast and completion.
+3. After rez:
+   - Verify Hollish is visible in zone.
+   - Verify Hollish is in the group window with correct name.
+   - Issue: `!status`, `!follow`, `!aggressive` — all should respond.
+   - Cast a player AoE near Hollish — Hollish should NOT be affected.
+4. Repeat the death+rez cycle for a total of 3 cycles.
+
+**Pass if:**
+- All 3 rez cycles succeed (Hollish returns visible, in group, responsive).
+- AoE exclusion works correctly on the rezzed companion in each cycle.
+- No "membername[] leak" (group window always shows correct names after each rez).
+- `!status` always responds post-rez.
+
+**Fail if:**
+- Any rez cycle leaves Hollish invisible or missing from group window (V1/V2 regression).
+- Rezzed Hollish is hit by player AoE (Fix W not covering rezzed companions).
+- Group window shows garbled or duplicate names after multiple rez cycles.
+
+**Antagonistic hook (C-10 atomic-rez coexistence):** During rez cycle 2 or 3, cast a player AoE spell at the precise moment Lashun's rez cast completes. Observe: AoE should not double-damage the rezzed companion. This is a theoretical-only scenario (single-threaded zone tick eliminates real race), but worth a single observation.
+
+---
+
+### V3R-9: Sustained AoE Encounter (Band 2)
+
+**What you're proving:** AoE exclusion (Fix W α) holds under sustained pressure across multiple spell casts over 2+ minutes, including multiple AoE types. No companion is EVER incorrectly hit.
+
+**Prerequisite:** Player with multiple AoE detrimental spells. Pull 3-4 enemy mobs to ensure repeated AoE use.
+
+**Steps:**
+1. Zone into a zone with groups of mobs (gnolls, skeletons, etc.).
+2. Pull 3-4 mobs at once. Position companions within AoE radius.
+3. Over a 2+ minute fight, cast AoE spells repeatedly — alternate types if available:
+   - AoE mez (if available for your class)
+   - AoE stun
+   - AoE damage
+4. After each AoE cast, note whether any companion was affected.
+5. Sustain for 2+ minutes with multiple AoE casts.
+
+**Pass if:** Across ALL AoE casts in the 2+ minute window, no companion is ever mezzed, stunned, or damaged by the player's own AoE.
+
+**Fail if:** Any companion is affected by a player AoE at any point in the 2+ minute window.
+
+---
+
+### V3R Band 3 Adjacent-System Regression Summary
+
+Per regression-discipline mandate, the sustained-play scenarios above cover the following adjacent-system consumers. Confirm each as you run the Band 2 tests:
+
+| Subsystem | Consumer tested | Where covered | Pass criterion |
+|-----------|----------------|---------------|----------------|
+| `Companion::Process()` AI tick | Alive companion heartbeat | V3R-5 (5+ min combat) | Companion stays visible throughout |
+| `Companion::Process()` AI tick | Sitting/standing sync on combat enter | V3R-5 | Lashun stands when player enters combat, no stuck-sitting |
+| `Companion::Process()` AI tick | LOM announcement | V3R-5 (let Lashun go low on mana) | LOM fires once, not spam |
+| `Companion::Process()` AI tick | Combat positioning | V3R-5 | Lashun maintains caster standoff range |
+| `Companion::Process()` AI tick | Melee attack rounds | V3R-5 | Hollish swings on cadence |
+| `!command` dispatch | All primary commands post-rez | V3R-8 (after each rez) | !status, !follow, !aggressive, !passive, !guard, !hold, !recall all respond |
+| `m_ping_timer` heartbeat | Dead stationary entity | V3R-2 (while dead companion is in zone awaiting 30-min timer) | Dead Jimble entity remains visible in zone during the wait window |
+| `m_death_despawn_timer` | Auto-dismiss fires | V3R-2 (30-min wait) | Auto-dismiss fires at 30-minute mark |
+| `m_death_despawn_timer` | Rez interrupts timer | V3R-8 (rez during active despawn window) | Rez succeeds, despawn timer not left in broken state |
+| `Mob::IsAttackAllowed` AoE | NPC AoE still hits companions | V3R-9 (sustained AoE) | If any mobs use AoE, companions CAN be affected by it (Fix W only excludes player's own AoE) |
+| `Mob::IsAttackAllowed` AoE | Beneficial AoE reaches companions | V3R-3 adjacent check | Player group heal/buff AoE reaches companions |
+| `Mob::IsAttackAllowed` AoE | Companion can cast on NPC | V3R-3 adjacent check | Lashun/Lydl can cast harmful spells at enemy mobs |
+| V1/V2 rez pipeline | Rez still works post-V3R | V3R-8 (multi-rez cycle) | 3 successful rez cycles |
+| V1/V2 rez pipeline | Player rez window still appears | (run V1 Test 2 if not covered by V3R-8) | Standard EQ rez accept window appears for player corpse |
+
+---
+
+### V3R Regression Tests
+
+---
+
+### V3R-R1: V1 Regression — Single Companion Rez Still Works
+
+**What you're proving:** Fix V's restructure of `Companion::Process()` does not break the V1/V2 rez pipeline.
+
+**Steps:** Run the V1/V2 primary rez scenario: let Hollish die in combat, wait for Lashun's auto-rez, verify Hollish returns.
+
+**Pass if:** Hollish returns to life exactly as established in V2 testing.
+**Fail if:** Rez no longer fires, or Hollish does not appear post-rez.
+
+---
+
+### V3R-R2: Suite 37 + Prior Suite Regression Check (Server-Side)
+
+**What you're proving:** All V3R unit tests pass and no prior test suite regressions were introduced.
+
+**Steps:** Already confirmed by infra-expert pre-check. To re-verify after any in-game testing reveals unexpected behavior:
+
+```bash
+docker exec akk-stack-eqemu-server-1 bash -c "cd /home/eqemu/server && ./bin/zone tests:companion" 2>&1 | tail -20
+```
+
+**Pass if:** Output ends with `[OK] All Companion Tests Completed!` and no `FAILED` lines.
+**Fail if:** Any FAILED line — report which test and escalate to c-expert.
+
+---
+
+### V3R-R3: OOC Regen HP Rate (G-9 carry-forward observation)
+
+**What you're proving:** After an extended rest out-of-combat, alive companions HP-regen at the rate predicted by `Companions:OOCRegenPct=5` (~5% of max HP per tick), NOT the base `NPC:OOCRegen=1` (~1 HP per tick).
+
+**Steps:**
+1. After a fight where companions took damage, sit in a safe area.
+2. Observe companion HP over ~2 minutes via `!status`.
+3. Note whether HP is climbing visibly (5%/tick would be clearly visible) or barely moving (~1 HP/tick would be nearly imperceptible).
+
+**Pass if:** HP climbs visibly — consistent with `OOCRegenPct=5`.
+**Fail if:** HP barely moves despite sitting for 2+ minutes (would indicate `Companions:OOCRegenPct` is not being applied — escalate to c-expert as a separate issue, NOT a V3R regression).
+
+**Note:** This is an adjacent observation, not a V3R fix. If regen appears broken, file it as a separate issue in the companion-regen-mechanics follow-up bugfix, not as a V3R blocker.
+
+---
+
+## V3R Server-Side Validation Summary
+
+**Overall V3R server-side result: PASS**
+
+All 37+ test suites pass. Binary built 2026-04-29 14:15, post-V3R commits. All three Fix V + Fix W code path symbols confirmed in binary. DB clean — 0 orphaned FKs, 5 companion rows with 1 pre-existing suspended row (Jimble, pre-dates V3R). All V3R-relevant rules at correct values. 8 zones running. No errors in world or zone logs beyond pre-existing inventory slot warnings.
+
+**In-game validation is the remaining gate for V3R closure.** The 7 scenarios above (V3R-1, V3R-2, V3R-3, V3R-5, V3R-7, V3R-8, V3R-9) plus the regression tests must be confirmed by the user.
+
+---
+
+## V3R Rollback Instructions
+
+If V3R introduces a regression:
+
+```bash
+cd /mnt/d/Dev/eq/eqemu
+
+# Full V3R rollback (Fix V + Fix W):
+git revert 035d33348 --no-commit
+# Review diff, then rebuild and restart
+
+# Rebuild after revert:
+docker exec akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"
+# Then full restart: make restart from akk-stack/, then loginserver/world/8 zones
+
+# Keep Suite 37 TDD tests even on rollback — they document the regressed behavior
+```
+
+**Selective rollback notes:**
+- Fix V (Process restructure) and Fix W (AoE exclusion) are independent changes in different files (`companion.cpp` vs `aggro.cpp`). If only one is problematic, selective revert is feasible. Consult c-expert for targeted revert.
+
+---
+
+## V3R Blockers
+
+None identified from server-side validation.
+
+| # | Blocker | Severity | Responsible Expert | Status |
+|---|---------|----------|-------------------|--------|
+| — | (none) | — | — | — |
