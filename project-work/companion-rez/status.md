@@ -632,6 +632,10 @@ doc, not optional:
 
 ## V3 Re-Triage Handoff Log
 
+### game-tester → user (V3R in-game validation pending)
+- **Date:** 2026-04-29
+- **Notes:** V3R server-side validation: PASS. Binary built 2026-04-29 14:15 with Fix V Option A + Fix W α (commits 1c03ce9ea TDD red + 035d33348 fix). All Suite 37 V.1/V.2/W.1 GREEN. All 36 prior suites still pass (0 regressions). DB: 5 companion rows, 0 orphaned FKs, 1 pre-existing suspended row (Jimble). All V3R rules confirmed. 8 zones running, no errors in logs. Full in-game test plan at `game-tester/test-plan.md` V3R section: 7 numbered scenarios (V3R-1 heartbeat, V3R-2 auto-dismiss 30min, V3R-3 AoE, V3R-5 5+min combat, V3R-7 multi-zone, V3R-8 multi-rez, V3R-9 sustained AoE) + 3 regression tests. Awaiting user in-game confirmation to close BUG-002 + BUG-004 + BUG-005.
+
 ### V3R architect → V3R implementation team (c-expert + infra-expert + game-tester)
 - **Date:** 2026-04-29
 - **Notes:** V3R Architecture posted to `architect/architecture.md` as new section "V3 Re-Triage Architecture (2026-04-29)" — preserves V1, V2, prior V3 sections intact as historical record.
@@ -715,11 +719,11 @@ User has reviewed and given a revised approval. BUG-003 (both mana and HP) is fu
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | V3 Re-Triage Architecture | architect (lead) + 5 advisors | Complete (USER-APPROVED with revisions) | 2026-04-29 | 2026-04-29 |
-| V3 Re-Triage Implementation | c-expert + infra-expert + game-tester | Awaiting Orchestrator Phase Transition | | |
-| V3 Re-Triage Validation | game-tester | Not Started | | |
+| V3 Re-Triage Implementation | c-expert + infra-expert + game-tester | Complete 2026-04-29 | 2026-04-29 | 2026-04-29 |
+| V3 Re-Triage Validation | game-tester | In Progress | 2026-04-29 | |
 | V3 Re-Triage Completion | _user_ | Not Started | | |
 
-**V3 Re-Triage current phase:** Architecture USER-APPROVED with revisions. Awaiting orchestrator phase transition (commit gate → team shutdown → dirty tree gate → implementation team spawn) per CLAUDE.md phase transition protocol.
+**V3 Re-Triage current phase:** Validation — server-side PASS; in-game test plan ready; awaiting user confirmation.
 
 ## V3 Re-Triage Implementation Tasks (REVISED — supersedes prior table)
 
@@ -729,8 +733,9 @@ User has reviewed and given a revised approval. BUG-003 (both mana and HP) is fu
 | V3R.2 | Implement Fix V Option A: restructure `Companion::Process()` top-section. `bool is_dead = (GetHP() <= 0);` capture + `if (!is_dead)` guards on AI-dispatch sections (B.3, B.4, B.7, B.8, B.9, B.10, B.11). Keep B.1 heartbeat AND B.2 `m_death_despawn_timer.Check()` UNCONDITIONAL. Reference c-expert formal enumeration B.1–B.11 for exact line guard mapping. ~25 lines C++. | c-expert | **Complete** 2026-04-29 | Implemented in companion.cpp. Fix R4 blanket early-return replaced with is_dead capture. Two `if (!is_dead)` blocks wrap AI-dispatch sections. Heartbeat + despawn timer UNCONDITIONAL. |
 | V3R.3 | Implement Fix W α: single-site IsCompanion-aware AoE exclusion in `Mob::IsAttackAllowed` `_CLIENT vs _NPC` matrix at `aggro.cpp:867`. Reference c-expert C-12 code sketch. ~10-15 lines C++. | c-expert | **Complete** 2026-04-29 | Implemented in aggro.cpp:868-884. Added companion.h include. Handles owner's companion + group member's companion. Commit 035d33348. |
 | V3R.4 | Rebuild zone binary. Re-run Suite 37 — verify V.1, V.2, W.1 PASS, all V1/V2 tests unchanged. Run full companion test suite. | c-expert | **Complete** 2026-04-29 | All Suite 37 tests pass. Full suite passes (Suite 36 group-ID exhaustion is pre-existing flaky, unrelated to V3R changes). Zero new compiler warnings. |
-| V3R.5 | `make restart` from akk-stack/, then full server stack startup (loginserver / world / 8 dynamic zones per documented procedure). | infra-expert | Not Started | runtime |
-| V3R.6 | In-game validation per V3R Validation Plan (post-revision): 7 sustained-play scenarios (V3R-1 heartbeat PRIMARY, V3R-2 auto-dismiss 30-min PRIMARY, V3R-3 AoE PRIMARY, V3R-5 sustained combat 5+min, V3R-7 multi-zone, V3R-8 multi-rez, V3R-9 sustained AoE). User confirms BUG-002 + BUG-005 + BUG-004 closed. | game-tester | Not Started | manual + sustained. BUG-003 scenarios REMOVED (descoped). |
+| V3R.4b (fix-iteration) | BUG-002 fix-iteration: alive-passive companion heartbeat gap. Pre-existing gap in original heartbeat fix (9e4b7dfd1) — heartbeat was always placed after passive early-return. Add V.3 TDD red test; hoist heartbeat block above all early-returns in companion.cpp with INVARIANT comment. | c-expert | **Complete** 2026-04-29 | V.3 red commit 081c6e5c8; green commit 84ac6a204. All 4 Suite 37 tests pass (V.1, V.2, W.1, V.3). Full suite green. Pushed to origin. |
+| V3R.5 | `make restart` from akk-stack/, then full server stack startup (loginserver / world / 8 dynamic zones per documented procedure). | infra-expert | **Complete** 2026-04-29 | loginserver PID 383, world PID 478, 8 dynamic zones PIDs 613-642. No startup errors confirmed by infra-expert. |
+| V3R.6 | In-game validation per V3R Validation Plan (post-revision): 7 sustained-play scenarios (V3R-1 heartbeat PRIMARY, V3R-2 auto-dismiss 30-min PRIMARY, V3R-3 AoE PRIMARY, V3R-5 sustained combat 5+min, V3R-7 multi-zone, V3R-8 multi-rez, V3R-9 sustained AoE). User confirms BUG-002 + BUG-005 + BUG-004 closed. | game-tester | **In Progress** 2026-04-29 | Server-side pre-checks PASS. In-game test plan at `game-tester/test-plan.md` V3R section. Awaiting user in-game confirmation. |
 | V3R.7 | Commit and push V3R changes on `bugfix/companion-rez` in eqemu and claude repos. | c-expert | **Complete** 2026-04-29 | eqemu commits pushed: 1c03ce9ea (TDD red) + 035d33348 (Fix V + Fix W green). claude repo status.md update commit pending. |
 
 **Spawn list:** c-expert (V3R.1, V3R.2, V3R.3, V3R.4, V3R.7), infra-expert (V3R.5), game-tester (V3R.6). **architect does NOT need to rejoin** (no BUG-003 decision step). **data-expert is NOT re-spawned** (no conditional rule UPDATE — empirical protocol descoped). **Do NOT spawn lua-expert / config-expert / protocol-agent.**
@@ -739,10 +744,10 @@ User has reviewed and given a revised approval. BUG-003 (both mana and HP) is fu
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-002 | NPC companions vanish from screen during combat if stationary (visibility heartbeat regressed) | High | user | **Investigating** — V3R architecture USER-APPROVED; fix in V3R implementation queue (Fix V Option A) | c-expert (V3R.2) | |
+| BUG-002 | NPC companions vanish from screen during combat if stationary (visibility heartbeat regressed) | High | user | **V3R FIX FAILED in-game 2026-04-30** — user repro: alive companions in passive mode (`!passive`) during combat still vanish after 10–15s when stationary. Fix V Option A premise (heartbeat skipped only for HP=0 entities) did NOT address the alive-passive case. **Re-triage needed.** c-expert dispatched 2026-04-30 to diagnose. | c-expert (re-triage) | |
 | BUG-003 | Companion HP/mana regen drastically slowed (~1%/report when sitting); user uncertain whether actual regen tick or gsay reporting cadence | High | user | **DESCOPED FROM V3R** — moved to future companion-regen-mechanics bugfix per user decision 2026-04-29. Both mana AND HP sides will be handled together in the deep-dive bugfix. | TBD (future regen-mechanics bugfix) | |
-| BUG-004 | Player harmful AoE spells (mez, stun) affect own NPC companions; AoE friend/foe filter regressed | High | user | **Investigating** — V3R architecture USER-APPROVED; fix in V3R implementation queue (Fix W α single-site) | c-expert (V3R.3) | |
-| BUG-005 (NEW) | 30-minute auto-dismiss timer broken for dead companions (`Companions:DeathDespawnS` not enforced post-V2 Fix R4) | Medium | architect (V3R Round 1 enumeration) | **Investigating** — V3R architecture USER-APPROVED; fix in V3R implementation queue (Fix V Option A — same fix as BUG-002, zero additional surface) | c-expert (V3R.2) | |
+| BUG-004 | Player harmful AoE spells (mez, stun) affect own NPC companions; AoE friend/foe filter regressed | High | user | **In-game validation pending** — server-side PASS, fix landed (Fix W α at `aggro.cpp:867`). User has not yet executed V3R-3 or V3R-9 in-game scenarios. | c-expert (V3R.3) | |
+| BUG-005 (NEW) | 30-minute auto-dismiss timer broken for dead companions (`Companions:DeathDespawnS` not enforced post-V2 Fix R4) | Medium | architect (V3R Round 1 enumeration) | **In-game validation pending** — server-side PASS, fix landed (bundled with Fix V Option A). User has not yet executed V3R-2 (31-min wait scenario). | c-expert (V3R.2) | |
 
 ## V3 Re-Triage Decision Log (REVISED — additions)
 
