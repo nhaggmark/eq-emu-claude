@@ -128,13 +128,14 @@ Data-expert: this list is illustrative; reconcile against `start_zones` table an
 
 ## 9. Post-Consultation Updates (added 2026-05-03 after protocol-agent + config-expert replies)
 
-### Spell ID range — BLOCKING
+### Spell ID range — constraint exists, but no reclamation needed (corrected after live-DB re-audit)
 
 - **Titanium constant:** `SPELL_ID_MAX = 9999` at `eqemu/common/patches/titanium_limits.h:329`
 - **Wire enforcement:** `titanium.cpp:1392-1408` silently writes `0xFFFFFFFFU` to spell_book entries with id > 9999
 - **Server enforcement:** `client.cpp:3543` `MemorizeSpell` rejects out-of-range ids
-- **Current DB state:** Only 3 unused IDs in [1, 9999]: **1348, 5093, 9412**. Need 12.
-- **Resolution:** data-expert task 0 (added) reclaims 9+ unused sub-9999 spell rows. Audit query in architecture.md §Data Model. Backup before delete.
+- **Live-DB audit (2026-05-03 same-day re-run by architect):** 16 unused IDs exist in [1, 9999]: `1, 2, 1348, 5093, 9412, 9413, 9414, 9415, 9416, 9417, 9418, 9419, 9420, 9421, 9422, 9423`. Excluding sentinel-reserved IDs 1 and 2, **14 unambiguously usable IDs**. We need 12.
+- **Resolution:** No reclamation needed. Architecture assigns the 12 new spells to IDs `1348, 5093, 9412–9421`, leaving `9422` and `9423` as future headroom.
+- **Earlier (incorrect) finding:** Protocol-agent's initial assessment reported "only 3 gaps" (1348, 5093, 9412) and triggered a planned reclamation step (data-expert task 0). The user challenged the requirement ("why does this have to be a lossy operation?"), the architect re-audited via `SELECT id FROM spells_new WHERE id BETWEEN 1 AND 9999 ORDER BY id` plus a Python set-difference, and found the contiguous unused block at 9412–9423 that the original sample missed. Task 0 was removed and the architecture amended same-day. Lesson: "N free IDs in a range" claims must be verified against the live DB via set-difference, not estimated from sampling.
 
 ### Bard `buff_duration = 0xFFFF` — FULL bypass confirmed
 

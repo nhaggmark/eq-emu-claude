@@ -3,7 +3,7 @@
 > **Feature branch:** `feature/summon-corpse-spell`
 > **PRD:** `game-designer/prd.md`
 > **Author:** architect
-> **Date:** 2026-05-03
+> **Date:** 2026-05-03 (amended same-day after spell-ID re-audit)
 > **Status:** Approved — ready for implementation
 
 ---
@@ -12,7 +12,7 @@
 
 Add 12 class-flavored "Summon Corpse" spells (one per casting-capable class), each a free, level-1, 0-mana, 6-second-cast, 3-minute-cooldown self-target spell that pulls the caster's own corpse to their feet within the same zone. The mechanical effect reuses the existing `SE_SummonCorpse` SPA (effect ID 91), which is already class-agnostic at the engine level — no class gate exists in the C++ handler. Implementation is **DB-first**: 12 rows in `spells_new`, 12 scroll items in `items`, vendor entries in `merchantlist`, an idempotent auto-scribe migration into `character_spells`, and one new rule (`Spells:UniversalSummonCorpseCooldown`). Three small, contained C++ changes are required: (a) register the new rule, (b) decouple the recast timer from the no-corpse no-op so a quick "do I have a corpse here?" check doesn't burn the 3-minute cooldown, and (c) consult the rule from the recast block (keyed on `spell_category`) so operators can hot-tune via `#reloadrules` without a content patch. No new opcodes, no protocol changes, no quest scripts.
 
-**One BLOCKING precondition — must be resolved before data-expert can begin spell row inserts:** Titanium's `SPELL_ID_MAX = 9999` (`common/patches/titanium_limits.h:329`) caps spell IDs that the wire format can transport; spells with IDs > 9999 are silently dropped from `OP_PlayerProfile.spell_book[]`. The `spells_new` table currently has only 3 unused IDs in the sub-9999 range (1348, 5093, 9412). We need 12. **Data-expert task 0** (added below) reclaims 9+ additional IDs by deleting truly-unused sub-9999 spell rows (no character has them scribed, no item points to them). This is the gating dependency for the entire feature.
+**Spell ID allocation — no reclamation needed.** Titanium's `SPELL_ID_MAX = 9999` (`common/patches/titanium_limits.h:329`) caps spell IDs that the wire format can transport; spells with IDs > 9999 are silently dropped from `OP_PlayerProfile.spell_book[]`. A live DB audit found **14 unambiguously usable IDs in [1, 9999]** — the contiguous block at 9412–9423 plus the gaps at 1348 and 5093. We need 12 of those 14. The architecture **assigns the 12 new spells to IDs `1348, 5093, 9412–9421`**, leaving `9422` and `9423` as future headroom. No DELETE statements, no spell-row reclamation, no risk of orphaning a referenced spell. (An earlier draft of this architecture flagged a reclamation precondition based on an undercount of available IDs; the user caught the error and the architecture was amended same-day. See §Decision Log entry #11.)
 
 ## Existing System Analysis
 
@@ -43,13 +43,12 @@ Add 12 class-flavored "Summon Corpse" spells (one per casting-capable class), ea
 
 What's missing between current state and PRD requirements:
 
-1. **No spell ID headroom for 12 new spells in the Titanium-safe range.** Reclamation needed (data-expert task 0).
-2. **No spell rows.** 12 new spells_new rows must be created (one per casting class).
-3. **No scroll items.** 12 new `items` rows (itemtype = 9 / Scroll).
-4. **No vendor entries.** `merchantlist` rows for every starting-city class spell vendor that supports each of the 12 classes.
-5. **No auto-scribe migration.** Existing characters of the 12 classes must have the spell pre-scribed on next login.
-6. **No tunable cooldown rule.** `Spells:UniversalSummonCorpseCooldown` does not exist.
-7. **No-op-no-cooldown UX missing.** Engine currently sets the recast timer regardless of whether SummonCorpse actually summoned anything — a "did I leave a corpse here?" probe burns the cooldown.
+1. **No spell rows.** 12 new spells_new rows must be created (one per casting class).
+2. **No scroll items.** 12 new `items` rows (itemtype = 9 / Scroll).
+3. **No vendor entries.** `merchantlist` rows for every starting-city class spell vendor that supports each of the 12 classes.
+4. **No auto-scribe migration.** Existing characters of the 12 classes must have the spell pre-scribed on next login.
+5. **No tunable cooldown rule.** `Spells:UniversalSummonCorpseCooldown` does not exist.
+6. **No-op-no-cooldown UX missing.** Engine currently sets the recast timer regardless of whether SummonCorpse actually summoned anything — a "did I leave a corpse here?" probe burns the cooldown.
 
 ## Technical Approach
 
@@ -59,8 +58,7 @@ Apply the least-invasive-first principle. Per-layer breakdown:
 
 | Component | Change Type | Justification |
 |-----------|-------------|---------------|
-| Spell ID reclamation (delete unused sub-9999 rows) | SQL (DELETE on spells_new) | Required to fit within Titanium's `SPELL_ID_MAX = 9999`. Strictly safer than introducing a per-client opcode rewrite. |
-| 12 new spells | SQL (spells_new) | Reuses existing SE_SummonCorpse SPA — no engine change for the effect itself. |
+| 12 new spells | SQL (spells_new) | Reuses existing SE_SummonCorpse SPA — no engine change for the effect itself. Spell IDs assigned from the 14 available unused IDs in [1, 9999]. |
 | 12 new scroll items | SQL (items) | Standard scroll-item pattern (itemtype=9, scrolleffect=spell_id). |
 | Vendor placement | SQL (merchantlist) | Standard vendor inventory pattern; no new merchant NPCs. |
 | Auto-scribe for existing chars | SQL migration (character_spells) | One-time INSERT...SELECT per class; idempotent. Titanium delivers via OP_PlayerProfile on next zone-in — no server push. |
@@ -73,39 +71,36 @@ Apply the least-invasive-first principle. Per-layer breakdown:
 
 ### Data Model
 
-#### Spell ID allocation strategy
+#### Spell ID allocation
 
-**Goal:** 12 contiguous (or nearly contiguous) spell IDs ≤ 9999.
+**Final allocation (12 IDs assigned, 2 spare):**
 
-**Source pool:**
-- 3 currently unused gaps: **1348, 5093, 9412**.
-- 9+ more reclaimed by data-expert via the procedure below.
+| Spell ID | Class | Spell Name |
+|----------|-------|-----------|
+| 1348 | Necromancer | Conjure Cadaver |
+| 5093 | Shadow Knight | Death's Recall |
+| 9412 | Cleric | Divine Reclamation |
+| 9413 | Paladin | Solemn Retrieval |
+| 9414 | Druid | Nature's Reclamation |
+| 9415 | Ranger | Warden's Claim |
+| 9416 | Shaman | Ancestral Summons |
+| 9417 | Beastlord | Ancestral Call |
+| 9418 | Wizard | Spectral Translocation |
+| 9419 | Magician | Summon Mortal Remains |
+| 9420 | Enchanter | Phantasmal Reclamation |
+| 9421 | Bard | Dirge of Homecoming |
+| 9422 | _spare_ | (reserved for future small-feature use) |
+| 9423 | _spare_ | (reserved for future small-feature use) |
 
-**Reclamation procedure (data-expert task 0):**
+**Source of the 14 free IDs (live DB audit, 2026-05-03):**
+- Verified via `SELECT id FROM spells_new WHERE id BETWEEN 1 AND 9999 ORDER BY id`. Set difference against [1, 9999] yields 16 unused IDs.
+- IDs 1 and 2 are excluded (conventionally reserved as sentinel values; safer to leave alone).
+- Remaining 14 unused IDs are: `1348, 5093, 9412, 9413, 9414, 9415, 9416, 9417, 9418, 9419, 9420, 9421, 9422, 9423`.
+- 12 needed; 2 left as headroom.
 
-```sql
--- Find spells_new rows in [1, 9999] that are referenced by NOTHING.
-SELECT s.id, s.name
-FROM spells_new s
-WHERE s.id BETWEEN 1 AND 9999
-  AND NOT EXISTS (SELECT 1 FROM character_spells cs WHERE cs.spell_id = s.id)
-  AND NOT EXISTS (SELECT 1 FROM items i WHERE i.scrolleffect = s.id)
-  AND NOT EXISTS (SELECT 1 FROM items i WHERE i.clickeffect = s.id)
-  AND NOT EXISTS (SELECT 1 FROM items i WHERE i.proceffect = s.id)
-  AND NOT EXISTS (SELECT 1 FROM items i WHERE i.worneffect = s.id)
-  AND NOT EXISTS (SELECT 1 FROM items i WHERE i.focuseffect = s.id)
-  AND NOT EXISTS (SELECT 1 FROM items i WHERE i.bardeffect = s.id)
-  AND NOT EXISTS (SELECT 1 FROM npc_spells_entries nse WHERE nse.spellid = s.id)
-  AND NOT EXISTS (SELECT 1 FROM aa_rank_effects are WHERE are.effect_id = 132 AND are.base_value = s.id)
-  -- Add any other spell-id reference site you know of
-LIMIT 50;
-```
+**No spell-row reclamation required.** An earlier draft of this architecture flagged a reclamation precondition based on a "3 free IDs" undercount; live DB audit confirmed 14 are available. Architecture amended same-day. See §Decision Log entry #11 for the audit trail.
 
-The data-expert reviews the candidate list (typically these are old PoP+ test spells, deprecated entries, or duplicates that survived previous schema work) and selects 9+ for deletion. Exclude any spell with effects that reference player-experience-affecting SPAs unless the data-expert is confident no live system uses them.
-
-**Backup before delete:** Per MEMORY.md work-protection rules, dump the 9+ rows to a backup SQL file (`claude/tmp/feature-summon-corpse-spell/reclaimed-spells-backup.sql`) before DELETE.
-
-**Final allocation:** Once 12+ IDs are available, data-expert assigns them to the 12 classes. Recommend grouping (e.g., the 3 found gaps + 9 contiguous reclaimed IDs) for human readability, but not required.
+The class-to-ID assignment above is suggested but not strictly required — data-expert may rearrange within the 14-ID pool if there's a reason. The architecture only requires that all 12 IDs be ≤ 9999 and that each spell row's `name` and `classes[]` bitmask match its lore-master-approved class assignment.
 
 #### New `spells_new` rows (12 total)
 
@@ -281,14 +276,13 @@ None. The spell uses the standard spell engine, not quest hooks.
 
 Summarized above in §Data Model. Migration file structure (data-expert finalizes):
 
-0. **Spell ID reclamation:** DELETE 9+ unused sub-9999 spell rows. Backup first.
-1. INSERT 12 spells_new rows.
+1. INSERT 12 spells_new rows (using assigned IDs `1348, 5093, 9412–9421`).
 2. INSERT 12 items rows.
 3. INSERT N merchantlist rows.
 4. INSERT 12 character_spells INSERT...SELECT batches (one per class).
 5. INSERT 1 rule_values row.
 
-Ordering matters: spell rows must exist before items.scrolleffect and character_spells rows reference them (logically; PEQ has no enforced FKs). **Single transaction recommended** so any failure rolls back atomically. **Reclamation step (0) should be in its own transaction with explicit verification** before the rest is applied — undoing a delete after a downstream commit is harder than undoing a single-pass migration.
+Ordering matters: spell rows must exist before items.scrolleffect and character_spells rows reference them (logically; PEQ has no enforced FKs). **Single transaction recommended** so any failure rolls back atomically.
 
 #### Configuration Changes
 
@@ -300,10 +294,9 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 
 | # | Task | Agent | Depends On | Estimated Scope |
 |---|------|-------|------------|-----------------|
-| 0 | **CRITICAL PRECONDITION:** Reclaim 9+ sub-9999 spell IDs in `spells_new` via the SQL audit query in §Data Model. Backup deleted rows to `claude/tmp/feature-summon-corpse-spell/reclaimed-spells-backup.sql`. Combined with the 3 known gaps (1348, 5093, 9412), produce a final list of 12 spell IDs for the new spells. | data-expert | — | DB audit + DELETE + backup |
 | 1 | Add `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, ...)` to `eqemu/common/ruletypes.h` before `RULE_CATEGORY_END()` at line 549. Confirm clean `ninja` build. | config-expert | — | 1 line + build |
-| 2 | Identify the existing Necromancer summon-corpse row in `spells_new` (likely spell ID 3 "Lesser Summon Corpse" or similar — verify via `SELECT id, name, new_icon, casting_animation, descnum, effect_description_id, spell_category FROM spells_new WHERE effectid1 = 91 ORDER BY id`). Capture all the cosmetic fields plus the spell_category (so the new universal spells can pick a DIFFERENT category, not collide). Author the chosen `spell_category` constant for the new spells. Share with c-expert. | data-expert | 0 | DB query + capture |
-| 3 | Author the 12 new `spells_new` INSERT statements, one per class, using values from the §Data Model table, the IDs from task 0, and the cloned icon/animation from task 2. Save to `data-expert/migrations/01-insert-spells.sql`. | data-expert | 2 | 12 INSERT rows |
+| 2 | Identify the existing Necromancer summon-corpse row in `spells_new` (likely spell ID 3 "Lesser Summon Corpse" or similar — verify via `SELECT id, name, new_icon, casting_animation, descnum, effect_description_id, spell_category FROM spells_new WHERE effectid1 = 91 ORDER BY id`). Capture all the cosmetic fields plus the spell_category (so the new universal spells can pick a DIFFERENT category, not collide). Author the chosen `spell_category` constant for the new spells. Share with c-expert. | data-expert | — | DB query + capture |
+| 3 | Author the 12 new `spells_new` INSERT statements, one per class, using the assigned IDs `1348, 5093, 9412–9421` (per §Data Model "Spell ID allocation"), and the cloned icon/animation from task 2. Save to `data-expert/migrations/01-insert-spells.sql`. | data-expert | 2 | 12 INSERT rows |
 | 4 | Add `bool m_summon_corpse_was_noop{false};` to `eqemu/zone/mob.h`. Set it in `eqemu/zone/spell_effects.cpp` no-corpse branch (~line 1851) when `TargetClient == CastToClient()`. Read it in `eqemu/zone/spells.cpp` recast block (~line 2817-2841) gated on the spell_category constant from task 2; also add the `RuleI(Spells, UniversalSummonCorpseCooldown)` override. | c-expert | 1, 2 | ~15 lines across 3 files + build |
 | 5 | Author the 12 new `items` INSERT statements (scroll items). Save to migration file. | data-expert | 3 | 12 INSERT rows |
 | 6 | Enumerate every starting-city class spell vendor's `npc_types.merchant_id` for each of the 12 classes (per the city table in `architect/context/source-spike-findings.md §8`). Author the merchantlist INSERTs. Save to migration file. | data-expert | 5 | ~30-50 INSERT rows |
@@ -315,7 +308,7 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 
 **No protocol-agent task in implementation phase** — protocol-agent's research is already complete and recorded. **No lua-expert or perl-expert task** — no quest scripts are touched.
 
-**Sequencing note:** Task 0 (reclamation) is gating; nothing else can start until 12 IDs are available. Tasks 1, 4 (config/c-expert) can run in parallel with tasks 0, 2 (data-expert) up until task 4 needs the spell_category constant from task 2.
+**Sequencing note:** No critical-precondition gating step. Tasks 1 (config-expert rule registration) and 2 (data-expert clone-source capture) can both start immediately. Task 4 (c-expert engine edits) waits on tasks 1 and 2. Task 3 (spell INSERTs) waits on task 2 only. The earlier draft of this architecture had a "task 0 — spell ID reclamation" precondition; subsequent live-DB audit found 14 unused IDs in [1, 9999] (12 needed), so no reclamation is required and task 0 was removed.
 
 ## Risk Assessment
 
@@ -323,7 +316,6 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| **Spell ID reclamation deletes a row that turns out to be referenced.** | Medium during reclamation | High — deleted spell silently disappears for any user/system referencing it | Audit query covers all known reference sites (character_spells, all 6 item effect columns, npc_spells_entries, aa_rank_effects). Backup before delete. Data-expert reviews each candidate name before approving. Single dedicated transaction so rollback is fast. |
 | Bard variant accidentally engages bard-song-mode | Eliminated by `buff_duration = 0xFFFF` | High if missed | Set `buff_duration = 0xFFFF` defensively on all 12 spells. Game-tester explicitly verifies Bard variant casts as a one-shot spell with normal SendSpellBarEnable behavior. Protocol-agent confirmed wire behavior is identical to non-Bard casts. |
 | Auto-scribe migration writes to slot >= 400 | Very low | Medium — DB row exists but Titanium client doesn't render | `MIN(MAX(slot_id) + 1, 399)` defensive cap. |
 | Recast timer rule override leaks into existing NEC/SHM summon-corpse line | Low if `spell_category` discriminator is unique | Medium — operator unintentionally retunes high-level spell cooldowns | Use a NEW `spell_category` value for the 12 new spells (data-expert verifies value is unused via `SELECT DISTINCT spell_category FROM spells_new`). NEC/SHM existing spells retain their stock category. |
@@ -331,7 +323,6 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 | `m_summon_corpse_was_noop` flag survives across casts | Low | Medium — next cast skips its cooldown unintentionally | Always reset the flag in the recast block (already in design — `m_summon_corpse_was_noop = false;` on read). |
 | Existing players surprised by the spell appearing in spellbook | Low | Low (UX) | PRD explicitly approves silent auto-scribe — no MOTD. Document in release notes for ops. |
 | Necromancer player's existing high-level summon-corpse line shares a `timer_id` with new spells | None — `timer_id = 0` for new spells; all 19 EndurTimerIndex slots are taken by other spells anyway | High if shared | Game-tester verifies casting the new spell does NOT block the high-level NEC summon-corpse spell and vice versa. |
-| Reclaimed spell ID is reused for one of our new spells, and a logged-in client still has the OLD spell cached locally | Low | Low — client expects spell name X, server now sends summon-corpse | Recommend reclaimed IDs be selected from rows not present in any character_spells row. Bounce all sessions before applying (already implied by full-stack restart). |
 
 ### Compatibility Risks
 
@@ -352,14 +343,15 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 
 ### Pass 1: Feasibility
 
-**Can we build this?** Yes, with one critical precondition (spell ID reclamation). All other technical questions resolved through source-code research and protocol/config consultation:
+**Can we build this?** Yes. All technical questions resolved through source-code research, protocol/config consultation, and live-DB audit:
 - `SE_SummonCorpse` is NOT class-gated — confirmed in `spell_effects.cpp:1793-1868`.
 - Bard `buff_duration = 0xFFFF` bypass is a complete bypass, not partial — confirmed by protocol-agent in their follow-up audit.
 - Cooldown rule keyed on `spell_category` discriminates from existing NEC/SHM line cleanly — config-expert confirmed.
 - Auto-scribe via SQL only is sufficient; no live push opcode needed — protocol-agent confirmed via `LoadCharacterSpellBook` + `OP_PlayerProfile` analysis.
 - No-op-no-cooldown decouple is achievable via the cast pipeline ordering (SpellEffect runs before recast timer set).
+- Spell ID headroom: 14 unambiguously usable IDs in [1, 9999]; 12 needed; no reclamation required (live-DB audit, see §Data Model "Spell ID allocation").
 
-**Hardest residual unknown:** None blocking, but the data-expert reclamation step requires careful judgment per candidate row. Mitigation: backup-before-delete and a thorough audit query covering all known reference sites.
+**Hardest residual unknown:** None. The earlier draft had spell-row reclamation as the hardest residual; the live-DB audit eliminated it.
 
 ### Pass 2: Simplicity
 
@@ -372,8 +364,6 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 - **Rule + DB row vs. row-only** — one extra line of code in exchange for `#reloadrules` hot-tunability. Worth it.
 - **No-op-no-cooldown C++ change** — could be skipped (PRD authorizes accepting the wart). Counter-argument: it's ~10 lines across 3 files, contained, and meaningfully improves player UX. **Keep it.**
 
-**Re-justification of spell ID reclamation:** Could we instead use IDs > 9999? No — Titanium drops them silently. The architecture has no other path within the constraint. Reclamation is the only viable approach unless we abandon the feature for this client.
-
 **Things considered and rejected:**
 - Adding a new `EntityList::GetMostRecentCorpseByOwner()` method — YAGNI.
 - Per-class animations — PRD explicitly rejects scope creep.
@@ -382,28 +372,26 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 
 **What could go wrong?** Steel-manned threats:
 
-1. **Reclamation deletes a "rare drop" spell that nobody currently has but is in some loot table.** Mitigation: audit query covers `lootdrop_entries` (transitively via items). Edge: if a quest reward is on the deleted spell, it would silently fail. Add `quest_globals` and `tasks.reward_id_list` to the audit. Pre-deploy: data-expert manually reviews candidate names against quest-script content (~5 mins).
-2. **Player exploits zone-edge to summon corpse just outside playable bounds.** Existing engine concern; not new.
-3. **Player casts and gets killed mid-cast, then casts again from second corpse-runner instance.** Standard interrupt rules apply.
-4. **Player exploits the group/raid check to summon a friend's corpse.** `target_type = ST_Self` (value 6) forces `spell_target = this` in the `SingleTarget` case at `spells.cpp:1910-1922`. The SE_SummonCorpse handler then sees `TargetClient == CastToClient()` regardless of player intent. Self-only enforced.
-5. **A NEW character mid-tutorial casts the spell with no corpse, hits the no-op branch, spam-casts.** Still has 6s cast time. Not exploitable; chat spam at worst.
-6. **A Bard player gets confused that the spell does NOT auto-pulse like other Bard spells.** UX risk — mitigate via spell description text.
-7. **`spell_category` collision with a future spell or a row we haven't audited.** Data-expert verifies the chosen value is unused via `SELECT DISTINCT spell_category FROM spells_new`. Choose a value above all current categories (e.g., 200+).
-8. **Player has 60 active buffs, cast fails because no buff slot.** N/A — `buff_duration = 0xFFFF` means no buff is granted.
-9. **Server crash mid-migration.** Single transaction wrapper rolls back atomically. Idempotent guards enable safe re-run.
-10. **Operator sets `Spells:UniversalSummonCorpseCooldown = 0` to disable cooldown for testing, forgets to revert.** Acceptable — same surface as any other rule. Document in release notes.
-11. **Operator deletes the new rule_values row, expects the engine default of 180.** Yes — `RuleI(Spells, UniversalSummonCorpseCooldown)` returns the compile-time default if the row is absent. Safe.
-12. **Existing high-level NECROMANCER who already has Greater Summon Corpse scribed gets the new spell auto-scribed.** Migration uses `MAX(slot_id) + 1`, so the new spell appends after existing scribed spells. No displacement.
-13. **Player logged in during migration — migration affects them but in-memory `m_pp.spell_book[]` doesn't reflect the change.** Mitigation: full-stack restart in infra-expert task forces all sessions to re-login. Or: kick affected sessions before migration.
-14. **Reclaimed spell ID later turns out to have been used by some quest script's `quest::scribespells(level)` mass-scribe.** Audit `quests/` directory for `castspell`, `scribespells`, `traindiscs` calls referencing the candidate IDs. Data-expert task 0 includes this grep. Already in scope.
-15. **Player who just deleted a character of one of the 12 classes — migration runs the same day, character is soft-deleted, no row written.** Filter handles this.
+1. **Player exploits zone-edge to summon corpse just outside playable bounds.** Existing engine concern; not new.
+2. **Player casts and gets killed mid-cast, then casts again from second corpse-runner instance.** Standard interrupt rules apply.
+3. **Player exploits the group/raid check to summon a friend's corpse.** `target_type = ST_Self` (value 6) forces `spell_target = this` in the `SingleTarget` case at `spells.cpp:1910-1922`. The SE_SummonCorpse handler then sees `TargetClient == CastToClient()` regardless of player intent. Self-only enforced.
+4. **A NEW character mid-tutorial casts the spell with no corpse, hits the no-op branch, spam-casts.** Still has 6s cast time. Not exploitable; chat spam at worst.
+5. **A Bard player gets confused that the spell does NOT auto-pulse like other Bard spells.** UX risk — mitigate via spell description text.
+6. **`spell_category` collision with a future spell or a row we haven't audited.** Data-expert verifies the chosen value is unused via `SELECT DISTINCT spell_category FROM spells_new`. Choose a value above all current categories (e.g., 200+).
+7. **Player has 60 active buffs, cast fails because no buff slot.** N/A — `buff_duration = 0xFFFF` means no buff is granted.
+8. **Server crash mid-migration.** Single transaction wrapper rolls back atomically. Idempotent guards enable safe re-run.
+9. **Operator sets `Spells:UniversalSummonCorpseCooldown = 0` to disable cooldown for testing, forgets to revert.** Acceptable — same surface as any other rule. Document in release notes.
+10. **Operator deletes the new rule_values row, expects the engine default of 180.** Yes — `RuleI(Spells, UniversalSummonCorpseCooldown)` returns the compile-time default if the row is absent. Safe.
+11. **Existing high-level NECROMANCER who already has Greater Summon Corpse scribed gets the new spell auto-scribed.** Migration uses `MAX(slot_id) + 1`, so the new spell appends after existing scribed spells. No displacement.
+12. **Player logged in during migration — migration affects them but in-memory `m_pp.spell_book[]` doesn't reflect the change.** Mitigation: full-stack restart in infra-expert task forces all sessions to re-login. Or: kick affected sessions before migration.
+13. **Player who just deleted a character of one of the 12 classes — migration runs the same day, character is soft-deleted, no row written.** Filter handles this.
 
 ### Pass 4: Integration
 
 **Sequencing dependencies:**
-- Task 0 (reclamation) gates everything content-related (tasks 2, 3, 5, 6, 7, 9). Until 12 IDs are reserved, no spell row work can begin.
-- Task 1 (rule registration) is independent of task 0.
-- Task 2 (capture clone-source row + assign new spell_category) blocks task 4 (c-expert needs the constant).
+- No critical-precondition gating step (the earlier draft had a "task 0 — spell ID reclamation" precondition; live-DB audit eliminated it).
+- Task 1 (rule registration) and task 2 (clone-source capture) can both start immediately and have no inter-dependency.
+- Task 2 (capture clone-source row + assign new spell_category) blocks task 4 (c-expert needs the constant) and task 3 (data-expert spell INSERTs need the cosmetic clone fields).
 - Tasks 1 and 4 (C++ changes) need a rebuild before any DB migration is meaningful — but the migration can be authored independently. Rebuild + migration must both complete before game-tester validates.
 - Task 9 (transactional migration bundle) requires tasks 3, 5, 6, 7, 8 done.
 - Task 10 (build + deploy) is the final integration step.
@@ -419,7 +407,7 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 | Agent | Task(s) | Rationale |
 |-------|---------|-----------|
 | **c-expert** | 4 | Owns the C++ engine edits: `mob.h`, `spell_effects.cpp`, `spells.cpp`. Must coordinate `spell_category` constant with data-expert. |
-| **data-expert** | 0, 2, 3, 5, 6, 7, 9 | Owns spell ID reclamation (task 0 — critical precondition), all spells_new / items / merchantlist / character_spells migration work. Dominant role in this feature. |
+| **data-expert** | 2, 3, 5, 6, 7, 9 | Owns all spells_new / items / merchantlist / character_spells migration work. Dominant role in this feature. (Earlier draft included a task 0 spell-ID reclamation step; eliminated after live-DB audit confirmed 14 free IDs are available — see §Data Model.) |
 | **config-expert** | 1, 8 | Owns rule registration (`ruletypes.h` + `rule_values` seed row). |
 | **infra-expert** | 10 | Owns the build + restart cycle. |
 | **game-tester** | (post-implementation) | Validates the PRD acceptance criteria. |
@@ -431,7 +419,7 @@ Tasks are ordered by dependency. Each task names exactly one expert.
 The game-tester verifies all PRD §Acceptance Criteria items. Specifically:
 
 - [ ] **Spell ID range.** Verify all 12 new spell IDs are ≤ 9999 via `SELECT id FROM spells_new WHERE name LIKE '%Summon Corpse%' OR name IN (...)`. Cross-check against the 12 names in PRD §Class Spell Names.
-- [ ] **Reclamation regression check.** For each reclaimed spell ID, verify no character has it scribed (`SELECT * FROM character_spells WHERE spell_id IN (<reclaimed>)`), no item effect references it (search 6 effect columns), no NPC spell list references it.
+- [ ] **Spell-ID range and uniqueness check.** Verify all 12 new spell IDs are in the assigned set `{1348, 5093, 9412, 9413, 9414, 9415, 9416, 9417, 9418, 9419, 9420, 9421}` and that no other spell row owns any of those IDs (`SELECT id FROM spells_new WHERE id IN (1348,5093,9412,9413,9414,9415,9416,9417,9418,9419,9420,9421)` returns exactly 12 rows, all our new spells).
 - [ ] **New character — vendor purchase.** For each of the 12 classes, create a fresh character. Visit the canonical class spell vendor in their starting city. Verify the appropriate scroll appears in inventory at trivial copper cost. Buy and scribe; verify spell appears in spellbook at level 1.
 - [ ] **Existing character — auto-scribe.** Pre-migration, identify (or create then save) an existing character of each of the 12 classes. Apply migration. Log in. Verify the spell is scribed in spellbook with no UI message.
 - [ ] **Cast mechanics.** Mem the spell into a gem slot, target nothing (or self), cast. Verify: 6-second cast bar, 0 mana consumed, no reagent prompt, no target-required prompt, no fizzle.

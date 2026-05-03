@@ -77,6 +77,12 @@ if (!EQ::ValueWithin(spell_id, 3, EQ::spells::DynamicLookup(ClientVersion(), Get
     return;  // server won't send OP_MemorizeSpell for IDs > 9999
 ```
 
+**CORRECTION (added 2026-05-03 same-day, after architect re-audit):** The "3 gaps" finding below is INCORRECT. A live DB audit by the architect (run as `SELECT id FROM spells_new WHERE id BETWEEN 1 AND 9999 ORDER BY id` then set-difference against [1, 9999]) found **16 unused IDs**: `1, 2, 1348, 5093, 9412, 9413, 9414, 9415, 9416, 9417, 9418, 9419, 9420, 9421, 9422, 9423`. Excluding IDs 1 and 2 (conventionally reserved as sentinel values), there are **14 unambiguously usable IDs**. We need 12. **No reclamation is required.** The original audit below missed the contiguous unused block at 9412–9423. The user caught this discrepancy and the architecture was amended same-day to drop the reclamation step. The architecture now assigns the 12 new spells to IDs `1348, 5093, 9412–9421` with `9422` and `9423` as future headroom. Credit to the user for catching the undercount: their challenge ("why does this have to be a lossy operation? these are net new spells") prompted the re-audit. Lesson for future protocol research: when reporting "N free IDs in a range", always run the actual set-difference query against the live DB rather than sampling gaps in the dense midrange — set-difference is O(rows) and definitive, sampling can miss contiguous unused blocks at range edges.
+
+---
+
+**Original (incorrect) verdict, preserved for the audit trail:**
+
 **VERDICT — BLOCKING CONSTRAINT:** The 12 new spell IDs must be ≤ 9,999. With only 3 gaps available in that range and 12 spells needed, there is **insufficient headroom** in the current sub-9,999 ID space. The data-expert must resolve this before spell IDs can be assigned. Options:
 1. Identify and reclaim IDs from `spells_new` rows that are not in use by any character or item (spells assigned to no character in `character_spells`, no scroll in `items.scroll_effect`), then delete those rows to open slots.
 2. Or use IDs > 9,999 and accept that the Titanium client cannot see them. This would mean the feature is **not deliverable as designed** for the Titanium client.
@@ -221,7 +227,7 @@ Not applicable — this is a research-only task. No files are created or modifie
 
 ## Open Items
 
-- [ ] **BLOCKING: Spell ID headroom.** Only 3 gaps exist in the Titanium-safe sub-9,999 ID range. The data-expert needs a plan to find 12 available IDs ≤ 9,999. Until this is resolved, spell IDs cannot be assigned.
+- [x] **RESOLVED 2026-05-03 same-day — finding was incorrect; see Q1 CORRECTION above.** Live DB audit by architect found 14 unambiguously usable IDs in [1, 9999] (not 3). 12 needed; no reclamation required. Architecture amended; spell IDs assigned to `1348, 5093, 9412–9421`.
 - [ ] **Advisory: Bard bard_song_mode quirk.** Architect to decide whether the missing `SendSpellBarEnable` after Bard cast is acceptable. It does not prevent the spell from working but may cause a minor visual inconsistency in spell bar re-enable timing.
 - [ ] Architect confirm: is the `OP_LinkedReuse` silence for Titanium a known/acceptable pattern for other cooldown spells on this server?
 
@@ -231,7 +237,7 @@ Not applicable — this is a research-only task. No files are created or modifie
 
 If another agent needs protocol context:
 
-1. **Titanium spell ID hard limit is 9,999.** Spells > 9,999 are silently dropped from the spellbook wire format and from `OP_MemorizeSpell`. This is enforced in `titanium.cpp` and `client.cpp:3543`. The DB currently has only 3 gaps below 9,999 — this is the top blocking constraint.
+1. **Titanium spell ID hard limit is 9,999.** Spells > 9,999 are silently dropped from the spellbook wire format and from `OP_MemorizeSpell`. This is enforced in `titanium.cpp` and `client.cpp:3543`. The DB has 14 unambiguously usable IDs in the sub-9,999 range (per architect's same-day re-audit — see Q1 CORRECTION above). The earlier "3 gaps" claim was an undercount that missed the contiguous block at 9412–9423; do not propagate that figure.
 
 2. **Auto-scribe works via DB only.** Inserting rows into `character_spells` is sufficient. No live push is needed; spells appear on next login via `OP_PlayerProfile`.
 

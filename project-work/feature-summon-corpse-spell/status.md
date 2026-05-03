@@ -17,7 +17,7 @@
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation (ready to start once team is spawned; data-expert task 0 is the critical precondition)
+**Current phase:** Implementation (ready to start once team is spawned)
 
 ---
 
@@ -51,7 +51,7 @@ _Record each handoff between agents with context and any notes._
   5. Vendor placement → resolved by lore-master in design phase (standard class spell vendor in each starting city, no faction gating).
   6. Animation / icon reuse vs bespoke → reuse from existing Necromancer summon-corpse row's `new_icon` and `casting_animation` for all 12.
   7. Rule key validation → no collision (only `Bots:AllowCommandedSummonCorpse` exists). Rule pattern: `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, "...")` in `ruletypes.h:425+`. Plus `rule_values` seed row in `ruleset_id=1`. Engine reads dynamically at cast time; `#reloadrules` sufficient to retune. **Discriminator key: `spells_new.spell_category`** (per config-expert; avoids leaking into existing NEC/SHM summon-corpse spells).
-- **CRITICAL PRECONDITION FLAGGED:** Titanium `SPELL_ID_MAX = 9999` (titanium_limits.h:329). Only 3 unused IDs in [1, 9999] (1348, 5093, 9412). Need 12. Data-expert task 0 reclaims 9+ unused sub-9999 spell rows. This is the gating dependency for all content tasks.
+- **Spell ID allocation (no precondition needed):** Titanium `SPELL_ID_MAX = 9999` (titanium_limits.h:329) is the wire-format ceiling. A live-DB audit found 14 unambiguously usable IDs in [1, 9999]; 12 needed. Architecture assigns the 12 new spells to IDs `1348, 5093, 9412–9421`, leaving `9422` and `9423` as future headroom. (An earlier draft of this status flagged a "3 free IDs / reclaim 9+" precondition based on an undercount; the user caught the error and the architecture was amended same-day. See Decision Log entry #11 below.)
 - **Implementation team composition:** c-expert + data-expert + config-expert + infra-expert. NOT spawning lua-expert, perl-expert, or protocol-agent (no implementation-phase work for them).
 
 ---
@@ -62,10 +62,9 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 0 | **PRECONDITION:** Reclaim 9+ unused sub-9999 spell IDs in `spells_new`. Audit query covers character_spells + all 6 item effect columns + npc_spells_entries + aa_rank_effects + manual quest-script grep. Backup deletes to `claude/tmp/feature-summon-corpse-spell/reclaimed-spells-backup.sql`. Final list of 12 IDs (3 known gaps + 9+ reclaimed) documented in data-expert dev-notes. | data-expert | Not Started | Critical — gates all content tasks |
 | 1 | Add `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, ...)` to `ruletypes.h` before `RULE_CATEGORY_END()` at line 549; clean build | config-expert | Not Started | 1 line + build cycle |
-| 2 | Identify existing Necromancer summon-corpse row in `spells_new` for icon/animation/descnum clone-mutate values; assign new unique `spell_category` value for the 12 new spells; share constant with c-expert | data-expert | Not Started | Depends on task 0 |
-| 3 | Author 12 INSERT statements for new spells in `spells_new` (using IDs from task 0, cloned cosmetic fields from task 2, and the new spell_category) | data-expert | Not Started | Depends on task 2 |
+| 2 | Identify existing Necromancer summon-corpse row in `spells_new` for icon/animation/descnum clone-mutate values; assign new unique `spell_category` value for the 12 new spells; share constant with c-expert | data-expert | Not Started | No dependency |
+| 3 | Author 12 INSERT statements for new spells in `spells_new` (using assigned IDs `1348, 5093, 9412–9421` per architecture §Data Model, cloned cosmetic fields from task 2, and the new spell_category) | data-expert | Not Started | Depends on task 2 |
 | 4 | Add `m_summon_corpse_was_noop` flag (`mob.h`); set in SummonCorpse no-corpse branch (`spell_effects.cpp:1851`); read in recast block (`spells.cpp:2817-2841`) gated on `spell_category == kUniversalSummonCorpseCategory`; add `RuleI(Spells, UniversalSummonCorpseCooldown)` override in same block | c-expert | Not Started | Depends on tasks 1, 2; ~15 lines across 3 files |
 | 5 | Author 12 INSERT statements for scroll items in `items` | data-expert | Not Started | Depends on task 3 |
 | 6 | Enumerate starting-city class spell vendor merchant_ids; author merchantlist INSERTs | data-expert | Not Started | Depends on task 5; ~30-50 rows |
@@ -94,7 +93,7 @@ _Anything preventing progress. Remove when resolved._
 
 | Blocker | Raised By | Date | Resolved |
 |---------|-----------|------|----------|
-| _none open_ | | | Spell ID headroom is now task 0 (a precondition, not a blocker) |
+| _none open_ | | | All open questions resolved (1 by lore-master in design, 6 by architect in architecture phase). Spell ID headroom — initially flagged as a precondition based on an undercount — was eliminated by a same-day live-DB re-audit (14 free IDs available, 12 needed). |
 
 ---
 
@@ -125,7 +124,7 @@ _Key decisions made during this feature's development._
 | 8 | Reuse new_icon and casting_animation from existing Necromancer summon-corpse row | architect | 2026-05-03 | Per PRD recommendation; avoids art-pipeline scope creep. |
 | 9 | Implementation team = c-expert + data-expert + config-expert + infra-expert | architect | 2026-05-03 | No quest scripts, no protocol-phase implementation; lean team minimizes token use. |
 | 10 | timer_id = 0 for all 12 new spells (no shared linked timer) | architect (config-expert finding) | 2026-05-03 | EndurTimerIndex slots 1-19 are all occupied; not a problem because each spell is class-restricted. |
-| 11 | Spell ID reclamation (data-expert task 0) is critical precondition | architect (protocol-agent finding) | 2026-05-03 | Titanium SPELL_ID_MAX = 9999, only 3 gaps available, need 12. Reclaim via audit query covering all known reference sites; backup-before-delete. |
+| 11 | Spell ID assignment: `1348, 5093, 9412–9421` (12 IDs) with `9422, 9423` as headroom — no reclamation | architect (live-DB re-audit after user challenge) | 2026-05-03 | Initial protocol-agent finding flagged "only 3 gaps / reclaim 9+" as a critical precondition. User challenged: "why does this have to be a lossy operation? these are net new spells". Architect re-ran the audit as a live-DB set-difference query and found 14 unambiguously usable IDs in [1, 9999] (the original sample missed the contiguous unused block at 9412–9423). Reclamation precondition removed from the architecture same-day. The 12 spells are net-new INSERTs into previously-unused ID slots. Lesson: "N free IDs in a range" claims must be verified via set-difference against the live DB, not estimated from sampling. |
 | 12 | Migration auto-scribe slot-pick capped at 399 via `MIN(MAX(slot_id)+1, 399)` | architect (protocol-agent finding) | 2026-05-03 | Defensive cap against Titanium SPELLBOOK_SIZE=400. In practice no character on this server is anywhere near 400, but cheap to guard. |
 
 ---
@@ -166,5 +165,5 @@ _These items happen ONLY when the user explicitly confirms the feature is done._
 - 0 source files modified (architecture is research + planning only).
 - 1 architecture doc (459 lines) + 1 source-spike reference (>180 lines) + this status.md + agent-conversations.md (210 lines) all updated and consistent.
 - All 7 PRD open questions RESOLVED (1 by lore-master in design, 6 by architect in this phase).
-- 1 critical precondition added: data-expert task 0 (spell ID reclamation), gating the rest of the content work.
+- 0 critical preconditions. Same-day amendment after user challenge: an initial "reclaim 9+ spell IDs" precondition was eliminated when a live-DB re-audit confirmed 14 free sub-9999 IDs are available (12 needed). Architecture reverted to a non-lossy net-new INSERT strategy.
 - Implementation phase ready to start.

@@ -158,6 +158,51 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 **Outcome:** Architecture phase complete. All 7 PRD open questions resolved (1 by lore-master in design, 6 by architect during architecture phase). One critical precondition (spell ID reclamation) added as data-expert task 0 — this gates implementation start.
 
+---
+
+### 2026-05-03 — Same-day amendment: user challenge on spell-ID reclamation (architecture revised)
+
+**From:** user (via team-lead) → **To:** architect
+
+> User reviewed the architecture summary and challenged the reclamation requirement, verbatim:
+>
+> > "why does this have to be a lossy operation? these are net new spells for everyone but necromancers and shamans right?"
+>
+> Team-lead asked architect to (1) re-confirm the SPELL_ID_MAX=9999 hard cap, (2) re-run the audit query against the live DB in dry-run mode to verify the actual count of unused IDs, (3) explore non-lossy alternatives (one shared row across 12 classes, two thematic-grouping rows, modify existing NEC/SHM rows, sparse-class roster, or other), and (4) recommend an option with tradeoffs.
+
+**Response from** architect:
+
+> Re-verified all four points:
+>
+> 1. **SPELL_ID_MAX = 9999 is a real Titanium hard cap** confirmed at `eqemu/common/patches/titanium_limits.h:328` and via the per-client constants at `sof_limits.h` (15999), `sod_limits.h` (23000), `uf_limits.h` (28000), `rof_limits.h` / `rof2_limits.h` (45000). Cannot be raised without a custom Titanium client patch (out of scope; client binary is closed).
+>
+> 2. **Live-DB audit: 14 unambiguously usable IDs in [1, 9999], not 3.** Ran `SELECT id FROM spells_new WHERE id BETWEEN 1 AND 9999 ORDER BY id` against the live MariaDB instance, then computed the set-difference against the full [1, 9999] range. Result: 16 unused IDs total — `1, 2, 1348, 5093, 9412, 9413, 9414, 9415, 9416, 9417, 9418, 9419, 9420, 9421, 9422, 9423`. Excluding sentinel-reserved IDs 1 and 2, **14 unambiguously usable**. We need 12. Protocol-agent's "only 3 gaps" was an undercount that missed the contiguous unused block at 9412–9423.
+>
+> 3. **Non-lossy alternatives evaluated for the record (none needed):**
+>    - **(a) 1 shared row across 12 classes:** 1 ID, but loses 12 lore-master-approved class names (single `name[64]` field per row). Rejected — discards substantive design-phase work.
+>    - **(b) 2 shared rows (divine + arcane groupings):** 2 IDs, loses 10 of 12 names. Rejected — same reason.
+>    - **(c) Modify existing NEC/SHM rows:** 0 new IDs but breaks the existing high-level summon-corpse line (drops level from 35/60 to 1, free, 0-mana). Rejected — violates PRD §AC "no regression on existing NEC/SHM summon-corpse".
+>    - **(d) Sparse strategy with reduced class roster:** Contradicts PRD scope.
+>    - **(e) IDs > 9999 (Titanium-invisible):** Equivalent to "feature disabled" on this Titanium-only server.
+>
+> 4. **Final recommendation: adopt the architecture as-is, except delete data-expert task 0** (spell-ID reclamation). Assign the 12 new spells to IDs `1348, 5093, 9412–9421` with `9422` and `9423` as future headroom.
+
+**Response from** user (via team-lead):
+
+> Approved. Execute the amendment immediately: drop task 0, document the chosen IDs explicitly, correct `protocol-agent/dev-notes.md` Q1, log the exchange in `agent-conversations.md`, update `source-spike-findings.md` and `status.md`, commit + push as `arch(summon-corpse): correct spell ID availability (14 free IDs in [1,9999]) — drop reclamation task 0`. Confirm implementation team composition unchanged (c-expert + data-expert + config-expert + infra-expert).
+
+**Outcome:**
+
+- Architecture amended same-day. Five files updated:
+  - `architect/architecture.md` — Executive Summary, §Data Model "Spell ID allocation", §Implementation Sequence (renumbered 1-11), §Risk Assessment (dropped reclamation rows), §Review Passes (cleaned), §Required Implementation Agents (data-expert task list updated), §Validation Plan (replaced "reclamation regression check" with ID-uniqueness check).
+  - `architect/context/source-spike-findings.md` — §9 Spell ID range section corrected.
+  - `protocol-agent/dev-notes.md` — Q1 CORRECTION block prepended; Open Items resolved; Context for Next Agent updated.
+  - `status.md` — Current phase note, Handoff Log callout, Implementation Tasks (task 0 dropped), Open Questions, Decision Log #11, Notes — all corrected.
+  - `agent-conversations.md` — this entry.
+- **Implementation team composition is unchanged:** c-expert + data-expert + config-expert + infra-expert. Same set as before; data-expert just has one fewer task to start.
+- **Lesson learned:** "N free IDs in a range" claims must be verified via live-DB set-difference, not estimated from gap-sampling. Sampling can miss contiguous unused blocks at range edges.
+- Credit to the user for catching the undercount before any reclamation SQL was authored or executed.
+
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._
@@ -198,6 +243,7 @@ This table is the quick-reference for anyone catching up._
 | 13 | Auto-scribe via SQL insert into `character_spells` only — no runtime push packet needed; spells appear on next login via `OP_PlayerProfile` | protocol-agent | 2026-05-03 | `LoadCharacterSpellBook` (zonedb.cpp:597) reads all `character_spells` rows into m_pp at every zone-in |
 | 14 | `buff_duration=0xFFFF` on the Bard spell bypasses `bard_song_mode` **entirely** (not just the pulsing subpath) — spell takes identical non-bard post-cast path including `SendSpellBarEnable` | protocol-agent (confirmed follow-up) | 2026-05-03 | spells.cpp:1475 `if (buff_duration == 0xFFFF)` logs and falls through without setting bard_song_mode; earlier finding that SendSpellBarEnable was skipped was based on the recast_time>0 path, not the 0xFFFF path |
 | 15 | `OP_LinkedReuse` is unmapped in Titanium — cooldown is server-enforced only via `pTimerSpellStart + spell_id`; client gem-grey driven by spell row `recast_time` in local cache | protocol-agent | 2026-05-03 | `titanium_ops.h` has no entry for OP_LinkedReuse; consistent with how other cooldown spells work on Titanium |
+| 16 | Spell ID assignment: `1348, 5093, 9412–9421` (12 IDs); `9422, 9423` as headroom — no reclamation; data-expert task 0 dropped | architect (live-DB re-audit after user challenge) | 2026-05-03 | Initial protocol-agent finding flagged "only 3 gaps / reclaim 9+" as a critical precondition. User challenged ("why does this have to be a lossy operation?"). Live-DB set-difference query found 14 unambiguously usable IDs in [1, 9999]. Architecture amended same-day; implementation team composition unchanged. |
 
 ---
 
