@@ -123,16 +123,40 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 **Response from** config-expert:
 
-> _(pending — message dispatched but not yet replied. Architecture proceeds with safe-default assumption: option (b) — rule consulted at cast time, ranged-keyed to the 12 new spell IDs to avoid leaking into existing NEC/SHM summon-corpse line.)_
+> Q1 answer: No generated header beyond `ruletypes.h` needed — `RULE_INT` X-macro is self-contained. Add the line, rebuild, done. `#reloadrules` reloads DB values into already-compiled slots at runtime. Rule shape `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, "...")` confirmed clean. `rule_values` insert goes in `ruleset_id=1` only (only active ruleset on this server). Critical finding: `EndurTimerIndex` (timer_id) slots 1–19 are all occupied — new spells cannot use linked-timer sharing. Set `timer_id = 0` for all 12.
+>
+> Q2 answer: Recommend option (b) — dynamic cast-time rule lookup. Rationale: option (a) requires `shared_memory` restart; option (c) is operator-confusing (rule edit must wait for next startup migration to take effect). Option (b) makes `#reloadrules` sufficient — that is the entire point of having a rule. **Hook key:** use `spell_category` or `spell_group` field on the 12 new spells, NOT `SE_SummonCorpse` (which would also match existing high-level Necro/Shaman spells and unintentionally retune them). Final decision deferred to architect + c-expert.
 
-**Outcome (so far):** Architecture written with:
-> - `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, "Cooldown in seconds for the Universal Summon Corpse spell line. 0 disables. Default 180.")` added in `ruletypes.h`.
-> - `rule_values` seed row INSERT in the same migration as the spell rows.
-> - Engine consults the rule inside `spells.cpp:2817-2841` (the existing recast block), gated by `IsEffectInSpell(SE_SummonCorpse)` AND a range-check against the 12 new spell IDs (data-expert provides the constant range). This preserves NEC/SHM existing summon-corpse cooldown behavior.
-> If config-expert prefers option (c) — startup migration writes the rule value into the spell row — the architecture switches to that approach with even less engine code (drop the conditional in spells.cpp). Pending decision.
+**Outcome:** Architecture revised to use:
+> - `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, "...")` in `ruletypes.h` before `RULE_CATEGORY_END()` at line 549.
+> - `rule_values` seed row in `ruleset_id=1`.
+> - C++ rule-override at `spells.cpp:2817-2841` keyed on **`spells_new.spell_category`** (data-expert assigns a unique unused value to all 12 new spells; existing NEC/SHM summon-corpse spells retain their stock category and are unaffected).
+> - All 12 spells set `timer_id = 0` (linked-timer sharing not used; not needed since each spell is class-restricted).
 
 ---
 
+
+---
+
+### 2026-05-03 — Architect close-out: spell ID blocker accepted, all open questions resolved
+
+**From:** architect → **To:** (team — for the record)
+
+> Architecture doc (`architect/architecture.md`) finalized. Key updates from the protocol/config consultations:
+>
+> 1. **BLOCKING precondition added (data-expert task 0):** Reclaim 9+ unused sub-9999 spell IDs in `spells_new`. Audit query covers character_spells, all 6 item effect columns, npc_spells_entries, aa_rank_effects, plus a manual quest-script grep. Backup-before-delete is mandatory per work-protection rules. Combined with the 3 known gaps (1348, 5093, 9412), this yields the 12 IDs needed.
+> 2. **Bard `buff_duration = 0xFFFF` confirmed as full bypass** (per protocol-agent's follow-up audit). Identical wire behavior to non-Bard casts. The "SendSpellBarEnable skipped" concern was a misread of the recast_time>0 path; the 0xFFFF path bypasses bard_song_mode entirely.
+> 3. **`spell_category` is the rule discriminator** (per config-expert's recommendation). Avoids leaking the rule into existing NEC/SHM summon-corpse spells. Cleaner than the original spell-ID range-check I proposed.
+> 4. **timer_id = 0 for all 12 new spells.** EndurTimerIndex slots 1-19 are exhausted; not a problem because each spell is class-restricted (no character holds more than one of the 12).
+> 5. **Auto-scribe via SQL insert only.** Confirmed protocol-side: `LoadCharacterSpellBook` + `OP_PlayerProfile` deliver on next zone-in. No live push opcode needed.
+>
+> Implementation team composition: c-expert + data-expert + config-expert + infra-expert. NOT spawning lua-expert, perl-expert, or protocol-agent (no implementation work for them). Game-tester is dispatched separately as a solo agent in the validation phase.
+>
+> Notifying team-lead next.
+
+**Response from** _(no further response expected; architect proceeds to status.md update + commit + team-lead notification)_
+
+**Outcome:** Architecture phase complete. All 7 PRD open questions resolved (1 by lore-master in design, 6 by architect during architecture phase). One critical precondition (spell ID reclamation) added as data-expert task 0 — this gates implementation start.
 
 ## Implementation Team Conversations
 
