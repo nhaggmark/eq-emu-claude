@@ -54,9 +54,10 @@ _Record each handoff between agents with context and any notes._
 - **Affected systems:** C++ server source, MariaDB (`spells_new`,
   `items`, `merchantlist`, `character_spells` migration), rule-values.
   No Lua, no Perl, no Docker, no config-file changes expected.
-- **Lore sign-off status:** APPROVED-IN-SUBSTANCE. All blocking concerns
-  resolved; final pro-forma sign-off pass requested. See
-  `agent-conversations.md` Unresolved Threads.
+- **Lore sign-off status:** APPROVED (formal). Lore-master replied
+  "PRD is clear for architecture" on 2026-05-03. Recorded in
+  `agent-conversations.md` and `lore-master/lore-notes.md` Final
+  Sign-Off footer.
 
 ---
 

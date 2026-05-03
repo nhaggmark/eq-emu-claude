@@ -44,9 +44,23 @@ _game-designer + lore-master exchanges during Phase 2._
 
 **Response from** lore-master:
 
-> _(awaiting response)_
+> APPROVED — PRD is clear for architecture.
 
-**Outcome:** _(pending)_
+**Outcome:** Design phase formally closed on lore review. PRD status now Approved with explicit lore-master sign-off recorded. Architecture team unblocked. Status.md and lore-notes.md final-sign-off footer updated to reflect the explicit approval. No further design-phase iteration needed.
+
+---
+
+### 2026-05-03 — Universal Summon Corpse: lore-notes.md persistence clarification
+
+**From:** game-designer → **To:** lore-master
+
+> Confirmed that lore-master's review payload was already persisted verbatim to lore-master/lore-notes.md (182 lines, committed in d62b45a) and they did not need to re-send the blob. Redirected them to focus on the PRD sign-off specifically, with line-number pointers (PRD lines 176-185 Compact framing quote, 214-230 hard-fit class notes, 342-358 era compliance ruling) for verification.
+
+**Response from** lore-master:
+
+> APPROVED — PRD is clear for architecture (delivered with the formal sign-off above).
+
+**Outcome:** Re-send-loop avoided. Lore-master confirmed disk-state was correct and proceeded to formal PRD approval.
 
 ---
 
@@ -98,6 +112,7 @@ This table is the quick-reference for anyone catching up._
 | 3 | Universal in-world framing: Option A — The Compact of the Awakened (Luclin Nexus-grounded) | game-designer (with lore-master recommendation) | 2026-05-03 | Handles INT-caster access without deity gymnastics, era-locked in Luclin (no Planes of Power) |
 | 4 | Lore-master flavor text adopted verbatim for all 12 spells | game-designer | 2026-05-03 | Quality of lore-master strings exceeded designer-drafted alternatives |
 | 5 | Lore-master's full review payload persisted to lore-master/lore-notes.md verbatim | game-designer | 2026-05-03 | Lore-master lacks Write/Bash tools by design; game-designer wrote the file on their behalf, paste-verbatim per team-lead instruction |
+| 6 | Lore-master formal APPROVED sign-off received on full PRD | lore-master | 2026-05-03 | Explicit "PRD is clear for architecture" — no remaining lore concerns; design phase formally closed |
 
 ---
 
@@ -107,4 +122,4 @@ _Conversations that didn't reach resolution. Track here so they don't get lost._
 
 | Topic | Agents | Status | Blocking? |
 |-------|--------|--------|-----------|
-| Lore-master final sign-off pass on full PRD | game-designer → lore-master | Sign-off request sent 2026-05-03; awaiting explicit APPROVED / REVISE response | NON-BLOCKING for handoff: all 6 lore-master blocking concerns were addressed verbatim and the framing choice they recommended was adopted. Architecture phase may begin; if lore-master's final-pass response surfaces additional concerns, they will be applied as a follow-up amendment. |
+| Lore-master final sign-off pass on full PRD | game-designer → lore-master | RESOLVED 2026-05-03 — lore-master replied APPROVED ("PRD is clear for architecture"). No outstanding lore concerns. | No |

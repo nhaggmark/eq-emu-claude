@@ -176,7 +176,7 @@ PRD sent to lore-master for final sign-off pass on 2026-05-03.
 
 ## Final Sign-Off
 
-- **Date:** _(pending lore-master response)_
-- **Verdict:** _(pending)_
-- **Summary:** _(pending)_
-- **Remaining concerns:** _(pending)_
+- **Date:** 2026-05-03
+- **Verdict:** APPROVED
+- **Summary:** Lore-master's response verbatim: "APPROVED — PRD is clear for architecture." All 6 blocking name issues from the initial review were resolved exactly as recommended; the universal framing pick (Option A — The Compact of the Awakened) was adopted; all 12 flavor text strings and 4 hard-fit class glosses were integrated into the PRD verbatim. No remaining lore concerns. Architecture phase unblocked.
+- **Remaining concerns:** None for design. Architecture and implementation should keep the Compact of the Awakened framing era-locked (Luclin Nexus content only — NO Planes of Power references) when writing any vendor-NPC dialogue, scroll item descriptions, or in-game documentation tied to this spell.
