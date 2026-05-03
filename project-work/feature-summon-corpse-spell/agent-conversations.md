@@ -96,17 +96,57 @@ _game-designer + lore-master exchanges during Phase 2._
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-### [Date] — [Topic]
+### 2026-05-03 — Rule plan: UniversalSummonCorpseCooldown (config-expert proactive outreach)
 
-**From:** [agent] → **To:** [agent]
+**From:** config-expert → **To:** architect
 
-> [Message content or summary]
+> Shared completed Stage 1–2 research. Rule shape: `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, ...)`, no collision with existing rules. Critical finding: all `EndurTimerIndex` slots 1–19 are fully occupied — the 12 new spells cannot use the linked-timer mechanism for a shared cooldown group. Not a blocker because each spell is class-restricted, so a character can only ever have one of the 12 in their spellbook. Raised three open questions: (1) hot-reload path — dynamic cast-time rule lookup vs. baked into spell row; (2) ruleset scope — `ruleset_id=1` only recommended; (3) route the `ruletypes.h` edit to c-expert.
 
-**Response from** [agent]:
+**Response from** architect:
 
-> [Response content or summary]
+> Two direct questions: (a) confirm `RULE_INT` macro placement and whether any generated header needs updating beyond `ruletypes.h`; (b) request recommendation on option (a) hardcoded row / (b) dynamic cast-time rule / (c) startup migration.
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** See next exchange for config-expert's full answers.
+
+---
+
+### 2026-05-03 — Rule registration and hot-reload path decision
+
+**From:** architect → **To:** config-expert
+
+> Confirmed preferred macro syntax. Asked: (1) does anything beyond `ruletypes.h` need updating for rule registration? (2) Which of three options is preferred for the source-of-truth on cooldown: (a) hardcoded `spells_new.recast_time` row, (b) rule read dynamically at cast time, or (c) rule applied to spell row at startup migration?
+
+**Response from** config-expert:
+
+> Q1 answer: No generated header needs updating — the `RULE_INT` X-macro is self-contained. Add the line, rebuild, done. `#reloadrules` reloads DB values into already-compiled slots at runtime. Collision confirmed clean. `rule_values` insert goes in `ruleset_id=1` only (only active ruleset on this server).
+>
+> Q2 answer: Recommend option (b) — dynamic cast-time rule lookup. Rationale: option (a) requires a `shared_memory` restart to take effect and the operator path is non-obvious; option (c) is worse (operator edits rule but must also watch startup migration reapply it). Option (b) makes `#reloadrules` sufficient — that is the entire point of having a rule. For the C++ hook key, recommend using `spell_category` or `spell_group` field on the 12 new spells rather than `SE_SummonCorpse` (which would also match the existing high-level Necro/Shaman spells). `EndurTimerIndex` cannot be used as a discriminator — all 19 slots taken. Final decision on hook key deferred to architect + c-expert.
+
+**Outcome:** Rule shape confirmed. Option (b) dynamic cast-time lookup recommended. Architect to decide hook key with c-expert. Config-expert remains in Stage 3 (Socialize), holding for architect sign-off before Stage 4 DB insert.
+
+---
+
+### 2026-05-03 — Protocol feasibility assessment: 5 questions answered
+
+**From:** protocol-agent → **To:** architect
+
+> Completed full protocol research on all 5 questions. Full findings in `protocol-agent/dev-notes.md`. Summary:
+>
+> **Q1 (Spell ID range) — BLOCKING.** Titanium `SPELL_ID_MAX = 9999` (`titanium_limits.h:328`). The wire format silently drops spells > 9,999 (titanium.cpp:1394). The DB currently has only **3 gaps** (IDs 1348, 5093, 9412) in the sub-9,999 range; we need 12 IDs. Data-expert must find/reclaim 9+ more before spell rows can be assigned.
+>
+> **Q2 (Auto-scribe delivery) — No special opcode.** A SQL insert into `character_spells` is sufficient. Spells appear on next login via `OP_PlayerProfile` (PlayerProfile_Struct.spell_book[] is loaded from DB by `LoadCharacterSpellBook` in zonedb.cpp:597 on every zone-in).
+>
+> **Q3 (Scroll scribe class-gate) — No Titanium quirks.** Server checks item `classes` bitmask (`RestrictSpellScribing` rule) and spell `classes[GetClass()-1]` level threshold in `OPMemorizeSpell`. Titanium client also pre-filters merchant inventory client-side by `classes` bitmask.
+>
+> **Q4 (Bard routing) — Advisory, not blocking.** Any spell with Bard class ≠ 255 triggers `IsBardSong()` (spdat.cpp:855). With `recast_time > 0`, `IsPulsingBardSong()` returns false — no song-loop. Spell casts and cooldowns correctly. Minor cosmetic: `SendSpellBarEnable` is not called after a Bard cast (bard_song_mode branch, spells.cpp:1818). Recommend documenting as known quirk; workarounds (is_discipline=1) cause worse problems.
+>
+> **Q5 (PvP/zone restriction) — Server-side message sufficient.** `OP_LinkedReuse` is unmapped in `titanium_ops.h` — no linked timer push for Titanium. Cooldown is fully server-side via `pTimerSpellStart + spell_id`. Client gem-greying comes from spell's `recast_time` in local spell cache. Cast-and-fail-with-message matches existing Necro Summon Corpse behavior.
+
+**Response from** architect:
+
+> _(pending)_
+
+**Outcome:** Protocol assessment complete. Architect alerted to spell ID blocker and Bard advisory.
 
 ---
 
@@ -142,6 +182,14 @@ This table is the quick-reference for anyone catching up._
 | 5 | Lore-master's full review payload persisted to lore-master/lore-notes.md verbatim | game-designer | 2026-05-03 | Lore-master lacks Write/Bash tools by design; game-designer wrote the file on their behalf, paste-verbatim per team-lead instruction |
 | 6 | Lore-master formal APPROVED sign-off received on full PRD | lore-master | 2026-05-03 | Explicit "PRD is clear for architecture" — no remaining lore concerns; design phase formally closed |
 | 7 | Vendor placement: standard class spell vendor in each starting city, all 12 scrolls; no guild-gated placement | lore-master | 2026-05-03 | Universal utility spell, not guild-prestige; Classic convention; avoids faction-gate issue (especially Necromancer in Neriak/Paineel) |
+| 8 | New rule `Spells:UniversalSummonCorpseCooldown` — `RULE_INT`, default 180 (seconds), no name collision confirmed | config-expert | 2026-05-03 | Grepped `ruletypes.h` and queried live `rule_values`; only related hit is `Bots:AllowCommandedSummonCorpse` (different category) |
+| 9 | `EndurTimerIndex` shared-timer slots 1–19 are all occupied; new spells cannot use linked-timer group | config-expert | 2026-05-03 | Not a blocker — each spell is class-restricted so no character can have more than one of the 12 in their spellbook |
+| 10 | Rule is `ruleset_id=1` only; no other rulesets active on this server | config-expert | 2026-05-03 | Queried `rule_sets` and `zone.ruleset`; ruleset 1 is the only assigned ruleset |
+| 11 | Preferred cooldown approach: option (b) dynamic rule lookup at cast time (pending architect confirmation) | config-expert recommendation | 2026-05-03 | Makes `#reloadrules` sufficient to tune cooldown; hook key to be decided by architect + c-expert (recommend `spell_category` or `spell_group` field, not `SE_SummonCorpse`) |
+| 12 | **BLOCKING:** 12 new spell IDs must be ≤ 9,999 (Titanium `SPELL_ID_MAX`); only 3 gaps available in that range — data-expert must find/reclaim 9+ more IDs | protocol-agent | 2026-05-03 | `titanium.cpp:1394` drops spells > 9999 from wire format; server also blocks `OP_MemorizeSpell` for out-of-range IDs (`client.cpp:3543`) |
+| 13 | Auto-scribe via SQL insert into `character_spells` only — no runtime push packet needed; spells appear on next login via `OP_PlayerProfile` | protocol-agent | 2026-05-03 | `LoadCharacterSpellBook` (zonedb.cpp:597) reads all `character_spells` rows into m_pp at every zone-in |
+| 14 | Bard's "Dirge of Homecoming" will be classified as a bard song by `IsBardSong()` (any Bard-scribable spell triggers this); no song-loop because recast_time > 0; minor cosmetic quirk: `SendSpellBarEnable` skipped after Bard cast | protocol-agent | 2026-05-03 | `IsBardSong` (spdat.cpp:855) keys on `classes[Bard-1] < 255`; `IsPulsingBardSong` (spdat.cpp:2376) returns false when `recast_time > 0` |
+| 15 | `OP_LinkedReuse` is unmapped in Titanium — cooldown is server-enforced only via `pTimerSpellStart + spell_id`; client gem-grey driven by spell row `recast_time` in local cache | protocol-agent | 2026-05-03 | `titanium_ops.h` has no entry for OP_LinkedReuse; consistent with how other cooldown spells work on Titanium |
 
 ---
 
