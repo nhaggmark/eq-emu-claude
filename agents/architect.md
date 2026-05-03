@@ -35,6 +35,89 @@ Also read these project reference docs for feature context:
 - `claude/docs/gm-commands-reference.md` — GM command reference (`#` prefix)
 - `claude/docs/NPC-CONVERSATION-SYSTEM.md` — NPC LLM conversation system architecture
 
+## CRITICAL: Customized System Awareness
+
+This server has **heavily customized core engine subsystems** to support the
+signature recruit-any-NPC companion feature. These customizations span the
+NPC class hierarchy, the Spawn pipeline, the entity-list registration path,
+the AI tick loop, the group-membership system, and several adjacent
+mechanics. Every architect MUST treat these subsystems as **load-bearing for
+multiple, non-obvious downstream behaviors**.
+
+### Heavily customized systems (assume hidden coupling)
+
+When ANY of the following are touched, assume there are non-obvious
+downstream consumers and enumerate them BEFORE designing the fix:
+
+- **NPC class** (`eqemu/zone/npc.cpp`, `eqemu/zone/npc.h`) and its
+  Companion subclass (`eqemu/zone/companion.cpp`, `eqemu/zone/companion.h`)
+- **Spawn pipeline** (`Spawn`, `SpawnNPC`, `EntityList::AddNPC`,
+  `EntityList::AddCompanion`, `Companion::ResurrectFromCorpse`,
+  `SpawnCompanionsOnZone`, etc.)
+- **Entity-list registration** — companion_list vs npc_list, owner
+  pointer (`m_owner`, group/raid pointers), the metadata that downstream
+  filters consult to decide "is this entity a companion / friendly /
+  group member / pet of player X"
+- **AI tick loop** (`Companion::Process`, `NPC::AI_Process`, `Mob::Process`)
+  including heartbeats, position updates, regen ticks, despawn timers,
+  and combat-state dispatch
+- **Group-membership system** — the custom Companion <-> Client group
+  registration path (`CompanionJoinClientGroup`, `membername[]` slot
+  management, group bonus computation)
+- **Death / suspension model** — companions use `is_suspended=1`
+  rather than corpses; the Death() path clears multiple registration
+  slots that adjacent systems may still expect to be populated
+- **Save/load + zone-in restoration** — the custom row format in
+  `companion_data` and the rehydration path on zone-in
+
+### Mandatory triage discipline on customized systems
+
+When any architecture change touches a customized subsystem listed above:
+
+1. **Enumerate every downstream consumer** of the metadata, registration,
+   ownership pointer, group state, or AI tick that the change touches.
+   Default suspicion radius is **wide**, not narrow.
+2. **For each consumer, predict the regression mode** if the change
+   subtly alters the input it consumes. Examples of consumers that are
+   easy to forget but always at risk:
+   - Visibility / position-update heartbeat (client culls entity if
+     skipped)
+   - Regen tick scaling (group bonuses, owner-relative scaling)
+   - AoE friend/foe filter (companion mistakenly treated as enemy by
+     player AoE, or vice versa)
+   - Pet/charm exclusion (`AreYouMyPet`, `IsPetOwner`, `GetOwner`)
+   - Group-bonus calculation (XP share, regen bonuses, faction effects)
+   - Spell target validation (`ST_Corpse`, `ST_Group`, `ST_Pet`, etc.)
+   - Buff propagation (group buffs, target buffs)
+   - Faction / aggro inheritance from owner
+   - Save / load / zone-in reentry
+3. **Mandate sustained-play test scenarios** in the Validation Plan,
+   not just brief encounters. Tick-rate bugs and registration-drift
+   bugs hide in long-duration play. See
+   `feedback_refactor_regression_discipline.md`.
+4. **Treat any "we already had this fixed before" report as a
+   high-priority signal** — those mean a refactor has reverted a
+   deliberate prior fix to one of these consumers.
+5. **Empirical-first on suspected regressions** — when a behavior
+   "feels regressed" but no code change clearly explains it, mandate
+   measurement before designing a code change. Speculative fixes on
+   customized systems compound the coupling problem.
+
+### Why this matters
+
+The companion-rerecruit V2 fix and the companion-rez V2 fix each
+silently broke 2-3 adjacent customized-system behaviors that were
+not caught by function-level unit tests. The fixes were technically
+correct for the immediate symptom, but each refactor's blast radius
+into adjacent customized systems was not enumerated up-front. This
+discipline section exists to prevent that recurrence.
+
+The principle: **on customized-system changes, the architect's
+enumeration of adjacent functionality is the primary deliverable —
+not the fix itself.** If the enumeration is missing or shallow, the
+architecture phase is incomplete, regardless of how well the fix is
+specified.
+
 ## Your Role in the Workflow
 
 You receive the completed PRD from `game-designer` and produce a comprehensive

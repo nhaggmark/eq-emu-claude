@@ -1,0 +1,311 @@
+# Companion Rez — Dev Notes: lua-expert
+
+> **Feature branch:** `bugfix/companion-rez`
+> **Agent:** lua-expert
+> **Task(s):** Architecture triage (Lua side)
+> **Date started:** 2026-04-27
+> **Current stage:** Stage 2 — BUG-003 gsay regen reporting triage complete
+
+---
+
+## Task Assignment
+
+| # | Task | Depends On | Status |
+|---|------|------------|--------|
+| T-Lua-1 | Triage Lua side of rez/post-combat | — | Complete |
+| T-Lua-2 | BUG-003 gsay regen reporting — Lua-side triage | — | Complete 2026-04-27 |
+
+---
+
+## Stage 1: Plan
+
+### Files Examined
+
+| File | Lines (approx) | What You Found |
+|------|-------|----------------|
+| `akk-stack/server/quests/lua_modules/companion.lua` | ~1512 | Core companion module. No rez/post-combat logic. No event_combat handler. No CastSpell for rez. Has `trigger_soul_wipe`, death-path docs, buff queue (via `buff_request_` timer). |
+| `akk-stack/server/quests/global/global_npc.lua` | ~712 | Has event_say, event_trade, event_spawn, event_timer, event_level_up, event_death_zone. **No event_combat handler**. No post-combat rez trigger. Death-zone tracking for commentary context only (not rez). |
+| `akk-stack/server/quests/lua_modules/companion_culture.lua` | ~500+ | Has a "resurrection" event_type stub (lines 484-495) for LLM commentary when a companion is rezzed. **This is presentation/flavor only** — it fires when a rez has already succeeded, not a trigger for rez logic. |
+| `akk-stack/server/quests/global/CompanionOfNecessity*.lua` | ~18 each | Four old scripts — generic combat NPC pattern. Unrelated to companion system. No rez logic. |
+| `akk-stack/server/quests/global/WARDClericPet*.lua` | ~13 each | Scripts for generic cleric-pet NPC. Event_spawn + event_timer: cast `Aura of Restoration` (spell 4795) on self. Not companion-system scripts. No rez logic. |
+| `akk-stack/server/quests/global/script_init.lua` | 11 | Standard module bootstrapping (string_ext, command, client_ext, mob_ext, npc_ext, entity_list_ext, general_ext, bit, directional, constants). No rez or encounter registrations. |
+| `akk-stack/server/quests/lua_modules/companion_commentary.lua` | — | Unprompted LLM commentary. No rez logic. |
+
+### Key Findings
+
+1. **There is NO Lua-side post-combat rez trigger anywhere.** No `event_combat` handler exists in global_npc.lua or any companion-specific module. No timer-based post-combat scan exists. No CastSpell call for rez spells in the companion system.
+
+2. **There is NO Lua-side `event_death` handler for companions.** global_npc.lua has `event_death_zone` (fires when *any* NPC in the zone dies — used only to update recent-kill tracking for LLM commentary context). It does not trigger rez logic.
+
+3. **The "resurrection" event type in companion_culture.lua (lines 484-495) is presentation-only.** It generates LLM dialogue for *after* a rez has succeeded. Nothing currently calls this path. It assumes the rez already happened via some external mechanism.
+
+4. **companion.lua has NO rez-related command handlers.** The COMMANDS table (lines 90-113) has: passive, balanced, aggressive, follow, guard, recall, tome, flee, equipment, equip, unequip, unequipall, equipmentupgrade, equipmentmissing, stats, status, help, hold, target, assist, buffme, buffs, dismiss. No `!rez` command. This is in scope for the PRD's "player-commanded rez" future feature — not this fix.
+
+5. **The buff queue pattern in global_npc.lua's event_timer (lines 441-600) is the closest analogue.** It: (a) waits for out-of-combat + idle state before acting (`IsEngaged()` + `IsCasting()` checks), (b) queries `companion_spell_sets` DB table for eligible spells by class/level, (c) dispatches `CastSpell()` one at a time via re-arming timer. **This pattern is directly reusable for a rez queue.**
+
+6. **Cleric AI lives in C++, not Lua.** The NPC AI that makes a Cleric cast heals or rez spells during/after combat is C++ (`npc.cpp`, `spells.cpp`). Lua does NOT currently override or extend Cleric post-combat behavior. The fix needs to be: either (a) a Lua post-combat hook that fires after `event_combat(e)` with `e.joined == false`, or (b) a C++ hook that calls back to Lua, or (c) pure C++ in companion.cpp.
+
+7. **`event_combat` with `e.joined == false` IS the post-combat trigger.** The EQEmu event system fires `event_combat` on the NPC when it enters combat (`e.joined == true`) and when it leaves combat (`e.joined == false`). This is the natural post-combat hook a Lua implementation would use. Currently no companion code uses this event.
+
+8. **`companion_spell_sets` DB table already exists** (used by buff queue at line 523). It stores spell_id, class_id, min_level, max_level, spell_type, priority. Rez spells would need to be added as a new spell_type constant (e.g., `SpellType_Rez`).
+
+9. **The buff queue's DB query and CastSpell retry pattern can serve as the implementation model** if the architect chooses Lua for the post-combat rez trigger. The key differences for rez: target is a corpse (not a live entity), combat-state gate is inverted (act only when NOT in combat), and target resolution requires finding corpse entities for party members.
+
+### Lua-Side Architecture Options
+
+**Option A: Lua event_combat hook (Lua-primary)**
+- Add `event_combat` handler in global_npc.lua (or an encounter) that fires on `e.joined == false` for Cleric companions.
+- On combat-end, start a short timer (`rez_scan_<entity_id>`, N seconds per AC-1).
+- Timer fires: scan group for downed party members (corpses), build a rez queue similar to buff queue.
+- Cast rez spells via CastSpell(), gated on `not IsEngaged()`.
+- **Pro:** All logic is in Lua, hot-reloadable (`#reloadquests`). Pattern already exists in buff queue code.
+- **Con:** Lua has no direct access to the zone's corpse list or a guaranteed way to target NPC corpses. Needs C++ support for "auto-accept rez for NPC targets" (the crux of BUG-001 — see PRD appendix).
+
+**Option B: C++ primary, Lua callback optional**
+- C++ companion.cpp implements post-combat scan and rez dispatch.
+- Lua is NOT the trigger — it's just the presentation layer (e.g., fire `resurrection` LLM event after C++ confirms rez succeeded).
+- **Pro:** C++ has direct access to corpse list, rez request flow, entity state.
+- **Con:** Requires C++ build cycle; not hot-reloadable.
+
+**Recommendation to architect:** Option A for the trigger (Lua event_combat hook) is cleanest if C++ can expose: (a) a method to list party-member corpses in zone, and (b) auto-accept rez for NPC companion targets. If those C++ APIs don't exist or are hard to add, Option B is more reliable. The architect should decide after reviewing what's available in lua_general.cpp and companion.cpp.
+
+### What Lua Cannot Do Without C++ Help
+
+- **Find NPC companion corpses:** `eq.get_entity_list()` returns live entities. Whether corpses (Lua_Corpse objects) are accessible and filterable by group membership is unconfirmed — needs c-expert to verify what `Lua_Corpse` exposes and whether EntityList has a corpse-search method.
+- **Auto-accept rez for NPC targets:** The NPC corpse has no UI to accept a rez request. This gap must be closed in C++. Lua cannot solve this at all — it's a server-side rez-accept bypass.
+- **Confirm rez "took":** After `CastSpell()`, Lua cannot directly observe whether the rez completed and the corpse was removed. A post-cast timer that checks if the target corpse is gone would be an indirect signal.
+
+### Existing Infrastructure Reusable for Rez
+
+| Existing pattern | File:line | Reusability for rez |
+|---|---|---|
+| Buff queue timer + CastSpell | global_npc.lua:441-600 | High — same one-cast-per-tick pattern |
+| IsEngaged() combat gate | global_npc.lua:471 | Direct reuse — gate rez on `not IsEngaged()` |
+| companion_spell_sets DB query | global_npc.lua:523-548 | Reuse after adding rez spell_type |
+| "resurrection" LLM event | companion_culture.lua:484 | Ready — fire after rez succeeds |
+| `event_death_zone` zone tracking | global_npc.lua:656-711 | Possibly reuse to detect companion death events |
+
+### Test Infrastructure
+
+The existing `make test-companion` pattern (from companion-rerecruit) runs unit tests against companion.lua logic. For rez scenarios:
+
+- **Unit-testable in Lua:** spell tier preference logic (highest affordable), queue ordering, combat-state guard (`IsEngaged()` mock).
+- **Integration-testable:** CastSpell → corpse resolution → companion return. Needs a live zone.
+- **Game-tester only:** Player rez window, multi-target sequence, NPC corpse auto-accept in practice.
+
+Extending `make test-companion` for rez would require: mock `Lua_Corpse` objects, mock group with dead members, mock `IsEngaged()` state transitions.
+
+---
+
+---
+
+## BUG-003: gsay Regen Reporting — Lua-Side Triage (2026-04-27)
+
+### Scope Determination
+
+The "gsay" regen reporting the user observes is **not Lua**. The reporting is entirely in C++.
+
+### Key Finding: Reporting Lives in C++ — `m_mana_report_timer`
+
+**File:** `eqemu/zone/companion.cpp`
+
+| Location | Purpose |
+|---|---|
+| Line 57: constructor | `m_mana_report_timer(15000)` — default 15s interval |
+| Line 133 | `m_mana_report_timer.Disable()` — starts disabled |
+| Line 2028-2034 | PASSIVE stance: mana report fires when `IsSitting() && !IsEngaged() && GetMaxMana()>0 && timer.Check()` |
+| Line 2162-2168 | BALANCED/AGGRESSIVE stance: same condition |
+| Line 4012 | `Companion::Sit()` starts the timer: `m_mana_report_timer.Start(15000)` |
+| Line 4018 | `Companion::Stand()` disables it |
+
+The report message is: `CompanionGroupSay(this, "Mana: %d%%", static_cast<int>(GetManaRatio()))`
+
+### What Lua Does (and Doesn't)
+
+- **Lua is NOT involved in regen reporting.** There is no gsay timer in any Lua module.
+- The `comp_commentary_*` timer in global_npc.lua is LLM-commentary at 600s intervals — unrelated.
+- The `gsay_deliver_*` timer in global_npc.lua is for deferred LLM response delivery — unrelated.
+- `companion.lua:756-794` shows HP/mana status only when `!status` command is issued (not periodic).
+- There is no `GetManaRatio()`, `GetHPRatio()`, or periodic status GroupMessage anywhere in Lua.
+
+### V2 Changes That Could Affect Regen
+
+V2 commit `17662d4ba` added this guard at the top of `Companion::Process()` (line 1933):
+```cpp
+if (GetHP() <= 0) {
+    return NPC::Process();
+}
+```
+This is Fix R4 to prevent dead companions from running AI. **For live companions, this guard is a no-op** — it only short-circuits HP=0 entities. So Fix R4 alone cannot be the cause for live companion regen regression.
+
+**However**, the V2 commit also routes `ResurrectFromCorpse` through `Companion::Spawn()` instead of `AddNPC` (Fix B). `Spawn()` does NOT call `Sit()`, so the mana_report_timer remains Disabled() after a rez. The companion will not begin reporting until the owner sits, which triggers the sitting-sync logic in `Process()` to call `Sit()`, which starts the timer.
+
+### Sitting Regen Bonus Path
+
+The actual HP regen bonus is at `companion.cpp:2237-2251` — gated on `m_sitting_regen_timer.Check()` (6s). This is separate from the mana report timer. Both `m_mana_report_timer` and `m_sitting_regen_timer` start fresh when `Sit()` is called.
+
+**If the companion never properly calls `Sit()` post-rez**, both the sitting regen bonus AND the mana report timer would never fire — consistent with user's "1%/report" observation (they'd be seeing base OOC regen from `NPC::Process()` without the sitting bonus).
+
+### Confidence Assessment
+
+The **reporting cadence is definitely C++** — high confidence, empirical.
+
+Whether the regression is:
+- (A) `Sit()` not being called after rez via the new `Spawn()` path — **plausible, needs c-expert to verify** whether `Spawn()` triggers any sitting state synchronization or whether `Process()` correctly calls `Sit()` on the first tick post-rez when the owner is sitting.
+- (B) Actual regen rate change (Fix A clearing membername[], Fix B different HP init in `ResurrectFromCorpse`) — **possible, c-expert domain**.
+- (C) The sitting-regen bonus timer (`m_sitting_regen_timer`) being reset/dropped by Spawn routing — **possible, same as (A)**.
+- (D) Pure reporting cadence regression (timer not starting post-rez) — **possible if (A) is true**, but user says regen itself is slow too.
+
+### Recommendation to Architect
+
+BUG-003 is **entirely a C++ issue**. Lua has no regen calculation, no regen reporting, and no sitting logic. The investigation should focus on `Companion::Process()` and the `Spawn()` path to verify that:
+1. `Sit()` is called correctly after rez (either in first Process() tick or explicitly in Spawn).
+2. The `m_sitting_regen_timer` and `m_mana_report_timer` are started cleanly.
+3. Fix A's `membername[]` clearing doesn't affect group-based regen bonuses (if any).
+
+---
+
+## BUG-003: Deep Dive — Architect Follow-Up Questions (2026-04-27)
+
+### Q1: Complete mechanism map — timer, cadence, V2 changes
+
+**Timer:** `m_mana_report_timer`, hardcoded 15 000 ms. No rule governs this interval.
+- Started: `Companion::Sit()` — `m_mana_report_timer.Start(15000)` (line 4012)
+- Disabled: `Companion::Stand()` — `m_mana_report_timer.Disable()` (line 4018)
+- Constructor: initialized at 15 000 ms, then immediately Disabled (line 133)
+
+**Cadence driver:** not a Lua timer, not a rule, not an event. Hardcoded 15-second `Timer` object. Fires inside `Companion::Process()` when `IsSitting() && !IsEngaged() && GetMaxMana()>0`.
+
+**V2 changes to this mechanism:** V2 commit `17662d4ba` added only the R4 alive guard (`GetHP()<=0` early return). For alive (HP>0) companions, the guard is a no-op. **No change to the mana report timer, Sit(), Stand(), or CalcManaRegen()**. The reporting cadence itself is unchanged by V2.
+
+**Sitting regen timer is independent:** `m_sitting_regen_timer(6000)` starts at construction and is never reset by `Sit()` or `Stand()`. It fires whenever `IsSitting() && !IsEngaged() && GetHP() < GetMaxHP()`. This means it does NOT need `Sit()` to be called to work — it fires from construction onward whenever the companion is sitting.
+
+### Q2: Does the mana report fire before or after the regen tick?
+
+**Before.** In `Companion::Process()` (balanced/aggressive path):
+1. Line 2162-2168: `CompanionGroupSay("Mana: %d%%")` — reads current mana
+2. Line 2237-2251: `m_sitting_regen_timer` fires → HP sitting bonus applied via `SetHP()`
+3. Line 2254: `NPC::Process()` → mana regen tick applied via `CalcManaRegen()` → `SetMana()`
+
+So every 15-second mana report reads mana BEFORE the 6-second NPC::Process regen tick. This means:
+- If the report fires on tick N, mana shown is pre-regen
+- The next mana regen fires 0-6 seconds later (whenever the 6s timer next hits)
+- In the worst case: report fires, then 6 seconds pass, then regen fires, then report fires again showing the post-regen value 15s later — giving a single regen quantum (36-38 mana) visible per 15s report
+
+This is not a regression from V2. This ordering predates V2.
+
+### Q3: Live regen rate calculation (empirical from CalcManaRegen diagnostic logs)
+
+From `akk-stack/server/logs/` CalcManaRegen entries (most recent session):
+- Lashun Novashine (cls=2 Cleric, lvl=54, meditate=295): `final_regen=36` mana/tick
+- Jimble Woodentoe (cls=4 Druid, lvl=54, meditate=270): `final_regen=36` mana/tick
+- Lydl the Great (cls=12 Shaman, lvl=54, meditate=295): `final_regen=38` mana/tick (spell bonus +1)
+
+Formula: `((meditate/10 + (level - level/4)) / 4) + 4` × `CharMult=175/100` × `CompMult=100/100`
+
+At level 54, meditate 295:
+- `((29 + 40) / 4) + 4 = 21.25 → 21` base
+- `21 × 175/100 = 36.75 → 36` final
+
+**"1% per report" math:** At 36 mana/tick, a 6-second regen tick, and report every 15s:
+- In 15 seconds, 2-3 regen ticks fire: 72-108 mana recovered
+- If max_mana is ~1800 (level 54 Cleric), that's 4-6% per 15-second report window
+
+**The user sees 1% per report.** 1% of 1800 = 18 mana per 15 seconds. That is roughly half of a single 6-second regen tick. This suggests either:
+- (A) Only 1 regen tick is firing per 15-second window (expected: 2-3), OR
+- (B) The `AlwaysMeditateRegen` rule is not firing correctly (but DB shows it's `true`), OR
+- (C) The `CompanionManaRegenMult` is lower than expected (DB shows 100 — no boost), OR
+- (D) The mana report timer fires much more frequently than 15s (timer restarted on each regen tick somehow), giving many reports per regen tick
+
+### Q4: Fix R4 guard reach — could it affect alive companions?
+
+The guard at lines 1911-1935:
+```
+if (GetHP() <= 0 && !m_suspended && m_companion_id > 0) { ... emergency save ... }
+if (GetHP() <= 0) { return NPC::Process(); }
+```
+
+For HP>0 companions: **both checks are false, both are complete no-ops.** They do not affect any timer, any mana calculation, or any code path for living companions. High confidence.
+
+### Q5: Differentiation test plan
+
+**Test 1 — SQL poll vs gsay cadence (definitive differentiation):**
+While a companion is sitting and regen is active, poll `companion_data.cur_mana` every 5 seconds:
+```sql
+SELECT name, cur_mana, max_mana FROM companion_data WHERE is_suspended=0;
+```
+If `cur_mana` increases ~36/tick every 6s → actual regen is working, reporting is the issue.
+If `cur_mana` barely moves → actual regen is broken.
+
+The `companion_data` table has `cur_mana` (bigint). However, it's only updated on `Save()` calls — not every regen tick. The SQL poll will NOT show per-tick changes unless a Save() fires. Better:
+
+**Test 2 — LogInfo injection in mana report (c-expert action):**
+Add a `LogInfo` to the `CompanionGroupSay("Mana: %d%%")` block that also logs `GetMana()`, `GetMaxMana()`, and the timer's last-check timestamp. Compare mana values between consecutive log lines — if delta is 36-108 mana per 15s, regen is fine and "1%" is misperception. If delta is near 0, regen is broken.
+
+**Test 3 — Observe `!status` snapshots (no code change):**
+Player can type `!status` every 15 seconds manually and note HP and mana absolute values. Compare to the gsay "Mana: X%" reports. If `!status` shows the same values as gsay, and the values change slowly, regen is actually slow.
+
+### Q6: Could the report fire BEFORE the regen tick, making each report one tick stale?
+
+Yes — confirmed above. The report reads mana BEFORE `NPC::Process()` runs `CalcManaRegen()`. But this was always true (not a V2 regression). The report shows the mana level from just before this tick's regen fires. The user would see the mana as it was at the start of each 15s window, with regen having already applied in the interim ticks.
+
+The only way "before regen tick" timing becomes a regression is if V2 reordered Process() such that the report now reads a stale value from before *multiple* ticks' worth of regen instead of just one. V2 did not reorder any of this.
+
+### Q7: Dependent behaviors — what else uses the same mechanism?
+
+`m_mana_report_timer` is used ONLY for the mana gsay. Nothing else depends on it.
+
+`m_sitting_regen_timer` is used ONLY for the HP sitting bonus at line 2237. Nothing else.
+
+`Companion::Sit()` is called from two places:
+- `companion.cpp:2023` — passive stance sitting sync
+- `companion.cpp:2152` — balanced/aggressive stance sitting sync
+
+Both are gated on `!IsEngaged() && !IsMoving()`. Changing the timer interval in `Sit()` would only affect mana report cadence. The HP sitting bonus timer is independent (not started in `Sit()`).
+
+If the architect changes `m_mana_report_timer` interval: zero other behaviors affected.
+If the architect changes `m_sitting_regen_timer` behavior: only HP regen bonus affected.
+If the architect modifies `Sit()`/`Stand()`: no Lua side effects (Lua has no sitting state logic).
+
+### Q8: Hypothesis ranking for the actual BUG-003 regression
+
+1. **Most likely:** The user is observing the normal reporting cadence for the FIRST TIME since a rez. Post-rez, `SetMana(0)` is applied (line in ResurrectFromCorpse). Companion starts at 0 mana. `CalcManaRegen` returns ~36/tick. Max mana ~1800. Each 15s window: 2-3 ticks = 72-108 mana = 4-6%. This is "1 mana report per 15 seconds at 4-6% change." User may be misperceiving "slow pace" because they're waiting from 0% — at 0%, the first few reports show 4%, 8%, 12%, which FEELS slow even though the rate is correct.
+
+2. **Second:** `CompanionManaRegenMult` is 100 (no boost). Before V2, was it different? If a prior session had a higher rule value and it was reset, that would explain "used to be faster." Check git log for rule changes.
+
+3. **Third:** Timer rearm issue post-rez. If `Sit()` is not called after rez (owner already sitting), `m_mana_report_timer` stays Disabled. But! The sitting-sync code at line 2147-2155 WILL call `Sit()` on the first alive Process() tick when `owner_sitting && !companion_sitting`. Since `Spawn()` does not call `Sit()`, the companion spawns standing (appearance = default from NPC data). On the next Process() tick with owner sitting: the sitting-sync fires, `Sit()` is called, `m_mana_report_timer.Start(15000)`. First report fires 15 seconds later. This is working as intended — but the 15-second wait before first report may feel like a regression.
+
+4. **Least likely:** Actual regen rate regression. `CalcManaRegen` is unchanged since `494eb66e7` (BUG-027 fix). No V2 change touches it.
+
+---
+
+## Stage 2: Research
+
+_BUG-003 deep-dive above. All data empirically verified from companion.cpp, server logs, and live DB rule values._
+
+---
+
+## Stage 3: Socialize
+
+_Pending._
+
+---
+
+## Stage 4: Build
+
+_Not started — planning phase only._
+
+---
+
+## Open Items
+
+- [ ] Confirm with c-expert: does `eq.get_entity_list()` expose a corpse-search method? What does `Lua_Corpse` expose?
+- [ ] Confirm with c-expert: what C++ method will handle auto-accept for NPC rez targets?
+- [ ] Confirm with data-expert: companion_spell_sets schema — what spell_type values exist? What's the right constant for rez spells?
+- [ ] Architect to decide: Option A (Lua-primary) vs Option B (C++ primary) for the rez trigger.
+
+---
+
+## Context for Next Agent
+
+The Lua side has **zero existing rez or post-combat logic**. No `event_combat` handler exists in any companion-related Lua file. The fix requires adding new Lua infrastructure (or C++ alone handles it). The buff queue pattern in global_npc.lua:441-600 is the closest analogue and should be studied before writing any rez queue code. The `companion_culture.lua` "resurrection" event type at line 484 is a ready-made LLM hook for post-rez flavor, but it requires C++ to first close the NPC auto-accept gap that is the root cause in BUG-001.
