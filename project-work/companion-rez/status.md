@@ -720,8 +720,9 @@ User has reviewed and given a revised approval. BUG-003 (both mana and HP) is fu
 |-------|-------|--------|---------|-----------|
 | V3 Re-Triage Architecture | architect (lead) + 5 advisors | Complete (USER-APPROVED with revisions) | 2026-04-29 | 2026-04-29 |
 | V3 Re-Triage Implementation | c-expert + infra-expert + game-tester | Complete 2026-04-29 | 2026-04-29 | 2026-04-29 |
-| V3 Re-Triage Validation | game-tester | In Progress | 2026-04-29 | |
-| V3 Re-Triage Completion | _user_ | Not Started | | |
+| V3 Re-Triage Fix-Iteration | c-expert + architect (audit) | Complete 2026-05-03 | 2026-04-30 | 2026-05-03 |
+| V3 Re-Triage Validation | game-tester + user | Complete 2026-05-03 | 2026-04-29 | 2026-05-03 |
+| V3 Re-Triage Completion | _user_ | Pending merge decision | | |
 
 **V3 Re-Triage current phase:** Validation — server-side PASS; in-game test plan ready; awaiting user confirmation.
 
@@ -746,8 +747,8 @@ User has reviewed and given a revised approval. BUG-003 (both mana and HP) is fu
 |---|-----|----------|-------------|--------|-------------|----------|
 | BUG-002 | NPC companions vanish from screen during combat if stationary (visibility heartbeat regressed) | High | user | **RESOLVED 2026-05-03** — V3R fix-iteration confirmed in-game by user ("that works great!"). Fix: heartbeat block hoisted to top of `Companion::Process()` (commit 84ac6a204) so it runs unconditionally for all alive code paths regardless of stance. V.3 TDD test (commit 081c6e5c8) covers alive-passive heartbeat permanently. Belt-and-suspenders: architect independent audit verified c-expert's diagnosis; c-expert iterated with TDD-first discipline per `feedback_refactor_regression_discipline.md`. | c-expert | 2026-05-03 |
 | BUG-003 | Companion HP/mana regen drastically slowed (~1%/report when sitting); user uncertain whether actual regen tick or gsay reporting cadence | High | user | **DESCOPED FROM V3R** — moved to future companion-regen-mechanics bugfix per user decision 2026-04-29. Both mana AND HP sides will be handled together in the deep-dive bugfix. | TBD (future regen-mechanics bugfix) | |
-| BUG-004 | Player harmful AoE spells (mez, stun) affect own NPC companions; AoE friend/foe filter regressed | High | user | **In-game validation pending** — server-side PASS, fix landed (Fix W α at `aggro.cpp:867`). User has not yet executed V3R-3 or V3R-9 in-game scenarios. | c-expert (V3R.3) | |
-| BUG-005 (NEW) | 30-minute auto-dismiss timer broken for dead companions (`Companions:DeathDespawnS` not enforced post-V2 Fix R4) | Medium | architect (V3R Round 1 enumeration) | **In-game validation pending** — server-side PASS, fix landed (bundled with Fix V Option A). User has not yet executed V3R-2 (31-min wait scenario). | c-expert (V3R.2) | |
+| BUG-004 | Player harmful AoE spells (mez, stun) affect own NPC companions; AoE friend/foe filter regressed | High | user | **RESOLVED 2026-05-03** — user confirmed in-game ("It all looks good!"). Fix W α single-site at `aggro.cpp:867` (commit 035d33348) — narrow `IsCompanion`-aware exclusion in `Mob::IsAttackAllowed` covering owner's companions and group-member companions. | c-expert | 2026-05-03 |
+| BUG-005 (NEW) | 30-minute auto-dismiss timer broken for dead companions (`Companions:DeathDespawnS` not enforced post-V2 Fix R4) | Medium | architect (V3R Round 1 enumeration) | **RESOLVED 2026-05-03** — user confirmed in-game ("It all looks good!"). Fix bundled with V3R Fix V Option A (commit 035d33348) + heartbeat hoist (commit 84ac6a204) — despawn timer now runs unconditionally for dead companions. | c-expert | 2026-05-03 |
 
 ## V3 Re-Triage Decision Log (REVISED — additions)
 
