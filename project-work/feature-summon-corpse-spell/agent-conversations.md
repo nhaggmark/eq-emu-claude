@@ -96,59 +96,43 @@ _game-designer + lore-master exchanges during Phase 2._
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-### 2026-05-03 — Rule plan: UniversalSummonCorpseCooldown (config-expert proactive outreach)
+### 2026-05-03 — Architecture consult: client implications + Bard memming + recast wire format
 
-**From:** config-expert → **To:** architect
+**From:** architect → **To:** protocol-agent
 
-> Shared completed Stage 1–2 research. Rule shape: `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, ...)`, no collision with existing rules. Critical finding: all `EndurTimerIndex` slots 1–19 are fully occupied — the 12 new spells cannot use the linked-timer mechanism for a shared cooldown group. Not a blocker because each spell is class-restricted, so a character can only ever have one of the 12 in their spellbook. Raised three open questions: (1) hot-reload path — dynamic cast-time rule lookup vs. baked into spell row; (2) ruleset scope — `ruleset_id=1` only recommended; (3) route the `ruletypes.h` edit to c-expert.
+> Sent the PRD path and three specific Titanium-client questions before locking architecture.md:
+> 1. Spellbook capacity / scribe delivery — is there a Titanium spellbook slot cap that the migration must respect, and does an SQL-only INSERT into character_spells render cleanly on next login or does it need a server-side post-login push (OP_NewSpellbook / OP_SpellSlotChange refresh)?
+> 2. Bard memming a non-song spell — given the Bard variant has classes8=1 (engine treats as IsBardSong=true) and we set buff_duration=0xFFFF to bypass `bard_song_mode` in `Mob::SpellFinished` (spells.cpp:1474-1477), are there client-side expectations for a Bard with a non-song spell in a gem slot (e.g., recast-timer ack format mismatch, gem-clear behavior)?
+> 3. Recast timer wire format — any cap on the recast field for a 3-minute (180000 ms) timer on a level-1 spell that the Titanium client might mis-render?
 
-**Response from** architect:
+**Response from** protocol-agent:
 
-> Two direct questions: (a) confirm `RULE_INT` macro placement and whether any generated header needs updating beyond `ruletypes.h`; (b) request recommendation on option (a) hardcoded row / (b) dynamic cast-time rule / (c) startup migration.
+> All three clear, no blockers. (1) Titanium `SPELLBOOK_SIZE = 400` (titanium_limits.h:329). SQL INSERT into `character_spells` is sufficient — `LoadCharacterSpellBook` reads all rows at zone-in and `OP_PlayerProfile` delivers the full 400-slot array (titanium.cpp:1392–1408). `OP_NewSpellbook` / `OP_SpellSlotChange` do not exist in the Titanium opcode table; no push needed. (2) `buff_duration=0xFFFF` causes the IsBardSong branch at spells.cpp:1475 to log and fall through without setting `bard_song_mode` — **this bypasses the bard path entirely**, not just the pulsing subpath. The spell takes the identical non-bard post-cast path: `SendSpellBarEnable` (sends `OP_ManaChange`, fully mapped in Titanium at titanium.cpp:1249) + `MemorizeSpell(scribing=3)` with slot translated by `ServerToTitaniumCastingSlot` (titanium.cpp:1268). No Bard-specific client expectation violated; gem clears and re-enables on cooldown normally. (3) `recast_time=180000` is well-established in the sub-9999 range (Taste of Death id=1149, Avatar id=1598, etc.). Server stores as 180s via `pTimerSpellStart`. `OP_LinkedReuse` is unmapped in Titanium so `SetLinkedSpellReuseTimer` sends nothing to the client. Gem-grey countdown driven by client's local spell cache `recast_time`. `uint32` timestamps have no overflow concern at 180s — Lay on Hands runs at 4200000ms (70 min) on Titanium (id=87).
 
-**Outcome:** See next exchange for config-expert's full answers.
+**Outcome:** Architecture assumptions confirmed correct on all three points. `buff_duration=0xFFFF` is the right Bard approach — verified to produce identical wire behavior to all other casting classes. No protocol changes required.
 
 ---
 
-### 2026-05-03 — Rule registration and hot-reload path decision
+### 2026-05-03 — Architecture consult: rule shape + recast override mechanism
 
 **From:** architect → **To:** config-expert
 
-> Confirmed preferred macro syntax. Asked: (1) does anything beyond `ruletypes.h` need updating for rule registration? (2) Which of three options is preferred for the source-of-truth on cooldown: (a) hardcoded `spells_new.recast_time` row, (b) rule read dynamically at cast time, or (c) rule applied to spell row at startup migration?
+> Sent the PRD path and two specific rule-design questions:
+> 1. New rule shape — confirm `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, "...")` in `eqemu/common/ruletypes.h` under the existing `RULE_CATEGORY(Spells)` block at line 425, plus a `rule_values` row insert. No collision with existing rules confirmed via grep (only `Bots:AllowCommandedSummonCorpse` exists). Anything else in the registration path?
+> 2. Rule vs spells_new.recast_time as source of truth — three options: (a) hardcode in the row with no rule, (b) rule consulted at cast time inside `Mob::SpellFinished`, (c) rule applied at startup migration to update the row. Asked which has best operator-UX / hot-tuning tradeoff.
 
 **Response from** config-expert:
 
-> Q1 answer: No generated header needs updating — the `RULE_INT` X-macro is self-contained. Add the line, rebuild, done. `#reloadrules` reloads DB values into already-compiled slots at runtime. Collision confirmed clean. `rule_values` insert goes in `ruleset_id=1` only (only active ruleset on this server).
->
-> Q2 answer: Recommend option (b) — dynamic cast-time rule lookup. Rationale: option (a) requires a `shared_memory` restart to take effect and the operator path is non-obvious; option (c) is worse (operator edits rule but must also watch startup migration reapply it). Option (b) makes `#reloadrules` sufficient — that is the entire point of having a rule. For the C++ hook key, recommend using `spell_category` or `spell_group` field on the 12 new spells rather than `SE_SummonCorpse` (which would also match the existing high-level Necro/Shaman spells). `EndurTimerIndex` cannot be used as a discriminator — all 19 slots taken. Final decision on hook key deferred to architect + c-expert.
+> _(pending — message dispatched but not yet replied. Architecture proceeds with safe-default assumption: option (b) — rule consulted at cast time, ranged-keyed to the 12 new spell IDs to avoid leaking into existing NEC/SHM summon-corpse line.)_
 
-**Outcome:** Rule shape confirmed. Option (b) dynamic cast-time lookup recommended. Architect to decide hook key with c-expert. Config-expert remains in Stage 3 (Socialize), holding for architect sign-off before Stage 4 DB insert.
-
----
-
-### 2026-05-03 — Protocol feasibility assessment: 5 questions answered
-
-**From:** protocol-agent → **To:** architect
-
-> Completed full protocol research on all 5 questions. Full findings in `protocol-agent/dev-notes.md`. Summary:
->
-> **Q1 (Spell ID range) — BLOCKING.** Titanium `SPELL_ID_MAX = 9999` (`titanium_limits.h:328`). The wire format silently drops spells > 9,999 (titanium.cpp:1394). The DB currently has only **3 gaps** (IDs 1348, 5093, 9412) in the sub-9,999 range; we need 12 IDs. Data-expert must find/reclaim 9+ more before spell rows can be assigned.
->
-> **Q2 (Auto-scribe delivery) — No special opcode.** A SQL insert into `character_spells` is sufficient. Spells appear on next login via `OP_PlayerProfile` (PlayerProfile_Struct.spell_book[] is loaded from DB by `LoadCharacterSpellBook` in zonedb.cpp:597 on every zone-in).
->
-> **Q3 (Scroll scribe class-gate) — No Titanium quirks.** Server checks item `classes` bitmask (`RestrictSpellScribing` rule) and spell `classes[GetClass()-1]` level threshold in `OPMemorizeSpell`. Titanium client also pre-filters merchant inventory client-side by `classes` bitmask.
->
-> **Q4 (Bard routing) — Advisory, not blocking.** Any spell with Bard class ≠ 255 triggers `IsBardSong()` (spdat.cpp:855). With `recast_time > 0`, `IsPulsingBardSong()` returns false — no song-loop. Spell casts and cooldowns correctly. Minor cosmetic: `SendSpellBarEnable` is not called after a Bard cast (bard_song_mode branch, spells.cpp:1818). Recommend documenting as known quirk; workarounds (is_discipline=1) cause worse problems.
->
-> **Q5 (PvP/zone restriction) — Server-side message sufficient.** `OP_LinkedReuse` is unmapped in `titanium_ops.h` — no linked timer push for Titanium. Cooldown is fully server-side via `pTimerSpellStart + spell_id`. Client gem-greying comes from spell's `recast_time` in local spell cache. Cast-and-fail-with-message matches existing Necro Summon Corpse behavior.
-
-**Response from** architect:
-
-> _(pending)_
-
-**Outcome:** Protocol assessment complete. Architect alerted to spell ID blocker and Bard advisory.
+**Outcome (so far):** Architecture written with:
+> - `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, "Cooldown in seconds for the Universal Summon Corpse spell line. 0 disables. Default 180.")` added in `ruletypes.h`.
+> - `rule_values` seed row INSERT in the same migration as the spell rows.
+> - Engine consults the rule inside `spells.cpp:2817-2841` (the existing recast block), gated by `IsEffectInSpell(SE_SummonCorpse)` AND a range-check against the 12 new spell IDs (data-expert provides the constant range). This preserves NEC/SHM existing summon-corpse cooldown behavior.
+> If config-expert prefers option (c) — startup migration writes the rule value into the spell row — the architecture switches to that approach with even less engine code (drop the conditional in spells.cpp). Pending decision.
 
 ---
+
 
 ## Implementation Team Conversations
 
@@ -188,7 +172,7 @@ This table is the quick-reference for anyone catching up._
 | 11 | Preferred cooldown approach: option (b) dynamic rule lookup at cast time (pending architect confirmation) | config-expert recommendation | 2026-05-03 | Makes `#reloadrules` sufficient to tune cooldown; hook key to be decided by architect + c-expert (recommend `spell_category` or `spell_group` field, not `SE_SummonCorpse`) |
 | 12 | **BLOCKING:** 12 new spell IDs must be ≤ 9,999 (Titanium `SPELL_ID_MAX`); only 3 gaps available in that range — data-expert must find/reclaim 9+ more IDs | protocol-agent | 2026-05-03 | `titanium.cpp:1394` drops spells > 9999 from wire format; server also blocks `OP_MemorizeSpell` for out-of-range IDs (`client.cpp:3543`) |
 | 13 | Auto-scribe via SQL insert into `character_spells` only — no runtime push packet needed; spells appear on next login via `OP_PlayerProfile` | protocol-agent | 2026-05-03 | `LoadCharacterSpellBook` (zonedb.cpp:597) reads all `character_spells` rows into m_pp at every zone-in |
-| 14 | Bard's "Dirge of Homecoming" will be classified as a bard song by `IsBardSong()` (any Bard-scribable spell triggers this); no song-loop because recast_time > 0; minor cosmetic quirk: `SendSpellBarEnable` skipped after Bard cast | protocol-agent | 2026-05-03 | `IsBardSong` (spdat.cpp:855) keys on `classes[Bard-1] < 255`; `IsPulsingBardSong` (spdat.cpp:2376) returns false when `recast_time > 0` |
+| 14 | `buff_duration=0xFFFF` on the Bard spell bypasses `bard_song_mode` **entirely** (not just the pulsing subpath) — spell takes identical non-bard post-cast path including `SendSpellBarEnable` | protocol-agent (confirmed follow-up) | 2026-05-03 | spells.cpp:1475 `if (buff_duration == 0xFFFF)` logs and falls through without setting bard_song_mode; earlier finding that SendSpellBarEnable was skipped was based on the recast_time>0 path, not the 0xFFFF path |
 | 15 | `OP_LinkedReuse` is unmapped in Titanium — cooldown is server-enforced only via `pTimerSpellStart + spell_id`; client gem-grey driven by spell row `recast_time` in local cache | protocol-agent | 2026-05-03 | `titanium_ops.h` has no entry for OP_LinkedReuse; consistent with how other cooldown spells work on Titanium |
 
 ---
