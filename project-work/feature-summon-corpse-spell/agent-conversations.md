@@ -64,6 +64,34 @@ _game-designer + lore-master exchanges during Phase 2._
 
 ---
 
+### 2026-05-03 — Universal Summon Corpse: lore-notes.md restructured to template-aligned format
+
+**From:** lore-master → **To:** game-designer
+
+> Sent a restructured lore-notes.md payload following the template sections (Feature Concept, Lore Research, Era Compliance Review, Universal Framing Rationales, PRD Section Reviews, Decisions & Rationale, Recommended Final Name Table, Hard-Fit Class Rationales, Flavor Text, Final Sign-Off, Context for Next Phase). Asked game-designer to write it to disk via heredoc.
+
+**Response from** game-designer:
+
+> Persisted verbatim to lore-master/lore-notes.md (206 lines) and committed in 053bd05. The substantive lore decisions are unchanged from the earlier review (same 6 blocking fixes, same 3 non-blocking originals, same Option A framing, same flavor text strings). The restructure is purely organizational — the new artifact is a much better reference for the architect than the prior verbatim-paste version.
+
+**Outcome:** lore-notes.md upgraded from message-verbatim format to template-aligned structured format. No PRD changes required.
+
+---
+
+### 2026-05-03 — Universal Summon Corpse: final lore sign-off + vendor placement (Open Question 5)
+
+**From:** lore-master → **To:** game-designer
+
+> Final verification of the revised PRD. APPROVED — PRD is cleared for architecture handoff. Confirmed all 6 blocking name changes are correctly integrated, all 3 non-blocking originals are acceptable as-is, Compact of the Awakened framing is era-safe, hard-fit class rationales are present and accurate, era compliance section is clean, acceptance criteria and balance considerations are lore-consistent. Also answered Open Question 5 (vendor placement): use the standard class spell vendor in each starting city for all 12 scrolls; do NOT scatter to guild-specific or faction-gated vendors. Three reasons: (1) universal utility spell, not guild-prestige reward; (2) Classic convention is level-1 spells on standard class spell vendors; (3) faction-gated guild vendors (e.g., Necromancer guild in Neriak/Paineel) would lock the scroll behind faction the level-1 character may not have.
+
+**Response from** game-designer:
+
+> Acknowledged. Updated PRD Open Question 5 to RESOLVED with the lore-master rationale recorded inline. Updated lore-notes.md Final Sign-Off footer (now APPROVED, no longer APPROVED WITH NOTES) and Context for Next Phase (added vendor-placement guidance). Committed and pushed.
+
+**Outcome:** Design phase fully closed with no remaining open questions on the lore side. The architect inherits 6 open questions instead of 7 (vendor placement is now answered). PRD §Open Questions §5 is marked RESOLVED with the lore-master's rationale recorded inline.
+
+---
+
 ## Architecture Team Conversations
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
@@ -113,6 +141,7 @@ This table is the quick-reference for anyone catching up._
 | 4 | Lore-master flavor text adopted verbatim for all 12 spells | game-designer | 2026-05-03 | Quality of lore-master strings exceeded designer-drafted alternatives |
 | 5 | Lore-master's full review payload persisted to lore-master/lore-notes.md verbatim | game-designer | 2026-05-03 | Lore-master lacks Write/Bash tools by design; game-designer wrote the file on their behalf, paste-verbatim per team-lead instruction |
 | 6 | Lore-master formal APPROVED sign-off received on full PRD | lore-master | 2026-05-03 | Explicit "PRD is clear for architecture" — no remaining lore concerns; design phase formally closed |
+| 7 | Vendor placement: standard class spell vendor in each starting city, all 12 scrolls; no guild-gated placement | lore-master | 2026-05-03 | Universal utility spell, not guild-prestige; Classic convention; avoids faction-gate issue (especially Necromancer in Neriak/Paineel) |
 
 ---
 

@@ -412,12 +412,20 @@ For the architect / implementation team:
 4. **Auto-scribe migration timing.** The 12 spells must already exist
    in `spells_new` *before* the migration runs over `character_spells`.
    Data-expert to sequence.
-5. **Vendor placement.** Which existing spell-vendor NPCs in each
-   starting city sell the new scrolls? Lore-master to advise on
-   class-appropriate vendor (e.g., Necromancer scroll on a guild
-   vendor in the Necropolis, etc.) — alternatively, place all 12
-   on each class's standard spell vendor, simplest and consistent
-   with how level-1 spells are sold today.
+5. **Vendor placement — RESOLVED 2026-05-03 by lore-master.**
+   Use the standard class spell vendor in each starting city for all
+   12 scrolls. Do NOT scatter to guild-specific or faction-gated
+   vendors (e.g., do not put the Necromancer scroll on a Necropolis
+   guild vendor only). Lore-master rationale: (a) this is a universal
+   utility spell, not a guild-prestige reward, so it belongs on
+   infrastructure-level vendors; (b) Classic-era convention is that
+   level-1 spells are sold uniformly at the class spell vendor in the
+   starting city, not at faction-gated guild vendors; (c) faction-
+   restricted guild vendors (e.g., Necromancer guild vendor in
+   Neriak/Paineel) would lock the scroll behind faction the player
+   may not have at level 1, creating inconsistency. Architect/data-
+   expert: place each of the 12 scrolls on the canonical class spell
+   vendor in each city that supports that class as a starting city.
 6. **Animation / sound effect.** The existing summon-corpse effect
    has an animation. Reuse as-is for all 12 classes, or do we want
    class-flavored animations? Recommend: reuse, scope-creep

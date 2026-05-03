@@ -49,8 +49,10 @@ _Record each handoff between agents with context and any notes._
 - **Open questions for the architect** (full list in PRD §Open Questions):
   cooldown enforcement on no-corpse cast; multi-corpse selection order;
   Bard scribed-spell routing (gem-window vs. song-window); auto-scribe
-  migration sequencing; vendor-NPC placement strategy; animation/icon
-  reuse-vs-bespoke decisions.
+  migration sequencing; animation/icon reuse-vs-bespoke decisions.
+  Vendor-NPC placement strategy was resolved by lore-master on
+  2026-05-03 (standard class spell vendor in each starting city for
+  all 12 scrolls — see PRD §Open Questions §5).
 - **Affected systems:** C++ server source, MariaDB (`spells_new`,
   `items`, `merchantlist`, `character_spells` migration), rule-values.
   No Lua, no Perl, no Docker, no config-file changes expected.

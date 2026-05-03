@@ -128,6 +128,7 @@ The gods of Norrath long ago agreed that a mortal who falls in service to their 
 | 4 | Bard name should change from "Dirge of Recovery" | "Recovery" deflates "Dirge" | "Lament of Reclamation" (valid alternate) |
 | 5 | Beastlord name should change from "Ancestor's Reclaim" | Grammar flaw; underplays beast-bond | "Feral Reclamation" (leans beast-bond more) |
 | 6 | Cleric name should change from "Hallowed Recall" | Reads as Paladin-coded | "Blessed Retrieval" (valid alternate) |
+| 7 | All 12 scrolls sold on standard class spell vendor in each starting city | Universal utility spell, not guild-prestige; matches Classic level-1 spell vendor convention; avoids faction-gating issue with Necromancer guild vendor | Faction-gated guild vendor placement (rejected: would lock scroll behind faction at level 1) |
 
 ---
 
@@ -191,16 +192,17 @@ Every being leaves a fading impression — an echo of the self. A dead body reta
 ## Final Sign-Off
 
 - **Date:** 2026-05-03
-- **Verdict:** APPROVED WITH NOTES
-- **Summary:** All 12 classes are era-compliant (Classic through Luclin). No post-Luclin references, no PoP content, no Gates of Discord mechanics. Six spell names require replacement before PRD finalization (Druid, Shaman, Ranger, Bard, Beastlord, Cleric); three have non-blocking alternates available (Paladin, Wizard, Enchanter). The universal framing rationale (Option A or B) must be chosen by the user before the PRD flavor section is finalized. Recommended replacements are provided and lore-approved. Pending user framing choice, this feature is cleared for PRD completion and architecture handoff.
-- **Remaining concerns:** Enchanter is the weakest lore fit; if the user wants a tighter rationale, "Illusory Tether" with explicit mind-over-matter spell description language will help. No blocking concerns for implementation.
+- **Verdict:** APPROVED — PRD cleared for architecture handoff
+- **Summary:** Final verification pass on the revised PRD. All six blocking name changes resolved correctly (Druid="Nature's Reclamation", Shaman="Ancestral Summons", Ranger="Warden's Claim", Bard="Dirge of Homecoming", Beastlord="Ancestral Call", Cleric="Divine Reclamation"). Three non-blocking originals retained without objection (Paladin "Solemn Retrieval", Wizard "Spectral Translocation", Enchanter "Phantasmal Reclamation"). Compact of the Awakened framing adopted verbatim and era-safe. Hard-fit class rationales (Paladin, Ranger, Bard, Enchanter) all present and accurate. Era compliance section clean — no post-Luclin references; Beastlord correctly noted as Luclin-era-legal. Acceptance criteria and balance considerations both lore-consistent. Vendor placement question (PRD Open Question 5) answered: standard class spell vendor in each starting city for all 12 scrolls.
+- **Remaining concerns:** None. PRD is ready to commit and hand to the architect.
 
 ---
 
 ## Context for Next Phase
 
-- The universal framing rationale (Option A vs. Option B) is a user decision, not an implementation decision — it only affects flavor text and scroll descriptions, not spell mechanics.
+- The universal framing rationale (Option A vs. Option B) is a user decision, not an implementation decision — it only affects flavor text and scroll descriptions, not spell mechanics. Game-designer adopted Option A (Compact of the Awakened).
 - Spell names are the critical implementation input; use the recommended table above, not the brief.md originals.
 - No new NPCs, factions, or zones are introduced by this feature. Era lock (Classic–Luclin) is maintained throughout.
 - Flavor text strings (one-sentence descriptions above) can be used directly as the spell description field content by the data-expert.
 - Druid and Ranger names specifically need care: both classes are nature-flavored but distinctly NOT death-magic users. Implementation-side tooltip/description text must not use "death," "corpse-command," "undead," or necromantic vocabulary for these two classes.
+- **Vendor placement (lore-master decision):** Place all 12 scrolls on the standard class spell vendor in each starting city, mirroring how every other level-1 spell is sold in Classic. Do NOT use faction-gated guild vendors. Rationale: this is a universal utility spell, not a guild-prestige reward; faction-gated placement would lock the scroll behind faction the character may not have at level 1 (Necromancer in Neriak/Paineel is the worst case).
