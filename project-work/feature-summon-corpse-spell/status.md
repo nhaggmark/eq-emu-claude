@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/summon-corpse-spell`
 > **Created:** 2026-05-03
-> **Last updated:** 2026-05-03
+> **Last updated:** 2026-05-03 (design phase complete)
 
 ---
 
@@ -11,13 +11,13 @@
 | Phase | Agent | Status | Started | Completed |
 |-------|-------|--------|---------|-----------|
 | Bootstrap | bootstrap-agent | Complete | 2026-05-03 | 2026-05-03 |
-| Design | game-designer + lore-master | Not Started | | |
+| Design | game-designer + lore-master | Complete | 2026-05-03 | 2026-05-03 |
 | Architecture | architect + protocol-agent + config-expert | Not Started | | |
 | Implementation | _implementation team_ | Not Started | | |
 | Validation | game-tester | Not Started | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Design
+**Current phase:** Architecture
 
 ---
 
@@ -29,6 +29,34 @@ _Record each handoff between agents with context and any notes._
 - **Date:** 2026-05-03
 - **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
   Feature brief at `brief.md`. Spawn both agents as teammates for the Design phase.
+
+### design team (game-designer + lore-master) → architect (architecture team)
+- **Date:** 2026-05-03
+- **PRD:** `game-designer/prd.md` — fully filled out, all template sections
+  populated. Status: Approved.
+- **Lore review:** `lore-master/lore-notes.md` — lore-master's full review
+  persisted verbatim. All 6 BLOCKING name issues addressed exactly as
+  recommended. Universal in-world framing chosen: Option A "The Compact
+  of the Awakened" (Luclin Nexus-grounded). Final lore-master full-pass
+  sign-off requested but not blocking handoff.
+- **Scope summary:** Free, level-1, class-flavored Summon Corpse spell
+  scribed by all 12 casting-capable classes (CLR, DRU, SHM, NEC, WIZ,
+  MAG, ENC, PAL, SHD, RNG, BST, BRD). 0 mana, 6s cast, 3-min cooldown.
+  Self-target, same-zone-only, summons caster's own corpse. Vendor
+  acquisition for new chars; auto-scribe migration for existing.
+  Mechanically identical to existing Necromancer/Shaman summon-corpse —
+  just universalized.
+- **Open questions for the architect** (full list in PRD §Open Questions):
+  cooldown enforcement on no-corpse cast; multi-corpse selection order;
+  Bard scribed-spell routing (gem-window vs. song-window); auto-scribe
+  migration sequencing; vendor-NPC placement strategy; animation/icon
+  reuse-vs-bespoke decisions.
+- **Affected systems:** C++ server source, MariaDB (`spells_new`,
+  `items`, `merchantlist`, `character_spells` migration), rule-values.
+  No Lua, no Perl, no Docker, no config-file changes expected.
+- **Lore sign-off status:** APPROVED-IN-SUBSTANCE. All blocking concerns
+  resolved; final pro-forma sign-off pass requested. See
+  `agent-conversations.md` Unresolved Threads.
 
 ---
 
