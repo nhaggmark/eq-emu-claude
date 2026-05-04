@@ -168,7 +168,25 @@ VALUES (
 
 ## Stage 4: Build
 
-_Not started — awaiting architect confirmation of rule shape._
+**Started:** 2026-05-03
+
+### Implementation Log
+
+**Task 1 — ruletypes.h edit:**
+- File: `eqemu/common/ruletypes.h`
+- Inserted at line 549 (before `RULE_CATEGORY_END()`, after last existing `Spells` rule `AlwaysStackSpells`):
+  ```cpp
+  RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, "Cooldown in seconds for the universal self-summon-corpse spell line (12 class-flavored level-1 spells). 0 disables the cooldown. Default 180 (3 minutes). Range: 0-3600. Hot-reloadable via #reloadrules.")
+  ```
+- `RULE_CATEGORY_END()` now at line 550.
+- Build step owned by infra-expert (task 10).
+
+**Task 8 — rule_values SQL:**
+- File: `claude/project-work/feature-summon-corpse-spell/config-expert/migrations/08-rule-values.sql`
+- SQL: `INSERT INTO rule_values (ruleset_id, rule_name, rule_value, notes) VALUES (1, 'Spells:UniversalSummonCorpseCooldown', '180', '...')`
+- data-expert includes this in the bundled transactional migration (task 9).
+
+**Status: Both tasks complete. Committed to feature/summon-corpse-spell.**
 
 ---
 

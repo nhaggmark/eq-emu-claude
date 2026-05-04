@@ -62,14 +62,14 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Add `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, ...)` to `ruletypes.h` before `RULE_CATEGORY_END()` at line 549; clean build | config-expert | Not Started | 1 line + build cycle |
+| 1 | Add `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, ...)` to `ruletypes.h` before `RULE_CATEGORY_END()` at line 549; clean build | config-expert | Complete | 2026-05-03 |
 | 2 | Identify existing Necromancer summon-corpse row in `spells_new` for icon/animation/descnum clone-mutate values; assign new unique `spell_category` value for the 12 new spells; share constant with c-expert | data-expert | Not Started | No dependency |
 | 3 | Author 12 INSERT statements for new spells in `spells_new` (using assigned IDs `1348, 5093, 9412–9421` per architecture §Data Model, cloned cosmetic fields from task 2, and the new spell_category) | data-expert | Not Started | Depends on task 2 |
 | 4 | Add `m_summon_corpse_was_noop` flag (`mob.h`); set in SummonCorpse no-corpse branch (`spell_effects.cpp:1851`); read in recast block (`spells.cpp:2817-2841`) gated on `spell_category == kUniversalSummonCorpseCategory`; add `RuleI(Spells, UniversalSummonCorpseCooldown)` override in same block | c-expert | Not Started | Depends on tasks 1, 2; ~15 lines across 3 files |
 | 5 | Author 12 INSERT statements for scroll items in `items` | data-expert | Not Started | Depends on task 3 |
 | 6 | Enumerate starting-city class spell vendor merchant_ids; author merchantlist INSERTs | data-expert | Not Started | Depends on task 5; ~30-50 rows |
 | 7 | Author idempotent character_spells auto-scribe migration (12 INSERT...SELECT blocks with `MIN(MAX(slot_id)+1, 399)` cap) | data-expert | Not Started | Depends on task 3 |
-| 8 | Author rule_values seed row for `Spells:UniversalSummonCorpseCooldown` (ruleset_id=1) | config-expert | Not Started | Depends on task 1 |
+| 8 | Author rule_values seed row for `Spells:UniversalSummonCorpseCooldown` (ruleset_id=1) | config-expert | Complete | 2026-05-03 |
 | 9 | Bundle SQL into single transactional migration; test idempotency on snapshot | data-expert | Not Started | Depends on tasks 3, 5, 6, 7, 8 |
 | 10 | Rebuild zone/world; restart full stack per MEMORY.md startup order; apply migration | infra-expert | Not Started | Depends on tasks 4, 9 |
 | 11 | Hand off to game-tester for validation | (orchestrator) | Not Started | Depends on task 10 |
