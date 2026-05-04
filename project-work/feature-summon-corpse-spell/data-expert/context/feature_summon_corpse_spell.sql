@@ -48,7 +48,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   1348, 'Conjure Cadaver', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -57,7 +57,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 255, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 1348);
@@ -71,7 +71,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   5093, 'Death''s Recall', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -80,7 +80,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 255, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 5093);
@@ -94,7 +94,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9412, 'Divine Reclamation', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -103,7 +103,7 @@ SELECT
   6, 65535, 0, 1, 0, 1,
   0, 0, 221,
   255, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9412);
@@ -117,7 +117,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9413, 'Solemn Retrieval', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -126,7 +126,7 @@ SELECT
   6, 65535, 0, 1, 0, 1,
   0, 0, 221,
   255, 255, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9413);
@@ -140,7 +140,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9414, 'Nature''s Reclamation', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -149,7 +149,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 255, 255, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9414);
@@ -163,7 +163,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9415, 'Warden''s Claim', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -172,7 +172,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9415);
@@ -186,7 +186,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9416, 'Ancestral Summons', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -195,7 +195,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 255, 255, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9416);
@@ -209,7 +209,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9417, 'Ancestral Call', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -218,7 +218,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9417);
@@ -232,7 +232,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9418, 'Spectral Translocation', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -241,7 +241,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9418);
@@ -255,7 +255,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9419, 'Summon Mortal Remains', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -264,7 +264,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9419);
@@ -278,7 +278,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9420, 'Phantasmal Reclamation', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -287,7 +287,7 @@ SELECT
   6, 65535, 0, 1, 0, 14,
   0, 0, 221,
   255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9420);
@@ -301,7 +301,7 @@ INSERT INTO spells_new
    targettype, buffduration, buffdurationformula, goodEffect, resisttype, skill,
    EndurTimerIndex, IsDiscipline, spell_category,
    classes1, classes2, classes3, classes4, classes5, classes6, classes7, classes8, classes9, classes10, classes11, classes12, classes13, classes14, classes15, classes16,
-   new_icon, CastingAnim, descnum, effectdescnum,
+   new_icon, CastingAnim, descnum, typedescnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
   9421, 'Dirge of Homecoming', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
@@ -310,7 +310,7 @@ SELECT
   6, 65535, 0, 1, 0, 98,
   0, 0, 221,
   255, 255, 255, 255, 255, 255, 255, 1, 255, 255, 255, 255, 255, 255, 255, 255,
-  109, 43, 2213, 64,
+  109, 43, 2213, 125, 64,
   0, 0, 1
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9421);
