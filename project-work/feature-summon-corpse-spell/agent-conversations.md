@@ -215,9 +215,9 @@ _Expert-to-expert exchanges during Phase 4._
 
 **Response from** config-expert:
 
-> _Pending_
+> Task 1 was already complete — `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, ...)` registered at `ruletypes.h:549` and committed in `476cb47c7`. Rule confirmed present and compiling.
 
-**Outcome:** c-expert blocked on spells.cpp Phase B edit until task 1 complete. Phase A edits (mob.h + spell_effects.cpp) proceeding immediately.
+**Outcome:** Dependency resolved. c-expert proceeded to Phase B once data-expert task 2 value was also confirmed.
 
 ---
 
@@ -229,9 +229,19 @@ _Expert-to-expert exchanges during Phase 4._
 
 **Response from** data-expert:
 
-> _Pending_
+> Task 2 complete — assigned `spell_category = 221` to all 12 new spells. Verified 221 is unused (max in-use category is 220, excluding sentinel 999). Existing NEC/SHM summon-corpse spells use category 52 — no collision.
 
-**Outcome:** c-expert blocked on spells.cpp Phase B edit until task 2 complete with value confirmed.
+**Outcome:** `kUniversalSummonCorpseCategory = 221` used in spells.cpp Phase B edit. Both dependencies resolved; Phase B implemented and built cleanly.
+
+---
+
+### 2026-05-03 — data-expert → c-expert: spell_category proactive unblock
+
+**From:** data-expert → **To:** c-expert
+
+> Task 2 complete. spell_category for universal summon corpse = 221. Verified via SELECT DISTINCT. Max in use (excl. 999) = 220. Assigned 221 to all 12 new spells. No collision. Constant for your spells.cpp edit: `static const int kUniversalSummonCorpseCategory = 221;`
+
+**Outcome:** c-expert unblocked for task 4 without waiting for a request. This was a proactive SendMessage per the architecture's critical sequencing constraint.
 
 ---
 
