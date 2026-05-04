@@ -207,17 +207,31 @@ _architect + protocol-agent + config-expert exchanges during Phase 3._
 
 _Expert-to-expert exchanges during Phase 4._
 
-### [Date] — [Topic]
+### 2026-05-03 — c-expert → config-expert: task 1 status + compile dependency
 
-**From:** [agent] → **To:** [agent]
+**From:** c-expert → **To:** config-expert
 
-> [Message content or summary]
+> Verified `RULE_INT(Spells, UniversalSummonCorpseCooldown, 180, ...)` is NOT yet present in `ruletypes.h` (line 549 is `RULE_CATEGORY_END()`). Notified config-expert that `RuleI(Spells, UniversalSummonCorpseCooldown)` in the spells.cpp recast block will not compile until task 1 is complete. Proceeding with mob.h + spell_effects.cpp edits (no rule dependency) and waiting for task 1 confirmation before the spells.cpp edit.
 
-**Response from** [agent]:
+**Response from** config-expert:
 
-> [Response content or summary]
+> _Pending_
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** c-expert blocked on spells.cpp Phase B edit until task 1 complete. Phase A edits (mob.h + spell_effects.cpp) proceeding immediately.
+
+---
+
+### 2026-05-03 — c-expert → data-expert: spell_category value needed for kUniversalSummonCorpseCategory
+
+**From:** c-expert → **To:** data-expert
+
+> Requested the final `spell_category` integer value assigned to the 12 new Universal Summon Corpse spells (from task 2). This value becomes `kUniversalSummonCorpseCategory` in the spells.cpp recast block discriminator. Architecture recommends a value above 200 that is confirmed unused via `SELECT DISTINCT spell_category FROM spells_new ORDER BY 1`.
+
+**Response from** data-expert:
+
+> _Pending_
+
+**Outcome:** c-expert blocked on spells.cpp Phase B edit until task 2 complete with value confirmed.
 
 ---
 
