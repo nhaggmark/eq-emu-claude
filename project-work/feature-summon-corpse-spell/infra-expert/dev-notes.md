@@ -151,6 +151,28 @@ All 10 processes confirmed running via `ps aux`.
 
 Final validation: new_spells=12, new_items=12, vendor_entries=57, auto_scribed=1, rule_row=1. PASS.
 
+#### 2026-05-04 — Client spells_us.txt regeneration and deploy
+
+**What:** Ran `export_client_files` to regenerate Titanium client data files from the now-correct spells_new table, then deployed to `/mnt/d/EQ/`.
+
+**Binary location:** `/home/eqemu/code/build/bin/export_client_files` (not in ~/server/bin — must be run from ~/server/ dir with export/ subdir created first).
+
+**Commands:**
+```
+docker exec akk-stack-eqemu-server-1 bash -c "mkdir -p ~/server/export && cd ~/server && ~/code/build/bin/export_client_files"
+```
+Output: ExportSpells 40734, ExportSkillCaps 58359, ExportBaseData 1600, ExportDBStrings 44580.
+
+**Files exported:** spells_us.txt (27MB), dbstr_us.txt (6.1MB), SkillCaps.txt (799KB), BaseData.txt (61KB).
+
+**Client backup:** `claude/tmp/feature-summon-corpse-spell/client-backup-1777926156/` — contains previous spells_us.txt and dbstr_us.txt (SkillCaps.txt and BaseData.txt were not previously in the client dir).
+
+**Deployed to client:** All 4 files copied to `/mnt/d/EQ/`.
+
+**Verification:** grep confirmed all 12 new spell IDs present in `/mnt/d/EQ/spells_us.txt` with correct names (Conjure Cadaver, Death's Recall, Divine Reclamation, Solemn Retrieval, Nature's Reclamation, Warden's Claim, Ancestral Summons, Ancestral Call, Spectral Translocation, Summon Mortal Remains, Phantasmal Reclamation, Dirge of Homecoming).
+
+**User action required:** Titanium client must be FULLY EXITED and relaunched — a character relog inside a running client is not sufficient to re-read spells_us.txt.
+
 ### Problems & Solutions
 
 | Problem | Root Cause | Solution |
@@ -165,7 +187,11 @@ Final validation: new_spells=12, new_items=12, vendor_entries=57, auto_scribed=1
 |------|--------|-------------|
 | `claude/project-work/feature-summon-corpse-spell/infra-expert/dev-notes.md` | Modified | Stage 4 implementation log |
 | `claude/project-work/feature-summon-corpse-spell/status.md` | Modified | Task 10 → Complete |
-| `claude/tmp/feature-summon-corpse-spell/` | Created | Pre-migration DB backup (gitignored, 123MB) |
+| `claude/tmp/feature-summon-corpse-spell/` | Created | Pre-migration DB backup (123MB) + client file backups (gitignored) |
+| `/mnt/d/EQ/spells_us.txt` | Replaced | Regenerated with 12 new spell entries (40734 total spells) |
+| `/mnt/d/EQ/dbstr_us.txt` | Replaced | Regenerated (44580 DB strings) |
+| `/mnt/d/EQ/SkillCaps.txt` | Added | New file — was not previously in client dir |
+| `/mnt/d/EQ/BaseData.txt` | Added | New file — was not previously in client dir |
 
 ---
 
