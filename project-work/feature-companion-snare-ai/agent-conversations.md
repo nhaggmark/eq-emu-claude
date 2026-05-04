@@ -138,6 +138,37 @@ section and the technical appendix.
 
 ---
 
+### 2026-05-04 — Final PRD Review (Post-Addendum)
+
+**From:** lore-master → **To:** game-designer
+
+> Lore-master conducted a final review of the full PRD after the
+> Necromancer-naming addendum was committed (`4729182`). Reviewed
+> Lore Considerations (PRD lines 237-244), Era Compliance (lines 231-235),
+> the Classes Affected table, and the EK Hill Giants example scenario.
+
+**Response from lore-master (final PRD review):**
+
+> APPROVED — Full PRD reviewed. Lore Considerations and Era Compliance
+> sections are accurate. All four affected classes correctly
+> characterized. Example scenario (EK Hill Giants) is era-appropriate.
+> No narrative surface area, no post-Luclin references, no class
+> identity concerns. Sign-off complete.
+>
+> Specific verifications:
+> - Lore Considerations: silent-suppression recommendation correctly
+>   recorded as confirmed.
+> - Era Compliance: all referenced spells are Classic-through-Luclin.
+> - Ranger "inherits Druid snare line" is correct to EQ class design.
+> - Eastern Karana Hill Giants — correct zone, correct era, correct
+>   creature. No lore inconsistency.
+
+**Outcome:** Final lore sign-off on the complete (post-addendum) PRD
+recorded. Design phase deliverables are fully reviewed and approved.
+Architecture team has a lore-vetted document to work from.
+
+---
+
 ## Architecture Team Conversations
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
