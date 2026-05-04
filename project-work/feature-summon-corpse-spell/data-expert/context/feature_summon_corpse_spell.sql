@@ -25,8 +25,8 @@ START TRANSACTION;
 -- Clone cosmetics from spell 2213 (Lesser Summon Corpse):
 --   new_icon=109, CastingAnim=43, descnum=2213, effectdescnum=64, goodEffect=1
 -- All 12 use:
---   player_1='PLAYER_1', you_cast='', other_casts='', cast_on_you='', cast_on_other='', spell_fades=''
---   (empty string, not NULL — shared_memory C++ loader crashes on NULL varchar fields)
+--   player_1='PLAYER_1', teleport_zone='', you_cast='', other_casts='', cast_on_you='', cast_on_other='', spell_fades=''
+--   (empty string, not NULL — shared_memory C++ loader crashes on NULL varchar fields for ALL 8 varchar cols)
 --   effect_id1=91 (SE_SummonCorpse), effect_base_value1=255 (level cap), formula1=100
 --   cast_time=6000ms, recovery_time=2500ms, recast_time=180000ms (3 min)
 --   mana=0, targettype=6 (ST_Self), buffduration=65535 (0xFFFF, bypasses bard song mode)
@@ -41,7 +41,7 @@ START TRANSACTION;
 
 -- ID 1348: Necromancer — Conjure Cadaver (classes11=NEC=1)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -51,7 +51,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  1348, 'Conjure Cadaver', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  1348, 'Conjure Cadaver', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -64,7 +64,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 1348);
 
 -- ID 5093: Shadow Knight — Death's Recall (classes5=SHD=1)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -74,7 +74,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  5093, 'Death''s Recall', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  5093, 'Death''s Recall', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -87,7 +87,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 5093);
 
 -- ID 9412: Cleric — Divine Reclamation (classes2=CLR=1, skill=1 Divination)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -97,7 +97,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9412, 'Divine Reclamation', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9412, 'Divine Reclamation', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 1,
@@ -110,7 +110,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9412);
 
 -- ID 9413: Paladin — Solemn Retrieval (classes3=PAL=1, skill=1 Divination)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -120,7 +120,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9413, 'Solemn Retrieval', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9413, 'Solemn Retrieval', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 1,
@@ -133,7 +133,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9413);
 
 -- ID 9414: Druid — Nature's Reclamation (classes6=DRU=1, skill=14 Alteration)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -143,7 +143,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9414, 'Nature''s Reclamation', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9414, 'Nature''s Reclamation', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -156,7 +156,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9414);
 
 -- ID 9415: Ranger — Warden's Claim (classes4=RNG=1, skill=14 Alteration)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -166,7 +166,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9415, 'Warden''s Claim', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9415, 'Warden''s Claim', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -179,7 +179,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9415);
 
 -- ID 9416: Shaman — Ancestral Summons (classes10=SHM=1, skill=14 Alteration)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -189,7 +189,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9416, 'Ancestral Summons', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9416, 'Ancestral Summons', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -202,7 +202,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9416);
 
 -- ID 9417: Beastlord — Ancestral Call (classes15=BST=1, skill=14 Alteration)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -212,7 +212,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9417, 'Ancestral Call', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9417, 'Ancestral Call', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -225,7 +225,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9417);
 
 -- ID 9418: Wizard — Spectral Translocation (classes12=WIZ=1, skill=14 Alteration)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -235,7 +235,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9418, 'Spectral Translocation', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9418, 'Spectral Translocation', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -248,7 +248,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9418);
 
 -- ID 9419: Magician — Summon Mortal Remains (classes13=MAG=1, skill=14 Conjuration)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -258,7 +258,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9419, 'Summon Mortal Remains', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9419, 'Summon Mortal Remains', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -271,7 +271,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9419);
 
 -- ID 9420: Enchanter — Phantasmal Reclamation (classes14=ENC=1, skill=14 Alteration)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -281,7 +281,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9420, 'Phantasmal Reclamation', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9420, 'Phantasmal Reclamation', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 14,
@@ -294,7 +294,7 @@ WHERE NOT EXISTS (SELECT 1 FROM spells_new WHERE id = 9420);
 
 -- ID 9421: Bard — Dirge of Homecoming (classes8=BRD=1, skill=98 Singing)
 INSERT INTO spells_new
-  (id, name, player_1, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
+  (id, name, player_1, teleport_zone, you_cast, other_casts, cast_on_you, cast_on_other, spell_fades,
    cast_time, recovery_time, recast_time, mana,
    effectid1, effect_base_value1, formula1,
    effectid2, effectid3, effectid4, effectid5, effectid6, effectid7, effectid8, effectid9, effectid10, effectid11, effectid12,
@@ -304,7 +304,7 @@ INSERT INTO spells_new
    new_icon, CastingAnim, descnum, effectdescnum,
    MinResist, MaxResist, no_block)
 SELECT
-  9421, 'Dirge of Homecoming', 'PLAYER_1', '', '', '', '', '', 6000, 2500, 180000, 0,
+  9421, 'Dirge of Homecoming', 'PLAYER_1', '', '', '', '', '', '', 6000, 2500, 180000, 0,
   91, 255, 100,
   254, 254, 254, 254, 254, 254, 254, 254, 254, 254, 254,
   6, 65535, 0, 1, 0, 98,
