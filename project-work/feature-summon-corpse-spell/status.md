@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/summon-corpse-spell`
 > **Created:** 2026-05-03
-> **Last updated:** 2026-05-03 (architecture phase complete; spell-ID precondition flagged)
+> **Last updated:** 2026-05-04 (feature complete; merged to default branches)
 
 ---
 
@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-05-03 | 2026-05-03 |
 | Design | game-designer + lore-master | Complete | 2026-05-03 | 2026-05-03 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-05-03 | 2026-05-03 |
-| Implementation | c-expert + data-expert + config-expert + infra-expert | Not Started | | |
-| Validation | game-tester | Not Started | | |
-| Completion | _user_ | Not Started | | |
+| Implementation | c-expert + data-expert + config-expert + infra-expert | Complete | 2026-05-03 | 2026-05-04 |
+| Validation | game-tester | Skipped — user-confirmed in-game | 2026-05-04 | 2026-05-04 |
+| Completion | _user_ | Complete | 2026-05-04 | 2026-05-04 |
 
-**Current phase:** Implementation (ready to start once team is spawned)
+**Current phase:** Complete (merged to default branches; feature branch deleted)
 
 ---
 
@@ -72,7 +72,24 @@ _Populated by the architect after the architecture doc is approved._
 | 8 | Author rule_values seed row for `Spells:UniversalSummonCorpseCooldown` (ruleset_id=1) | config-expert | Complete | 2026-05-03 |
 | 9 | Bundle SQL into single transactional migration; test idempotency on snapshot | data-expert | Complete | 2026-05-03. Run twice — counts stable at 12/12/57/1/1. All checks pass. |
 | 10 | Rebuild zone/world; restart full stack per MEMORY.md startup order; apply migration | infra-expert | Complete | 2026-05-03. Build 65/65. shared_memory loaded new spells. All 10 processes running (loginserver + world + 8 zones). Validation: 12/12/57/1/1. Note: 3 NULL-column bugs in data-expert migration required patching before shared_memory would load (you_cast/other_casts/cast_on_you/cast_on_other/spell_fades/teleport_zone set to ''; typedescnum set to 125). |
-| 11 | Hand off to game-tester for validation | (orchestrator) | Not Started | Depends on task 10 |
+| 11 | Hand off to game-tester for validation | (orchestrator) | Skipped | User-confirmed working in-game; formal validation not required |
+| 12 | Regenerate Titanium client `spells_us.txt` and deploy to /mnt/d/EQ/ | infra-expert | Complete | 2026-05-04. Discovered as gap during in-game validation. `bin/export_client_files` with `~/server/export/` pre-created. spells_us.txt + dbstr_us.txt + SkillCaps.txt + BaseData.txt deployed. Backup at `claude/tmp/feature-summon-corpse-spell/client-backup-1777926156/`. Commit cb28558. |
+| 13 | Document UX wart: 3-min memorize warm-up | data-expert | Complete | 2026-05-04. Recast_time enforced on memorize as well as on cast. Players should keep spell memorized at all times. Logged in data-expert/dev-notes.md. |
+
+---
+
+## Handoff Log addendum (2026-05-04)
+
+### implementation team → user (validation + completion)
+- **Date:** 2026-05-04
+- **In-game validation:** User logged in with Enchanter "Chelon" (level 56). After client-file regeneration (task 12), the spell "Phantasmal Reclamation" rendered correctly in spellbook. After 3-minute warm-up, the spell cast successfully. User confirmed feature works as designed.
+- **Known UX wart:** 3-minute warm-up after memorize before first cast is possible. Architectural property of `recast_time` on the spell row, not a bug. Documented in data-expert dev-notes.
+- **Validation phase outcome:** SKIPPED (user-confirmed). game-tester not dispatched.
+- **Final commits per repo:**
+  - `eqemu/feature/summon-corpse-spell`: 476cb47c7 (rule), 5f5e69570 (Phase A), 8a5f4565e (Phase B) — merged to master
+  - `claude/feature/summon-corpse-spell`: full design + architecture + implementation history — merged to main
+  - `akk-stack/feature/summon-corpse-spell`: no feature commits (server SQL is gitignored under server/quests/sql/) — branch deleted without merge
+  - `spire/feature/summon-corpse-spell`: no feature commits (web admin not affected) — branch deleted without merge
 
 ---
 

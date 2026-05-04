@@ -193,8 +193,25 @@ Note: `misty`/`mistythicket` vendors do NOT sell spell scrolls — no scrolleffe
 ## Open Items
 
 - [x] spell_category communicated to c-expert (221)
-- [ ] config-expert must INSERT rule_values row (task 8) — migration file has a section for it with NOT EXISTS guard
-- [ ] infra-expert applies migration after build (task 10)
+- [x] config-expert rule_values row — included in migration Section 5, applied
+- [x] infra-expert applied migration (task 10 complete)
+
+## Known UX Wart — 3-Minute Warm-Up After Memorize
+
+Universal Summon Corpse spells have a 3-minute warm-up period after memorizing
+before they can be cast for the first time. This is standard EQEmu engine
+behavior: `recast_time` gates the spell gem on both cast AND memorize.
+
+**Release-notes item for game-designer/PRD:**
+> Players should keep the spell memorized at all times to use it as a true
+> emergency tool. Memorizing the spell mid-emergency will not allow immediate
+> casting — the 3-minute cooldown applies from the moment the spell is scribed
+> into a gem slot.
+
+**Design-review checklist note:** When proposing `recast_time` on a new spell,
+verify that the memorize-warmup behavior matches the player-facing cooldown
+spec. A spell with `recast_time = 180000` cannot be cast for 3 minutes after
+it is first memorized, even by a fresh character who has never cast it before.
 
 ---
 
