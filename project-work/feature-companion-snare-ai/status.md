@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/companion-snare-ai`
 > **Created:** 2026-05-03
-> **Last updated:** 2026-05-04
+> **Last updated:** 2026-05-04 (amended)
 
 ---
 
@@ -29,6 +29,17 @@ _Record each handoff between agents with context and any notes._
 - **Date:** 2026-05-03
 - **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
   Feature brief at `brief.md`. Spawn both agents as teammates for the Design phase.
+
+### architect → team-lead (Phase 3 amendment)
+- **Date:** 2026-05-04
+- **Amendment doc:** `architect/architecture.md` (rewritten with amendment notice)
+- **Trigger:** team-lead requested re-verification of AI routing claim and threshold retune.
+- **Findings:**
+  1. User's reported "Druid ensnare spam" is actually Druid casting **Root-line spells** through the existing AI_Druid Root branch (companion_ai.cpp:1235), NOT snare-line. The spell names "Ensnaring Roots", "Engulfing Roots", etc. cause the colloquial confusion — they have effect ID 99 (Root), not 3 (MovementSpeed).
+  2. PRD literal scope ("snare-line only, roots OUT") does not match user's actual reported behavior. **Scope decision required from user** before implementation.
+  3. Amendment retunes `Companions:SnareHpThreshold` 20 → 25 per user direction.
+- **Architect recommendation:** Option 2 — gate both Snare-line AND Root-line through unified helper `AI_AttemptMovementControl`.
+- **Tasks reduced** vs. original plan: dropped "add SpellType_Snare branches to AI_Druid/AI_Necro/AI_Shaman" (irrelevant — those branches don't fire today and aren't the user's complaint). The actual fix is gating the EXISTING AI_Druid Root branch.
 
 ### architect → implementation team (Phase 4)
 - **Date:** 2026-05-04
@@ -69,22 +80,26 @@ _Record each handoff between agents with context and any notes._
 
 ## Implementation Tasks
 
-_Populated by the architect after the architecture doc is approved._
+_Populated by the architect. Amended 2026-05-04 after re-verification of AI routing._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Add 2 RULE_INT entries to `common/ruletypes.h` (`Companions:SnareHpThreshold` default 20, `Companions:SnareResistLimit` default 2). | config-expert | Not Started | Required before C++ build. |
-| 2 | Audit `companion_spell_sets` for DRU/RNG/NEC/SHM snare-line entries with `spell_type = 128`. Add missing rows by spell ID. | data-expert | Not Started | Parallel with task 1. |
-| 3 | Implement `Companion::AI_AttemptSnare`, `OnSpellResisted`, `ClearSnareResistCounters`. Add `m_snare_resist_counts`, `m_last_snare_target_id` members. | c-expert | Not Started | Depends on task 1. |
-| 4 | Replace AI_Ranger snare branch with `AI_AttemptSnare` call. Preserve 30% throttle. | c-expert | Not Started | Depends on task 3. |
-| 5 | Replace AI_Bard snare branch with `AI_AttemptSnare` call. Preserve 20% throttle. | c-expert | Not Started | Depends on task 3. |
-| 6 | Add SpellType_Snare branch to AI_Druid (50% throttle). | c-expert | Not Started | Depends on task 3. |
-| 7 | Add SpellType_Snare branch to AI_Necromancer (50% throttle). | c-expert | Not Started | Depends on task 3. |
-| 8 | Add SpellType_Snare branch to AI_Shaman (50% throttle). | c-expert | Not Started | Depends on task 3. |
-| 9 | Hook `m_was_engaged` transition site in `Companion::Process` to call `ClearSnareResistCounters()`. | c-expert | Not Started | Depends on task 3. |
-| 10 | Hook `Mob::SpellOnTarget` full-resist branch in `spells.cpp:4554` to call `OnSpellResisted` when `IsCompanion()`. | c-expert | Not Started | Depends on task 3. |
-| 11 | Build (`ninja -j$(nproc)`), restart container + zone processes, smoke test. | c-expert | Not Started | Gates task 12. |
-| 12 | Insert 2 default rule_values rows for the new rules. Run `#reloadrules` to activate. | config-expert | Not Started | Depends on task 11 (rebuild required for `_FindRule()` to match). |
+| 1 | Add 2 RULE_INT entries to `common/ruletypes.h` (`Companions:SnareHpThreshold` default **25**, `Companions:SnareResistLimit` default 2). Updated descriptions reflect movement-control (snare AND root) coverage. | config-expert | Not Started | Required before C++ build. Default 25 aligns with Combat:FleeHPRatio. |
+| 2 | Audit `companion_spell_sets` for the Druid 3192/3447 mis-tag (tagged Snare 128 but effect is Root, should be type 4). Optional correction; gate handles both via unified helper. | data-expert | Not Started | Parallel with task 1. May be no-op. |
+| 3 | Implement `Companion::AI_AttemptMovementControl(Mob*, uint32 type_mask)`, `OnSpellResisted`, `ClearMovementControlResistCounters`. Add `m_movement_control_resist_counts`, `m_last_movement_control_target_id` members. | c-expert | Not Started | Depends on task 1. Replaces the original `AI_AttemptSnare` plan. |
+| 4 | Replace AI_Druid Root branch (companion_ai.cpp:1235-1246) with `AI_AttemptMovementControl(GetTarget(), SpellType_Root)`. Preserve 30% throttle. **This is the fix for the user's reported "Druid ensnare spam."** | c-expert | Not Started | Depends on task 3. NEW — added by amendment. |
+| 5 | Replace AI_Ranger Snare branch (companion_ai.cpp:1467-1483) with `AI_AttemptMovementControl(GetTarget(), SpellType_Snare)`. Preserve 30% throttle. | c-expert | Not Started | Depends on task 3. |
+| 6 | Replace AI_Bard Snare branch (companion_ai.cpp:1788-1802) with `AI_AttemptMovementControl(GetTarget(), SpellType_Snare)`. Preserve 20% throttle. | c-expert | Not Started | Depends on task 3. |
+| 7 | Hook `m_was_engaged` transition site in `Companion::Process` (companion.cpp:1992-2000) to call `ClearMovementControlResistCounters()`. | c-expert | Not Started | Depends on task 3. |
+| 8 | Hook `Mob::SpellOnTarget` full-resist branch (`spells.cpp:4554`) to call `OnSpellResisted` when `IsCompanion()`. | c-expert | Not Started | Depends on task 3. |
+| 9 | Build (`ninja -j$(nproc)`), restart container + zone processes, smoke test. | c-expert | Not Started | Gates task 10. |
+| 10 | Insert 2 default `rule_values` rows for the new rules. Run `#reloadrules` to activate. | config-expert | Not Started | Depends on task 9 (rebuild required for `_FindRule()` to match). |
+
+**Tasks dropped vs. original architecture:**
+- ~~Add SpellType_Snare branch to AI_Druid~~ — unnecessary; the user's spam is on the Root branch (now gated by Task 4). Druid SpellType_Snare entries in companion_spell_sets remain unreached, which is unchanged from current behavior.
+- ~~Add SpellType_Snare branch to AI_Necromancer~~ — Necromancer doesn't currently spam any movement-control spell; adding a branch expands behavior beyond user complaint. Latent (separate) bug: Necromancer Darkness DoTs are unreachable in current AI; defer to a follow-up "AI completeness" feature.
+- ~~Add SpellType_Snare branch to AI_Shaman~~ — Shaman has no SpellType_Snare data and AI_Shaman has no Root branch. Out of scope for this feature.
+
 
 ---
 
@@ -145,6 +160,9 @@ _Key decisions made during this feature's development._
 | 10 | Manual `/command` snare override = N/A in current scope. No `!snare` or `!cast` command exists today. AC-8 marked N/A. | architect | 2026-05-04 | Verified against `claude/docs/companion-commands-reference.md`. PRD's "override bypass" is forward-looking; if a future feature adds `!snare`, the override is small additional plumbing. |
 | 11 | `Companions:SnareResistLimit = 0` means "no cap, attempt every eligible tick." | architect (confirming config-expert flagged ambiguity) | 2026-05-04 | Encoded as `if (resist_limit > 0)` in the gate. Matches PRD intent. |
 | 12 | Scope expansion — Druid/Necromancer/Shaman class AI handlers do not currently route `SpellType_Snare`. Adding branches is part of this feature, not optional. Bard's existing snare branch is also gated for consistency. | architect | 2026-05-04 | The PRD names DRU/RNG/NEC/SHM but only RNG and BRD have snare branches in the code today. Without adding the missing branches, the feature would only apply to RNG. Bard included for uniform application of the rule. |
+| 13 | Architecture amended 2026-05-04 — original claim re-verified literally true but irrelevant. User's reported "Druid ensnare spam" is actually Druid casting Root-line spells via AI_Druid Root branch (line 1235). Decision #12 is superseded by #14 below. | architect | 2026-05-04 | Verified by direct DB query of companion_spell_sets and spells_new effect IDs. |
+| 14 | Scope expansion: gate BOTH SpellType_Snare AND SpellType_Root via shared helper renamed `AI_AttemptMovementControl`. PRD scope expanded from "snare-line only" to "movement-control". | architect (recommended; pending user decision) | 2026-05-04 | Without this expansion, the user's actual complaint (Druid root spam) is unaddressed. |
+| 15 | `Companions:SnareHpThreshold` default retuned 20 → 25 to align with `Combat:FleeHPRatio` (default 25). | user direction | 2026-05-04 | Eliminates the 25%-to-20% window where mob is fleeing but gate denies. |
 
 ---
 

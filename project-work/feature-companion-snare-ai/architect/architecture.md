@@ -3,60 +3,154 @@
 > **Feature branch:** `feature/companion-snare-ai`
 > **PRD:** `game-designer/prd.md`
 > **Author:** architect
-> **Date:** 2026-05-04
-> **Status:** Approved (Architecture phase)
+> **Date:** 2026-05-04 (amended)
+> **Status:** Approved — with Amendment 2026-05-04 noted below
+
+---
+
+## Amendment Notice — 2026-05-04
+
+This document was substantially amended after team-lead requested
+re-verification of the AI routing claim. The original architecture
+asserted that `AI_Druid`, `AI_Necromancer`, and `AI_Shaman` did
+not route `SpellType_Snare` and proposed adding new branches.
+Re-verification by querying the live `companion_spell_sets` table
+and `spells_new` effect data revealed two crucial corrections:
+
+1. **The user's reported "Druid ensnare spam" is NOT snare-line —
+   it is actual Root spell casting** through the existing
+   `AI_Druid` `SpellType_Root` branch. The Druid root spells in
+   the user's spell set are named "Ensnaring Roots", "Engulfing
+   Roots", "Grasping Roots", "Enveloping Roots", etc. — the user
+   colloquially called these "ensnare" but they are immobilize
+   roots (effect ID 99 = Root), not movement-slow snares
+   (effect ID 3 = MovementSpeed).
+
+2. **The PRD scope of "snare-line ONLY, roots OUT of scope" does
+   not match the user's reported bug.** Shipping the original
+   architecture as-designed (gating only `SpellType_Snare`)
+   would NOT eliminate the user's observed Druid spam, because
+   the Druid's spam is on the `SpellType_Root` branch — which
+   the original PRD explicitly excluded from scope.
+
+This amendment also retunes `Companions:SnareHpThreshold`
+default from 20 to 25 to align with `Combat:FleeHPRatio` and
+eliminate the awkward 25%-to-20% window where a mob is fleeing
+but the gate denies snare. (Per user direction.)
+
+**A scope decision is required from the user before
+implementation begins** — see "§Scope Decision Required" below.
+The architecture sections that follow are written to support
+the most likely user choice (gate BOTH snare and root branches),
+but each affected section is annotated to indicate what changes
+under each scope option.
+
+---
+
+## Scope Decision Required
+
+The original PRD scoped the feature as "autonomous snare-line
+casting only; roots OUT of scope, players use root for legit CC."
+The user's reported bug is "ranger and druids spam ensnare."
+
+After source-code re-verification, those two statements describe
+**different code paths**:
+
+| User-reported behavior | Actual code path | PRD scope status |
+|---|---|---|
+| Ranger Ensnare spam | `AI_Ranger` `SpellType_Snare` branch (companion_ai.cpp:1469) | **IN scope** |
+| Druid "Ensnare" spam | `AI_Druid` `SpellType_Root` branch (companion_ai.cpp:1235) — casts spells named "Ensnaring Roots", "Engulfing Roots", etc. | **OUT of scope per PRD** but IS the user's actual complaint |
+
+Three options for the user:
+
+**Option 1 — Strict PRD: snare-line only.**
+Apply the HP/flee/resist-counter gate ONLY to `SpellType_Snare`
+branches (AI_Ranger and AI_Bard). Druid root spam remains.
+User will likely report "the feature didn't fix Druid" after
+shipping. The Bard branch is also gated for consistency, but
+Bard is not in the user's complaint.
+
+**Option 2 — User's actual intent: gate both snare and root.**
+Apply the gate to `SpellType_Snare` branches AND to
+`SpellType_Root` branches (AI_Druid Root branch is the only
+one in scope today). This addresses the user's actual reported
+behavior. PRD scope is expanded; lore-master should sign off
+on root-gating since lore-master previously approved
+"silent suppression" for snare specifically. The PRD's
+non-goal "Changing root-line spells" needs explicit override.
+
+**Option 3 — Two features.**
+Ship Option 1 now (matches PRD literally). File a follow-up
+bug-fix feature for "Druid root spam" using the same shared
+gate helper (which is designed to be reusable). This delays
+addressing the user's actual complaint by one feature cycle.
+
+**Architect recommendation: Option 2.** The gate logic is
+identical for snare and root (the rule is "stop pre-emptive
+movement-control casting at high HP"). The shared helper
+`AI_AttemptMovementControl` (formerly `AI_AttemptSnare`)
+becomes more useful, not less. The lore-master review for
+roots is straightforward — same "silent suppression" reasoning
+applies. Bigger blast radius is paid for by addressing the
+user's actual reported behavior.
+
+**The remainder of this document assumes Option 2.** If the
+user picks Option 1 or 3, mark the Root-related tasks (#6 in
+the implementation sequence below) as deferred and rename the
+helper to keep `AI_AttemptSnare`. No other section changes.
 
 ---
 
 ## Executive Summary
 
-Restrict autonomous companion-AI casting of snare-line (movement-slow)
-spells in active combat to targets that are simultaneously at or below
-the configured HP threshold AND in low-HP flee state. Track a per-
-(companion, target) full-resist counter and stop autonomous snare
-attempts on a target after the configured limit is reached. Counter
-resets on engagement-end and on target change. Out-of-combat behavior
-unchanged. The implementation is **pure C++** in `eqemu/zone/`, with
-two new rules in `common/ruletypes.h`, two `INSERT INTO rule_values`
-seeds, and a small data-expert task to ensure the snare-line spells
-for DRU/RNG/NEC/SHM are present in `companion_spell_sets` tagged
-with `spell_type = SpellType_Snare`.
+Restrict autonomous companion-AI casting of movement-control
+spells in active combat (snare-line spells AND root-line spells)
+to targets that are at or below the configured HP threshold AND
+in low-HP flee state. Track per-(companion, target) full-resist
+counters and stop autonomous attempts on a target after the
+configured limit. Counters reset on engagement-end and on target
+change. Out-of-combat behavior unchanged.
+
+Implementation is **pure C++** in `eqemu/zone/`, with two new
+rules in `common/ruletypes.h`, two `INSERT INTO rule_values`
+seeds, and a small data audit pass on `companion_spell_sets`.
 
 The gate is centralized in **one shared helper**
-(`Companion::AI_AttemptSnare`) that every class handler calls, so the
-rule lives in one place. The Druid, Necromancer, and Shaman class AI
-handlers in `companion_ai.cpp` do **not** currently route
-`SpellType_Snare` — adding a branch that calls `AI_AttemptSnare` is
-part of the work, not optional. Bard already routes snare today and
-gets the same gate treatment for consistency, even though the PRD
-doesn't enumerate it.
+(`Companion::AI_AttemptMovementControl`) that every applicable
+class handler calls, so the rule lives in one place. The
+existing `AI_Druid` Root branch (line 1235), `AI_Ranger` Snare
+branch (line 1469), and `AI_Bard` Snare branch (line 1789) are
+the three sites that route through the helper.
 
-The most consequential design call: classify snare-line spells **only**
-by the existing `SpellType_Snare` bitmask tag stored in
-`companion_spell_sets.spell_type`. Do not name-match — Necromancer
-snare-line names ("Clinging Darkness", "Dooming Darkness") do not
-contain the word "snare" and would silently bypass any name filter,
-leaving Necromancer snare spam in place. Lore-master verified this
-load-bearing detail.
+The most consequential design call: classify snare-line and
+root-line spells **only** by the existing `SpellType_Snare`
+and `SpellType_Root` bitmask tags stored in
+`companion_spell_sets.spell_type`. Do not name-match — the
+spell name "Ensnaring Roots" is misleading (it's a root, not
+a snare) and similarly Necromancer "Clinging Darkness" /
+"Dooming Darkness" are snare-line despite the names.
+
+**Defaults amended per user 2026-05-04:**
+`Companions:SnareHpThreshold` default = **25** (was 20),
+aligning with `Combat:FleeHPRatio` default of 25 to eliminate
+the window where mob is fleeing but gate denies. Operators
+who want a tighter window can lower it.
 
 ## Existing System Analysis
 
-### Current State
+### Current State (Verified Against Live Database 2026-05-04)
 
 **Entity hierarchy.** Companion is a customized subclass of NPC
 (`eqemu/zone/companion.h:77`), holding its spell list in
-`m_companion_spells` (`std::vector<CompanionSpell>`,
-`companion.h:524`). Each `CompanionSpell` has `spellid`, `type`
-(SpellType bitmask), `stance`, `slot` (priority), `time_cancast`
-(per-spell cooldown), and HP-threshold fields (`min_hp_pct`,
-`max_hp_pct`).
+`m_companion_spells` (`std::vector<CompanionSpell>`). Loaded
+from the `companion_spell_sets` table on AI_Start.
 
 **AI dispatch.** Companion AI cast pipeline (call chain):
 
 ```
-NPC::AI_Process (zone/mob_ai.cpp)
-  → Companion::AI_EngagedCastCheck   (companion.cpp:2271)
-  → Companion::AICastSpell           (companion_ai.cpp:359)
+NPC::AI_Process (mob_ai.cpp)
+  → Companion::AI_EngagedCastCheck (companion.cpp:2271)
+  → Companion::AICastSpell (companion_ai.cpp:359)
     → switch(GetClass())
        ├ AI_Druid       (companion_ai.cpp:1160)
        ├ AI_Ranger      (companion_ai.cpp:1459)
@@ -64,114 +158,100 @@ NPC::AI_Process (zone/mob_ai.cpp)
        ├ AI_Shaman      (companion_ai.cpp:1283)
        ├ AI_Bard        (companion_ai.cpp:1758)
        └ ...others
-    → Companion::AIDoSpellCast       (companion.cpp:2320)
+    → Companion::AIDoSpellCast (companion.cpp:2320)
       → Mob::CastSpell
-        → ... eventually Mob::SpellOnTarget (spells.cpp:3907)
+        → ... Mob::SpellOnTarget (spells.cpp:3907)
           → ResistSpell (spells.cpp:5306)
             → resist branch at spells.cpp:4508 (full resist)
 ```
 
-**Snare classification.** `SpellType_Snare` is a bit in the
-`SpellTypes` enum (`common/spdat.h:639`, `(1 << 7)`). Each row in
-`companion_spell_sets` carries a `spell_type` column populated by the
-data-expert. Selection helper: `GetSpellsForType` and
-`SelectFirstSpell` in `companion_ai.cpp` filter by mask.
+**SpellType_Snare cast branches that actually fire today.**
 
-**Existing snare cast branches in companion AI.**
+Verified against live `companion_spell_sets` data and AI handler
+source:
 
-| Class      | File                  | Behavior today |
-|-----------|----------------------|----------------|
-| Ranger    | companion_ai.cpp:1467-1483 | `if (iSpellTypes & SpellType_Snare && zone->random.Roll(30))`, gated only by `SnareImmunity` and `GetSnaredAmount() >= 0`. **No HP / flee gate.** This is the spam offender for Ranger. |
-| Bard      | companion_ai.cpp:1788-1802 | `if (iSpellTypes & SpellType_Snare && zone->random.Roll(20))`, same gates as Ranger. **No HP / flee gate.** Spam offender for Bard, even though PRD doesn't enumerate Bard. |
-| Druid     | AI_Druid              | **No `SpellType_Snare` branch.** If the data-expert lists Ensnare with `spell_type = SpellType_Snare`, nothing in AI_Druid will fire it today. |
-| Necromancer | AI_Necromancer      | **No `SpellType_Snare` branch.** Same gap as Druid. |
-| Shaman    | AI_Shaman             | **No `SpellType_Snare` branch.** Same gap. (Shaman has a `SpellType_Slow` branch — different effect.) |
-| NPC fallback | mob_ai.cpp:321-339 | Base-NPC SpellType_Snare branch fires when `m_companion_spells` is empty (Companion falls back to NPC native AI). 50% roll, no HP/flee gate. |
+| Class | Code path | SpellType_Snare data present? | Casts today? | Notes |
+|---|---|---|---|---|
+| Ranger | `AI_Ranger` line 1469 | Yes (242 Snare, 512 Ensnare) | **YES — fires at 30% throttle** | Existing snare branch. **THIS IS WHAT THE PRD TARGETS for Ranger.** |
+| Bard | `AI_Bard` line 1789 | Yes (738 Selo's Consonant, 1758 Selo's Assonant) | **YES — fires at 20% throttle** | Existing snare branch. (Not in user complaint, but in PRD by implication.) |
+| Druid | (no Snare branch) | Yes (242, 512, 1767, 3192, 3447) | **NO** — AI_Druid has no SpellType_Snare branch | The 5 entries in spell set go unreached by AI. |
+| Necromancer | (no Snare branch) | Yes (344-3309 Darkness line) | **NO** — AI_Necromancer has no SpellType_Snare branch. The Necro Darkness spells also do DoT damage (effect 0) but are NOT tagged with SpellType_DOT in companion_spell_sets, so AI_Necromancer's DoT branch doesn't pick them up either. | Latent bug: Necromancer Darkness DoTs are unreachable today. |
+| Shaman | (no Snare branch) | **No SpellType_Snare entries for Shaman in companion_spell_sets** | NO | Shaman has no snare-line in this spell-set data at all. Lore lists Drowsy etc. but they're not in the data. |
+
+**SpellType_Root cast branches that actually fire today.**
+
+| Class | Code path | SpellType_Root data present? | Casts today? | Notes |
+|---|---|---|---|---|
+| Druid | `AI_Druid` line 1235 | Yes (249 Grasping Roots, 76 Engulfing Roots, 490 Enveloping Roots, 77 Ensnaring Roots, 1719 Engorging Roots, 1608 Entrapping Roots) | **YES — fires at 30% throttle** | The Druid Root branch. **This is the actual code path firing the user's "ensnare spam"** because the spell names contain "Ensnaring/Engulfing/Grasping/etc." All effect ID 99 = full immobilize root, not snare. |
+| Ranger | (no Root branch) | Yes (249, 76, 490, 3192) | NO — AI_Ranger has no SpellType_Root branch | Roots in data but unreached. |
+| Shaman | (no Root branch) | Yes (230, 131, 132, 133, 3195, 3196) | NO | Roots in data but unreached. |
+| Necromancer | (no Root branch) | Yes (369, 230, 133, 131, 132, 3195) | NO | Roots in data but unreached. |
+
+**Data tagging anomaly noted.** The Druid spell set tags spell
+3192 (Earthen Roots) and 3447 (Savage Roots) as
+`spell_type = 128` (SpellType_Snare), but their actual effect
+in `spells_new` is effect ID 99 (Root). This is a data
+mis-tag — they should be `spell_type = 4` (SpellType_Root).
+For Ranger, 3192 IS correctly tagged as `spell_type = 4`.
+The data-expert audit task (#3 below) covers this.
 
 **Flee state observability.** `Mob::IsFleeing()` (`mob.h:1251`)
-returns the `flee_mode` member, set by `Mob::StartFleeing()` from
-`fearpath.cpp` when a mob's HP ratio drops below `Combat:FleeHPRatio`
-(default 25). This is an O(1) member read — cheap, no scan, no
-allocations. Same `flee_mode` clears via `StopFleeing()` when the
-mob is healed back above threshold or pacified. Distinct from
-`Mob::IsFeared()` which returns `(spellbonuses.IsFeared || flee_mode)`
-— our gate consumes `IsFleeing()` only (low-HP flee), per PRD intent
-"reach flee threshold and start running."
+returns the `flee_mode` member, set by `Mob::StartFleeing()`
+when a mob's HP ratio drops below `Combat:FleeHPRatio`
+(default 25). O(1) member read.
 
-**Resist signal pathway.** `Mob::SpellOnTarget` (`spells.cpp:3907`)
-runs the resist roll through `Mob::ResistSpell` (`spells.cpp:5306`).
-At `spells.cpp:4508-4555`, when `spell_effectiveness < 100` AND
-either fully resisted or non-partial-resistable, the spell is
-treated as a full resist: `LogSpells("Spell [{}] was completely
-resisted by [{}]", ...)`, message strings sent, hate added if
-applicable, `safe_delete(action_packet)`, `return false`. The
-caster (`this`) is the Companion in our scenarios.
+**Resist signal pathway.** `Mob::SpellOnTarget` full-resist
+branch at `spells.cpp:4508-4555`. Caster is `this`. We hook
+here, guarded by `caster->IsCompanion()`.
 
-There is already precedent for **owner-visible resist messaging**
-for bots: `if (IsBot() && RuleB(Bots, ShowResistMessagesToOwner))`
-at `spells.cpp:4519`. Companions do not currently emit a parallel
-message. This is fine — silent suppression is intended.
+**Engagement-boundary signal.** Existing `m_was_engaged`
+transition in `Companion::Process` (`companion.cpp:1992-2000`).
 
-**Engagement-boundary signal.** Companion already maintains a
-previous-tick engagement state member: `m_was_engaged`
-(`companion.h:587`). Each tick of `Companion::Process`
-(`companion.cpp:1992-2000`):
-
-```cpp
-bool currently_engaged = IsEngaged();
-if (m_was_engaged && !currently_engaged) {
-    // Combat just ended — start the rez delay timer
-    ...
-}
-m_was_engaged = currently_engaged;
-```
-
-This is a clean transition signal already used by the rez subsystem.
-We piggyback the snare-resist counter clear on the same edge.
-
-**Rule namespace.** `common/ruletypes.h:1182-1255` defines
-`RULE_CATEGORY(Companions)` with 44+ existing companion rules,
-including patterns like `Companions:HealThresholdPct`,
-`Companions:ManaCutoffPct`, `Companions:HealerManaConservePct`,
-`Companions:LOMThresholdPct`. Our two new rules conform exactly.
+**Rule namespace.** `Companions:*` exists with 44+ rules
+(`ruletypes.h:1182-1255`). New rules conform exactly.
 
 **Companion command system.** Per
-`claude/docs/companion-commands-reference.md`, no `!snare` or
-generic `!cast` command exists today. The closest analogues are
-`!buffme`/`!buffs` (buff queue) and `!assist` (forced melee
-engagement). There is **no current path** for a player to manually
-direct a companion to cast a specific spell at a specific target.
-The PRD's "manual command override bypasses the rule" is therefore
-moot in current scope — there is nothing to bypass.
+`claude/docs/companion-commands-reference.md`, no `!snare`,
+`!root`, or generic `!cast` command exists. The PRD's "manual
+override bypasses the rule" is moot in current scope.
 
 ### Gap Analysis
 
-What's missing between current state and PRD requirements:
+What's missing between current state and the corrected
+understanding of user intent:
 
-1. **Gate logic.** No HP-threshold-AND-fleeing gate exists in any
-   companion snare branch today.
-2. **Resist counter.** No per-(companion, target) snare-resist
-   tracking exists.
-3. **Counter reset on engagement boundary.** No hook on
-   `m_was_engaged` transition for snare counters (the hook itself
-   exists for rez; we add a sibling action).
-4. **AI handler routing.** Druid, Necromancer, Shaman class AI
-   does not route `SpellType_Snare` at all — their handlers must
-   be extended to call the shared snare attempt helper. (The
-   feature is incomplete without these branches even after the
-   gate is built.)
-5. **Two tunable rules.** `Companions:SnareHpThreshold` and
+1. **Movement-control gate.** No HP-threshold-AND-fleeing gate
+   exists in any companion snare or root branch today. Both
+   AI_Druid Root (line 1235) and AI_Ranger Snare (line 1469)
+   need the gate.
+2. **Resist counter.** No per-(companion, target) resist
+   tracking exists for any movement-control cast.
+3. **Counter reset on engagement boundary.** No hook on the
+   existing `m_was_engaged` transition for snare/root counters.
+4. **Two tunable rules.** `Companions:SnareHpThreshold` and
    `Companions:SnareResistLimit` do not exist.
-6. **Data tagging.** `companion_spell_sets` must contain rows for
-   DRU/RNG/NEC/SHM snare-line spells with `spell_type =
-   SpellType_Snare` (data-expert verifies; small or no work).
+5. **Data audit (small).** `companion_spell_sets` should be
+   audited for the data mis-tag noted above (Druid's 3192
+   and 3447 tagged as Snare but effect is Root). Whether to
+   fix the tags is a data-expert decision; either way, the
+   gate works because both Snare and Root are gated through
+   the same helper.
 
-Out of current scope (per PRD, deliberate non-goals):
+Out of scope (deliberate non-goals or deferred):
 
-- No manual `/command` snare override — there is no existing path
-  to override, and adding one is a separate feature.
-- No client-side change. Pure server-side AI gating.
-- No new opcodes, no new packets, no Titanium-format work.
+- No manual `/command` snare/root override — there is no
+  existing path to override.
+- No client-side change.
+- No new opcodes/packets/Titanium-format work.
+- **No new AI routing for Druid SpellType_Snare, Necromancer
+  SpellType_Snare/Root, or Shaman SpellType_Root.** These
+  spell types are present in companion_spell_sets data for
+  some classes but their AI handlers do not route them today.
+  Adding new branches would expand companion behavior beyond
+  what's needed to address the user's complaint and the PRD
+  scope. Defer to a separate "Companion AI completeness"
+  follow-up if the user wants those classes to use those
+  spells autonomously.
 
 ## Technical Approach
 
@@ -179,154 +259,159 @@ Out of current scope (per PRD, deliberate non-goals):
 
 | Component | Change Type | Justification |
 |-----------|-------------|---------------|
-| `common/ruletypes.h` (Companions category) | Add 2 RULE_INTs | Tunable thresholds without rebuild for tuning passes. Conforms to existing `Companions:*` namespace. |
-| `rule_values` table | INSERT 2 default rows | Seed defaults (20, 2) into ruleset 1. |
-| `eqemu/zone/companion.h` | Add 1 method, 2 helpers, 1 member | New: `CompanionSnareCounters m_snare_resist_counts` (per-target map), `OnSpellResisted(spellid, target)` hook, `AI_AttemptSnare(target)` shared helper, `ClearSnareResistCounters()` on engagement-end. |
-| `eqemu/zone/companion_ai.cpp` | Add shared helper, route through 5 class handlers | Implements gate (HP <= rule, IsFleeing(), counter < limit). Each existing handler that should snare calls it. |
-| `eqemu/zone/companion.cpp` | Hook engagement transition, target change | At the existing `m_was_engaged` site, clear the counter map on engaged→idle. Also clear on target change. |
-| `eqemu/zone/spells.cpp` | One ~3-line hook in `SpellOnTarget` | Call `caster->CastToCompanion()->OnSpellResisted(spell_id, spelltar)` inside the existing full-resist branch when `caster->IsCompanion()` and `spell_type & SpellType_Snare`. Zero behavioral change for non-companion casters. |
-| `companion_spell_sets` | Verify (or add) DRU/RNG/NEC/SHM snare-line entries with `spell_type = SpellType_Snare` | Data-expert verification. May be no-op if already tagged. |
-
-**Least-invasive ladder.** No Lua change. No SQL schema change. No
-new tables. No new opcodes. No client work. The work is one
-~80-line C++ addition centered on a single shared method, two
-rules, two seed inserts, and (likely) a data-expert audit pass.
+| `common/ruletypes.h` (Companions category) | Add 2 RULE_INTs | Tunable thresholds. Conforms to existing `Companions:*` namespace. Default 25 for HP threshold (aligned with Combat:FleeHPRatio). Default 2 for resist limit. |
+| `rule_values` table | INSERT 2 default rows | Seed defaults into ruleset 1. |
+| `eqemu/zone/companion.h` | Add 1 method, 2 helpers, 2 members | New: `m_movement_control_resist_counts` (per-target map), `m_last_movement_control_target_id` (for change detection), `OnSpellResisted(spellid, target)` hook, `AI_AttemptMovementControl(target, type_mask)` shared helper, `ClearMovementControlResistCounters()` on engagement-end. |
+| `eqemu/zone/companion_ai.cpp` | Add shared helper, route through 3 class branches | Replaces existing AI_Druid Root branch, AI_Ranger Snare branch, AI_Bard Snare branch. The helper accepts a type mask so the same code handles both Snare and Root. |
+| `eqemu/zone/companion.cpp` | Hook engagement transition | Add `ClearMovementControlResistCounters()` call to existing `m_was_engaged` site. Target-change detected at top of `AI_AttemptMovementControl`. |
+| `eqemu/zone/spells.cpp` | One ~3-line hook | In existing full-resist branch, call `caster->CastToCompanion()->OnSpellResisted(spell_id, spelltar)` when caster is a Companion. |
+| `companion_spell_sets` | Optional data audit | Verify Druid 3192/3447 tagging consistency. Data mis-tag is benign because both Snare and Root are gated. |
 
 ### Data Model
 
-**No schema changes.** The `companion_spell_sets` table already has
-the `spell_type` column. The work for data-expert is to ensure
-the right rows exist with the right tag.
-
-**Per-(companion, target) counter** lives in **runtime memory only**:
+**No schema changes.** Per-target counter is runtime memory only:
 
 ```cpp
 // In Companion (private):
-//   Maps target entity ID -> consecutive full-resist count.
-//   Cleared on engagement boundary, on target change.
-std::unordered_map<uint16, uint8> m_snare_resist_counts;
+//   Maps target entity ID -> consecutive full-resist count
+//   for movement-control spells (snare-line OR root-line).
+//   Cleared on engagement-end and target change.
+std::unordered_map<uint16, uint8> m_movement_control_resist_counts;
+uint16 m_last_movement_control_target_id = 0;
 ```
-
-Map size: one entry per target-the-companion-tried-to-snare during
-the current engagement. Practical max: handful per fight. Zero
-persistent storage — counters are per-fight and per-engagement.
 
 **Two new rule rows:**
 
 ```sql
 INSERT INTO rule_values (ruleset_id, rule_name, rule_value, notes) VALUES
-(1, 'Companions:SnareHpThreshold', '20',
- 'Target HP percentage at or below which companions are allowed to autonomously cast snare-line spells. The target must ALSO be in flee state. Lower = stricter. Set to 100 to disable the HP gate (allow snare anywhere a fleeing target exists). Default 20 per PRD.'),
+(1, 'Companions:SnareHpThreshold', '25',
+ 'Target HP percentage at or below which companions may autonomously cast movement-control spells (snare-line and root-line). Target must ALSO be in flee state. Default 25 to align with Combat:FleeHPRatio. Set to 100 to disable the HP gate.'),
 (1, 'Companions:SnareResistLimit', '2',
- 'Number of consecutive full resists on the same target after which the companion stops attempting autonomous snare on that target for the remainder of the engagement. Counter resets on engagement-end and on target change. Set to 0 to disable the cap. Set high (99+) to effectively disable. Default 2 per PRD.');
+ 'Consecutive full-resists per (companion, target) per engagement before companion stops attempting movement-control casts on that target. Counter resets on engagement-end and target change. Set to 0 = no cap (never give up). Default 2.');
 ```
+
+(Rule names retain "Snare" prefix despite gating roots too — to
+avoid renaming existing rule shape proposals from config-expert.
+The notes string clarifies the actual coverage. If the user
+prefers, rename to `MovementControlHpThreshold` /
+`MovementControlResistLimit`.)
 
 ### Code Changes
 
 #### C++ Changes
 
-**1. `common/ruletypes.h` — add 2 rules, just before
+**1. `common/ruletypes.h` — add 2 rules before
 `RULE_CATEGORY_END()` at line 1256:**
 
 ```cpp
-RULE_INT(Companions, SnareHpThreshold, 20,
+RULE_INT(Companions, SnareHpThreshold, 25,
     "Target HP percent at or below which a companion's autonomous AI is allowed to "
-    "cast snare-line spells. The target must ALSO be in flee state (Mob::IsFleeing()). "
-    "Set to 100 to disable the HP gate. PRD default 20.")
+    "cast movement-control spells (snare-line AND root-line). The target must ALSO be "
+    "in flee state (Mob::IsFleeing()). Default 25 aligns with Combat:FleeHPRatio so the "
+    "gate opens exactly when targets enter flee. Set to 100 to disable the HP gate.")
 RULE_INT(Companions, SnareResistLimit, 2,
     "Consecutive full-resists per (companion, target) at which companion stops "
-    "attempting autonomous snare on that target for the engagement. Counter resets "
-    "on engagement-end and on target change. Set to 0 to disable. PRD default 2.")
+    "attempting movement-control casts (snare/root) on that target for the "
+    "engagement. Counter resets on engagement-end and target change. Set to 0 = no cap. "
+    "Default 2.")
 ```
 
-**2. `eqemu/zone/companion.h` — additions in the Companion class
-declaration:**
+**2. `eqemu/zone/companion.h` — declarations:**
 
-In the public AI section (near the existing `AI_SlowDebuff` entry,
-companion.h:268):
+In public AI section:
 
 ```cpp
-// Shared snare attempt with HP-threshold + flee + resist-counter gate.
-// Returns true if a snare cast was attempted on `target`. Replaces
-// the previous unconditional snare branches in AI_Ranger / AI_Bard,
-// and is the entry point that AI_Druid / AI_Necromancer / AI_Shaman
-// must call when those handlers want to snare.
-bool AI_AttemptSnare(Mob* target);
+// Shared movement-control attempt with HP-threshold + flee +
+// resist-counter gate. Type mask controls whether to attempt
+// snare-line (SpellType_Snare), root-line (SpellType_Root), or
+// either. Replaces the previous unconditional snare/root branches
+// in AI_Ranger / AI_Bard / AI_Druid.
+bool AI_AttemptMovementControl(Mob* target, uint32 spell_type_mask);
 
-// Resist event hook fired from Mob::SpellOnTarget when this companion's
-// cast is fully resisted. Increments the snare-resist counter only when
-// the spell carries SpellType_Snare in its companion-spell-set entry.
-// No-op for any other resist (heals, nukes, debuffs, etc.).
+// Resist event hook fired from Mob::SpellOnTarget when this
+// companion's cast is fully resisted. Increments the counter only
+// when the spell carries SpellType_Snare or SpellType_Root in its
+// companion-spell-set entry.
 void OnSpellResisted(uint16 spell_id, Mob* target);
 
-// Clears all per-target snare resist counters. Called on engaged->idle
-// transition (existing m_was_engaged hook) and on target change.
-void ClearSnareResistCounters();
+// Clears all per-target resist counters. Called on engaged->idle
+// transition and on target change.
+void ClearMovementControlResistCounters();
 ```
 
-In the private section (near `m_xp_lost_on_death`):
+In private section:
 
 ```cpp
-// Per-(this companion, target_entity_id) consecutive full-resist count
-// for SpellType_Snare casts. Cleared on engagement-end and target change.
-// Runtime-only; not persisted.
-std::unordered_map<uint16, uint8> m_snare_resist_counts;
+// Per-(this companion, target_entity_id) consecutive full-resist
+// count for SpellType_Snare and SpellType_Root casts. Cleared on
+// engagement-end and target change. Runtime-only; not persisted.
+std::unordered_map<uint16, uint8> m_movement_control_resist_counts;
+uint16 m_last_movement_control_target_id = 0;
 ```
 
-**3. `eqemu/zone/companion_ai.cpp` — implement the shared gate
-helper. Add this near the existing `AI_SlowDebuff` (around line
-869):**
+**3. `eqemu/zone/companion_ai.cpp` — implement the shared helper.
+Insert near AI_SlowDebuff (around line 869):**
 
 ```cpp
 // ============================================================
-// AI_AttemptSnare — shared snare gate
+// AI_AttemptMovementControl — shared snare/root gate
 //
 // PRD requirements:
-//   * Out-of-combat: gate does not apply (return early -> proceed normally)
-//   * In-combat: target HP <= Companions:SnareHpThreshold AND target
-//     IsFleeing(). Both must be true.
+//   * Out-of-combat: gate does not apply
+//   * In-combat: target HP <= Companions:SnareHpThreshold AND
+//     target IsFleeing(). Both required.
 //   * Per-(companion, target) full-resist counter, cap at
-//     Companions:SnareResistLimit. Cleared on engagement-end and
-//     target change.
+//     Companions:SnareResistLimit. Cleared on engagement-end
+//     and target change.
 //   * No chat spam on suppression.
 //
-// Returns true if a snare cast was attempted (CastSpell started),
-// false otherwise (gate failed, no spell available, or target ineligible).
+// `spell_type_mask` should be SpellType_Snare, SpellType_Root,
+// or (SpellType_Snare | SpellType_Root). Controls which spell
+// type pool to draw the cast from.
 //
-// Centralizing all snare-cast logic here means there is exactly one
-// place that decides "should this companion snare this target right
-// now." Class handlers call this from their engaged branch.
+// Returns true if a cast was attempted, false otherwise.
 // ============================================================
-bool Companion::AI_AttemptSnare(Mob* target)
+bool Companion::AI_AttemptMovementControl(Mob* target, uint32 spell_type_mask)
 {
     if (!target || target->GetHP() <= 0) {
         return false;
     }
 
-    // Cheap eligibility checks (preserve pre-existing behavior — these
-    // are NOT part of the new rule, just the same checks the old
-    // Ranger/Bard branches already did).
-    if (target->GetSpecialAbility(SpecialAbility::SnareImmunity)) {
-        return false;
+    // Pre-existing "don't re-cast if redundant" checks, preserved
+    // from the original AI_Ranger/AI_Bard snare branches and the
+    // AI_Druid root branch. NOT part of the new rule.
+    if (spell_type_mask & SpellType_Snare) {
+        if (target->GetSpecialAbility(SpecialAbility::SnareImmunity)) {
+            return false;
+        }
+        if (target->GetSnaredAmount() >= 0) {
+            // Already snared — skip re-cast.
+            return false;
+        }
     }
-    if (target->GetSnaredAmount() >= 0) {
-        // Already snared — no need to re-cast.
+    if ((spell_type_mask & SpellType_Root) && target->IsRooted()) {
+        // Already rooted — skip re-cast.
         return false;
     }
 
-    // Spell availability check
+    // Spell availability
     uint32 now_ms = Timer::GetCurrentTime();
-    uint16 snare_spell = SelectFirstSpell(
-        m_companion_spells, SpellType_Snare, m_current_stance, now_ms);
-    if (!snare_spell) {
+    uint16 cast_spell = SelectFirstSpell(
+        m_companion_spells, spell_type_mask, m_current_stance, now_ms);
+    if (!cast_spell) {
         return false;
     }
 
-    // ---------------- THE NEW GATE ----------------
-    // Out-of-combat: rule does not apply. Companion may snare freely
-    // during pulls / kiting / pre-engagement positioning.
+    // Target-change detection (clear all counters when switching
+    // targets — relaxed but simple semantic).
+    uint16 tid = target->GetID();
+    if (tid != m_last_movement_control_target_id) {
+        m_movement_control_resist_counts.clear();
+        m_last_movement_control_target_id = tid;
+    }
+
+    // ---------------- THE GATE ----------------
     if (IsEngaged()) {
-        // In-combat: both conditions required.
         const int hp_threshold = RuleI(Companions, SnareHpThreshold);
         const int target_hpr   = static_cast<int>(target->GetHPRatio());
         const bool fleeing     = target->IsFleeing();
@@ -336,30 +421,28 @@ bool Companion::AI_AttemptSnare(Mob* target)
             return false;
         }
 
-        // Resist-counter cap. Lookup is O(1) on small per-fight map.
         const int resist_limit = RuleI(Companions, SnareResistLimit);
         if (resist_limit > 0) {
-            auto it = m_snare_resist_counts.find(target->GetID());
-            if (it != m_snare_resist_counts.end() &&
+            auto it = m_movement_control_resist_counts.find(tid);
+            if (it != m_movement_control_resist_counts.end() &&
                 it->second >= static_cast<uint8>(resist_limit)) {
                 return false;
             }
         }
     }
-    // ----------------------------------------------
+    // ------------------------------------------
 
-    // Standard cast path — preserved from existing snare branches.
-    bool cast_ok = AIDoSpellCast(snare_spell, target, spells[snare_spell].mana);
+    bool cast_ok = AIDoSpellCast(cast_spell, target, spells[cast_spell].mana);
     if (cast_ok) {
-        SetSpellTimeCanCast(snare_spell, spells[snare_spell].recast_time);
+        SetSpellTimeCanCast(cast_spell, spells[cast_spell].recast_time);
     }
     return cast_ok;
 }
 
 // ============================================================
-// OnSpellResisted — called from Mob::SpellOnTarget on full resist.
-// Only counts SpellType_Snare resists. Heal/buff/debuff/nuke
-// resists are ignored.
+// OnSpellResisted — called from Mob::SpellOnTarget on full
+// resist. Counts SpellType_Snare and SpellType_Root resists
+// only. All other resists are ignored.
 // ============================================================
 void Companion::OnSpellResisted(uint16 spell_id, Mob* target)
 {
@@ -367,113 +450,94 @@ void Companion::OnSpellResisted(uint16 spell_id, Mob* target)
         return;
     }
 
-    // Only count snare-line resists. Look up the spell type from
-    // m_companion_spells (the per-companion spell list, which is the
-    // source of truth for "what type is this spell for this companion").
-    bool is_snare = false;
+    bool is_movement_control = false;
     for (const auto& cs : m_companion_spells) {
-        if (cs.spellid == spell_id && (cs.type & SpellType_Snare)) {
-            is_snare = true;
+        if (cs.spellid == spell_id &&
+            (cs.type & (SpellType_Snare | SpellType_Root))) {
+            is_movement_control = true;
             break;
         }
     }
-    if (!is_snare) {
+    if (!is_movement_control) {
         return;
     }
 
-    // Increment per-target counter (default-initialized to 0 on insert).
     uint16 tid = target->GetID();
-    uint8& count = m_snare_resist_counts[tid];
+    uint8& count = m_movement_control_resist_counts[tid];
     if (count < 255) {
         ++count;
     }
 
-    LogAIDetail("Companion [{}] OnSpellResisted: snare [{}] on target [{}] (entity_id [{}]) — count now [{}]",
+    LogAIDetail("Companion [{}] OnSpellResisted: movement-control spell [{}] on target [{}] (id [{}]) — count now [{}]",
                 GetName(), spell_id, target->GetName(), tid, count);
 }
 
-// ============================================================
-// ClearSnareResistCounters — wipe all counters on engagement-end
-// or target change.
-// ============================================================
-void Companion::ClearSnareResistCounters()
+void Companion::ClearMovementControlResistCounters()
 {
-    if (!m_snare_resist_counts.empty()) {
-        m_snare_resist_counts.clear();
+    if (!m_movement_control_resist_counts.empty()) {
+        m_movement_control_resist_counts.clear();
+    }
+    m_last_movement_control_target_id = 0;
+}
+```
+
+**4. `eqemu/zone/companion_ai.cpp` — replace existing
+`AI_Druid` Root branch (lines 1235-1246):**
+
+Before:
+```cpp
+if ((iSpellTypes & SpellType_Root) && m_current_stance != COMPANION_STANCE_PASSIVE) {
+    uint32 now_ms = Timer::GetCurrentTime();
+    uint16 root_spell = SelectFirstSpell(m_companion_spells, SpellType_Root, m_current_stance, now_ms);
+    Mob* target = GetTarget();
+    if (root_spell && target && !target->IsRooted() && zone->random.Roll(30)) {
+        bool cast_ok = AIDoSpellCast(root_spell, target, spells[root_spell].mana);
+        if (cast_ok) {
+            SetSpellTimeCanCast(root_spell, spells[root_spell].recast_time);
+            return true;
+        }
     }
 }
 ```
 
-**4. `eqemu/zone/companion_ai.cpp` — replace the existing Ranger
-snare branch (lines 1467-1483) with a call to the shared helper:**
+After:
+```cpp
+// Movement-control: root fleeing low-HP enemies — gated by
+// Companions:SnareHpThreshold and IsFleeing.
+if ((iSpellTypes & SpellType_Root) && m_current_stance != COMPANION_STANCE_PASSIVE
+    && zone->random.Roll(30)) {
+    if (AI_AttemptMovementControl(GetTarget(), SpellType_Root)) {
+        return true;
+    }
+}
+```
+
+**5. `eqemu/zone/companion_ai.cpp` — replace existing
+`AI_Ranger` Snare branch (lines 1467-1483):**
 
 ```cpp
-// Snare to prevent fleeing enemies — gated by HP/flee rule.
-// (Preserves the original 30% throttle so we don't try every tick.)
+// Movement-control: snare fleeing low-HP enemies — gated.
 if ((iSpellTypes & SpellType_Snare) && zone->random.Roll(30)) {
-    if (AI_AttemptSnare(GetTarget())) {
+    if (AI_AttemptMovementControl(GetTarget(), SpellType_Snare)) {
         return true;
     }
 }
 ```
 
-**5. `eqemu/zone/companion_ai.cpp` — replace the existing Bard
-snare branch (lines 1788-1802) similarly:**
+**6. `eqemu/zone/companion_ai.cpp` — replace existing
+`AI_Bard` Snare branch (lines 1788-1802):**
 
 ```cpp
-// Snare fleeing targets — gated by HP/flee rule.
+// Movement-control: snare fleeing targets — gated.
 if ((iSpellTypes & SpellType_Snare) && zone->random.Roll(20)) {
-    if (AI_AttemptSnare(GetTarget())) {
+    if (AI_AttemptMovementControl(GetTarget(), SpellType_Snare)) {
         return true;
     }
 }
 ```
 
-**6. `eqemu/zone/companion_ai.cpp` — add a snare branch to AI_Druid,
-inside the `if (engaged)` block, ordered AFTER heal/cure but BEFORE
-the existing Root branch (so snare is preferred over root for low-HP
-fleeing targets):**
-
-```cpp
-// Snare fleeing low-HP enemies — gated by HP/flee rule.
-if ((iSpellTypes & SpellType_Snare) && zone->random.Roll(50)) {
-    if (AI_AttemptSnare(GetTarget())) {
-        return true;
-    }
-}
-```
-
-**7. `eqemu/zone/companion_ai.cpp` — add a snare branch to
-AI_Necromancer, inside `if (engaged)`, ordered after lifetap and
-before generic nuke (so necro will land snare on fleeing low-HP
-targets without competing with DoT priorities):**
-
-```cpp
-// Snare fleeing low-HP enemies — gated by HP/flee rule.
-if ((iSpellTypes & SpellType_Snare) && zone->random.Roll(50)) {
-    if (AI_AttemptSnare(GetTarget())) {
-        return true;
-    }
-}
-```
-
-**8. `eqemu/zone/companion_ai.cpp` — add a snare branch to AI_Shaman,
-inside `if (engaged)`, ordered after slow and heal (slow is the
-shaman's signature debuff; snare is supplemental):**
-
-```cpp
-// Snare fleeing low-HP enemies — gated by HP/flee rule.
-if ((iSpellTypes & SpellType_Snare) && zone->random.Roll(50)) {
-    if (AI_AttemptSnare(GetTarget())) {
-        return true;
-    }
-}
-```
-
-**9. `eqemu/zone/companion.cpp` — at the existing `m_was_engaged`
-transition site (line ~1993, currently used to start the rez delay
-timer), also clear the snare resist counters on engagement-end. Also
-clear when the companion's target changes mid-fight:**
+**7. `eqemu/zone/companion.cpp` — hook engagement-end at
+existing `m_was_engaged` site (lines 1992-2000):**
 
 ```cpp
 bool currently_engaged = IsEngaged();
@@ -483,124 +547,97 @@ if (m_was_engaged && !currently_engaged) {
         m_rez_delay_timer.Start(RuleI(Companions, RezPostCombatDelayS) * 1000);
         m_rez_meditation_announced = false;
     }
-    // Snare gate: clear per-target resist counters when combat ends.
-    ClearSnareResistCounters();
+    // Movement-control gate: clear per-target resist counters.
+    ClearMovementControlResistCounters();
 }
 m_was_engaged = currently_engaged;
 ```
 
-For the target-change case, the simplest hook is in
-`Companion::AICastSpell` near the top: capture the
-`current_target_id_for_snare` and compare against last tick's. But
-the cleaner fix is to override `Mob::SetTarget` on Companion. Inspect
-existing SetTarget pattern: there is no Companion::SetTarget today.
-Adding one is a small Mob override — risky. **Defer to AICastSpell-
-local detection**: at the top of `AI_AttemptSnare`, read the current
-target ID and compare to a `m_last_snare_target_id` member; on
-mismatch, clear the map first. This avoids touching SetTarget.
+**8. `eqemu/zone/spells.cpp` — hook the resist branch at
+~line 4554, just before `safe_delete(action_packet); return false;`:**
 
 ```cpp
-// At top of AI_AttemptSnare:
-uint16 tid = target->GetID();
-if (tid != m_last_snare_target_id) {
-    m_snare_resist_counts.clear();
-    m_last_snare_target_id = tid;
-}
-```
-
-(Adds `uint16 m_last_snare_target_id = 0;` private member.)
-
-**Resist hook site choice — architect note.** protocol-agent
-recommended hooking `Companion::CastedSpellFinished()` instead of
-`Mob::SpellOnTarget`. Architect chose `SpellOnTarget` for surgical
-clarity: it is the single source of truth for "this spell was
-fully resisted by this target" and works uniformly across
-single-target / AE / group spells. `CastedSpellFinished` is broader
-(covers fizzle / interrupt / OOM / resist) and would require
-internal differentiation. The fallback is documented: if c-expert
-hits scope or include challenges with the SpellOnTarget hook,
-moving the hook to `Companion::CastedSpellFinished` (overriding
-`Mob::CastedSpellFinished`) is acceptable and produces equivalent
-behavior for our case.
-
-**10. `eqemu/zone/spells.cpp` — hook the resist branch (around line
-4554, just before `safe_delete(action_packet); return false;`):**
-
-```cpp
-// Companion snare gate: count this resist if caster is a Companion
-// and the spell is in its snare-line spell set. No-op for any other
-// caster type or spell type. Safe inside the resist branch — only
-// runs on confirmed full resist.
+// Companion movement-control gate: count this resist if caster
+// is a Companion and the spell is in its snare-line or root-line
+// spell set. No-op for any other caster type.
 if (this->IsCompanion()) {
     this->CastToCompanion()->OnSpellResisted(spell_id, spelltar);
 }
 ```
 
-The hook is a single line at one site. Other resist sites
-(`spelltar->MessageString(Chat::SpellFailure, YOU_RESIST...)`,
-hate addition, sneak/feign break) are unaffected.
+**Resist-hook site choice — architect note.** protocol-agent
+recommended hooking `Companion::CastedSpellFinished()` instead.
+Architect chose `Mob::SpellOnTarget` for surgical clarity:
+single source of truth across single-target / AE / group spells.
+`CastedSpellFinished` is broader (fizzle/interrupt/OOM/resist).
+Documented as fallback.
 
 #### Lua/Script Changes
 
-**None.** This is pure server-side AI logic.
+**None.**
 
 #### Database Changes
 
 **No schema changes.**
 
-**Two `INSERT INTO rule_values` seeds** (the data-expert task is
-trivial; config-expert produces the SQL):
+**Two `INSERT INTO rule_values` seeds** (config-expert, after
+rebuild):
 
 ```sql
 INSERT INTO rule_values (ruleset_id, rule_name, rule_value, notes) VALUES
-(1, 'Companions:SnareHpThreshold', '20',
- 'Target HP percent at or below which companions may autonomously snare. Target must ALSO be IsFleeing(). Default 20 per PRD.'),
+(1, 'Companions:SnareHpThreshold', '25',
+ 'Target HP percent at or below which companions may autonomously cast movement-control spells (snare-line and root-line). Target must ALSO be IsFleeing(). Default 25 aligns with Combat:FleeHPRatio.'),
 (1, 'Companions:SnareResistLimit', '2',
- 'Consecutive full-resists per (companion, target) before companion stops attempting autonomous snare on that target for the engagement. Counter resets on engagement-end and target change. Default 2 per PRD.');
+ 'Consecutive full-resists per (companion, target) per engagement before companion stops attempting movement-control casts on that target. Counter resets on engagement-end and target change. 0 = no cap. Default 2.');
 ```
 
-**Optional data-expert audit:** verify `companion_spell_sets` has
-rows for DRU/RNG/NEC/SHM snare-line spells with `spell_type =
-SpellType_Snare` (= 128, decimal value of `(1 << 7)`). For Necro,
-the relevant in-era spells are Clinging Darkness and Dooming
-Darkness — confirm by spell ID, not by name. If absent, add rows.
-If already present, no-op.
+**Optional data-expert audit:** The Druid spell set has a
+mis-tag (3192 Earthen Roots and 3447 Savage Roots tagged as
+`spell_type=128` (Snare) but effect ID 99 = Root). The gate
+covers both types, so the mis-tag is functionally benign in
+the new code. The data-expert may correct the tag for
+consistency or leave as-is. Document the choice.
 
 #### Configuration Changes
 
 Two new entries in `common/ruletypes.h`:
 
-- `Companions:SnareHpThreshold` (RULE_INT, default 20)
+- `Companions:SnareHpThreshold` (RULE_INT, default 25)
 - `Companions:SnareResistLimit` (RULE_INT, default 2)
 
-No `eqemu_config.json` changes. No `.env` changes.
+No `eqemu_config.json` changes.
 
 ## Implementation Sequence
 
 | # | Task | Agent | Depends On | Estimated Scope |
 |---|------|-------|------------|-----------------|
-| 1 | Add 2 RULE_INT entries to `common/ruletypes.h` (Companions category) for `SnareHpThreshold` (default 20) and `SnareResistLimit` (default 2). | config-expert | — | ~10 lines, one file |
-| 2 | Audit `companion_spell_sets` for DRU/RNG/NEC/SHM rows with the appropriate snare-line spell IDs and `spell_type = 128` (SpellType_Snare). For each missing class+level slot in the in-era range (1-65), add a row. Document by spell ID, never by name. Flag any data-divergence. | data-expert | — | Mostly verification; small INSERT set if gaps exist. Run in parallel with task 1. |
-| 3 | Implement `Companion::AI_AttemptSnare(Mob*)`, `Companion::OnSpellResisted(uint16, Mob*)`, `Companion::ClearSnareResistCounters()`. Add `m_snare_resist_counts` and `m_last_snare_target_id` private members in `companion.h`. | c-expert | 1 (rules must exist for `RuleI(Companions, SnareHpThreshold)` to compile) | ~80 lines C++ |
-| 4 | Replace the existing `SpellType_Snare` branch in `AI_Ranger` (companion_ai.cpp:1467-1483) with a call to `AI_AttemptSnare`. Preserve the existing 30% throttle. | c-expert | 3 | ~6 line replacement |
-| 5 | Replace the existing `SpellType_Snare` branch in `AI_Bard` (companion_ai.cpp:1788-1802) with a call to `AI_AttemptSnare`. Preserve the existing 20% throttle. | c-expert | 3 | ~6 line replacement |
-| 6 | Add a `SpellType_Snare` branch to `AI_Druid`. Position after heal/cure, before existing Root branch. 50% throttle. Calls `AI_AttemptSnare`. | c-expert | 3 | ~6 lines |
-| 7 | Add a `SpellType_Snare` branch to `AI_Necromancer`. Position after lifetap, before generic nuke. 50% throttle. Calls `AI_AttemptSnare`. | c-expert | 3 | ~6 lines |
-| 8 | Add a `SpellType_Snare` branch to `AI_Shaman`. Position after slow/heal/cure. 50% throttle. Calls `AI_AttemptSnare`. | c-expert | 3 | ~6 lines |
-| 9 | Add `ClearSnareResistCounters()` call to the existing `m_was_engaged && !currently_engaged` site in `Companion::Process` (companion.cpp:1993-2000). | c-expert | 3 | ~2 lines |
-| 10 | Add the `SpellOnTarget` resist hook in `eqemu/zone/spells.cpp` (~line 4554, inside the existing full-resist branch, right before `safe_delete(action_packet)`). Guarded by `this->IsCompanion()`. Calls `CastToCompanion()->OnSpellResisted(spell_id, spelltar)`. | c-expert | 3 | ~3 lines |
-| 11 | Build and restart the eqemu-server container. Confirm no compile warnings, server boots clean, no test regressions. Build path: `docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`. Restart via `make restart` from akk-stack/, then start zone processes per project memory. | c-expert | 4,5,6,7,8,9,10 | Build + restart + smoke test |
-| 12 | After rebuild + restart, insert the 2 default `rule_values` rows for `Companions:SnareHpThreshold` and `Companions:SnareResistLimit`. Use `INSERT IGNORE` or guard with `WHERE NOT EXISTS` for idempotence. Run `#reloadrules` in-game to pick up the values without further restart. | config-expert | 11 (rebuild must complete first — `_FindRule()` only finds compile-time-defined rules) | ~6 lines SQL |
+| 1 | Add 2 RULE_INT entries to `common/ruletypes.h` (`Companions:SnareHpThreshold` default 25, `Companions:SnareResistLimit` default 2). Updated description strings reflect movement-control coverage. | config-expert | — | ~10 lines |
+| 2 | Audit `companion_spell_sets` for the noted Druid 3192/3447 mis-tag (tagged Snare but effect is Root). If correcting, update `spell_type` from 128 to 4 for these two rows in the Druid (class_id=6) entries. Optional — gate handles both. Document the choice. | data-expert | — | Either no-op (leave tag) or two `UPDATE` statements. Run in parallel with task 1. |
+| 3 | Implement `Companion::AI_AttemptMovementControl(Mob*, uint32)`, `Companion::OnSpellResisted(uint16, Mob*)`, `Companion::ClearMovementControlResistCounters()`. Add `m_movement_control_resist_counts` and `m_last_movement_control_target_id` private members in `companion.h`. | c-expert | 1 (rules must exist for `RuleI(Companions, SnareHpThreshold)` to compile) | ~100 lines C++ |
+| 4 | Replace `AI_Druid` Root branch (companion_ai.cpp:1235-1246) with a call to `AI_AttemptMovementControl(GetTarget(), SpellType_Root)`. Preserve 30% throttle. | c-expert | 3 | ~6 lines |
+| 5 | Replace `AI_Ranger` Snare branch (companion_ai.cpp:1467-1483) with a call to `AI_AttemptMovementControl(GetTarget(), SpellType_Snare)`. Preserve 30% throttle. | c-expert | 3 | ~6 lines |
+| 6 | Replace `AI_Bard` Snare branch (companion_ai.cpp:1788-1802) with a call to `AI_AttemptMovementControl(GetTarget(), SpellType_Snare)`. Preserve 20% throttle. | c-expert | 3 | ~6 lines |
+| 7 | Add `ClearMovementControlResistCounters()` call to the `m_was_engaged && !currently_engaged` site in `Companion::Process` (companion.cpp:1993-2000). | c-expert | 3 | ~2 lines |
+| 8 | Add the `SpellOnTarget` resist hook in `eqemu/zone/spells.cpp` (~line 4554, inside the existing full-resist branch). Guarded by `this->IsCompanion()`. | c-expert | 3 | ~3 lines |
+| 9 | Build (`docker exec -it akk-stack-eqemu-server-1 bash -c "cd ~/code/build && ninja -j$(nproc)"`), restart container + zone processes, smoke test. | c-expert | 4,5,6,7,8 | Build + restart |
+| 10 | After rebuild + restart, insert the 2 default `rule_values` rows for `Companions:SnareHpThreshold` and `Companions:SnareResistLimit`. Run `#reloadrules` in-game to activate. | config-expert | 9 (rebuild required for `_FindRule()` to match new rules) | ~6 lines SQL |
 
-**Sequence summary.** Tasks 1 and 2 are independent and can run
-in parallel. Task 3 depends on Task 1 only (needs RULE_INT to
-exist for the C++ to compile). Tasks 4-10 are sequential after
-task 3 (each touches `companion_ai.cpp` and serializing avoids
-merge friction). Task 11 (rebuild + restart) is the integration
-step. Task 12 (rule_values seed) MUST come after rebuild +
-restart because `#reloadrules` calls `_FindRule()` which only
-matches compile-time-registered rules — see config-expert's note
-in `agent-conversations.md` 2026-05-03 entry.
+**Sequence summary.** Task 1 and Task 2 in parallel. Task 3
+after Task 1 (compilation needs RULE_INT). Tasks 4-8 sequential
+after Task 3 (single-file serialization in companion_ai.cpp and
+related). Task 9 (rebuild) gates Task 10 (rule_values seed).
+
+**Note on what's NOT included.** The original architecture
+proposed adding new `SpellType_Snare` branches to AI_Druid,
+AI_Necromancer, and AI_Shaman. After re-verification, those
+branches are unnecessary for this feature:
+- AI_Druid's spam is on the existing Root branch, gated by
+  Task 4.
+- AI_Necromancer and AI_Shaman do not currently spam any
+  movement-control spell. Adding new branches would expand
+  behavior without addressing user complaint or PRD scope.
+- If a future feature wants Necromancer Darkness DoTs to
+  fire, that's a separate "AI completeness" effort.
 
 ## Risk Assessment
 
@@ -608,334 +645,211 @@ in `agent-conversations.md` 2026-05-03 entry.
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| `Combat:FleeHPRatio` (default 25) is HIGHER than `Companions:SnareHpThreshold` (default 20). A mob enters flee at 25% but our gate doesn't unlock until 20%, so there's a 25%-to-20% window where the mob is fleeing but the companion still won't snare. AC-2 ("Snare fires at flee threshold") might miss by ~5% of HP. | Medium | Low — players will see a slightly delayed snare instead of immediate. Not a regression vs current behavior (current snares from 100% HP, so even with the gap players gain end-of-fight reliability). | Document the relationship in the rule description string. game-tester confirms the snare lands within a few ticks of the mob entering the 20% band, not the 25% band. If the user wants tighter tracking, set `Companions:SnareHpThreshold` to 25 to match `Combat:FleeHPRatio`. |
-| `m_snare_resist_counts` could grow unbounded if a fight has many distinct targets. | Very Low | Very Low — typical engagement has 1-3 targets. Map clears on combat end. | `clear()` on engagement-end and target change. Cap at 255 per-counter (uint8). Realistic memory cost: < 30 bytes per companion per fight. |
-| If the user changes `Companions:SnareHpThreshold` mid-fight via `#rule_set`, the new value takes effect on the next AI tick. A target currently in the "old window" could suddenly become eligible/ineligible. | Low | Trivial — rule changes mid-fight are an admin action, not a player action. | Document. Don't bother with cooldowns. |
-| Necromancer Clinging Darkness and Dooming Darkness combine SE_MovementSpeed with detrimental DoT effects in the same spell. Tagging them `SpellType_Snare` means they show up in the snare branch — but they ARE the necro snare-line. Correct behavior. The risk is double-tagging (also `SpellType_DOT`) which would route the same spell through two branches. | Low | Low — the AI cycle uses a "first hit wins" pattern; the snare branch returning true short-circuits the rest of the engaged path. | Data-expert confirms each row has a single primary `spell_type` bit. If multi-tagged, the routing order in `AI_Necromancer` decides — snare branch ordered AFTER lifetap and BEFORE DoT/nuke is intentional. |
-| Adding new branches to AI_Druid, AI_Necromancer, AI_Shaman could shift the relative priority of OTHER existing spells (heals, lifetaps, DoTs). | Low | Low — the new branch only fires if there is a snare spell loaded AND target is in the gate window. In normal combat (target above 20% / not fleeing), the branch returns false within microseconds and downstream branches run normally. | Game-tester runs full-engagement scenarios pre vs post change for each affected class, with no snare spell in companion_spell_sets, and confirms no behavior delta. |
-| The `m_was_engaged` transition site is shared with the rez delay timer. Adding `ClearSnareResistCounters()` here is single-line. Potential coupling: if a future engineer changes the rez transition logic, they may forget snare counters. | Low | Low — counters auto-clear on next combat anyway. | Inline comment on both lines explaining the shared edge, citing this architecture doc. |
-| The resist hook in `Mob::SpellOnTarget` runs on EVERY full resist for EVERY caster — clients, NPCs, bots, mercs. Adding a `IsCompanion()` branch is one comparison + cheap virtual dispatch. Hot path concern: `Mob::SpellOnTarget` is on the spell-resolution critical path. | Low | Very Low — `IsCompanion()` is a virtual returning a constant. The hook adds < 5ns when not a companion, ~50ns when it is. Modern zones cast O(few) resistable spells per second per zone. Negligible. | None needed. Verified branch is single-comparison, no allocation. |
+| `Combat:FleeHPRatio` and `Companions:SnareHpThreshold` are now both default 25. They'll usually align — but operators may set them differently. The 25%/20% window from the original doc is gone with the default change. | Low | Low | Documented in rule notes string. game-tester confirms snare/root fires at flee threshold. |
+| `m_movement_control_resist_counts` could grow unbounded if a fight has many distinct targets. | Very Low | Very Low | `clear()` on engagement-end and target change. Cap at 255 per counter. Realistic memory: < 30 bytes per companion per fight. |
+| Data mis-tag (Druid 3192, 3447 tagged Snare but effect is Root). | Low | Low | Gate handles both types via the same helper. Functionally benign. data-expert decides whether to correct the tag for consistency. |
+| Rule changes mid-fight via `#rule_set` take effect on next AI tick — a target currently in the "old window" could suddenly become eligible/ineligible. | Low | Trivial | Rule changes mid-fight are an admin action, not a player action. |
+| Necromancer Darkness spells combine snare with DoT — but they're tagged ONLY as `SpellType_Snare`, and AI_Necromancer has no Snare branch. So they don't fire anyway. Out of scope for this feature. | N/A | N/A | Documented as latent bug; not addressed here. |
+| The resist hook in `Mob::SpellOnTarget` runs on every full resist for every caster. `IsCompanion()` virtual dispatch + `m_companion_spells` linear scan when companion. < 1μs per snare/root resist. | Very Low | Very Low | Hot path is unaffected for non-Companion casters (single comparison). For Companions, scan is bounded by spell-set size (~20-30 entries). |
+| Renaming `AI_Druid`'s Root branch from "Root if balanced/aggressive" semantics to "movement control if fleeing low-HP" is a player-observable behavior change. Players who rely on Druid root-locking mobs at high HP for kiting will notice. | Medium | Medium — this IS the intended user-facing change but it's broader than PRD wording originally suggested. | Document in user-facing release notes. The user's reported complaint was about Druid spam; this is the fix. Operators who want pre-feature behavior set `SnareHpThreshold = 100`. |
 
 ### Compatibility Risks
 
 **Could this break existing behavior?**
 
-- **Ranger snare today fires at 30% roll on any non-immune,
-  non-already-snared target.** After this change, Ranger snare
-  fires only when target is fleeing at <=20% HP, with a 2-resist
-  cap. **Player-observable behavior change.** Player will notice
-  Ranger no longer Ensnaring during normal pulls. Per PRD this is
-  the intended outcome — the entire purpose of the feature.
-- **Bard snare today fires at 20% roll on any non-immune target.**
-  Same change applies. PRD doesn't enumerate Bard but the fix
-  generalizes correctly.
-- **Druid, Necromancer, Shaman previously NEVER cast snare in
-  companion_ai.cpp** (no branch). After this change they will cast
-  snare when conditions match. **Net behavior gain** for those
-  classes — net behavior loss for Ranger/Bard during the >20% HP
-  window.
-- **NPC fallback path (`mob_ai.cpp:321`)** still runs the
-  un-gated snare logic when `m_companion_spells` is empty.
-  Companions with empty spell sets are an edge case (data-expert
-  ensures spell sets are populated for all companion classes).
-  **Out-of-scope for this feature** — the gate sits on the
-  Companion class AI path, not the fallback NPC path. If the
-  fallback fires, the gate doesn't apply. game-tester should
-  confirm production companions don't drop into the fallback.
-- **Non-companion NPC snares unchanged.** The NPC AI path at
-  `mob_ai.cpp:321` is unchanged. Hostile NPCs still snare players
-  per their original logic.
+- **AI_Druid Root branch gating** is a player-observable change.
+  Pre-feature: Druid roots fleeing or non-fleeing targets at any
+  HP, with the only constraint being "target not already rooted."
+  Post-feature: Druid roots ONLY targets at <=25% HP and fleeing.
+  This change matches what the user actually wants but exceeds
+  PRD literal scope.
+- **AI_Ranger Snare branch gating** is the same change pattern.
+  Per PRD intent.
+- **AI_Bard Snare branch gating** is the same. PRD doesn't
+  enumerate Bard but the rule applies uniformly.
+- **All other AI handlers (AI_Necromancer, AI_Shaman, AI_Cleric,
+  etc.) are unchanged.** Any spell types they DO route are not
+  in scope.
+- **NPC fallback path** (`mob_ai.cpp:321` SpellType_Snare
+  branch) is unchanged. Only fires when `m_companion_spells`
+  is empty.
+- **Non-companion NPC snares/roots unchanged.** Hostile NPCs
+  still snare/root players per their original logic.
 
 **What needs regression testing?**
 
-- AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8 (manual command
-  is N/A — see below), AC-9, AC-10, AC-11 from the PRD.
+- AC-1, AC-2, AC-3, AC-4, AC-5, AC-6 (now covers Druid+Ranger
+  for movement-control instead of just snare-line for the four
+  named classes), AC-7, AC-9 (root behavior — no longer
+  unaffected; updated AC needed), AC-10, AC-11.
 - Druid HoT-vs-direct-heal selection unchanged.
-- Necromancer DoT/lifetap/pet routing unchanged.
-- Shaman slow/cannibalize routing unchanged.
-- Existing companion mana conservation behavior unchanged (gate
-  short-circuits early — does not consume mana on suppressed casts).
+- Druid's other engaged branches (heal, cure, DoT, nuke) unchanged.
 
 ### Performance Risks
 
-- **Per-tick gate evaluation cost.** Per AI tick, the gate adds:
-  1 RuleI lookup (cached), 1 GetHPRatio() call, 1 IsFleeing()
-  member read, 1 unordered_map lookup. < 200ns per tick per
-  candidate snare cast. Negligible.
-- **Resist hook cost.** Per full resist, the hook adds 1
-  IsCompanion() virtual dispatch and (when companion) 1
-  unordered_map insert + linear scan of m_companion_spells (~10-20
-  entries) to confirm spell type. < 1μs per snare resist.
-  Snare resists are infrequent enough this is irrelevant.
-- **Memory.** O(targets-this-fight) entries in the counter map.
-  Typically 1-3. ~30 bytes per companion per active fight.
-  Wiped on combat end.
+- Per-tick gate evaluation: 1 RuleI lookup (cached), 1
+  GetHPRatio(), 1 IsFleeing(), 1 unordered_map lookup.
+  < 200ns. Negligible.
+- Resist hook: 1 IsCompanion() virtual + (when Companion)
+  1 unordered_map insert + ~20-entry linear scan of
+  m_companion_spells. < 1μs per resist. Resists are infrequent.
+- Memory: O(targets-this-fight) entries. Typical 1-3.
 
 ## Review Passes
 
 ### Pass 1: Feasibility
 
-**Can we actually build this with the existing codebase?**
+Yes. Every required hook exists. Re-verified against live
+database 2026-05-04. The corrected understanding is grounded
+in actual data.
 
-Yes. Every required hook already exists:
-
-- `IsCompanion()` / `CastToCompanion()` — confirmed present
-  (`entity.h:85, 103`).
-- `Mob::IsFleeing()` — confirmed present (`mob.h:1251`).
-- `m_was_engaged` transition site — confirmed present
-  (`companion.cpp:1992-2000`).
-- `Mob::SpellOnTarget` full-resist branch — confirmed present
-  (`spells.cpp:4508-4555`).
-- `SpellType_Snare` bitmask — confirmed present (`spdat.h:639`).
-- `Companions:*` rule namespace — confirmed present
-  (`ruletypes.h:1182-1255`).
-- Existing class-specific AI dispatch — confirmed working
-  (`companion_ai.cpp` AI_Ranger, AI_Bard already cast snare
-  successfully today).
-
-**Hardest part:** verifying that the data-expert task (ensuring
-DRU/NEC/SHM snare-line spells are in `companion_spell_sets` with
-`spell_type = SpellType_Snare`) is complete. Without that, only
-Ranger and Bard get the new behavior. Mitigation: data-expert
-runs a query to enumerate all current SpellType_Snare entries by
-class, and the architect's audit checklist names the in-era
-spells per class so gaps are obvious.
+**Hardest part:** confirming the user's "Druid ensnare spam"
+maps to the Root branch (not the Snare branch). Verified by:
+1. Querying `companion_spell_sets` for Druid `spell_type=4`
+   entries — found 6 root spells (76, 77, 249, 490, 1608,
+   1719) named Engulfing/Ensnaring/Grasping/Enveloping/
+   Entrapping/Engorging Roots.
+2. Querying `spells_new` for those IDs — confirmed effect
+   ID 99 (Root) on each.
+3. Querying `companion_spell_sets` for Druid `spell_type=128`
+   — found 5 spells, but AI_Druid has no SpellType_Snare branch
+   to consume them.
+4. Concluded: AI_Druid's actual cast pattern routes through
+   the Root branch (line 1235), and the user is calling those
+   "ensnare" because of the spell names.
 
 ### Pass 2: Simplicity
 
-**Is this the simplest approach? Can anything be removed or
-deferred?**
-
 What's in scope and necessary:
-- Shared `AI_AttemptSnare` helper (reduces five copies of gate
-  logic to one).
-- Resist hook in `SpellOnTarget` (cleanest signal pathway —
-  alternatives polled state or returning a "did this resist?"
-  bool from `AIDoSpellCast` would require deeper plumbing).
-- Counter clear on engagement-end (piggybacks an existing edge).
-- Counter clear on target-change (one comparison at top of
-  `AI_AttemptSnare`).
-- New rules (PRD requires tunability for AC-11).
-- New AI branches for DRU/NEC/SHM (without these, the feature
-  doesn't apply to 3 of the 4 named classes).
+- Shared `AI_AttemptMovementControl` helper (one place for the
+  rule, replaces three branches).
+- Resist hook in `SpellOnTarget` (cleanest signal).
+- Counter clear on engagement-end (piggyback existing edge).
+- Counter clear on target-change (one line at top of helper).
+- Two new rules.
 
 What's deferred:
-- **Manual `/command` snare override.** No `!snare` command
-  exists today. Adding one is a separate feature. PRD Open
-  Question #1 is answered: there's nothing to bypass.
-  Game-tester marks AC-8 as "N/A — no manual snare command
-  exists; rule applies to all autonomous casts only."
-- **Owner-visible resist messages.** Could mirror
-  `Bots:ShowResistMessagesToOwner`. Out of scope per PRD's
-  silent-suppression directive. Skip.
-- **Per-class snare throttle rules.** Each class handler keeps
-  its existing `zone->random.Roll()` throttle as a hardcoded
-  constant. Could expose as `Companions:SnareCastChancePct` or
-  per-class equivalents. Skip for now — config-expert can add
-  later if needed; not required by PRD.
-
-What's removed:
-- **No new tables.** The runtime counter is in-memory only.
-  Persistence is unnecessary — counters are per-engagement.
-- **No new opcodes.** No client-visible packet changes.
-- **No new emote / chat / sound.** Silent suppression per PRD.
-- **No Lua bindings.** No script-side need to read or mutate
-  counters.
+- Manual `/command` override (no command exists today).
+- New AI branches for unused snare/root types (not user
+  complaint, expanded behavior).
+- Necromancer Darkness DoT routing (latent bug, separate feature).
 
 ### Pass 3: Antagonistic
 
-**What could go wrong?**
-
 | Edge case | Behavior |
 |-----------|----------|
-| Mob enters flee at 25% HP, immediately drops to 20%. Gate unlocks; snare fires. Mob is healed back to 30%. | `flee_mode` is cleared by `Mob::StopFleeing()` (fearpath.cpp:182) when HP recovers above flee threshold. Gate locks again next tick. Companion does not refresh the snare during heal-up window (the existing snare buff continues until natural fade). PRD edge-case #1 satisfied. |
-| Scripted flee at 80% HP (e.g., quest mob, fear spell on enemy NPC). | `IsFleeing()` returns true (flee_mode set) but `target_hpr > hp_threshold`. Gate denies. No snare. PRD edge-case #2 satisfied. |
-| Calm-temperament mob below 20% HP that doesn't flee. | `IsFleeing()` returns false. Gate denies. No snare. PRD edge-case #3 satisfied. |
-| Existing snare lands, then gets dispelled or fades naturally. | No resist event fired. Counter does not increment. Gate may re-fire if conditions still met. PRD edge-case #4 satisfied. |
-| Snare lands, then breaks early due to damage. | No resist event fired (the break is a different code path). Counter does not increment. PRD edge-case #5 satisfied. |
-| Two snare-capable companions in the same group. | Each Companion has its own `m_snare_resist_counts` map. PRD edge-case #6 satisfied. |
-| Companion dies and is rezzed mid-fight. | On death the Companion enters suspended state; the map persists in memory until the entity is destroyed or the engagement-end edge fires. After rez, `m_was_engaged` may not reflect the gap correctly. **Risk noted.** Mitigation: clear counters in `Companion::Death` and on `Unsuspend`. Add to task 4 implementation — `ClearSnareResistCounters()` calls in those two methods as defense-in-depth. |
-| Companion swap mid-fight (player dismisses one, recruits another). | New Companion entity = fresh map. PRD edge-case #8 satisfied. |
-| Multi-mob fight, snare on Mob A resists, target switches to Mob B. | `m_last_snare_target_id` differs from Mob B's ID; map clears at top of `AI_AttemptSnare`. Mob B counter fresh. PRD edge-case "multi-mob isolation" satisfied. **CAVEAT:** because target-change clears the WHOLE map (not just removes Mob A's entry), if the companion later switches back to Mob A, Mob A's counter is also fresh. This is a relaxed interpretation of PRD AC-5. PRD AC-5 says "Druid caps out on Mob A. Mob B reaches flee threshold. Druid casts on Mob B." It doesn't specify what happens when Druid switches back to Mob A. The relaxed interpretation is more forgiving; conservative would be to keep per-target counts indefinitely until engagement-end. **Architect choice: relaxed semantics — wipe-on-switch.** Rationale: target-changes in companion combat are rare and almost always reflect a meaningful "this is a new fight from the AI's perspective." Documented as a known semantic; game-tester verifies AC-5 works with the relaxed semantics (it does — Mob B's counter is fresh as required). |
-| Mob de-aggros and resets, then is re-pulled later. | `m_was_engaged && !currently_engaged` fires when the companion drops off the hate list (no targets). Counter clears. New pull = fresh counter. PRD edge-case #9 satisfied. |
-| Player explicitly commands the companion to snare a >20% HP target. | **Cannot occur in current scope.** No `!snare` command exists. AC-8 is N/A. |
-| Race condition: spell cast START fires, mob dies before resolution, target is gone when SpellOnTarget runs. | `Mob::SpellOnTarget` already handles missing target (`spelltar` is the resolved target object; if dead, the existing resist branch never fires because the spell never resolves). Hook is safe. |
-| Mob is healed above 20% HP while snared. | `flee_mode` clears (StopFleeing). Existing snare buff continues until duration end. Gate locks against re-snare. Correct. |
-| Rule `SnareHpThreshold` set to 100 (operator wants the gate effectively disabled). | Gate condition `target_hpr > 100` is always false. Snare fires whenever target IsFleeing(). Resist counter still applies. Effectively reverts to "snare only fleeing targets" — looser than PRD default but tighter than current behavior. Reasonable. |
-| Rule `SnareResistLimit` set to 0 (operator wants resist cap disabled). | Code branch: `if (resist_limit > 0)` skips the cap check. Companion attempts snare every tick the gate passes. Reasonable. |
-| Companion's `m_companion_spells` is empty (data missing). Falls back to `NPC::AI_EngagedCastCheck` -> `mob_ai.cpp:321` snare branch. | Gate does NOT apply (we did not modify mob_ai.cpp). This is the pre-feature behavior. **In production, all companions should have spell sets** — data-expert verifies. If a class somehow doesn't, snare spam will return for that class only. Game-tester runs an audit query confirming every companion class has at least 1 spell set entry per level band. |
-
-**Player-exploit vectors.**
-- Could a player abuse the rule to manipulate enemy AI? No — the
-  gate is purely on the companion's autonomous AI. The TARGET
-  mob's behavior is unchanged.
-- Could a player force the rule by manipulating their own
-  companion's state? No — the rule reads `IsEngaged()`,
-  `GetHPRatio()`, `IsFleeing()` from the target NPC. Player
-  cannot directly toggle these on the target.
-- Could the resist counter be drained (e.g., by repeatedly
-  triggering target-change to wipe it)? Yes — but to do this the
-  player must direct the companion to switch targets, which
-  costs a positioning/AI cycle and means the companion isn't
-  attacking the previous target anyway. Net effect: no exploit
-  worth defending against.
+| Mob enters flee at 25% HP. Default threshold is 25. Gate unlocks immediately on flee. | Correct alignment. |
+| Mob is healed back above 25%. Existing snare/root buff continues until natural fade. Gate locks against re-cast. | Correct. |
+| Scripted flee at 80% HP. | `target_hpr > hp_threshold`. Gate denies. No autonomous snare/root. |
+| Calm-temperament mob below 25% HP that doesn't flee. | Gate denies. |
+| Existing snare/root lands, then is dispelled or fades. | No resist event. Counter unchanged. Gate may re-fire if conditions still met. |
+| Snare/root lands successfully but breaks early due to damage. | No resist event (different code path). Counter unchanged. |
+| Two snare-capable companions in the same group. | Each has its own counter map. |
+| Companion dies and is rezzed mid-fight. Counter persists in memory until destroyed or engagement-end. After rez, `m_was_engaged` may not reflect the gap correctly. | Defense-in-depth: clear counters in `Companion::Death` and on `Unsuspend`. Add to task 3 implementation. |
+| Companion swap mid-fight. | New entity = fresh map. |
+| Multi-mob fight, snare on Mob A resists, target switches to Mob B. | `m_last_movement_control_target_id` differs; map clears at top of helper. Mob B counter fresh. |
+| Mob de-aggros, resets, then re-pulled. | `m_was_engaged` transitions when companion drops off hate list. Counter clears. |
+| Player explicitly commands snare/root cast. | Cannot occur in current scope. AC-8 is N/A. |
+| Race: cast START fires, mob dies before resolution. | Existing handling in `SpellOnTarget` covers this. |
+| Rule `SnareHpThreshold = 100`. | Gate condition always opens. Snare/root fires whenever target IsFleeing. Resist counter still applies. |
+| Rule `SnareResistLimit = 0`. | Cap branch skipped. Companion attempts every eligible tick. |
+| Companion's `m_companion_spells` is empty. Falls back to NPC AI. | Gate does NOT apply (we did not modify mob_ai.cpp). Pre-feature behavior. Production companions should have spell sets. |
 
 ### Pass 4: Integration
 
-**How do the pieces fit together?**
+Sequence:
 
-The work flows through the implementation team in order:
+1. **config-expert** task 1: RULE_INT macros.
+2. **data-expert** task 2 (parallel): optional audit/correction.
+3. **c-expert** tasks 3-8: C++ implementation, single coherent
+   commit.
+4. **c-expert** task 9: rebuild + restart.
+5. **config-expert** task 10: rule_values seed + `#reloadrules`.
+6. Hand off to game-tester.
 
-1. **config-expert** lands the rule definition + seed SQL first.
-   This is required before c-expert can compile code that uses
-   `RuleI(Companions, SnareHpThreshold)`.
-2. **data-expert** runs in parallel — verifying spell-set rows
-   exist. May insert missing rows. Does not block c-expert
-   directly but DOES block game-tester (without data, AC-6 fails
-   for DRU/NEC/SHM).
-3. **c-expert** lands the C++ work in one logical commit:
-   ruletypes inclusion verified, helper + members in companion.h
-   / companion_ai.cpp / companion.cpp / spells.cpp. Commit is
-   self-contained — all five classes (DRU/RNG/NEC/SHM/BRD) work
-   after this single commit.
-4. **c-expert** builds and runs unit tests.
-5. **Validation hand-off** to game-tester.
-
-**Ordering hazards to flag for the implementation team:**
-
-- Don't rebuild or rerun until config-expert's `INSERT INTO
-  rule_values` has been applied to the running DB — `RuleI`
-  returns 0 for an undefined rule, which means the gate
-  evaluates as "target_hpr > 0" (always true except for already-
-  dead targets) and the gate effectively SUPPRESSES ALL SNARE.
-  Check `SELECT * FROM rule_values WHERE rule_name LIKE
-  'Companions:Snare%'` returns 2 rows before testing.
-- The `IsCompanion()` virtual dispatch from `Mob::SpellOnTarget`
-  must include `companion.h` if not already pulled in. Check the
-  existing `spells.cpp` includes — `IsCompanion()` is on Entity
-  base so `entity.h` (already included) is enough; the
-  `CastToCompanion()` call includes `companion.h`. Add the
-  include if missing.
-- The `m_was_engaged` site already exists. The new
-  `ClearSnareResistCounters()` line goes INSIDE the existing
-  `if (m_was_engaged && !currently_engaged)` block — same
-  scope, same edge.
+Critical hazard: **Don't run game-tester until task 10
+completes.** `RuleI()` returns 0 for missing rules; with
+`SnareHpThreshold = 0`, the gate suppresses ALL movement-control
+casts.
 
 ## Required Implementation Agents
 
 | Agent | Task(s) | Rationale |
 |-------|---------|-----------|
-| config-expert | 1, 12 | Owns `common/ruletypes.h` (task 1) and the `rule_values` SQL seed (task 12). The two tasks are split across the rebuild boundary because `#reloadrules` only finds compile-time-defined rules. |
-| data-expert | 2 | Owns `companion_spell_sets` content. Verification + small INSERTs only. Runs in parallel with task 1. |
-| c-expert | 3, 4, 5, 6, 7, 8, 9, 10, 11 | Owns all C++ work in `eqemu/zone/` plus the rebuild/restart integration step. |
+| config-expert | 1, 10 | Owns `common/ruletypes.h` (task 1, pre-build) and `rule_values` SQL seed (task 10, post-build via `#reloadrules`). |
+| data-expert | 2 | Owns `companion_spell_sets` content. Audit + optional correction. |
+| c-expert | 3, 4, 5, 6, 7, 8, 9 | All C++ work in `eqemu/zone/` plus rebuild integration. |
 
-protocol-agent has no implementation work for this feature.
-
-lua-expert, perl-expert, infra-expert have no work for this feature.
+protocol-agent: no implementation work. lua-expert, perl-expert,
+infra-expert: no work for this feature.
 
 ## Validation Plan
 
-Game-tester verifies each PRD acceptance criterion in-game. The
-gate's invisible nature (silent suppression) means most ACs are
-verified by **not seeing** snare casts. Server logs (`LogAIDetail`)
-help confirm the gate is actually firing rather than the spell
-just being absent.
+The validation plan covers movement-control casts (snare-line
+AND root-line). game-tester verifies each PRD AC, with the
+note that several ACs need re-interpretation under the
+expanded scope (root included).
 
-- [ ] **AC-1 (no snare during normal combat).** Pull a non-trivial
-      mob with a Druid companion. Verify in chat / spell log that
-      Druid does NOT cast Ensnare while target HP > 20%. Run for
-      at least 60 seconds across 3 separate engagements.
-- [ ] **AC-2 (snare fires at flee threshold).** Engage a mob to
-      ~20% HP. Mob enters flee. Druid casts Ensnare within 2-3 AI
-      ticks. Verify cast appears in chat / spell log.
-- [ ] **AC-3 (two-resist cutoff).** Engage a high-MR mob (e.g.,
-      Hill Giant). At flee+20% HP, observe Druid casts Ensnare —
-      first cast resists. Druid casts again — second cast resists.
-      Druid does NOT cast Ensnare a third time on that mob even
-      though it's still at <=20% HP and fleeing.
-- [ ] **AC-4 (counter resets on new target).** During a chain
-      pull, Druid 2-resists Mob A, Mob A dies. Pull Mob B.
-      At Mob B flee, Druid casts Ensnare on Mob B (counter is
-      fresh). If Mob B resists once, Druid attempts a second
-      time. If second resists, no third attempt.
-- [ ] **AC-5 (multi-mob isolation).** In a 2-mob fight, Druid
-      caps on Mob A. Mob B reaches flee threshold. Druid casts
-      Ensnare on Mob B (Mob B counter is fresh). [Note: with the
-      relaxed wipe-on-target-change semantics, Mob A's counter
-      ALSO clears when Druid switches to Mob B. PRD AC-5 is
-      satisfied; the relaxation is in the architect's favor.]
-- [ ] **AC-6 (all four classes obey the rule).** Repeat AC-1
-      and AC-2 with a Ranger, Necromancer, and Shaman companion.
-      Each must:
-      - NOT cast snare while target > 20% HP / not fleeing
-      - Cast snare when target <= 20% HP AND fleeing
-      - Cap at 2 resists per target
-- [ ] **AC-7 (out-of-combat snare unaffected).** Verify a Ranger
-      companion will cast snare on a target during pull setup
-      (companion not yet engaged) when conditions are otherwise
-      ineligible. **Implementation note:** the gate only applies
-      `IsEngaged() == true`. Out-of-combat path falls through
-      without checking HP/flee. game-tester should confirm by
-      observing snare casts during pull positioning.
+- [ ] **AC-1 (no movement-control during normal combat).**
+      Pull a non-trivial mob with a Druid companion. Druid
+      does NOT cast Engulfing Roots or any other root/snare
+      while target HP > 25%. Run for 60s across 3 fights.
+- [ ] **AC-2 (movement-control fires at flee threshold).**
+      Engage a mob to ~25% HP. Mob enters flee. Druid casts
+      a root within 2-3 AI ticks.
+- [ ] **AC-3 (two-resist cutoff).** High-MR mob. At flee+25%,
+      Druid casts root — resists. Casts again — resists.
+      Druid does NOT cast root a third time on that mob.
+- [ ] **AC-4 (counter resets on new target).** Chain pull.
+      Druid 2-resists Mob A, Mob A dies. Pull Mob B. At Mob B
+      flee, Druid casts root on Mob B (counter fresh).
+- [ ] **AC-5 (multi-mob isolation).** 2-mob fight. Druid
+      caps on Mob A. Mob B reaches flee. Druid casts root on
+      Mob B (Mob B fresh; the wipe-on-target-change semantic
+      means Mob A counter also resets, which is acceptable).
+- [ ] **AC-6 (Druid AND Ranger obey the rule).** Repeat
+      AC-1 and AC-2 with a Ranger companion. Ranger casts
+      Snare/Ensnare under the same gate.
+- [ ] **AC-7 (out-of-combat unaffected).** Companion casts
+      snare/root freely during pulls / kiting setups.
 - [ ] **AC-8 (manual command override).** **N/A — no manual
-      snare command exists in current scope.** Architect resolved
-      open question #1: there is no companion command path that
-      directly invokes a snare cast. The PRD's "manual override"
-      is a forward-looking concern to be addressed if/when a
-      `!snare` command is added in a future feature. Game-tester
-      records this as N/A with the architectural reason.
-- [ ] **AC-9 (root spells unaffected).** Necromancer (or Druid)
-      root behavior is identical pre vs post change. The Druid
-      `AI_Druid` Root branch is unmodified.
-- [ ] **AC-10 (player snare unaffected).** A player Druid casts
-      Ensnare on any target — works exactly as before. The hook
-      is on `IsCompanion()` only; player Clients are skipped.
-- [ ] **AC-11 (tunables work).** Set
-      `Companions:SnareHpThreshold` to 30 via `#rule_set` —
-      gate now opens at 30% HP. Set `Companions:SnareResistLimit`
-      to 1 — companion stops at 1 resist. Set
-      `SnareResistLimit` to 0 — no cap, companion will attempt
-      snare every eligible tick.
-- [ ] **AC-12 (mana savings observable).** Compare a Druid
-      companion's end-of-fight mana % across 5 fights pre vs
-      post change. Post-change should be visibly higher.
-      Sanity check, not pass/fail.
+      snare/root command exists.** Recorded with documented
+      reason.
+- [ ] **AC-9 (root spells unaffected).** **REINTERPRETED
+      under scope expansion:** root-line spells now ARE
+      gated. Original PRD AC-9 wording is superseded by AC-1
+      and AC-2 covering both snare and root.
+- [ ] **AC-10 (player snare/root unaffected).** Player
+      Druid casting Ensnaring Roots or Ensnare on a target
+      works exactly as before. Hook is on `IsCompanion()` only.
+- [ ] **AC-11 (tunables work).** `Companions:SnareHpThreshold
+      = 30` opens gate at 30%. `SnareResistLimit = 1` caps
+      at 1 resist.
+- [ ] **AC-12 (mana savings observable).** Compare end-of-fight
+      mana % across 5 fights pre vs post.
 
-**Sustained-play test scenarios** (per architect discipline on
-customized systems — see `feedback_refactor_regression_discipline.md`):
+**Sustained-play test scenarios:**
 
-- [ ] **Long engagement (5+ minutes).** Verify that
-      `m_snare_resist_counts` does not leak. Companion's memory
-      footprint stable. Counters clear cleanly on
-      engagement-end.
-- [ ] **Chain pull (10+ targets).** Verify counter resets on
-      each new pull. No state from previous fights bleeds into
-      new ones.
-- [ ] **Companion death + rez during the same fight.** Verify
-      the rez flow does not double-fire the engagement-end
-      transition in a way that prematurely clears counters,
-      causing repeated cap-resets. Test specifically: pull,
-      Druid resists 2x, Druid dies, gets rezzed, fight
-      continues, target still at 20%+ — Druid does NOT
-      attempt snare again on that target.
-- [ ] **Companion zone-in mid-engagement.** Verify
-      `m_snare_resist_counts` initializes to empty on Spawn /
-      Unsuspend. Counter map should be a fresh `{}` after
-      zone load.
-- [ ] **All four named classes (DRU/RNG/NEC/SHM) verify they
-      can actually cast snare-line spells in the right
-      conditions.** This implicitly verifies the data-expert's
-      audit task (task 3) was complete.
+- [ ] Long engagement (5+ minutes). No counter leak.
+- [ ] Chain pull (10+ targets). Counters reset cleanly.
+- [ ] Companion death + rez during the same fight. Counters
+      don't double-fire engagement-end.
+- [ ] Companion zone-in mid-engagement. `m_movement_control_
+      resist_counts` initializes empty.
+- [ ] Druid AND Ranger verify both classes cast their movement-
+      control spells in the right conditions and refrain in
+      the wrong conditions.
 
 ---
 
-> **Next step:** Spawn the implementation team with exactly
-> three agents:
-> - **c-expert** (tasks 3-11)
-> - **config-expert** (tasks 1, 12)
+> **Next step:** Confirm scope decision with the user
+> (Option 2 assumed in this document). Then spawn the
+> implementation team:
+>
+> - **c-expert** (tasks 3-9)
+> - **config-expert** (tasks 1, 10)
 > - **data-expert** (task 2)
 >
-> Tasks 1 and 2 can run in parallel. Tasks 3-10 are sequential
-> after task 1. Task 11 (rebuild + restart) gates task 12
-> (rule_values seed via INSERT + `#reloadrules`). After task 12,
-> hand off to game-tester.
+> Tasks 1 and 2 parallel. Task 3 after Task 1. Tasks 4-8
+> sequential after Task 3. Task 9 (rebuild) gates Task 10.
+> After Task 10, hand off to game-tester.

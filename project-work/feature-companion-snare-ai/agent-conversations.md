@@ -356,6 +356,79 @@ description and gate code (`if (resist_limit > 0)`).
 
 ---
 
+
+
+### 2026-05-04 — User-Driven Amendment: Re-Verify AI Routing + Retune Threshold
+
+**From:** team-lead → **To:** architect
+
+> Amendment requested. Two items:
+>
+> 1. Re-verify the architect's claim that "AI_Druid, AI_Necromancer, and
+>    AI_Shaman do NOT currently route SpellType_Snare." This contradicts
+>    the user's direct observation that opened the feature ("our ranger
+>    and druids tend to spam ensnare constantly during battles"). The
+>    user has personally seen Druid companions casting Ensnare spam.
+>    Trace the actual code path and report findings.
+>
+> 2. Retune `Companions:SnareHpThreshold` default from 20 to 25 to align
+>    with `Combat:FleeHPRatio` (default 25). Eliminates the awkward
+>    25%-to-20% window where mob is fleeing but gate denies snare.
+
+**Architect investigation findings:**
+
+> Re-verified by querying live `companion_spell_sets` and `spells_new`:
+>
+> 1. **AI routing claim confirmed correct in literal sense:** AI_Druid,
+>    AI_Necromancer, AI_Shaman have no `SpellType_Snare` branches today.
+>
+> 2. **BUT the user's "Druid ensnare spam" is NOT snare-line — it's
+>    actual Root spells.** AI_Druid HAS a `SpellType_Root` branch
+>    (companion_ai.cpp:1235) that fires at 30% throttle, gated only by
+>    `!target->IsRooted()`. The Druid root spell set contains spell IDs
+>    76 (Engulfing Roots), 77 (Ensnaring Roots), 249 (Grasping Roots),
+>    490 (Enveloping Roots), 1608 (Entrapping Roots), 1719 (Engorging
+>    Roots). All have effect ID 99 (Root, full immobilize) — they are
+>    NOT snare-line. The user is colloquially calling these "ensnare"
+>    because the spell names contain "Ensnaring" / "Engulfing" / etc.
+>
+> 3. **The PRD scoped roots OUT but the user's actual complaint IS
+>    about roots.** Shipping the original architecture (gating only
+>    SpellType_Snare) would NOT solve the user's reported behavior.
+>
+> 4. **Data anomaly noted:** Druid companion_spell_sets entries 3192
+>    (Earthen Roots) and 3447 (Savage Roots) are tagged `spell_type=128`
+>    (Snare) but their actual effect is Root. Functionally benign with
+>    a unified gate; data-expert may correct or leave as-is.
+>
+> **Architecture amendments applied:**
+> - Helper renamed `AI_AttemptSnare` → `AI_AttemptMovementControl(target, type_mask)`
+> - Helper accepts SpellType_Snare, SpellType_Root, or both as a mask
+> - Gates AI_Druid Root branch (line 1235), AI_Ranger Snare branch
+>   (line 1469), AI_Bard Snare branch (line 1789) — three sites total
+> - Removed plan to add new SpellType_Snare branches to AI_Druid /
+>   AI_Necro / AI_Shaman (those classes don't currently spam those types;
+>   adding branches expands behavior beyond user complaint)
+> - Default `Companions:SnareHpThreshold` retuned 20 → 25 per user
+> - Renamed counter members to `m_movement_control_resist_counts` etc.
+>
+> **Scope decision required from user before implementation:**
+> - Option 1 (strict PRD): gate snare-line only. Druid root spam
+>   continues. Likely won't satisfy user's complaint.
+> - Option 2 (architect recommendation): gate both snare-line AND
+>   root-line. Addresses user's actual reported behavior. PRD scope
+>   expanded; lore-master sign-off should be re-confirmed for roots.
+> - Option 3: ship Option 1 now, file root-spam follow-up bug-fix.
+>
+> Architecture document is written to support Option 2 by default. If
+> user chooses Option 1 or 3, defer Task 4 (Druid Root branch gating)
+> and rename the helper back to `AI_AttemptSnare`.
+
+**Outcome:** Amendment applied. User scope decision pending. Architecture
+doc, status.md, agent-conversations.md updated and committed.
+
+---
+
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._
@@ -380,7 +453,10 @@ This table is the quick-reference for anyone catching up._
 | 7 | Resist hook site = `Mob::SpellOnTarget` full-resist branch (`spells.cpp:4508-4555`), guarded by `IsCompanion()`. protocol-agent's alternative recommendation of `CastedSpellFinished()` is documented as fallback if scope issues arise. | architect (in dialogue with protocol-agent) | 2026-05-04 | `SpellOnTarget` is the single source of truth for "this spell was fully resisted on this target" — uniform across single-target/AE/group. `CastedSpellFinished` is broader and would need to differentiate fizzle / interrupt / OOM / resist. |
 | 8 | `Companions:SnareResistLimit = 0` means "no cap, companion will attempt snare every eligible tick." | architect (confirming config-expert's flagged ambiguity) | 2026-05-04 | Matches PRD intent ("set to 0 to disable the resist counter entirely"). Encoded in the gate as `if (resist_limit > 0)`. |
 | 9 | Implementation sequence locked: Task 1 (RULE_INT macros) → tasks 4-11 (C++) → task 12 (build) → Task 2 (rule_values seed via INSERT + #reloadrules). Task 3 (data audit) parallel anywhere. | architect + config-expert | 2026-05-04 | config-expert traced source: `#reloadrules` → `_FindRule()` searches compile-time `s_RuleInfo[]`; new rules silently ignored until rebuilt. |
-| 10 | Scope expansion: Druid, Necromancer, Shaman class AI handlers in companion_ai.cpp do NOT currently route SpellType_Snare. Adding branches is part of this feature, not optional. Bard's existing snare branch is also gated for consistency even though the PRD did not enumerate Bard. | architect (discovered during source-code review) | 2026-05-04 | The PRD names DRU/RNG/NEC/SHM but the AI for 3 of those classes doesn't snare today. The PRD intent ("every class with a snare-line spell") implicitly includes Bard, and the shared AI_AttemptSnare helper applies the rule uniformly. |
+| 10 | (Superseded by amendment 2026-05-04 — see rows 11-13). Original claim: Druid/Necro/Shaman AI handlers don't route SpellType_Snare; adding branches needed. Re-verification revealed this was technically true but irrelevant to the user's actual complaint (which is Druid Root spam, not Snare). | architect | 2026-05-04 | Original claim survives as a footnote; the amendment supersedes the action. |
+| 11 | Architecture amendment 2026-05-04: re-verified AI routing. User's "Druid ensnare spam" is actually Druid casting Root-line spells (Ensnaring Roots, Engulfing Roots, etc.) via the AI_Druid SpellType_Root branch — NOT snare-line. The Druid root spells are named "Ensnaring/Engulfing" but have effect ID 99 (Root) not 3 (MovementSpeed). | architect (re-verification per team-lead) | 2026-05-04 | Verified by querying companion_spell_sets and spells_new. AI_Druid has no SpellType_Snare branch; the spam is on the existing Root branch (line 1235). |
+| 12 | Scope expansion under architect recommendation: gate BOTH SpellType_Snare AND SpellType_Root through the same shared helper. Helper renamed AI_AttemptSnare → AI_AttemptMovementControl. PRD scope expanded from "snare-line only" to "movement-control (snare + root)". | architect (recommended; user decision pending) | 2026-05-04 | Without this expansion, the user's actual reported behavior (Druid root spam) is unaddressed. Lore-master should re-confirm "silent suppression" reasoning applies equally to roots — same gate semantics. |
+| 13 | Companions:SnareHpThreshold default retuned 20 → 25 to align with Combat:FleeHPRatio default 25. | user direction | 2026-05-04 | Eliminates the 25%-to-20% window where mob is fleeing but gate denies. Operators wanting tighter window can lower it. |
 
 ---
 
