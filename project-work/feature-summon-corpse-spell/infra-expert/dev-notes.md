@@ -101,31 +101,79 @@ See Implementation Plan in Stage 1 — no amendments from socialization yet. Wil
 
 ## Stage 4: Build
 
-_Not started — holding for team-lead go-ahead._
-
 ### Implementation Log
 
-_To be filled in when build starts._
+#### 2026-05-03 — Pre-flight checks
+
+Confirmed all prerequisite commits in place on eqemu (c-expert tasks 1+4 committed), akk-stack (data-expert migration at `akk-stack/server/quests/sql/feature_summon_corpse_spell.sql`), and claude repos. eqemu branch: `feature/summon-corpse-spell`.
+
+#### 2026-05-03 — DB backup
+
+Backed up spells_new, items, merchantlist, character_spells, rule_values from live mariadb container to `/mnt/d/Dev/eq/claude/tmp/feature-summon-corpse-spell/pre-summon-corpse-deploy-1777855805.sql` (123MB).
+
+#### 2026-05-03 — Ninja rebuild
+
+Rebuilt all eqemu binaries inside akk-stack-eqemu-server-1. Result: 65/65 targets built, clean exit.
+
+#### 2026-05-03 — Migration validation (pre-restart)
+
+Summary query: new_spells=12, new_items=12, vendor_entries=57, auto_scribed=1, rule_row=1. All counts matched expected values.
+
+#### 2026-05-03 — make restart
+
+Restarted all Docker containers. All containers came back up.
+
+#### 2026-05-03 — shared_memory blocker (NULL varchar columns)
+
+shared_memory crashed at "Loading spells" with `basic_string: construction from null`. Root cause: data-expert's migration left you_cast, other_casts, cast_on_you, cast_on_other, spell_fades as SQL NULL on all 12 new spell rows. Data-expert patched to ''. Held until confirmed.
+
+#### 2026-05-03 — shared_memory blocker (teleport_zone NULL)
+
+shared_memory still crashed. Root cause: teleport_zone also NULL on all 12 new rows (missed in previous fix). Data-expert patched to ''. Held until confirmed.
+
+#### 2026-05-03 — shared_memory blocker (typedescnum NULL)
+
+shared_memory still crashed after both varchar fixes. Root cause: typedescnum (integer) was NULL on all 12 new rows and zero other spells in the entire DB. C++ loader reads this int to look up a string; NULL causes null string lookup and crashes basic_string constructor. Data-expert performed comprehensive 31-column diff against id=3, patched typedescnum=125 and confirmed all remaining nullable cols matched. Held until confirmed.
+
+#### 2026-05-03 — shared_memory SUCCESS
+
+Retried shared_memory after comprehensive NULL fix. Completed cleanly — no error, no exit code 1. All 12 new spell IDs now loaded into shared memory.
+
+#### 2026-05-03 — Full server startup
+
+Started all processes per MEMORY.md:
+1. shared_memory (completed above)
+2. loginserver (nohup, 3s wait)
+3. world (nohup, 8s wait)
+4. 8 zone processes dynamic_01..dynamic_08 (loop, 0.5s stagger — NOT eqlaunch)
+
+All 10 processes confirmed running via `ps aux`.
+
+Final validation: new_spells=12, new_items=12, vendor_entries=57, auto_scribed=1, rule_row=1. PASS.
 
 ### Problems & Solutions
 
 | Problem | Root Cause | Solution |
 |---------|-----------|----------|
-| | | |
+| shared_memory crash: basic_string from null | you_cast/other_casts/cast_on_you/cast_on_other/spell_fades NULL on new spell rows | Data-expert set all to '' |
+| shared_memory crash persisted | teleport_zone also NULL on new rows | Data-expert set to '' |
+| shared_memory crash persisted | typedescnum NULL on all 12 new rows (unique in entire DB) | Data-expert comprehensive 31-col diff, set typedescnum=125 |
 
 ### Files Modified (final)
 
 | File | Action | Description |
 |------|--------|-------------|
-| | | |
+| `claude/project-work/feature-summon-corpse-spell/infra-expert/dev-notes.md` | Modified | Stage 4 implementation log |
+| `claude/project-work/feature-summon-corpse-spell/status.md` | Modified | Task 10 → Complete |
+| `claude/tmp/feature-summon-corpse-spell/` | Created | Pre-migration DB backup (gitignored, 123MB) |
 
 ---
 
 ## Open Items
 
-- [ ] Confirm SQL file location from data-expert once task 9 is complete
-- [ ] Confirm c-expert's task 4 is committed before pulling repos
-- [ ] Await team-lead go-ahead to begin Stage 4
+- [x] SQL file location confirmed: `akk-stack/server/quests/sql/feature_summon_corpse_spell.sql`
+- [x] c-expert task 4 committed confirmed
+- [x] Team-lead go-ahead received and task 10 complete
 
 ---
 

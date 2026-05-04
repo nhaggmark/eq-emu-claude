@@ -71,7 +71,7 @@ _Populated by the architect after the architecture doc is approved._
 | 7 | Author idempotent character_spells auto-scribe migration (12 INSERT...SELECT blocks with `MIN(MAX(slot_id)+1, 399)` cap) | data-expert | Complete | 2026-05-03. 1 existing char auto-scribed (Chelon ENC slot 284). |
 | 8 | Author rule_values seed row for `Spells:UniversalSummonCorpseCooldown` (ruleset_id=1) | config-expert | Complete | 2026-05-03 |
 | 9 | Bundle SQL into single transactional migration; test idempotency on snapshot | data-expert | Complete | 2026-05-03. Run twice — counts stable at 12/12/57/1/1. All checks pass. |
-| 10 | Rebuild zone/world; restart full stack per MEMORY.md startup order; apply migration | infra-expert | Not Started | Depends on tasks 4, 9 |
+| 10 | Rebuild zone/world; restart full stack per MEMORY.md startup order; apply migration | infra-expert | Complete | 2026-05-03. Build 65/65. shared_memory loaded new spells. All 10 processes running (loginserver + world + 8 zones). Validation: 12/12/57/1/1. Note: 3 NULL-column bugs in data-expert migration required patching before shared_memory would load (you_cast/other_casts/cast_on_you/cast_on_other/spell_fades/teleport_zone set to ''; typedescnum set to 125). |
 | 11 | Hand off to game-tester for validation | (orchestrator) | Not Started | Depends on task 10 |
 
 ---
