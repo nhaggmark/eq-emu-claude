@@ -173,7 +173,186 @@ Architecture team has a lore-vetted document to work from.
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-_(empty — phase has not started)_
+### 2026-05-03 — Protocol Sign-Off + Resist Signal Pathway
+
+**From:** protocol-agent → **To:** architect
+
+> Delivered protocol feasibility review and answer to PRD Open Question #5.
+>
+> Summary of findings:
+>
+> 1. **Silent suppression is clean.** If the AI gate blocks the cast before
+>    `CastSpell()` is called, zero packets are generated — no `OP_BeginCast`,
+>    no `OP_Action`, no `OP_ManaChange`. The Titanium client sees nothing.
+>
+> 2. **No client-pushed AI tick state.** Companion AI ticks are entirely
+>    server-internal. No client prediction, nothing to update.
+>
+> 3. **Q5 answer — resist signal is a pure server-side return value, not a
+>    packet.** Path in `eqemu/zone/spells.cpp`: `SpellOnTarget()` calls
+>    `ResistSpell()` (lines 4483/4495 — pure server dice roll). On full
+>    resist, sends two `MessageString()` chat strings, then
+>    `safe_delete(action_packet); return false` (lines 4554–4555). The
+>    `false` return value propagates up through `SpellFinished()` →
+>    `CastedSpellFinished()`. No packet from the target triggers a resist;
+>    the target never "sends" a resist signal. Recommended hook for the
+>    resist counter: override or intercept `CastedSpellFinished()` in the
+>    Companion class — when `SpellOnTarget()` returns false for a snare-line
+>    spell, increment the per-target counter. No existing Bot resist-counter
+>    pattern to copy; this needs fresh plumbing.
+>
+> 4. **No client-prediction coupling.** NPC/companion casts are 100%
+>    server-driven.
+>
+> **APPROVED — No new opcodes, no new packet structs, no Titanium
+> translation changes needed.**
+
+**Outcome:** Protocol sign-off delivered. Open Question #5 answered.
+Full notes at `/mnt/d/Dev/eq/claude/project-work/feature-companion-snare-ai/protocol-agent/dev-notes.md`.
+
+---
+
+### 2026-05-03 — Namespace Confirmation and Rule Shape (config-expert → architect)
+
+**From:** config-expert → **To:** architect
+
+> Reported findings on Q8 (namespace) and proposed rule shapes:
+>
+> - **Namespace confirmed: `Companions:*`** — `ruletypes.h` lines 1182–1256 already
+>   have ~40 registered rules under this category; live DB has 47 matching rows.
+>   Not `Bots:*`, not `AI:*`.
+> - **No name collisions** — `SnareHpThreshold` and `SnareResistLimit` are absent
+>   from both `ruletypes.h` and the live DB.
+> - **Proposed rule shape:**
+>   - `RULE_INT(Companions, SnareHpThreshold, 20, ...)` → `RuleI(Companions, SnareHpThreshold)`
+>   - `RULE_INT(Companions, SnareResistLimit, 2, ...)` → `RuleI(Companions, SnareResistLimit)`
+> - **Open question:** Should `SnareResistLimit = 0` mean "no cap (never give up)"
+>   or "never cast snare (always blocked)"? PRD implies 0 = no cap; need architect
+>   confirmation for the notes string.
+> - **Dependency:** config-expert cannot insert `rule_values` rows until c-expert adds
+>   the `RULE_INT` entries to `ruletypes.h` and the server is rebuilt.
+
+**Outcome:** Awaiting architect confirmation before Stage 4.
+
+---
+
+### 2026-05-03 — Full Q1-Q4 Response to Architect (config-expert → architect)
+
+**From:** config-expert → **To:** architect
+
+> Full answers to all four architect questions:
+>
+> **Q1 (namespace):** `Companions:*` confirmed. `ruletypes.h` lines 1182–1256, ~40 rules,
+> 47 live DB rows. No `Bots:*` / `AI:*` / `NPC:*` ambiguity. Grepped for "Snare"/"snare"/"Slow" —
+> no collisions. Existing snare rules (`Spells:SnareOverridesSpeedBonuses`, `Bots:PercentChanceToCastSnare`)
+> are unrelated.
+>
+> **Q2 (existing cast-gating rules):** Three existing HP/mana threshold rules gate companion AI casts:
+> `HealThresholdPct`, `ManaCutoffPct`, `HealerManaConservePct`. None can be extended — all are
+> single-dimension with no flee-state check or per-target resist counter. New rules + new C++ gate
+> logic required.
+>
+> **Q3 (exact definitions):** Provided verbatim `RULE_INT` macro lines and `INSERT INTO rule_values`
+> SQL. `SnareResistLimit = 0` documented as "no cap" per PRD intent; flagged to architect for
+> confirmation of this semantic.
+>
+> **Q4 (runtime tunability):** Traced source: `#reloadrules` → `LoadRules()` → `SetRule()` →
+> `_FindRule()` which searches compile-time `s_RuleInfo[]`. New rules are **silently ignored** by
+> `#reloadrules` until the binary is rebuilt with the new `RULE_INT` entries. After rebuild,
+> `#reloadrules` works for runtime tuning — AC-11 will pass.
+
+**Outcome:** Full sign-off delivered. Dependency order documented: c-expert adds macros → rebuild → config-expert inserts DB rows → `#reloadrules` works.
+
+---
+
+### 2026-05-04 — Architect's Initial Pings to Advisors (logged in arrears)
+
+**From:** architect → **To:** protocol-agent
+
+> Sent feature TL;DR. Asserted no protocol implications because the change
+> only suppresses some existing OP_CastSpell / OP_Action / OP_Damage flow.
+> Asked protocol-agent to confirm or flag any edge case (manual command
+> override packet flow, companion-targeting packets, Titanium-specific
+> resist messaging).
+
+**Outcome:** protocol-agent had already responded with full sign-off
++ Q5 answer. See entry above (2026-05-03).
+
+---
+
+**From:** architect → **To:** config-expert
+
+> Asked four questions: (Q1) does `Companions:*` namespace exist; (Q2) any
+> existing rules already gate companion AI cast behavior we could extend;
+> (Q3) draft exact RULE_INT lines and INSERT statements for the two new
+> rules; (Q4) confirm `RULE_INT` rules are runtime-changeable for AC-11.
+
+**Outcome:** config-expert had already responded comprehensively.
+See entry above (2026-05-03). Architect confirms `SnareResistLimit = 0`
+means "no cap" per PRD intent — locked in the architecture doc rule
+description and gate code (`if (resist_limit > 0)`).
+
+---
+
+### 2026-05-04 — Architect Resist-Hook Site Decision
+
+**From:** architect → **To:** protocol-agent (response to Q5 answer)
+
+> Acknowledged protocol-agent's recommendation to hook `CastedSpellFinished()`
+> in the Companion class. Architect's design choice diverges slightly:
+> hook `Mob::SpellOnTarget` instead, inside the existing full-resist branch
+> at `spells.cpp:4508-4555`. Reasoning:
+>
+> 1. **`Mob::SpellOnTarget` is the single source of truth** for "this spell
+>    was fully resisted on this target." Works uniformly for single-target,
+>    AE, and group spells. `CastedSpellFinished` is broader and would need
+>    to differentiate fizzle / interrupt / OOM / resist internally.
+>
+> 2. **Surgical placement.** The full-resist branch already exists. We add
+>    one guarded line: `if (this->IsCompanion()) this->CastToCompanion()->OnSpellResisted(spell_id, spelltar);`.
+>    Zero behavioral change for any non-Companion caster (clients, NPCs,
+>    bots, mercs). Single comparison overhead per resist.
+>
+> 3. **Preserves protocol-agent's broader sign-off.** No new packets, no
+>    opcodes, no client-visible behavior change. The hook is data-flow
+>    only — it does not affect the resist's chat strings, hate add, or
+>    `safe_delete(action_packet)`.
+>
+> protocol-agent's `CastedSpellFinished` recommendation is documented
+> as the alternative implementation path. If c-expert hits a complication
+> with the `SpellOnTarget` hook (e.g., scope / include challenges),
+> falling back to `CastedSpellFinished` is acceptable.
+
+**Outcome:** Architect's choice locked. Documented in architecture.md.
+
+---
+
+### 2026-05-04 — Architect Confirms Sequence with config-expert
+
+**From:** architect → **To:** config-expert
+
+> Confirms config-expert's flagged dependency: the `RULE_INT` macros must
+> land in `ruletypes.h` and the server must be rebuilt BEFORE the
+> `INSERT INTO rule_values` rows take effect via `#reloadrules`.
+> Architecture doc's task list reflects this:
+>
+> - Task 1: config-expert lands `RULE_INT` definitions in `ruletypes.h`
+> - Task 4-11: c-expert lands C++ implementation
+> - Task 12: c-expert builds (compilation requires RULE_INT to exist)
+> - Task 2: config-expert lands `INSERT INTO rule_values` rows AFTER
+>   rebuild + restart
+>
+> Task 1 and the c-expert C++ work are technically independent at the
+> source level (RULE_INT and the C++ implementation can be staged in
+> any order, but BOTH must be present before the build succeeds).
+> Easiest serialization: config-expert delivers task 1 first, then
+> c-expert proceeds with tasks 4-11.
+>
+> Confirmed `SnareResistLimit = 0` semantics: "no cap, companion will
+> attempt snare every eligible tick." Documented in the rule's notes
+> string and in the gate code.
+
+**Outcome:** Sequencing locked. Implementation team has clear ordering.
 
 ---
 
@@ -196,6 +375,12 @@ This table is the quick-reference for anyone catching up._
 | 2 | Restricting WHEN companions cast snare does not violate Druid/Ranger/Necro/Shaman class identity. | lore-master | 2026-05-03 | Lore portrays these classes as using snare tactically (kiting, methodical kills, situational utility), not as reflexive spam. The AI change is MORE consistent with lore than current behavior, not less. |
 | 3 | No Classic-Luclin scripted encounter depends on companion-autonomous snare casting; no conflicts. | lore-master | 2026-05-03 | Confirmed during sign-off. |
 | 4 | Necromancer snare-line spells (Clinging Darkness / Dooming Darkness) do NOT have "snare" in the name. Spell classification must be by effect/category, NOT by name pattern. | lore-master → game-designer | 2026-05-03 | A name-based filter would silently miss Necromancer companions, leaving Necro snare spam in place. Reinforces PRD Open Question #3 — architect must use the proper classification path. |
+| 5 | No client-server protocol implications. Silent suppression (not calling CastSpell) generates zero packets. Titanium client sees nothing. | protocol-agent | 2026-05-03 | Confirmed by reading spells.cpp packet construction path. |
+| 6 | Resist signal (PRD Q5) is the boolean return value of SpellOnTarget(), not a packet. Pure server-side dice roll. Hook for resist counter: intercept CastedSpellFinished() in Companion class. No existing Bot pattern to copy — needs fresh plumbing. | protocol-agent | 2026-05-03 | Source: eqemu/zone/spells.cpp lines 4483–4555. |
+| 7 | Resist hook site = `Mob::SpellOnTarget` full-resist branch (`spells.cpp:4508-4555`), guarded by `IsCompanion()`. protocol-agent's alternative recommendation of `CastedSpellFinished()` is documented as fallback if scope issues arise. | architect (in dialogue with protocol-agent) | 2026-05-04 | `SpellOnTarget` is the single source of truth for "this spell was fully resisted on this target" — uniform across single-target/AE/group. `CastedSpellFinished` is broader and would need to differentiate fizzle / interrupt / OOM / resist. |
+| 8 | `Companions:SnareResistLimit = 0` means "no cap, companion will attempt snare every eligible tick." | architect (confirming config-expert's flagged ambiguity) | 2026-05-04 | Matches PRD intent ("set to 0 to disable the resist counter entirely"). Encoded in the gate as `if (resist_limit > 0)`. |
+| 9 | Implementation sequence locked: Task 1 (RULE_INT macros) → tasks 4-11 (C++) → task 12 (build) → Task 2 (rule_values seed via INSERT + #reloadrules). Task 3 (data audit) parallel anywhere. | architect + config-expert | 2026-05-04 | config-expert traced source: `#reloadrules` → `_FindRule()` searches compile-time `s_RuleInfo[]`; new rules silently ignored until rebuilt. |
+| 10 | Scope expansion: Druid, Necromancer, Shaman class AI handlers in companion_ai.cpp do NOT currently route SpellType_Snare. Adding branches is part of this feature, not optional. Bard's existing snare branch is also gated for consistency even though the PRD did not enumerate Bard. | architect (discovered during source-code review) | 2026-05-04 | The PRD names DRU/RNG/NEC/SHM but the AI for 3 of those classes doesn't snare today. The PRD intent ("every class with a snare-line spell") implicitly includes Bard, and the shared AI_AttemptSnare helper applies the rule uniformly. |
 
 ---
 
