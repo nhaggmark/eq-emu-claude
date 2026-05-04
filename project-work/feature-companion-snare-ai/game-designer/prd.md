@@ -167,18 +167,26 @@ afterward.
 ### Classes Affected
 
 Every companion class with a snare-line spell in its repertoire is in
-scope:
+scope. Per-class spell references (Classic-Luclin, lore-master verified
+2026-05-03):
 
-| Class | Notes |
-|-------|-------|
-| Druid | Primary offender — Ensnare is a foundational snare spell |
-| Ranger | Inherits Druid snare line |
-| Necromancer | Has snare-line spells in its arsenal |
-| Shaman | Has snare-line spells in its arsenal |
+| Class | In-era snare-line spells |
+|-------|--------------------------|
+| Druid | Snare (Classic), Ensnare (Classic/Kunark) |
+| Ranger | Snare line (Classic) — inherited from Druid |
+| Necromancer | Clinging Darkness / Dooming Darkness line (Classic/Kunark) |
+| Shaman | Drowsy (Classic) and the Spirit Strike / Turgur's line in later tiers |
 
 The rule applies uniformly across all four. Spell selection within the
 snare line (lower vs higher tier snare) is unchanged — only the gating
 condition changes.
+
+> **IMPORTANT for the architect:** Necromancer snare-line spells do NOT
+> contain the word "snare" in their names. Spell classification for this
+> feature MUST be by spell effect / category / skill, **not by name
+> pattern matching**. A name-based filter would silently miss Necromancer
+> companions and leave the spam behavior in place for them. (See PRD
+> Open Question #3.)
 
 ### Tunable Rules (recommended)
 
@@ -382,6 +390,12 @@ convention):
   snare?" question.
 - Root-line spells (immobilize, full stop) use a different effect.
   The classification must NOT pick up roots.
+- **Do NOT classify by spell name.** Necromancer snare-line spells
+  (Clinging Darkness, Dooming Darkness) don't have "snare" in the name
+  but ARE in the snare category. A name-pattern filter would silently
+  miss Necromancer companions and leave the spam behavior in place for
+  that class. Use effect ID / category / skill, not name. (Lore-master
+  verified 2026-05-03.)
 
 **Per-target counter lifetime:**
 - The simplest mental model: a small map on the companion entity

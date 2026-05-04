@@ -41,10 +41,11 @@ _game-designer + lore-master exchanges during Phase 2._
 
 **Response from** lore-master:
 
-> _(See follow-up exchange below — initial scoping was rolled into the final
-> sign-off response.)_
+> _(Initially routed via team-lead as APPROVED. Full per-question answers
+> followed in the third exchange below.)_
 
-**Outcome:** Lore-master engaged; awaiting consolidated reply.
+**Outcome:** Lore-master engaged; sign-off received via team-lead;
+detailed per-question answers followed.
 
 ---
 
@@ -82,11 +83,58 @@ _game-designer + lore-master exchanges during Phase 2._
 >   conflicts.
 > - APPROVED: No flavor text, dialogue, emotes, or in-game messaging
 >   changes of any kind.
->
-> No lore implications. PRD is clear to proceed.
 
 **Outcome:** Lore-master sign-off recorded. Design phase clear to hand off
 to architecture. PRD requires no lore-driven revisions.
+
+---
+
+### 2026-05-03 — Detailed Lore Answers (Follow-Up After Sign-Off)
+
+**From:** lore-master → **To:** game-designer
+
+> Per-question answers to the original four questions, sent after the
+> consolidated sign-off so they would land in the conversation log directly:
+>
+> **1. Era compliance / spell names.** All snare-line spells for the four
+> affected classes are solidly within era:
+> - Druid: Snare (Classic), Ensnare (Classic/Kunark)
+> - Ranger: Snare line (Classic) — inherited from Druid
+> - Necromancer: Clinging Darkness / Dooming Darkness line (Classic/Kunark)
+>   — these are snare-category even though the name doesn't say "snare"
+> - Shaman: Drowsy (Classic) and the Spirit Strike / Turgur's line in
+>   later tiers
+> No lore divergence between these classes on snare identity. The AI gate
+> applies cleanly across all four without any class-specific exception
+> needed for lore reasons.
+>
+> **2. Companion AI flavor text when snare is suppressed.** Stay silent.
+> This is the right call and it has precedent: EQ's combat system never
+> narrates an NPC *choosing not to cast something*. NPCs act or they don't.
+> An emote for a non-event would be both un-EQ in tone and actively worse
+> UX than the problem you're solving. No lore expectation or precedent
+> for narrating AI restraint.
+>
+> **3. Race/class identity — relentless snaring.** No. In EQ lore, Druids
+> and Rangers use snare as a tactical tool for kiting and escape prevention
+> — not as a reflexive combat spam. Necromancers use movement slow as part
+> of a methodical kill sequence, not carpet-bombing. Shaman snare is
+> situational utility. None of these class identities demand constant
+> in-combat snaring. The AI change is, if anything, more consistent with
+> how these classes are portrayed in lore than the current spam behavior.
+>
+> **4. General sign-off.** Nothing else touches lore. No factions, no
+> named NPCs, no quest flow, no item text, no zone-specific considerations,
+> no era concerns. APPROVED — PRD is clear to finalize.
+
+**Outcome:** Per-question lore context recorded for future reference.
+The Necromancer-specific spell-name guidance (Clinging Darkness / Dooming
+Darkness) is particularly load-bearing for the architect — these spells
+don't have "snare" in the name but ARE in the snare category, so any
+classification logic that pattern-matches on spell name would silently
+miss them. Architect should classify by spell effect/category, not by
+name. PRD updated to call this out explicitly in the Classes Affected
+section and the technical appendix.
 
 ---
 
@@ -113,9 +161,10 @@ This table is the quick-reference for anyone catching up._
 
 | # | Decision | Agents Involved | Date | Context |
 |---|----------|----------------|------|---------|
-| 1 | Companion declining to snare under the AI rule produces NO flavor text, dialogue, or emote — silent suppression. | game-designer + lore-master | 2026-05-03 | Adding combat-log emote spam would replace one form of spam (snare casts) with another. Lore-master concurred there is no narrative reason to announce the suppression. |
-| 2 | Restricting WHEN companions cast snare does not violate Druid/Ranger/Necro/Shaman class identity. | lore-master | 2026-05-03 | The spells still exist; the AI simply waits for the tactically meaningful moment. Aligns with "skilled play" of these classes. |
+| 1 | Companion declining to snare under the AI rule produces NO flavor text, dialogue, or emote — silent suppression. | game-designer + lore-master | 2026-05-03 | Adding combat-log emote spam would replace one form of spam (snare casts) with another. Lore-master concurred — EQ has no precedent for narrating an NPC choosing not to cast. |
+| 2 | Restricting WHEN companions cast snare does not violate Druid/Ranger/Necro/Shaman class identity. | lore-master | 2026-05-03 | Lore portrays these classes as using snare tactically (kiting, methodical kills, situational utility), not as reflexive spam. The AI change is MORE consistent with lore than current behavior, not less. |
 | 3 | No Classic-Luclin scripted encounter depends on companion-autonomous snare casting; no conflicts. | lore-master | 2026-05-03 | Confirmed during sign-off. |
+| 4 | Necromancer snare-line spells (Clinging Darkness / Dooming Darkness) do NOT have "snare" in the name. Spell classification must be by effect/category, NOT by name pattern. | lore-master → game-designer | 2026-05-03 | A name-based filter would silently miss Necromancer companions, leaving Necro snare spam in place. Reinforces PRD Open Question #3 — architect must use the proper classification path. |
 
 ---
 
