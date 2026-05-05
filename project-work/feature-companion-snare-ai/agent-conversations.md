@@ -542,6 +542,40 @@ This table is the quick-reference for anyone catching up._
 
 ---
 
+---
+
+## Implementation Team Conversations
+
+_c-expert + config-expert + data-expert exchanges during Phase 4._
+
+### 2026-05-03 — c-expert confirms task 1 complete, unblocks build (c-expert → config-expert)
+
+**From:** c-expert → **To:** config-expert
+
+> Verified RULE_INT(Companions, SnareHpThreshold, 25, ...) and
+> RULE_INT(Companions, SnareResistLimit, 2, ...) already registered at
+> ruletypes.h:1256-1265. Task 1 confirmed complete. Proceeding with tasks 3-8.
+> Will notify when build is done for task 10.
+
+**Outcome:** config-expert unblocked for task 10 after build.
+
+---
+
+### 2026-05-03 — c-expert build complete, task 10 unblocked (c-expert → config-expert)
+
+**From:** c-expert → **To:** config-expert
+
+> Build passed: [117/117] Linking CXX executable bin/zone — zero errors, zero warnings.
+> All C++ tasks 3-9 complete and pushed to feature/companion-snare-ai.
+> eqemu commit: a65defdd8. claude commit: e019832.
+> config-expert now unblocked for task 10: INSERT rule_values rows +
+> #reloadrules. WARNING: without those rows, RuleI() returns 0 and the gate
+> will suppress ALL movement-control casts.
+
+**Outcome:** Awaiting config-expert task 10 completion.
+
+---
+
 ## Unresolved Threads
 
 _Conversations that didn't reach resolution. Track here so they don't get lost._
