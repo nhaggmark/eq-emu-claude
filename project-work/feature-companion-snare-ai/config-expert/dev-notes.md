@@ -164,11 +164,12 @@ Use `Companions:SnareHpThreshold` (RULE_INT, default 20) and `Companions:SnareRe
 
 ## Stage 4: Build
 
-_Pending architect sign-off and c-expert RULE_INT registration._
-
 ### Implementation Log
 
-_Not started._
+| Date | Task | Action | Result |
+|------|------|--------|--------|
+| 2026-05-03 | Task 1 | Added `RULE_INT(Companions, SnareHpThreshold, 25, ...)` and `RULE_INT(Companions, SnareResistLimit, 2, ...)` to `eqemu/common/ruletypes.h` at line 1256 (end of Companions category, before `RULE_CATEGORY_END()`) | Committed af34add63 to feature/companion-snare-ai in eqemu |
+| 2026-05-03 | Task 10 | Authored `config-expert/migrations/10-rule-values.sql` with the two INSERT rows for ruleset_id=1 | File created; apply after c-expert rebuild (task 9) |
 
 ### Problems & Solutions
 
@@ -180,7 +181,8 @@ _Not started._
 
 | File | Action | Description |
 |------|--------|-------------|
-| DB `rule_values` | Insert | Two rows — to be executed once c-expert confirms RULE_INT is in ruletypes.h |
+| `eqemu/common/ruletypes.h` | Modified | Two RULE_INT entries added at end of Companions category (lines 1256-1265) |
+| `claude/project-work/feature-companion-snare-ai/config-expert/migrations/10-rule-values.sql` | Created | Two INSERT rows for ruleset_id=1; apply after rebuild |
 
 ---
 
