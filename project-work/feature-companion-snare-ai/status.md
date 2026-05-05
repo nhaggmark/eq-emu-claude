@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/companion-snare-ai`
 > **Created:** 2026-05-03
-> **Last updated:** 2026-05-04 (amended)
+> **Last updated:** 2026-05-04 (amended + comprehensive sweep)
 
 ---
 
@@ -29,6 +29,19 @@ _Record each handoff between agents with context and any notes._
 - **Date:** 2026-05-03
 - **Notes:** Workspace created. PRD template ready at `game-designer/prd.md`.
   Feature brief at `brief.md`. Spawn both agents as teammates for the Design phase.
+
+### architect → team-lead (Phase 3 comprehensive sweep)
+- **Date:** 2026-05-04
+- **Trigger:** User picked Option 2 with caveat "make sure it's applied across all relevant classes."
+- **Sweep methodology:** Direct grep of `eqemu/zone/companion_ai.cpp` for `SpellType_Snare` and `SpellType_Root`, cross-referenced against `companion_spell_sets` SQL query, per-handler read for all 16 `AI_<Class>` functions.
+- **Findings:** Exactly THREE live root/snare branches exist in `companion_ai.cpp`:
+  1. **AI_Druid** Root branch — `companion_ai.cpp:1235`
+  2. **AI_Ranger** Snare branch — `companion_ai.cpp:1469`
+  3. **AI_Bard** Snare branch — `companion_ai.cpp:1789`
+- **All other AI handlers verified clean:** AI_Tank, AI_Paladin, AI_ShadowKnight, AI_Cleric, AI_Shaman, AI_Rogue, AI_Monk, AI_Beastlord, AI_Wizard, AI_Magician, AI_Necromancer, AI_Enchanter, AI_Generic — none route Root or Snare. (See agent-conversations.md for full per-handler verification.)
+- **Dormant data noted:** Many classes (CLR, PAL, SHD, SHM, NEC, WIZ, ENC) have Root/Snare entries in `companion_spell_sets` but their AI handlers don't consume them. Out of scope for this feature; potential "AI completeness" follow-up.
+- **Task count unchanged:** 10 tasks. The three gating sites (Tasks 4, 5, 6) cover all relevant classes.
+- **User's concern satisfied:** the helper IS invoked from EVERY active root/snare AI branch in companion_ai.cpp.
 
 ### architect → team-lead (Phase 3 amendment)
 - **Date:** 2026-05-04
@@ -163,6 +176,7 @@ _Key decisions made during this feature's development._
 | 13 | Architecture amended 2026-05-04 — original claim re-verified literally true but irrelevant. User's reported "Druid ensnare spam" is actually Druid casting Root-line spells via AI_Druid Root branch (line 1235). Decision #12 is superseded by #14 below. | architect | 2026-05-04 | Verified by direct DB query of companion_spell_sets and spells_new effect IDs. |
 | 14 | Scope expansion: gate BOTH SpellType_Snare AND SpellType_Root via shared helper renamed `AI_AttemptMovementControl`. PRD scope expanded from "snare-line only" to "movement-control". | architect (recommended; pending user decision) | 2026-05-04 | Without this expansion, the user's actual complaint (Druid root spam) is unaddressed. |
 | 15 | `Companions:SnareHpThreshold` default retuned 20 → 25 to align with `Combat:FleeHPRatio` (default 25). | user direction | 2026-05-04 | Eliminates the 25%-to-20% window where mob is fleeing but gate denies. |
+| 16 | Comprehensive AI_<Class> sweep confirmed exactly THREE live root/snare branches: AI_Druid Root (line 1235), AI_Ranger Snare (line 1469), AI_Bard Snare (line 1789). No other AI handlers route Root or Snare. The amendment's three gating sites are the complete coverage. | architect (per team-lead) | 2026-05-04 | User's "make sure it's applied across all relevant classes" concern satisfied. Verified by direct grep + per-handler read + DB cross-reference. |
 
 ---
 

@@ -429,6 +429,88 @@ doc, status.md, agent-conversations.md updated and committed.
 
 ---
 
+
+
+### 2026-05-04 — Comprehensive AI_<Class> Sweep (User-Driven)
+
+**From:** team-lead → **To:** architect
+
+> User picked Option 2 (gate snare AND root) but added: "make sure
+> it's applied across all relevant classes." Concerned other casters
+> with snare/root behavior might be left out.
+>
+> Requested exhaustive sweep of `companion_ai.cpp` for every
+> `AI_<Class>` handler that contains a `SpellType_Snare` OR
+> `SpellType_Root` branch. For each, confirm the new helper should
+> be invoked there. Specifically verify Necromancer, Enchanter,
+> Shaman, ShadowKnight, Paladin, Beastlord — and any others.
+
+**Architect sweep methodology:**
+
+1. Listed all 16 `AI_<Class>` functions in `companion_ai.cpp`
+2. Direct grep: `grep -nE "SpellType_Snare|SpellType_Root" companion_ai.cpp`
+   → returns exactly 6 lines (3 if-checks + 3 SelectFirstSpell calls)
+3. Cross-referenced against `companion_spell_sets` SQL query for
+   classes with `spell_type IN (4, 128)` to see which classes have
+   data that's reached vs. dormant
+4. Read each handler not in the initial list to confirm no obscure
+   path consumes Root/Snare under a different spell-type alias
+
+**Sweep results — definitive:**
+
+Three (and only three) live branches consume Root or Snare today:
+
+| Class | Branch | File:line | Spells in data |
+|-------|--------|-----------|----------------|
+| Druid | Root | companion_ai.cpp:1235 | 76, 77, 249, 490, 1608, 1719 (the "Engulfing/Ensnaring/Grasping/Enveloping/Entrapping/Engorging Roots" line — all effect ID 99) |
+| Ranger | Snare | companion_ai.cpp:1469 | 242, 512 (Snare, Ensnare) |
+| Bard | Snare | companion_ai.cpp:1789 | 738, 1758 (Selo's Consonant/Assonant) |
+
+**Every other class verified to have NO active root/snare branch:**
+
+- AI_Tank (WAR): InCombatBuff only
+- AI_Paladin (PAL): Heal/Cure/InCombatBuff/Nuke/Resurrect/Buff — no Root/Snare
+- AI_ShadowKnight (SHD): Lifetap/InCombatBuff/DOT/Nuke/Pet/Buff — no Root/Snare
+- AI_Cleric (CLR): Heal/Cure/InCombatBuff/Resurrect/Buff — no Root/Snare
+- AI_Shaman (SHM): Slow/Heal/Cure/DOT/Cannibalize — no Root/Snare
+- AI_Rogue (ROG), AI_Monk (MNK): InCombatBuff only
+- AI_Beastlord (BST): Pet/Slow/InCombatBuff/DOT/Buff — no Root/Snare
+- AI_Wizard (WIZ): Escape/Nuke/WizardBuff — no Root/Snare
+- AI_Magician (MAG): Pet/Nuke/Buff — no Root/Snare
+- AI_Necromancer (NEC): Pet/DOT/Lifetap/Nuke/Resurrect/Buff — no Root/Snare
+- AI_Enchanter (ENC): Mez/Slow/InCombatBuff/Nuke/Buff — no Root/Snare
+- AI_Generic (fallback): Heal/Nuke|Lifetap|DOT/Buff — no Root/Snare
+
+**Dormant data flagged.** Many classes have Root/Snare entries
+in `companion_spell_sets` but their AI handlers don't consume
+them. These are dead data today:
+
+- CLR/PAL/SHM/NEC/WIZ/ENC have Root entries but no AI Root branch
+- SHD/NEC have Snare entries but no AI Snare branch (these are
+  the Necro Darkness line shared with SHD)
+- DRU has Snare entries (242, 512, 1767, 3192, 3447) but no AI
+  Snare branch — only the Root branch fires
+- RNG has Root entries (76, 249, 490, 3192) but no AI Root branch
+
+Adding new AI branches to consume the dormant entries is **out of
+scope** for this feature. Those classes don't currently spam
+roots/snares regardless of data. Listed as "AI completeness"
+follow-up potential.
+
+**Conclusion:** the user's concern is satisfied — the gate IS
+applied across all relevant classes. The "relevant classes" are
+defined empirically as "classes whose AI today actually casts
+root or snare." That's exactly the Druid Root branch, Ranger
+Snare branch, and Bard Snare branch — three sites, all gated
+by the amendment.
+
+**Outcome:** Sweep complete. Architecture doc, agent-conversations,
+and status.md updated to record the per-class enumeration. Task
+count unchanged (10 tasks). The amendment is now defensible
+against the user's concern.
+
+---
+
 ## Implementation Team Conversations
 
 _Expert-to-expert exchanges during Phase 4._

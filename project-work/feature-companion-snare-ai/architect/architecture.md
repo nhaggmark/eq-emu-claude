@@ -38,68 +38,32 @@ default from 20 to 25 to align with `Combat:FleeHPRatio` and
 eliminate the awkward 25%-to-20% window where a mob is fleeing
 but the gate denies snare. (Per user direction.)
 
-**A scope decision is required from the user before
-implementation begins** — see "§Scope Decision Required" below.
-The architecture sections that follow are written to support
-the most likely user choice (gate BOTH snare and root branches),
-but each affected section is annotated to indicate what changes
-under each scope option.
+**Scope decision was resolved 2026-05-04** — user picked
+Option 2 (gate both snare-line and root-line) and added the
+caveat "make sure it's applied across all relevant classes."
+A comprehensive AI handler sweep was performed to satisfy
+that caveat — see §Existing System Analysis → Comprehensive
+Sweep for the per-handler verification.
 
 ---
 
-## Scope Decision Required
+## Scope Decision Resolved (2026-05-04)
 
-The original PRD scoped the feature as "autonomous snare-line
-casting only; roots OUT of scope, players use root for legit CC."
-The user's reported bug is "ranger and druids spam ensnare."
+User picked **Option 2** — gate BOTH `SpellType_Snare` AND
+`SpellType_Root` through the unified helper
+`AI_AttemptMovementControl`. PRD scope expanded from "snare-line
+only" to "movement-control (snare + root)."
 
-After source-code re-verification, those two statements describe
-**different code paths**:
+Confirmed by user via team-lead 2026-05-04. User's accompanying
+caveat: "make sure it's applied across all relevant classes."
+That caveat is satisfied by the **comprehensive sweep** documented
+in §Existing System Analysis → Comprehensive Sweep — the three
+gating sites (AI_Druid Root, AI_Ranger Snare, AI_Bard Snare) are
+the complete inventory of active root/snare cast paths in
+`companion_ai.cpp`. No other AI handler routes Root or Snare.
 
-| User-reported behavior | Actual code path | PRD scope status |
-|---|---|---|
-| Ranger Ensnare spam | `AI_Ranger` `SpellType_Snare` branch (companion_ai.cpp:1469) | **IN scope** |
-| Druid "Ensnare" spam | `AI_Druid` `SpellType_Root` branch (companion_ai.cpp:1235) — casts spells named "Ensnaring Roots", "Engulfing Roots", etc. | **OUT of scope per PRD** but IS the user's actual complaint |
-
-Three options for the user:
-
-**Option 1 — Strict PRD: snare-line only.**
-Apply the HP/flee/resist-counter gate ONLY to `SpellType_Snare`
-branches (AI_Ranger and AI_Bard). Druid root spam remains.
-User will likely report "the feature didn't fix Druid" after
-shipping. The Bard branch is also gated for consistency, but
-Bard is not in the user's complaint.
-
-**Option 2 — User's actual intent: gate both snare and root.**
-Apply the gate to `SpellType_Snare` branches AND to
-`SpellType_Root` branches (AI_Druid Root branch is the only
-one in scope today). This addresses the user's actual reported
-behavior. PRD scope is expanded; lore-master should sign off
-on root-gating since lore-master previously approved
-"silent suppression" for snare specifically. The PRD's
-non-goal "Changing root-line spells" needs explicit override.
-
-**Option 3 — Two features.**
-Ship Option 1 now (matches PRD literally). File a follow-up
-bug-fix feature for "Druid root spam" using the same shared
-gate helper (which is designed to be reusable). This delays
-addressing the user's actual complaint by one feature cycle.
-
-**Architect recommendation: Option 2.** The gate logic is
-identical for snare and root (the rule is "stop pre-emptive
-movement-control casting at high HP"). The shared helper
-`AI_AttemptMovementControl` (formerly `AI_AttemptSnare`)
-becomes more useful, not less. The lore-master review for
-roots is straightforward — same "silent suppression" reasoning
-applies. Bigger blast radius is paid for by addressing the
-user's actual reported behavior.
-
-**The remainder of this document assumes Option 2.** If the
-user picks Option 1 or 3, mark the Root-related tasks (#6 in
-the implementation sequence below) as deferred and rename the
-helper to keep `AI_AttemptSnare`. No other section changes.
-
----
+The earlier "Options 1 / 2 / 3" decision tree is removed — Option 2
+is locked. Implementation team can proceed.
 
 ## Executive Summary
 
@@ -186,6 +150,80 @@ source:
 | Ranger | (no Root branch) | Yes (249, 76, 490, 3192) | NO — AI_Ranger has no SpellType_Root branch | Roots in data but unreached. |
 | Shaman | (no Root branch) | Yes (230, 131, 132, 133, 3195, 3196) | NO | Roots in data but unreached. |
 | Necromancer | (no Root branch) | Yes (369, 230, 133, 131, 132, 3195) | NO | Roots in data but unreached. |
+
+### Comprehensive Sweep — All AI_<Class> Handlers (2026-05-04)
+
+Per team-lead's request after user picked Option 2, performed an
+exhaustive `grep` of `companion_ai.cpp` for `SpellType_Snare` and
+`SpellType_Root` references across all 16 `AI_<Class>` handler
+functions. Cross-referenced against `companion_spell_sets` data
+to identify which spell-type tags are actively consumed by each
+class handler.
+
+**Definitive list of AI handlers that route Root or Snare today:**
+
+| Class | AI handler | File:line | Branch type | Spells in `companion_spell_sets` |
+|-------|------------|-----------|-------------|----------------------------------|
+| Druid | `AI_Druid` | companion_ai.cpp:1235 | `SpellType_Root` | 76 Engulfing Roots, 77 Ensnaring Roots, 249 Grasping Roots, 490 Enveloping Roots, 1608 Entrapping Roots, 1719 Engorging Roots |
+| Ranger | `AI_Ranger` | companion_ai.cpp:1469 | `SpellType_Snare` | 242 Snare, 512 Ensnare |
+| Bard | `AI_Bard` | companion_ai.cpp:1789 | `SpellType_Snare` | 738 Selo's Consonant Chain, 1758 Selo's Assonant Strain |
+
+**Sweep verification command:**
+```
+grep -nE "SpellType_Snare|SpellType_Root" eqemu/zone/companion_ai.cpp
+```
+Returns exactly 6 lines (3 paired if-checks + 3 paired
+`SelectFirstSpell` calls), all in the three handlers above.
+
+**Per-class handler verification (each AI_<Class> reviewed):**
+
+| Handler | Has Snare branch? | Has Root branch? | Routes today |
+|---------|-------------------|-------------------|--------------|
+| AI_Tank (WAR) | NO | NO | InCombatBuff only |
+| AI_Paladin (PAL) | NO | NO | Heal, Cure, InCombatBuff, Nuke, Resurrect, Buff |
+| AI_ShadowKnight (SHD) | NO | NO | Lifetap, InCombatBuff, DOT, Nuke, Pet, Buff |
+| AI_Cleric (CLR) | NO | NO | Heal, Cure, InCombatBuff, Resurrect, Buff |
+| **AI_Druid (DRU)** | NO | **YES — line 1235** | Heal, Cure, **Root (gated by amendment)**, DOT, Nuke |
+| AI_Shaman (SHM) | NO | NO | Slow, Heal, Cure, DOT, Cannibalize |
+| AI_Rogue (ROG) | NO | NO | InCombatBuff only |
+| AI_Monk (MNK) | NO | NO | InCombatBuff only |
+| **AI_Ranger (RNG)** | **YES — line 1469** | NO | **Snare (gated by amendment)**, Nuke, InCombatBuff, Buff |
+| AI_Beastlord (BST) | NO | NO | Pet, Slow, InCombatBuff, DOT, Buff |
+| AI_Wizard (WIZ) | NO | NO | Escape, Nuke, WizardBuff (DS) |
+| AI_Magician (MAG) | NO | NO | Pet, Nuke, Buff |
+| AI_Necromancer (NEC) | NO | NO | Pet, DOT, Lifetap, Nuke, Resurrect, Buff |
+| AI_Enchanter (ENC) | NO | NO | Mez, Slow, InCombatBuff, Nuke, Buff |
+| **AI_Bard (BRD)** | **YES — line 1789** | NO | Mez, InCombatBuffSong, **Snare (gated by amendment)**, Buff |
+| AI_Generic (fallback) | NO | NO | Heal, Nuke|Lifetap|DOT, Buff |
+
+**Dormant data for Root/Snare.** Several classes have Root or
+Snare entries in `companion_spell_sets` but their AI handlers
+do not consume them — the entries are dead data:
+
+| Class | Dormant Root entries | Dormant Snare entries |
+|-------|---------------------|------------------------|
+| Cleric | 6 (131-3196 root line) | — |
+| Paladin | 4 (131, 230, 3195, 3246) | — |
+| ShadowKnight | — | 5 (Necro Darkness 344-3400) |
+| Shaman | 6 (131-3196) | — |
+| Necromancer | 6 (369, 230, 131-3195) | 6 (Darkness 344-3309) |
+| Wizard | 6 (131-3194) | — |
+| Enchanter | 6 (131-3194) | — |
+| Druid | — | 5 (242, 512, 1767, 3192, 3447 — including the 3192/3447 Root mis-tag) |
+| Ranger | 4 (76, 249, 490, 3192) | — |
+
+These entries are unreached by current AI. Adding new AI
+branches to consume them is **out of scope** for this feature
+— the user's reported behavior is on the three live branches,
+not these dormant ones. A separate "AI completeness" follow-up
+feature can address whether the dormant entries should fire.
+
+**Conclusion of sweep:** the gate must be applied to the
+**three live branches** (Druid Root, Ranger Snare, Bard Snare).
+No additional AI handlers need modification. The user's concern
+about "make sure it's applied across all relevant classes" is
+satisfied: every class with an active root or snare cast path
+is covered.
 
 **Data tagging anomaly noted.** The Druid spell set tags spell
 3192 (Earthen Roots) and 3447 (Savage Roots) as
@@ -807,9 +845,22 @@ expanded scope (root included).
       caps on Mob A. Mob B reaches flee. Druid casts root on
       Mob B (Mob B fresh; the wipe-on-target-change semantic
       means Mob A counter also resets, which is acceptable).
-- [ ] **AC-6 (Druid AND Ranger obey the rule).** Repeat
-      AC-1 and AC-2 with a Ranger companion. Ranger casts
-      Snare/Ensnare under the same gate.
+- [ ] **AC-6 (per-class coverage — all three gated classes).**
+      Repeat AC-1 and AC-2 individually with each of the three
+      classes that have active root/snare branches, verifying
+      identical gate behavior:
+      - **Druid companion** (gates `SpellType_Root` line 1235):
+        with Engulfing Roots / Ensnaring Roots / Grasping Roots
+        / Enveloping Roots / Entrapping Roots / Engorging Roots
+        spell set, confirm root only fires when target HP ≤ 25%
+        AND `IsFleeing()`.
+      - **Ranger companion** (gates `SpellType_Snare` line 1469):
+        with Snare / Ensnare spell set, confirm snare only fires
+        when target HP ≤ 25% AND `IsFleeing()`.
+      - **Bard companion** (gates `SpellType_Snare` line 1789):
+        with Selo's Consonant Chain / Selo's Assonant Strain
+        spell set, confirm snare only fires when target HP ≤ 25%
+        AND `IsFleeing()`.
 - [ ] **AC-7 (out-of-combat unaffected).** Companion casts
       snare/root freely during pulls / kiting setups.
 - [ ] **AC-8 (manual command override).** **N/A — no manual
@@ -836,9 +887,12 @@ expanded scope (root included).
       don't double-fire engagement-end.
 - [ ] Companion zone-in mid-engagement. `m_movement_control_
       resist_counts` initializes empty.
-- [ ] Druid AND Ranger verify both classes cast their movement-
-      control spells in the right conditions and refrain in
-      the wrong conditions.
+- [ ] All three gated classes (Druid, Ranger, Bard) verify
+      each cast its movement-control spells under the gate in
+      the right conditions and refrains in the wrong conditions.
+      Run separate scenarios per class — Druid root, Ranger
+      snare, Bard snare — confirming each gate site fires
+      independently.
 
 ---
 
