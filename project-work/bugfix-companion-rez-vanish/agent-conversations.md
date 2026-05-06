@@ -22,17 +22,16 @@ rationale are never lost.
 
 _game-designer + lore-master exchanges during Phase 2._
 
-### [Date] — [Topic]
+### 2026-05-03 — Lore-master excluded by team-lead instruction
 
-**From:** [agent] → **To:** [agent]
+**From:** team-lead → **To:** game-designer (and design-team scoping)
 
-> [Message content or summary]
+> Lore-master is not on the design team for this bug-fix workspace.
+> No lore/narrative content in a behavior bug fix.
 
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** game-designer authored the PRD solo. No lore review
+performed; not required for this bug-fix workspace. Design Team section
+is intentionally otherwise empty for this workspace.
 
 ---
 
@@ -40,53 +39,110 @@ _game-designer + lore-master exchanges during Phase 2._
 
 _architect + protocol-agent + config-expert exchanges during Phase 3._
 
-### [Date] — [Topic]
+### 2026-05-03 — protocol-agent advisory: client packet impact of OLD-entity depop on rez
 
-**From:** [agent] → **To:** [agent]
+**From:** architect → **To:** protocol-agent (advisory)
 
-> [Message content or summary]
+> The proposed fix to BUG-001 rez-vanish is to depop the OLD dead
+> Companion entity inside `Companion::ResurrectFromCorpse()` before
+> creating the NEW rezzed entity. The OLD entity has a different
+> entity_id from the NEW rezzed entity. After Death(), the OLD entity
+> is invisible-by-corpse-occlusion (the corpse object renders, OLD's
+> ping_timer keeps OLD's stationary position packets going for client
+> visibility of the dead body). After Spawn() of NEW, both OLD and the
+> corpse are depopped. From the Titanium client's perspective, what
+> packets does the proposed change emit/suppress vs the current path?
 
-**Response from** [agent]:
+**Response from protocol-agent:**
 
-> [Response content or summary]
+> Current path (pre-fix): Death() emits `OP_Death` for OLD's entity_id
+> at death time. OLD's ping_timer continues to emit
+> `OP_PlayerPositionUpdate` with zero deltas every 5s for OLD's
+> entity_id (this is the BUG-002 heartbeat hoist that keeps the
+> dead-body entity visible to the Titanium client). On rez,
+> `corpse->DepopNPCCorpse()` emits `OP_DeleteSpawn` for the corpse
+> entity (separate from OLD). NEW's `Spawn()` emits `OP_NewSpawn` for
+> NEW's entity_id and `OP_GroupUpdate` (groupActJoin) for the group
+> slot. Eventually OLD's death-timer fires and OLD returns false from
+> Process() — at that point the entity reaper emits `OP_DeleteSpawn`
+> for OLD's entity_id (visible to client as the dead body fading
+> after 30 minutes).
+>
+> Proposed path (post-fix): same as current path through NEW's Spawn().
+> The difference is when `OP_DeleteSpawn` for OLD's entity_id is
+> emitted: pre-fix, at T_death + DeathDespawnS (30 min later);
+> post-fix, at rez time (immediately after NEW spawns). The Titanium
+> client handles `OP_DeleteSpawn` the same way at any time, so this is
+> a no-op behavioral change for the client. No new opcodes, no struct
+> size changes, no new packet fields.
+>
+> One minor consideration: at the instant of rez, the player will see
+> the dead body of OLD vanish (OP_DeleteSpawn) at the same time as NEW
+> appears (OP_NewSpawn). This is the same visual sequence the client
+> sees today after a player rez completes. No client UX issue.
+>
+> No client constraints. APPROVED — no issues.
 
-**Outcome:** _What was decided or changed as a result_
+**Outcome:** Fix design proceeds without protocol changes.
+
+### 2026-05-03 — config-expert advisory: rule changes for OLD-entity depop on rez
+
+**From:** architect → **To:** config-expert (advisory)
+
+> The proposed fix to BUG-001 rez-vanish is purely an entity-management
+> change in `Companion::ResurrectFromCorpse()`. Are there existing
+> Companions:* rules that the fix should consult? Should the fix be
+> rule-gated or always-on?
+
+**Response from config-expert:**
+
+> Existing relevant rules in `Companions` category (ruletypes.h:1156+):
+> - `Companions:DeathDespawnS` (default 1800) — controls how long the
+>   dead body lingers and the auto-dismiss timer. Pre-fix this rule
+>   acts as the LATCH for the bug (it determines when the corrupt-DB
+>   write happens). Post-fix this rule continues to gate the auto-
+>   dismiss path for un-rezzed dead companions, which is correct and
+>   should remain.
+> - `Companions:RezPostCombatDelayS` (default 10) — gates how long
+>   after combat ends before a Cleric companion attempts rez.
+>   Unaffected by the fix.
+> - `Companions:RezEnabled` — gates the entire rez subsystem. If false,
+>   no rez can happen, so this fix is a no-op when rez is disabled.
+>   No new rule needed to gate the fix itself.
+>
+> Recommendation: do NOT introduce a new `Companions:RezDepopOldEntity`
+> rule or similar. The fix is correctness, not behavior tuning — it
+> should always-on. Adding a rule would just create a footgun where
+> someone disables it and rez-vanish returns. Existing rules continue
+> to apply with no changes.
+>
+> No rule changes. APPROVED — no issues.
+
+**Outcome:** Fix is always-on; no rule changes; existing rules continue
+to apply unchanged.
+
+### 2026-05-03 — Self-review: enumeration of customized-system consumers
+
+**From:** architect (self-review per refactor-regression discipline)
+
+> Per `feedback_refactor_regression_discipline.md`, every fix to a
+> customized-system code path must enumerate adjacent consumers BEFORE
+> proposing the fix. The 12-consumer enumeration is in
+> `architecture.md` under "Antagonistic / Adjacent System Enumeration."
+> Summary: all 12 consumers are either unaffected or strictly improved
+> by the fix.
+
+**Outcome:** Enumeration recorded in architecture.md. No additional
+consumers identified that require fix-side changes.
 
 ---
 
 ## Implementation Team Conversations
 
-_Expert-to-expert exchanges during Phase 4._
-
-### [Date] — [Topic]
-
-**From:** [agent] → **To:** [agent]
-
-> [Message content or summary]
-
-**Response from** [agent]:
-
-> [Response content or summary]
-
-**Outcome:** _What was decided or changed as a result_
+_(Filled in once the implementation team is spawned and starts work.)_
 
 ---
 
-## Key Decisions from Conversations
+## Validation Team Conversations
 
-_Extract the most important decisions made through agent communication.
-This table is the quick-reference for anyone catching up._
-
-| # | Decision | Agents Involved | Date | Context |
-|---|----------|----------------|------|---------|
-| | | | | |
-
----
-
-## Unresolved Threads
-
-_Conversations that didn't reach resolution. Track here so they don't get lost._
-
-| Topic | Agents | Status | Blocking? |
-|-------|--------|--------|-----------|
-| | | | |
+_(Filled in once game-tester runs the four PRD repros.)_
