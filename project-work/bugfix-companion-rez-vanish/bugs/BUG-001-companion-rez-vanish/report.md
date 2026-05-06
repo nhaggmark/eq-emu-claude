@@ -20,6 +20,26 @@ The user could not determine whether the vanish was time-triggered or
 zone-triggered — they did not note exactly when it happened relative to time
 elapsed or zone transitions.
 
+### User Clarification (verbatim, 2026-05-06)
+
+> "I'm not 100% sure if zoning was the issue or not. I remember the rez
+> was successful but later we had to head out and I noted that the rez'd
+> NPC companion was gone. I don't know if it was a time based thing or a
+> zoning thing."
+
+Key takeaways from this clarification:
+1. The rez was confirmed successful at the time of rez.
+2. The companion was present in the group after the rez (for some duration).
+3. The discovery of the vanish was **incidental** — the user noticed it
+   later when they went to head out, NOT at a specific triggering moment.
+4. The user cannot rule out either time-based or zone-based triggering.
+
+Implication for triage: the architect should investigate BOTH the
+death-timer / despawn-clock expiry path AND the zone-handoff path; there
+is no narrow trigger window the user can point to. The repro plan must
+cover time-only, zone-only, AND combined (rez → play normally → eventually
+zone) patterns.
+
 ## Expected Behavior
 
 A successfully rez'd NPC companion should remain in the player's group

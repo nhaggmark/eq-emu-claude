@@ -37,9 +37,11 @@ This PRD formalizes the bug for architect triage.
    causing a successfully-rezzed companion to be removed from the group
    shortly after rez. The companion must remain in the group indefinitely
    after rez, the same as a companion that never died.
-2. Confirm the fix holds across BOTH a time-elapsed code path and a
-   zone-transition code path. The original report could not distinguish
-   which trigger fired, so the fix must address both possibilities.
+2. Confirm the fix holds across THREE independent patterns: time-only
+   (sit in same zone after rez), zone-only (zone immediately after rez),
+   AND combined (rez → play normally → eventually zone). The user
+   discovered the vanish incidentally and cannot isolate which path
+   triggered it, so the fix must address all three possibilities.
 3. Preserve all prior companion-rez and re-recruitment fixes — no regression
    on heartbeat, dismissed flag, group slot, alive guard, or name-based
    re-recruitment lookup.
@@ -83,6 +85,30 @@ This PRD formalizes the bug for architect triage.
    The player must travel back to the original recruit point and re-recruit
    the Wizard from scratch. Any equipment, level, or progression state on
    the rezzed instance is lost.
+
+### User Clarification (verbatim, 2026-05-06)
+
+The player provided this clarification AFTER the initial bug report,
+to record their actual recollection on the timing of discovery:
+
+> "I'm not 100% sure if zoning was the issue or not. I remember the rez
+> was successful but later we had to head out and I noted that the rez'd
+> NPC companion was gone. I don't know if it was a time based thing or a
+> zoning thing."
+
+Key takeaways:
+
+1. The rez was **confirmed successful** at the moment of rez.
+2. The companion was **present in the group after the rez** (for some
+   non-trivial duration).
+3. Discovery of the vanish was **incidental** — the player noticed when
+   they went to head out, not at a specific triggering moment. There is
+   no narrow trigger window the user can point to.
+4. The user **cannot rule out** either time-based or zone-based triggering.
+
+This drives the three-pattern repro plan below: time-only, zone-only,
+AND combined (rez → play normally → eventually zone). All three patterns
+must pass for the fix to be considered complete.
 
 ### Example Scenario
 
@@ -248,16 +274,27 @@ Player-facing, observable from in-game testing or zone server logs:
       and engineer agree to add). This gives the game-tester an
       observable signal beyond "companion is still there" so future
       regressions are catchable in logs.
-- [ ] **AC-7: Two-track repro retired.** Whatever scenario from the
-      Repro Steps below originally triggered the bug now consistently
-      produces the rez-and-stay outcome. Both the time-only and zone-only
-      paths are verified independently.
+- [ ] **AC-7: All three repro patterns pass.** The fix is verified
+      against ALL of: Repro A (time-only, no zoning), Repro B (zone-only,
+      minimum elapsed time), AND Repro D (combined: rez → play normally
+      → eventually zone, matching the user's actual recollection pattern).
+      Each path is run independently and each produces the rez-and-stay
+      outcome. Repro C (sustained-play) backs AC-5 separately.
 
 ## Reproduction Steps
 
-The original report could not isolate whether time elapse, zone
-transition, or both triggered the vanish. The architect and game-tester
-must repro **both paths independently** and verify the fix on both.
+The user's verbatim clarification (see User Experience section) confirms
+that the discovery of the vanish was incidental — "later we had to head
+out and I noted that the rez'd NPC companion was gone" — and that the
+user cannot isolate whether time elapse, zone transition, or both
+triggered the vanish. The architect and game-tester must repro **all
+three patterns independently** and verify the fix on each:
+
+- **Repro A** — time-only, no zoning (covers AC-1).
+- **Repro B** — zone-only, minimum elapsed time (covers AC-2).
+- **Repro C** — combined sustained-play, multi-death/rez/zone (covers AC-5).
+- **Repro D** — combined: rez → play normally → eventually zone, matching
+  the user's actual recollection pattern (covers AC-7's third pattern).
 
 ### Repro A: Time-only (no zoning)
 
@@ -317,9 +354,38 @@ must repro **both paths independently** and verify the fix on both.
 6. **PASS:** All of the above. **FAIL:** Any vanish at any point
    during the session.
 
+### Repro D: Player's actual recollection pattern (rez → play → eventually zone)
+
+This repro mirrors the user's verbatim recollection: rez succeeds,
+companion is present and behaving normally for some non-trivial duration,
+the player eventually decides to head out (zone), and at that point or
+shortly after the companion is noticed missing.
+
+1. Recruit Cleric + Wizard companions in a fight-rich zone with at
+   least one adjacent zone-line target.
+2. Engage in normal combat. Kill the Wizard companion (natural or
+   GM-scripted death).
+3. End combat. Allow the Cleric to autonomously rez the Wizard. Confirm
+   rez success: Wizard returns to the group slot and responds to commands.
+4. Note `T_REZ`. Stay in zone. Continue normal play (combat, conversation,
+   buffing, looting, sitting/standing, casting) for **at least 10 minutes**
+   after `T_REZ`. During this window confirm at intervals (every ~2 min)
+   that the Wizard is still in the group and still responding to a quick
+   `/stats` or `/help` ping.
+5. At `T_REZ + 10min` or later, zone to an adjacent zone ("head out").
+6. Verify Wizard is still in the group on the new zone side. Verify
+   Wizard responds to commands.
+7. Continue normal play in the new zone for **at least 5 more minutes**.
+   Verify Wizard remains in the group at end of window.
+8. **PASS:** Wizard is in the group at every check during step 4, on
+   the new zone side after step 5, and at the end of step 7.
+   **FAIL:** Wizard vanished at any check — note exact `T_REZ + N` and
+   whether the disappearance correlated with the zone transition or
+   with elapsed time within a single zone.
+
 ### Repro logging requirements
 
-For all three repros, capture:
+For all four repros (A, B, C, D), capture:
 - Zone server log (`akk-stack/server/logs/zone_dynamic_NN.log`) covering
   the full repro window.
 - World server log if available.
