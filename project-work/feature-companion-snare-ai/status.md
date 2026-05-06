@@ -2,7 +2,7 @@
 
 > **Feature branch:** `feature/companion-snare-ai`
 > **Created:** 2026-05-03
-> **Last updated:** 2026-05-04 (amended + comprehensive sweep)
+> **Last updated:** 2026-05-05 (feature complete; merged to default branches)
 
 ---
 
@@ -13,11 +13,20 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-05-03 | 2026-05-03 |
 | Design | game-designer + lore-master | Complete | 2026-05-03 | 2026-05-03 |
 | Architecture | architect + protocol-agent + config-expert | Complete | 2026-05-03 | 2026-05-04 |
-| Implementation | c-expert + config-expert + data-expert | Not Started | | |
-| Validation | game-tester | Not Started | | |
-| Completion | _user_ | Not Started | | |
+| Implementation | c-expert + config-expert + data-expert + infra-expert | Complete | 2026-05-04 | 2026-05-05 |
+| Validation | game-tester | Skipped — user-confirmed in-game | 2026-05-05 | 2026-05-05 |
+| Completion | _user_ | Complete | 2026-05-05 | 2026-05-05 |
 
-**Current phase:** Implementation
+**Current phase:** Complete (merged to default branches; feature branch deleted)
+
+### Final commits per repo
+- `eqemu/master`: af34add63 (RULE_INT) + a65defdd8 (gate helper, counter, branch invocations, resist hook) → merged
+- `claude/main`: full design + architecture + implementation history → merged
+- `akk-stack/master`: no feature commits — branch deleted without merge
+- `spire/master`: no feature commits — branch deleted without merge
+
+### User in-game validation outcome
+User logged in after the full-stack restart, observed companion behavior, and confirmed the gate works as intended. Validation phase formally skipped at user direction. Game-tester not dispatched.
 
 ---
 
