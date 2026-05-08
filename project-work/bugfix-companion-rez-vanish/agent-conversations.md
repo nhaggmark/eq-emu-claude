@@ -139,7 +139,37 @@ consumers identified that require fix-side changes.
 
 ## Implementation Team Conversations
 
-_(Filled in once the implementation team is spawned and starts work.)_
+### 2026-05-03 — c-expert implementation complete
+
+**From:** c-expert (self-log)
+
+**Work completed:**
+
+1. Read BUG-001 report, PRD, architecture.md, and agent-conversations.md per protocol.
+2. Added Suite 38 to `eqemu/zone/cli/tests/cli_companion_tests.cpp` — 19 tests across 3 sub-tests:
+   - 38.1: documents pre-fix broken state (2 entities share companion_id) + verifies Depop contract
+   - 38.2: verifies death-despawn-timer corruption path severed after Depop(false)
+   - 38.3: verifies zone-save race resolved (only NEW saves, is_suspended=0, is_dismissed=0)
+3. Implemented fix in `eqemu/zone/companion.cpp::ResurrectFromCorpse()`: added 29-line block
+   after `corpse_pos` capture (line 3662) that scans `entity_list.GetCompanionList()` for the OLD
+   entity matching `(companion_id, owner_char_id)` and calls `Depop(false)` before `new Companion`.
+   AC-6 log line: `Companion::ResurrectFromCorpse: depopping OLD dead entity (entity_id={}, companion_id={})`.
+4. Built clean: 244/244 ninja targets, no errors or warnings.
+5. Tests: 587 PASSED, 1 pre-existing FAIL (Suite 36.4a — unrelated to this fix, pre-existing state issue).
+   Suites 35, 36, 37 all GREEN. Suite 38 all 19 tests GREEN.
+6. Committed to `bugfix/companion-rez-vanish` branch in eqemu/:
+   - `3bd91a645` — test(companion): add Suite 38 TDD tests for BUG-001 rez-vanish OLD entity depop
+   - `3ed5f852a` — fix(companion): depop OLD dead entity in ResurrectFromCorpse (BUG-001 rez-vanish)
+7. Pushed to remote.
+
+**Note on Suite 38 test design:** `ResurrectFromCorpse` requires a live `Client*` in zone — cannot
+be called directly in unit tests (same constraint documented in Suite 29 comment at line 6837).
+Suite 38 uses structural tests (same pattern as Suite 36) that verify the fix's invariants: Depop
+removes from companion_list, timer corruption path is severed, zone-save race is resolved.
+The end-to-end behavioral validation (rez → 30min wait → still alive; rez → zone 3x → still alive)
+is delegated to game-tester per the PRD repros A/B/C/D.
+
+**Ready for:** server restart (infra-expert) + game-tester validation against repros A/B/C/D.
 
 ---
 

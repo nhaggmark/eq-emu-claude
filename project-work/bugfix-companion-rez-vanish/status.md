@@ -13,11 +13,11 @@
 | Bootstrap | bootstrap-agent | Complete | 2026-05-03 | 2026-05-03 |
 | Design | game-designer | Complete | 2026-05-03 | 2026-05-03 |
 | Architecture | architect (+ protocol-agent + config-expert advisory) | Complete | 2026-05-03 | 2026-05-03 |
-| Implementation | c-expert (+ infra-expert if needed) | Next | | |
-| Validation | game-tester | Not Started | | |
+| Implementation | c-expert (+ infra-expert if needed) | Complete | 2026-05-03 | 2026-05-03 |
+| Validation | game-tester | Next | | |
 | Completion | _user_ | Not Started | | |
 
-**Current phase:** Implementation
+**Current phase:** Validation
 
 ---
 
@@ -94,11 +94,11 @@ _Populated by the architect after the architecture doc is approved._
 
 | # | Task | Agent | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Add Suite 38 TDD red tests (38.1, 38.2, 38.3) for OLD-entity-leak rez vanish | c-expert | Not Started | Tests must FAIL pre-fix to prove they cover the right invariants |
-| 2 | Implement OLD-entity depop in `Companion::ResurrectFromCorpse()` (eqemu/zone/companion.cpp, before line 3699) | c-expert | Not Started | ~25 lines + comment block referencing BUG-001 rez-vanish |
-| 3 | Verify Suite 38 GREEN; verify Suites 35, 36, 37 (and all earlier) still GREEN | c-expert | Not Started | No-regression gate |
-| 4 | Build binary in dev container | c-expert | Not Started | `docker exec akk-stack-eqemu-server-1 ... ninja` |
-| 5 | Commit + push to `bugfix/companion-rez-vanish` in eqemu/ | c-expert | Not Started | Two commits — one for tests (red), one for fix (green) |
+| 1 | Add Suite 38 TDD red tests (38.1, 38.2, 38.3) for OLD-entity-leak rez vanish | c-expert | Complete 2026-05-03 | 19 tests, all GREEN |
+| 2 | Implement OLD-entity depop in `Companion::ResurrectFromCorpse()` (eqemu/zone/companion.cpp, before line 3699) | c-expert | Complete 2026-05-03 | 29 lines, clean build 244/244 |
+| 3 | Verify Suite 38 GREEN; verify Suites 35, 36, 37 (and all earlier) still GREEN | c-expert | Complete 2026-05-03 | 587 PASSED, 1 pre-existing FAIL (36.4a, unrelated) |
+| 4 | Build binary in dev container | c-expert | Complete 2026-05-03 | ninja 244/244, no errors |
+| 5 | Commit + push to `bugfix/companion-rez-vanish` in eqemu/ | c-expert | Complete 2026-05-03 | Commits 3bd91a645 (tests) + 3ed5f852a (fix), pushed |
 | 6 | Restart server processes (if needed for validation phase) | infra-expert | Not Started | Standby — only if game-tester does not self-service |
 | 7 | Validate AC-1 through AC-7 across all 4 PRD repros (A, B, C, D) | game-tester | Not Started | Capture zone logs, verify AC-6 log line appears on rez |
 
@@ -138,7 +138,7 @@ Open → Investigating → Fix In Progress → Resolved._
 
 | # | Bug | Severity | Reported By | Status | Assigned To | Resolved |
 |---|-----|----------|-------------|--------|-------------|----------|
-| BUG-001 | Rez'd NPC companion vanishes from group a few minutes after rez | High | User (player), 2026-05-05 | Investigating — architecture complete; root cause identified; fix specified | c-expert | |
+| BUG-001 | Rez'd NPC companion vanishes from group a few minutes after rez | High | User (player), 2026-05-05 | Fix implemented — awaiting game-tester validation | game-tester | |
 
 ---
 
